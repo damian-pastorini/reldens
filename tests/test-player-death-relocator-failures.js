@@ -196,6 +196,79 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
             this.assert.strictEqual(setup.revivedPlayers, 0);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
             this.assert.strictEqual(setup.savedStats, 0);
+            clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
+        });
+    }
+
+    captureScheduledRetries(setup)
+    {
+        let scheduledRetries = [];
+        setup.relocator.scheduleDeathTimer = (event, delayMs, timerAction) => {
+            scheduledRetries.push({event, delayMs, timerAction});
+            return true;
+        };
+        return scheduledRetries;
+    }
+
+    async testFailedAutomaticTownReviveIsRetried()
+    {
+        await this.test('a failed automatic town revive keeps the player dead and is retried until it works', async () => {
+            let setup = await this.deathBuilder.createRelocatorSetup();
+            let scheduledRetries = this.captureScheduledRetries(setup);
+            setup.room.savePlayerStats = async () => Promise.reject({message: 'Storage.'});
+            this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), false);
+            this.assert.strictEqual(setup.playerSchema.isDeath(), true);
+            this.assert.strictEqual(setup.playerSchema.privateData[ActionsConst.DEATH.PRIVATE_DATA.DEATH_RESOLVING], false);
+            this.assert.deepStrictEqual(setup.sceneChanges, []);
+            this.assert.deepStrictEqual(setup.client.sentMessages, []);
+            this.assert.deepStrictEqual(
+                scheduledRetries.map(retry => retry.delayMs),
+                [ActionsConst.DEATH.DEFAULTS.REVIVE_RETRY_MS]
+            );
+            this.assert.strictEqual([...scheduledRetries].shift().event, setup.event);
+            this.assert.strictEqual(await scheduledRetries.shift().timerAction(), false);
+            this.assert.strictEqual(scheduledRetries.length, 1);
+            setup.room.savePlayerStats = async () => true;
+            this.assert.strictEqual(await scheduledRetries.shift().timerAction(), true);
+            this.assert.deepStrictEqual(scheduledRetries, []);
+            this.assert.deepStrictEqual(setup.sceneChanges, this.deathBuilder.townSceneChange);
+            this.assert.deepStrictEqual(setup.client.sentMessages, [{act: GameConst.REVIVED, t: 'session-7'}]);
+        });
+    }
+
+    async testUnresolvedAutomaticReviveIsRetried()
+    {
+        await this.test('an automatic revive that returns false without an error is retried', async () => {
+            let setup = await this.deathBuilder.createRelocatorSetup({}, {restorationQty: 1});
+            let scheduledRetries = this.captureScheduledRetries(setup);
+            setup.event.revivePlayerCallback = async () => false;
+            this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), false);
+            this.assert.strictEqual(scheduledRetries.length, 1);
+        });
+    }
+
+    async testFailedManualReviveIsNotRetried()
+    {
+        await this.test('a failed revive with the auto revive disabled waits for the player to ask again', async () => {
+            let setup = await this.deathBuilder.createRelocatorSetup(this.deathBuilder.manualReviveConfig);
+            let scheduledRetries = this.captureScheduledRetries(setup);
+            setup.room.savePlayerStats = async () => Promise.reject({message: 'Storage.'});
+            this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), false);
+            this.assert.deepStrictEqual(scheduledRetries, []);
+        });
+    }
+
+    async testRetryOfAPlayerThatLeftOrIsAliveDoesNothing()
+    {
+        await this.test('the retry of a player that left or is alive revives nothing and stops retrying', async () => {
+            for(let setupOptions of [{activePlayers: []}, {inState: GameConst.STATUS.ACTIVE}]){
+                let setup = await this.deathBuilder.createRelocatorSetup({}, setupOptions);
+                let scheduledRetries = this.captureScheduledRetries(setup);
+                this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), false);
+                this.assert.deepStrictEqual(scheduledRetries, []);
+                this.assert.deepStrictEqual(setup.sceneChanges, []);
+                this.assert.strictEqual(setup.revivedPlayers, 0);
+            }
         });
     }
 

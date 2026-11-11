@@ -22,15 +22,15 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { ItemGrowthSteps } = require('./helpers/item-growth-steps');
+const { ItemGrowthChecks } = require('./helpers/item-growth-checks');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { ShowcaseSteps } = require('./helpers/showcase-steps');
 const { ItemDetailsShowcase } = require('./helpers/item-details-showcase');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { ResolveOperation } = require('../../lib/inventory/server/resolve-operation');
 const InventoryTranslations = require('../../lib/inventory/client/snippets/en_US');
 const { ItemGrowthCalculator, ItemsConst } = require('@reldens/items-system');
-const { ModifierConst } = require('@reldens/modifiers');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -38,46 +38,12 @@ let expect = BaseE2eTest.expect;
 class TestItemGrowth
 {
 
-    static ITEM_KEY = 'growing_sword';
-
-    static async loadGrowingItemData(gameConfig)
-    {
-        let itemRow = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'itemsItem', {key: TestItemGrowth.ITEM_KEY})]
-            .shift();
-        expect(itemRow, 'The growing item must be stored').toBeTruthy();
-        let modifierRow = [...await E2eSeedAndRestoreApi.loadRows(
-            gameConfig,
-            'itemsItemModifiers',
-            {item_id: itemRow.id}
-        )].shift();
-        expect(modifierRow, 'The growing item must have a modifier').toBeTruthy();
-        expect(Number(modifierRow.operation), 'The growing item modifier must increase its stat').toBe(
-            ModifierConst.OPS.INC
-        );
-        return {growth: sc.toJson(itemRow.customData, {}).growth, modifierRow, label: itemRow.label};
-    }
+    static ITEM_KEY = ItemGrowthSteps.ITEM_KEY;
 
     static async fetchStat(gameConfig, playerName, statKey)
     {
         return Number(
             (await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.FOREST_ROOM_NAME, playerName)).stats[statKey]
-        );
-    }
-
-    static async fetchItemGrowth(gameConfig, playerName)
-    {
-        return sc.get(
-            sc.toJson(
-                sc.get(
-                    [...await E2eSeedAndRestoreApi.loadInventoryRows(gameConfig, playerName, TestItemGrowth.ITEM_KEY)]
-                        .shift(),
-                    'customData',
-                    ''
-                ),
-                {}
-            ),
-            'growth',
-            {}
         );
     }
 
@@ -102,15 +68,6 @@ class TestItemGrowth
         return true;
     }
 
-    static createLevelDetails(statKey, modifierOperation, level, modifierValue)
-    {
-        return [
-            InventoryTranslations.items.growth.level.replace('%level', level),
-            ResolveOperation.prefix(modifierOperation)+modifierValue+ResolveOperation.suffix(modifierOperation)
-                +' '+statKey
-        ];
-    }
-
     static async equipFromInventory(page, gameConfig, itemLabel, levelDetails, longRun)
     {
         await LongRunShowcase.showStep(page, 'The player equips the '+itemLabel+': '+levelDetails.join(', '), longRun);
@@ -127,20 +84,6 @@ class TestItemGrowth
         await expect(equipButton).toBeVisible();
         await ShowcaseSteps.click(page, equipButton, longRun);
         await page.click(Selectors.hud.inventoryClose);
-    }
-
-    static async showEquippedItemDetails(page, levelDetails, longRun)
-    {
-        await page.click(Selectors.hud.equipmentOpen);
-        await expect(page.locator(Selectors.equipment.ui)).toBeVisible();
-        await ItemDetailsShowcase.showDetails(
-            page,
-            Selectors.equipment.itemImage(TestItemGrowth.ITEM_KEY),
-            Selectors.equipment.itemDetails(TestItemGrowth.ITEM_KEY),
-            levelDetails,
-            longRun
-        );
-        await page.click(Selectors.hud.equipmentClose);
     }
 
     static async openChat(page, longRun)
@@ -175,12 +118,12 @@ class TestItemGrowth
             page,
             ForestEnemyKill.ATTACK_SKILL_KEY,
             async () => expectedExperience === Number(
-                sc.get(await TestItemGrowth.fetchItemGrowth(gameConfig, playerName), 'experience', 0)
+                sc.get(await ItemGrowthSteps.fetchItemGrowth(gameConfig, playerName), 'experience', 0)
             ),
             TimeConstants.ENEMY_KILL
         );
         expect(experienceReached, 'The sword instance must store the kill experience').toBe(true);
-        let storedGrowth = await TestItemGrowth.fetchItemGrowth(gameConfig, playerName);
+        let storedGrowth = await ItemGrowthSteps.fetchItemGrowth(gameConfig, playerName);
         expect(storedGrowth).toEqual({
             level: expectedLevel,
             experience: expectedExperience
@@ -195,11 +138,11 @@ class TestItemGrowth
             + TimeConstants.ENEMY_KILL
         );
         let playerName = gameConfig.e2ePlayerName;
-        let itemData = await TestItemGrowth.loadGrowingItemData(gameConfig);
+        let itemData = await ItemGrowthSteps.loadGrowingItemData(gameConfig);
         let statKey = [...itemData.modifierRow.property_key.split('/')].pop();
         let modifierValue = Number(itemData.modifierRow.value);
         let modifierOperation = Number(itemData.modifierRow.operation);
-        let firstLevelDetails = TestItemGrowth.createLevelDetails(
+        let firstLevelDetails = ItemGrowthChecks.createLevelDetails(
             statKey,
             modifierOperation,
             ItemsConst.GROWTH.DEFAULT_LEVEL,
@@ -226,7 +169,7 @@ class TestItemGrowth
             {message: 'The equipped sword must apply its modifier'}
         ).toBe(statBefore + modifierValue);
         await showStatStep('Equipped at '+firstLevelDetails.join(', '), modifierValue);
-        await TestItemGrowth.showEquippedItemDetails(page, firstLevelDetails, longRun);
+        await ItemGrowthChecks.showItemDetails(page, true, firstLevelDetails, longRun);
         await TestItemGrowth.showStatValue(page, statKey, statBefore + modifierValue, longRun);
         await screenshots.capture(page, 'growing-sword-equipped');
         await TestItemGrowth.openChat(page, longRun);
@@ -254,9 +197,10 @@ class TestItemGrowth
             expectedModifierValue
         );
         await TestItemGrowth.showStatValue(page, statKey, statBefore + expectedModifierValue, longRun);
-        await TestItemGrowth.showEquippedItemDetails(
+        await ItemGrowthChecks.showItemDetails(
             page,
-            TestItemGrowth.createLevelDetails(statKey, modifierOperation, storedGrowth.level, expectedModifierValue),
+            true,
+            ItemGrowthChecks.createLevelDetails(statKey, modifierOperation, storedGrowth.level, expectedModifierValue),
             longRun
         );
         await screenshots.capture(page, 'growing-sword-level-reached');

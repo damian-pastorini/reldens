@@ -4,7 +4,8 @@
  *
  * Shared setup and checks of the player and object movement specs: the town player login and the scenario context
  * (room, player, the e2eNpcKey object, the navigation timeout and the server snapshot readers), the pointer move of the
- * player to a tile with the server trail until it stands still on it, the walk to a tile on a line of tiles no room
+ * player to a tile with the server trail until it stands still on it (also for the configured player of a spec context
+ * in any room), the walk to a tile on a line of tiles no room
  * body crosses (checked by the server) that returns the final server state of the stopped player, and the blocked
  * tiles found in a trail, so every movement spec reads the same server data the same way. The town NPCs and traders
  * get their random movement stopped
@@ -55,18 +56,25 @@ class MovementScenario
         await Navigation.waitForRoom(page, roomName, TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun));
         await MovementScenario.pauseMovingObjects(gameConfig, roomName);
         let context = {
-            gameConfig,
-            roomName,
-            playerName,
+            ...MovementScenario.createWalkContext(gameConfig, roomName, playerName, longRun),
             npcKey,
-            navTimeout: TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun),
-            fetchPlayer: async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
             fetchNpc: async () => RoomMovementApi.fetchObject(gameConfig, roomName, npcKey),
-            fetchTiles: async (tile, radius) => RoomMovementApi.fetchTiles(gameConfig, roomName, tile, radius),
-            isStill: (snapshot) => 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY
+            fetchTiles: async (tile, radius) => RoomMovementApi.fetchTiles(gameConfig, roomName, tile, radius)
         };
         await MovementScenario.placePlayerOnReturnPoint(page, context);
         return context;
+    }
+
+    static createWalkContext(gameConfig, roomName, playerName, longRun)
+    {
+        return {
+            gameConfig,
+            roomName,
+            playerName,
+            navTimeout: TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun),
+            fetchPlayer: async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
+            isStill: (snapshot) => 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY
+        };
     }
 
     static async placePlayerOnReturnPoint(page, context)
@@ -134,16 +142,7 @@ class MovementScenario
 
     static async walkIntoTheForest(page, context, longRun)
     {
-        let townMovement = await MovementScenario.movePlayer(
-            page,
-            context,
-            [
-                Math.floor(Login.FOREST_TRANSITION_X / Navigation.TILE_SIZE),
-                Math.floor(Login.FOREST_TRANSITION_Y / Navigation.TILE_SIZE) + 1
-            ],
-            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
-        );
-        expect(townMovement.done, 'The player must reach the tile below the forest change point').toBe(true);
+        await MovementScenario.walkBelowTheForestChangePoint(page, context, longRun);
         let isInForest = await Navigation.ensureInRoom(
             page,
             Login.FOREST_ROOM_NAME,
@@ -155,6 +154,38 @@ class MovementScenario
         expect(isInForest, 'The player must walk into the forest').toBe(true);
         await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
         return await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
+    }
+
+    static async walkBelowTheForestFromReturnPoint(page, gameConfig, playerName, longRun)
+    {
+        let walkContext = MovementScenario.createWalkContext(gameConfig, Login.TOWN_ROOM_NAME, playerName, longRun);
+        await MovementScenario.placePlayerOnReturnPoint(page, walkContext);
+        await MovementScenario.walkBelowTheForestChangePoint(page, walkContext, longRun);
+    }
+
+    static async tryWalkIntoTheForest(page, longRun)
+    {
+        return await Navigation.ensureInRoom(
+            page,
+            Login.FOREST_ROOM_NAME,
+            Login.FOREST_TRANSITION_X,
+            Login.FOREST_TRANSITION_Y,
+            TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun)
+        );
+    }
+
+    static async walkBelowTheForestChangePoint(page, context, longRun)
+    {
+        let townMovement = await MovementScenario.movePlayer(
+            page,
+            context,
+            [
+                Math.floor(Login.FOREST_TRANSITION_X / Navigation.TILE_SIZE),
+                Math.floor(Login.FOREST_TRANSITION_Y / Navigation.TILE_SIZE) + 1
+            ],
+            TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
+        );
+        expect(townMovement.done, 'The player must reach the tile below the forest change point').toBe(true);
     }
 
     static async pauseMovingObjects(gameConfig, roomName)
@@ -186,6 +217,21 @@ class MovementScenario
         return await RoomMovementApi.collectTrail(
             context.fetchPlayer,
             (player) => context.isStill(player) && tile[0] === player.currentCol && tile[1] === player.currentRow,
+            timeout
+        );
+    }
+
+    static async walkPlayerToTile(context, roomName, tile, timeout)
+    {
+        return await MovementScenario.movePlayer(
+            context.page,
+            MovementScenario.createWalkContext(
+                context.gameConfig,
+                roomName,
+                context.gameConfig.e2ePlayerName,
+                context.longRun
+            ),
+            tile,
             timeout
         );
     }

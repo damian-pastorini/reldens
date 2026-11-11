@@ -11,6 +11,12 @@ const { sc } = require('@reldens/utils');
 class TestAdminAuth extends BaseTest
 {
 
+    constructor(config)
+    {
+        super(config);
+        this.isIntegration = true;
+    }
+
     async testLoginPageLoads()
     {
         await this.test('Login page loads', async () => {

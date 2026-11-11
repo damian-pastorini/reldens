@@ -5,11 +5,13 @@
  * HTTP client for the e2e room movement endpoints registered by RoomMovementState: the player and object bodies
  * snapshots, the path finder tiles around a tile (walkable, walls, change points and the other blocked tiles), the
  * object path, move, move back to the original tile, placement and random movement switch, and the trail collected
- * from the server snapshots until a condition is met, so every movement spec asserts the exact server bodies.
+ * from the server snapshots until a condition is met (like a player standing still: no path steps and no velocity),
+ * so every movement spec asserts the exact server bodies.
  *
  */
 
 const { setTimeout: waitMs } = require('timers/promises');
+const { expect } = require('@playwright/test');
 const { SecurityApi } = require('./security-api');
 const { sc } = require('@reldens/utils');
 
@@ -17,6 +19,17 @@ class RoomMovementApi
 {
 
     static POLL_MS = 100;
+
+    static async waitForPlayerStill(gameConfig, roomName, playerName, timeout)
+    {
+        let stopped = await RoomMovementApi.collectTrail(
+            async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
+            (snapshot) => 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY,
+            timeout
+        );
+        expect(stopped.done, 'The player '+playerName+' must stand still: '+sc.toJsonString(stopped.last)).toBe(true);
+        return stopped.last;
+    }
 
     static async fetchPlayer(gameConfig, roomName, playerName)
     {

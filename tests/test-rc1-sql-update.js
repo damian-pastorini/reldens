@@ -15,6 +15,7 @@ class TestRc1SqlUpdate extends BaseTest
     constructor(config)
     {
         super(config);
+        this.isIntegration = true;
         this.updateFilePath = FileHandler.joinPaths(process.cwd(), 'migrations', 'development', 'rc.1-sql-update.sql');
         this.treeFilters = {object_class_key: 'enemy_1', client_key: 'enemy_forest_1'};
         this.teleportFilters = {object_class_key: 'teleport_1'};

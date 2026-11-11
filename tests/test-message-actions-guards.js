@@ -214,7 +214,7 @@ class TestMessageActionsGuards extends BaseTest
             playerName: 'player-'+sessionId,
             tradeInProgress,
             inventory: {
-                manager: {findItemsByPropertyValue: () => []},
+                manager: {items: {}},
                 client: {extractItemsDataForSend: () => ({})}
             }
         };

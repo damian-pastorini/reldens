@@ -8,7 +8,8 @@ server (see "App under test") and the unit and integration tests run with `RELDE
 test:default` (`tests/default/run-default.js`, it boots its own server on the `tests/config.json` port + 100), never
 with `npm test`, which targets an external server on the `tests/config.json` port that nothing starts (every admin
 integration test then fails with an empty `Error:`, the connection refused). Every checkout uses its own
-`tests/config.json` test database and ports.
+`tests/config.json` test database and ports. The only exception is `npm run test:unit` (`run-default.js --unit`), which
+runs the unit tests alone, without the database reset and the server, and skips the classes marked `isIntegration`.
 
 ## Commands
 
@@ -62,8 +63,50 @@ Flags accepted by `tests/e2e/run-tests.js`:
 - `--db-reset=<dbName>` - drops every table and rebuilds the database from `migrations/production` before the run;
   the value must match `dbName` in `tests/config.json` (`--db-reset=reldens_local`), otherwise the run stops without
   touching the database, so a wrong `dbName` can never drop another database
+- `--skip-servers=server-2` - the second game server instance is not created (see "Server instances"), the specs that
+  need it fail on `E2eServerInstances.forServer()` with the instance named
+- `--skip-db-reset=server-1,server-2` - the database reset of the listed instances is skipped (with `--db-reset`), a
+  database shared by several instances is reset only once
+- `--instance=<name>` - runs the suite as an isolated instance (see "Isolated instances"), the name uses lower case
+  letters, numbers and hyphens (`--instance=server-3`)
 - `--max-failures=<n>` - overrides the stop-on-failure limit
 - `--all` - runs every test regardless of failures
+
+## Server instances
+
+Every run boots the numbered game servers `server-1` and `server-2` (`tests/e2e/helpers/e2e-server-instances.js`):
+both share the `tests/config.json` database and the `RELDENS_SIGNED_TOKENS_SECRET` of the app `.env`, `server-1` runs
+on the found e2e port and `server-2` on the next free port (`run-tests.js` passes them in `RELDENS_E2E_SERVERS_PORTS`).
+`server-1` boots in the Playwright global setup process (`collect-game-data.js`), `server-2` in its own child process
+(`tests/e2e/forked-server-instance.js`, a second `ServerManager` in one process would share the events manager
+singleton) with the same startup and the same e2e endpoints, it logs to `test-results/server-2.log` and the global
+teardown shuts it down. A `servers` entry in `tests/config.json` overrides the config of one instance, like
+`{"servers": {"server-2": {"serverPath": "../other-checkout/app"}}}`. The per test reset runs on every instance and a
+spec reaches `server-2` with `E2eServerInstances.forServer(gameConfig, 'server-2')`, the game config whose
+`serverBaseUrl` is used by the e2e endpoints requests (`SecurityApi`) and by the client pages it opens
+(`Login.openClientPage()`).
+
+## Isolated instances
+
+`--instance=<name>` runs a complete second suite from the same checkout at the same time as the default run (or as
+another instance), for example two sessions working on the same branch, without touching each other
+(`tests/e2e/helpers/e2e-instance.js`, the name is kept in `RELDENS_E2E_INSTANCE` for the whole run):
+- database: the `tests/config.json` `dbName` with the instance name appended, hyphens as underscores
+  (`reldens_local_server_3`); create it once (`CREATE DATABASE reldens_local_server_3 CHARACTER SET utf8mb4 COLLATE
+  utf8mb4_unicode_ci`), the run is confirmed with that name,
+  `npm run test:e2e -- --instance=server-3 --db-reset=reldens_local_server_3`, and an instance always runs with
+  `--db-reset` since its database starts empty
+- ports: its `server-1` looks for a free port from the `tests/config.json` port plus 20, its `server-2` on the next
+  free port, the same as the default run (`--port=<port>` still overrides it)
+- outputs: everything the default run writes in `test-results/` and `tests/e2e/` (playwright results, videos,
+  screenshots, `server.log`, `server-2.log`, `tests.log`, `game-data.json`, `server-events.jsonl`) goes to
+  `test-results/instances/<name>/`; the `--clean-output` of an instance removes only its folder and the one of the
+  default run keeps `test-results/instances/`
+- an `instances` entry in `tests/config.json` overrides any config value of one instance, like
+  `{"instances": {"server-3": {"dbName": "reldens_other_tests", "port": 5060}}}`
+
+Both runs still boot their servers from the same `serverPath` app, so they share its `.env` (the database values are
+overridden by each run), its theme and its client bundle.
 
 ## Stop on first failure
 
@@ -257,6 +300,21 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 - the town movement specs (`test-movement.spec.js` and both pathfinding specs, through
   `MovementScenario.pauseMovingObjects`) stop every moving NPC and trader of the room and place it back on its spawn
   tile, so the walks, the routes and the blocked targets always run on the same room layout
+- `POST /api/e2e/room-objects/place-player-on-line-start` (`{roomName, sessionId, distances}`,
+  `RoomLinePlacement.placePlayerOnLineStart`) - places the player on the closest free tile around its current tile
+  (closest distance first, then the lowest row and column) that has a clear line of tiles at one of the `distances`,
+  and returns that `position` and the walk target `tile`; `MovementScenario.walkPlayerToTile` walks the player to the
+  returned tile, so a walk (the zero game over revive case of `test-death-stored-state-and-timers.spec.js`) never stops
+  on a body
+- `POST /api/e2e/room-objects/place-player-next-to-object-with-room` (`{roomName, sessionId, playerName, objectKey,
+  enemyKey}`, `RoomEnemyPlacement.placePlayerNextToObjectWithRoom`) - places the player on the first of the 8 tiles
+  around an active object of that asset key (the objects sorted by key) inside the object interaction area
+  (`isValidInteraction`), free of other bodies and with room for the given enemy next to the player
+  (`RoomAnchoredPlacement.findAttackPosition`), so the enemy hit case of `test-timing-objects-cancel.spec.js` places
+  the enemy without moving the miner; `TimingObjectSession.prepareMining` uses it when an enemy key is given
+- `RoomMovementApi.waitForPlayerStill` waits until the server player has no path steps and no velocity, used after a
+  walk before the next action (`test-game-session-lifecycle.spec.js`, the mining restart of
+  `test-timing-objects-rules.spec.js`), so a body still moving never cancels or changes the next step
 
 Both placements receive the client `sessionId` (`room.sessionId`) and move that exact player schema
 (`RoomObjectsState.findPlayer`), never the first player found by name, so a body left by another session of the same
@@ -265,9 +323,11 @@ user can never take the placement.
 The players reset before every test (`/api/e2e/reset-players`, with the group of the test) first waits until no scene
 room holds a player of that group (`PlayerStateReset.waitForTestPlayersToLeave`: the closed page of the previous test
 leaves, the room saves the player and removes it), so no previous session stays in a room the next test uses or
-overwrites the restored state; then it restores the stats, the inventory and the state of the group players (placed
-on the default return point of the group start room), and the enemies and the random movement stopped by a setup
-request (`RoomEnemiesReset.restoreAll`, `RoomMovementState.restoreRandomMovement`) only in the group rooms.
+overwrites the restored state; then it restores the stats, the inventory, the scores and score details (back to the
+rows captured on the setup, so a kill of an earlier test never leaves a score row) and the state of the group players
+(placed on the default return point of the group start room), and the enemies, the random movement stopped by a setup
+request and the drops left by the tests (`RoomEnemiesReset.restoreAll`, `RoomMovementState.restoreRandomMovement`,
+`DropsProbe.clearRoomsDrops`) only in the group rooms.
 
 ## Parallel spec groups
 
@@ -276,13 +336,15 @@ worker, so its specs run one after the other, and the groups run at the same tim
 
 - `world` - the town specs that need the town layout (NPCs, player and object pathfinding), users set 0 (`root`,
   `root2`, `root3`), start room `reldens-new-age-town`
-- `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames, auto recovery,
-  kill score and item growth, users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests, the game login flow and the
-  ad skins, users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
-- `exclusive` - the specs that change the server wide state (login and admin security, the scores reset), create
-  players (authentication, character system) or use more than one room (movement, client interpolation, teleport NPC,
-  death teleport), users set 0, it runs after every other group ended and its reset restores every room
+- `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames and item growth,
+  users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
+- `social` - private chat, teams, clans, trading, items, rewards, locale selector, quests and the game login flow, users
+  set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
+- `exclusive` - the specs that change the server wide state (login and admin security, the scores reset and every spec
+  that overrides a config value: the config is one for the whole server and its client values reach every player that
+  logs in, so a parallel group would get them), create players (authentication, character system) or use more than one
+  room (movement, client interpolation, teleport NPC, death teleport), users set 0, it runs after every other group
+  ended and its reset restores every room
 
 Players collide with every other body, so two groups never share a room: every group starts its players on the
 default return point of its own start room and the per test reset only touches the group players and rooms. The
@@ -322,6 +384,11 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
 fishing specs: enter the forest with its enemies disabled, place the player next to the first instance
 (`placeNextToObject`), read the reward quantity from the inventory, record the `timingStart`, `timingCancel` and
 `timingComplete` messages and start a timing on the placed instance.
+`TimingObjectSession.pinRespawnOutOfReach` (`POST /api/e2e/timing-objects/pin-respawn-out-of-reach`, `{roomName, group,
+objectKey, playerName}`, `TimingObjectsProbe.pinRespawnOutOfReach`) overrides the respawn tile of that object until the
+group reset: the free respawn tile closest to its old place among the tiles out of the interaction reach of the player
+(interaction area plus half a tile from the player position), falling back to the random tile, so the mined rock of
+`test-interactive-objects-rocks.spec.js` never respawns next to the miner.
 
 The game data (`collect-game-data.js`) collects the objects of the rooms the specs use (`SPECS_ROOMS_NAMES`: the town
 and the forest level 1), keyed by room name, whatever room the players were saved in, with per room object

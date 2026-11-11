@@ -356,6 +356,7 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'autoRecovery/tickMs', '5000', 2),
 	('server', 'players/death/autoConsumeRestorationItem', '1', 3),
 	('server', 'players/death/autoRevive', '1', 3),
+	('client', 'skills/animations/default_revive', '{"key":"default_revive","animationData":{"enabled":true,"type":"spritesheet","img":"heal_hit","frameWidth":64,"frameHeight":70,"start":0,"end":4,"repeat":0,"depthByPlayer":"above"}}', 4),
 	('server', 'players/death/restorationItemKey', 'restoration_scroll', 1),
 	('server', 'players/death/resurrectionAdsKey', 'resurrection-video', 1),
 	('server', 'players/death/teleportToTown/enabled', '0', 3),

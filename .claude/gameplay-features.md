@@ -223,6 +223,9 @@ item is stored and added.
 `Battle.clientDeathUpdate()` (`lib/actions/server/battle.js`) stores the revive timer in the `playerDeathTimer` private
 data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle revive bound to the room, the body, the
 player, the affected property and the client, so the listeners never receive the battle.
+The death queues the player body for removal (`roomWorld.removeBodies`, processed on the next world step), and
+`Battle.revivePlayer()` takes the body off that queue before adding it back, so a revive that runs before that step
+(`players/gameOver/timeOut` 0) never ends with the revived player without body.
 `ActionsPlugin.setup()` (`lib/actions/server/plugin.js`) logs a missing events manager, data server or config.
 `listenEvents()` checks the events manager once and attaches nothing without it, and `listenConfigRequiredEvents()`
 checks the config once and attaches none of the listeners that need it without it (the player class path and skills
@@ -272,7 +275,9 @@ With the teleport enabled or the auto revive disabled it replaces the battle tim
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
-- a failed resolution is logged
+- a failed resolution is logged, with the auto revive enabled it is retried every
+  `ActionsConst.DEATH.DEFAULTS.REVIVE_RETRY_MS` (5 seconds) while the player is dead in the room, and with the auto
+  revive disabled the revive stays ready, so the player can ask again
 
 `DeathReviveRequests` (`lib/actions/server/death-revive-requests.js`, on `reldens.beforeSceneExecuteMessages`, so a
 room with its actions disabled can not leave a dead player waiting) receives the `drq` and `drc` messages; the
@@ -357,10 +362,14 @@ next one. The running instance is the `scoresPeriodReset` property of the scores
 
 - using the skin ticket item (`skins/adTicketItemKey`) replaces its normal use: `SkinAdTicketGate`
   (`lib/users/server/skin-ad-ticket-gate.js`) sends `{act: 'skinAdS', adsId}` when the player has a ticket and the ad
-  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is consumed on
-  `reldens.beforeGiveAdRewardItem`, right before the reward (`skin_warlock_robe`, from the `ads_event_video` of the
-  `reldens.skinAdTicket` event, `"replayCooldown":0`), so every reward costs one ticket, a failed ad keeps the ticket,
-  and a player without the ticket at the end gets no reward
+  exists, and accepts the skin ad `AD_STARTED` message only from a player with a ticket; the ticket is reserved (removed
+  from the inventory, so it can not be traded away during the reward) on `reldens.beforeGiveAdRewardItem` and given back
+  on `reldens.afterAdEnded` when no reward was given (`skin_warlock_robe`, from the `ads_event_video` of the
+  `reldens.skinAdTicket` event, `"replayCooldown":0`), so every reward costs one ticket, a failed ad or a failed reward
+  keeps the ticket, and a player without the ticket at the end gets no reward; the reserved mark is set before the
+  ticket removal starts, and while it is set the trade accept and the NPC options (`btn-opt`) of that player, or of a
+  trade accept with that player, are refused, because the inventory lock of an exchange would refuse both the reward
+  and the ticket give back
 - an item with a `"skinKey"` custom data changes the player look while equipped: `PlayerSkinApplier`
   (`lib/users/server/player-skin-applier.js`) sets `playerSchema.avatarKey` on the inventory `EQUIP_ITEM`, restores the
   class path avatar (or another equipped skin) on `UNEQUIP_ITEM` and applies the equipped skin on the join
@@ -395,7 +404,9 @@ its ID; the disabled ads are never found.
   and the play stays closed
 
 `InventoryMessageActions` (`lib/inventory/server/message-actions.js`) rejects the equip of an item key that is not in
-the inventory or of an item without `equip()`, and the use of an item without `use()`.
+the inventory or of an item without `equip()`, and the use of an item without `use()`. The equip waits until the
+equipped item of the same group is unequipped (`unEquipPrevious()`) before equipping the new one, so the modifiers of
+the previous item are always reverted before the new item modifiers apply.
 
 ## Events added
 

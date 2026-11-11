@@ -4,8 +4,9 @@
  *
  * Records every message the server sends to the active room of the page (the listener is added once per room and the
  * start clears the recorded list), reads the recorded messages of an action, waits for one, and sends raw messages to
- * the room: any message and an object message with the id the client uses for that object, so the specs send the
- * exact payloads a modified client could send.
+ * the room: any message, several messages in the same page tick (so they overlap on the server, optionally reading the
+ * given answers recorded after a wait), and an object message with the id the client uses for that object, so the
+ * specs send the exact payloads a modified client could send.
  *
  */
 
@@ -49,6 +50,26 @@ class RoomMessagesRecorder
     static async sendMessage(page, message)
     {
         await page.evaluate((roomMessage) => window.reldens.activeRoomEvents.send(roomMessage), message);
+    }
+
+    static async sendMessages(page, messages)
+    {
+        await page.evaluate((roomMessages) => {
+            for(let roomMessage of roomMessages){
+                window.reldens.activeRoomEvents.send(roomMessage);
+            }
+        }, messages);
+    }
+
+    static async sendAndFetchAnswers(page, messages, answerActs, waitMs)
+    {
+        await RoomMessagesRecorder.start(page);
+        await RoomMessagesRecorder.sendMessages(page, messages);
+        await page.waitForTimeout(waitMs);
+        return await page.evaluate(
+            (acts) => (window.e2eRoomMessages || []).filter(message => acts.includes(message.act)),
+            answerActs
+        );
     }
 
     static async sendObjectMessage(page, objectKey, message)

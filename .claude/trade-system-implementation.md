@@ -14,12 +14,26 @@
 
 **Server determines playerToExchangeKey:**
 
-In `lib/inventory/server/message-actions.js` `InventoryMessageActions.sendExchangeUpdate()`:
+In `lib/inventory/server/exchange/exchange-update-sender.js` `ExchangeUpdateSender.send()`, called by
+`InventoryMessageActions` (`lib/inventory/server/message-actions.js`) for both players on the trade start and after
+every trade action:
 ```javascript
 let playerToExchangeKey = ownerSessionId === playerTo.sessionId ? 'A' : 'B';
 ```
 
-This identifies which exchange key belongs to the OTHER player (the one being sent data about in the message).
+This identifies which exchange key belongs to the OTHER player (the one being sent data about in the message). The
+`items` sent are the not equipped items of the receiving player.
+
+## Trade Start
+
+`InventoryMessageActions.startExchange()` runs when the invited player accepts:
+
+- a trade the accepting player already has with another player (both inventories set, a different exchange platform
+  than the inviter one) is closed first with `closeTradeAction()`: the other player trade box is closed and
+  `cancelExchange()` unlocks both inventories, so an accept never leaves the previous trade partner locked
+- the inviter becomes the exchange initializer again (`exchangeInitializerId`), since `initializeExchangeBetween()` resets
+  the exchange data, so `isMyTrade()` keeps the inviter on the `A` side and the accepting player on the `B` side
+- both players share the inviter exchange platform and both receive the trade box (`ExchangeUpdateSender.send()`)
 
 ## Three Column Structure
 
@@ -257,6 +271,7 @@ confirmations = {
 
 **Server:**
 - `lib/inventory/server/message-actions.js` - Trade message handling
+- `lib/inventory/server/exchange/exchange-update-sender.js` - The `TRADE_SHOW` update sent to each player
 - `lib/inventory/server/exchange/processor.js` - Exchange operations (init, add, remove, confirm), and
   `updatePlayerConfirmation(props, isConfirmed)` for the player-to-player confirm (then finalize) and disconfirm, mapped
   from the trade sub-actions by `InventoryMessageActions.mapSubAction()`

@@ -16,6 +16,7 @@ class Selectors
     constructor()
     {
         this.gameOver = {};
+        this.trade = {};
         this.initBaseSelectors();
         this.initHudAndChatSelectors();
         this.initInventoryAndStatsSelectors();
@@ -50,7 +51,8 @@ class Selectors
             deleteTopButton: '.actions .form-delete [type="submit"]',
             dialogConfirm: '.confirm-dialog .dialog-confirm',
             accountMenu: '.user-area .side-bar-item-header',
-            logoutLink: '.logout-link'
+            logoutLink: '.logout-link',
+            shuttingDownTime: '.shutting-down-time'
         };
     }
 
@@ -105,6 +107,7 @@ class Selectors
         this.hud = {
             chatOpen: '#chat-open',
             logout: '#logout',
+            playerBoxName: '.ui-box-player .player-name',
             up: '#up',
             settingsOpen: '#settings-open',
             settingsClose: '#settings-close',
@@ -168,7 +171,9 @@ class Selectors
             itemQty: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-qty-"]',
             itemEquip: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-equip-"]',
             itemUse: (itemKey) => '.item-box:has(img[src$="/' + itemKey + '.png"]) [id^="item-use-"]',
-            itemDetails: (itemKey) => '#inventory-items .item-box:has(img[src$="/'+itemKey+'.png"]) .item-data-container'
+            itemDetails: (itemKey) => '#inventory-items .item-box:has(img[src$="/'+itemKey+'.png"]) .item-data-container',
+            boxImage: (itemId) => '#item-'+itemId+' .image-container img',
+            boxDetails: (itemId) => '#item-'+itemId+' .item-data-container'
         };
         this.equipment = {
             ui: '#equipment-ui',
@@ -199,8 +204,10 @@ class Selectors
             tableRows: '.scores-table .score-container',
             rowPlayerName: '.score-player-name',
             rowValue: '.score-value',
+            myScore: '.scores-dialog-box .current-player-score-data',
             pagerLink: '.pager-page a',
-            currentPage: '.pager-page-current'
+            currentPage: '.pager-page-current',
+            pageTitle: '.scores-content h3'
         };
     }
 
@@ -208,18 +215,30 @@ class Selectors
     {
         this.rewards = {
             dialog: '.rewards-dialog-box',
+            dialogTitle: '.rewards-dialog-box .box-title',
+            dialogClose: '.rewards-dialog-box .box-close',
             content: '.rewards-content',
+            container: '.reward-container',
+            reward: (rewardId) => '.reward-'+rewardId,
+            rewardName: (rewardId) => '.reward-'+rewardId+' .reward-name',
+            rewardDescription: (rewardId) => '.reward-'+rewardId+' .reward-description',
+            rewardImage: (rewardId) => '.reward-'+rewardId+' .reward-image',
             active: '.reward-active',
+            inactive: '.reward-inactive',
             accepted: '.accepted-reward',
             image: '.reward-image',
             notificationBalloon: '#rewards-notification-balloon'
+        };
+        this.trade = {
+            sessionBoxes: '[id^="box-trade"]:not(#box-trade)'
         };
         this.teams = {
             dialog: '.teams-dialog-box',
             dialogContent: '.teams-dialog-box .box-content',
             container: '.team-container',
             invite: (playerId) => '.team-invite-'+playerId+' button',
-            acceptOption: '[id^="opt-accept-teams"]'
+            acceptOption: '[id^="opt-accept-teams"]',
+            playerProperty: (playerId, propertyKey) => '.team-player-'+playerId+' .property-key-'+propertyKey+' .value'
         };
         this.clans = {
             dialog: '.clan-dialog-box',
@@ -227,7 +246,8 @@ class Selectors
             container: '.clan-container',
             disbandAction: '.clan-disband-action',
             nameInput: '.clan-name-input',
-            submitCreate: '.submit-clan-create'
+            submitCreate: '.submit-clan-create',
+            playerProperty: (playerId, propertyKey) => '.clan-player-'+playerId+' .property-key-'+propertyKey+' .value'
         };
         this.npc = {
             dialogue: '.type-npc'

@@ -25,6 +25,7 @@ class RunDefault
         this.filter = null;
         this.methodFilter = null;
         this.breakOnError = false;
+        this.unitOnly = false;
     }
 
     parseArguments()
@@ -42,6 +43,9 @@ class RunDefault
             }
             if('--break-on-error' === arg){
                 this.breakOnError = true;
+            }
+            if('--unit' === arg){
+                this.unitOnly = true;
             }
         }
     }
@@ -89,7 +93,7 @@ class RunDefault
             Logger.log(100, '', 'Configuration not found: '+this.configFile);
             process.exit(1);
         }
-        if(!await this.confirmExecution()){
+        if(!this.unitOnly && !await this.confirmExecution()){
             Logger.log(100, '', 'Tests cancelled by user.');
             process.exit(0);
         }
@@ -97,13 +101,23 @@ class RunDefault
         Logger.log(100, '', 'TESTING RELDENS ADMIN INTEGRATION (SELF-HOSTED)');
         Logger.log(100, '', '='.repeat(60)+'\n');
         Logger.log(100, '', 'Test execution started: '+sc.formatDate(new Date()));
+        await this.prepareEnvironment();
+        await this.shutdown(this.reportExitCode(await this.runTestFiles()));
+    }
+
+    async prepareEnvironment()
+    {
+        if(this.unitOnly){
+            Logger.log(100, '', 'Unit tests only (--unit): no database reset, no self-hosted server, no integration tests.');
+            return false;
+        }
         Logger.log(100, '', 'Resetting database before tests...');
         if(!await new DatabaseResetUtility(this.config).resetDatabase()){
             Logger.log(100, '', 'Database reset failed - aborting test execution');
             await this.shutdown(1);
         }
         await this.startServer();
-        await this.shutdown(this.reportExitCode(await this.runTestFiles()));
+        return true;
     }
 
     loadConfig()
@@ -174,6 +188,10 @@ class RunDefault
             return false;
         }
         let testInstance = new testModule[testClassName](this.config);
+        if(this.unitOnly && testInstance.isIntegration){
+            Logger.log(100, '', 'Skipped, the integration tests need the database and the server (--unit).');
+            return false;
+        }
         testInstance.breakOnError = this.breakOnError;
         return testInstance;
     }

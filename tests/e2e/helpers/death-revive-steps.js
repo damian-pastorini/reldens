@@ -136,16 +136,35 @@ class DeathReviveSteps
         await context.screenshots.capture(context.page, 'player-dead-in-forest');
     }
 
-    static async killPlayerWithRestorationItem(context, configValues, longRunTimeOut, createDeathStep)
+    static async seedRestorationItems(context, restorationItemKey, quantity)
     {
-        let restorationItemKey = await DeathReviveSteps.prepareDeath(context, configValues, longRunTimeOut);
-        await E2eSeedAndRestoreApi.seedInventoryItem(
+        return await E2eSeedAndRestoreApi.seedInventoryItem(
             context.gameConfig,
             context.e2eGroup,
             context.gameConfig.e2ePlayerName,
             restorationItemKey,
-            1
+            quantity
         );
+    }
+
+    static async killPlayerCarryingItems(context, configValues, restorationItemsCount)
+    {
+        let restorationItemKey = await DeathReviveSteps.prepareDeath(context, configValues);
+        if(0 < restorationItemsCount){
+            await DeathReviveSteps.seedRestorationItems(context, restorationItemKey, restorationItemsCount);
+        }
+        await DeathReviveSteps.killPlayerInForest(
+            context,
+            await DeathReviveSteps.enterForest(context, 0 < restorationItemsCount),
+            'The player died carrying '+restorationItemsCount+' restoration items'
+        );
+        return restorationItemKey;
+    }
+
+    static async killPlayerWithRestorationItem(context, configValues, longRunTimeOut, createDeathStep)
+    {
+        let restorationItemKey = await DeathReviveSteps.prepareDeath(context, configValues, longRunTimeOut);
+        await DeathReviveSteps.seedRestorationItems(context, restorationItemKey, 1);
         let placement = await DeathReviveSteps.enterForest(
             context,
             true,
@@ -153,6 +172,18 @@ class DeathReviveSteps
         );
         await DeathReviveShowcase.expectShownItem(context, restorationItemKey);
         await DeathReviveSteps.killPlayerInForest(context, placement, createDeathStep(context.reviveLabels));
+        return restorationItemKey;
+    }
+
+    static async killPlayerAskedForTheItem(context, configValues)
+    {
+        let restorationItemKey = await DeathReviveSteps.killPlayerWithRestorationItem(
+            context,
+            Object.assign({}, DeathReviveSteps.ASKED_ITEM_CONFIG, configValues),
+            DeathReviveSteps.LONG_RUN_ASKED_ITEM_TIME_OUT,
+            reviveLabels => 'The player died: the game over box asks to use or keep the '+reviveLabels.itemLabel
+        );
+        await DeathReviveSteps.expectRestorationItemQuestion(context, restorationItemKey);
         return restorationItemKey;
     }
 
@@ -206,14 +237,25 @@ class DeathReviveSteps
         await DeathReviveSteps.expectItemConsumedInForest(context, restorationItemKey);
     }
 
+    static async fetchPlayer(context, roomName)
+    {
+        return await GameplayE2eStateApi.fetchPlayer(context.gameConfig, roomName, context.gameConfig.e2ePlayerName);
+    }
+
+    static async expectAliveInForest(context)
+    {
+        let revived = await TestCombatDeath.waitForPlayerHpCondition(context.page, 'alive', TimeConstants.PLAYER_REVIVE);
+        expect(revived, 'The player must revive').toBe(true);
+        expect(await Navigation.getCurrentRoomName(context.page), 'The player must revive where it died').toBe(
+            Login.FOREST_ROOM_NAME
+        );
+        return await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME);
+    }
+
     static async expectItemConsumedInForest(context, restorationItemKey)
     {
         let page = context.page;
-        let revived = await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE);
-        expect(revived, 'The player must revive').toBe(true);
-        expect(await Navigation.getCurrentRoomName(page), 'The player must revive where it died').toBe(
-            Login.FOREST_ROOM_NAME
-        );
+        await DeathReviveSteps.expectAliveInForest(context);
         await DeathReviveSteps.expectRestorationItemQuantity(context, restorationItemKey, 0);
         await DeathReviveShowcase.showStep(
             context,
@@ -231,13 +273,12 @@ class DeathReviveSteps
 
     static async expectRestorationItemQuantity(context, restorationItemKey, expectedQuantity)
     {
-        let restorationRows = await E2eSeedAndRestoreApi.loadInventoryRows(
-            context.gameConfig,
-            context.gameConfig.e2ePlayerName,
-            restorationItemKey
-        );
         expect(
-            restorationRows.reduce((totalQuantity, row) => totalQuantity + Number(row.qty), 0),
+            await E2eSeedAndRestoreApi.fetchInventoryQuantity(
+                context.gameConfig,
+                context.gameConfig.e2ePlayerName,
+                restorationItemKey
+            ),
             'The stored restoration item quantity must be '+expectedQuantity
         ).toBe(expectedQuantity);
     }

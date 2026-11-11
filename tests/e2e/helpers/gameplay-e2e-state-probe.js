@@ -3,11 +3,13 @@
  * Reldens - Gameplay E2E State Probe
  *
  * Server side e2e endpoints for the gameplay features: the live player snapshot (avatar key, life, base life, stats,
- * state, scene, position, experience and level), the player state set with the room activate and deactivate methods
+ * base stats, state, scene, position, whether its body is in the room physics world, whether it got the PvP action,
+ * experience and level, the body movement speed and the player speed the room world creates the bodies with), the player
+ * state set with the room activate and deactivate methods
  * (dead, disabled or active, so a spec reaches the dead or disabled player paths where no enemy can kill it), the life
  * of an active enemy out of battle of a live room (set, then read by its body state key, so the auto recovery spec
- * watches the exact body it changed), the life of an exact enemy body (in battle or not) and the scores period reset
- * check run on a given date,
+ * watches the exact body it changed), the life of an exact enemy body (in battle or not), the live rooms with an auto
+ * recovery interval (and the count of every interval kept) and the scores period reset check run on a given date,
  * after the stored last period key was set to the given value (the spec preserves that config row and the scores rows
  * before); the check interval of the scores plugin is stopped and any running check awaited first, so the interval
  * never runs a check of its own in the middle, and it is started again after the check.
@@ -40,12 +42,31 @@ class GameplayE2eStateProbe
             life: playerSchema.stats[affectedProperty],
             totalLife: playerSchema.statsBase[affectedProperty],
             stats: Object.assign({}, playerSchema.stats),
+            statsBase: Object.assign({}, playerSchema.statsBase),
             inState: playerSchema.state.inState,
             scene: playerSchema.state.scene,
             x: playerSchema.state.x,
             y: playerSchema.state.y,
+            bodyInWorld: Boolean(playerSchema.physicalBody?.world),
+            hasPvpAction: Boolean(playerSchema.actions?.pvp),
             experience: Number(sc.get(classPath, 'currentExp', 0)),
-            level: Number(sc.get(classPath, 'currentLevel', 0))
+            level: Number(sc.get(classPath, 'currentLevel', 0)),
+            nextLevelExperience: sc.isFunction(classPath.getNextLevelExperience) ? classPath.getNextLevelExperience() : 0,
+            classPathLabel: sc.get(classPath, 'currentLabel', ''),
+            skillsKeys: Object.keys(sc.get(classPath, 'currentSkills', {})),
+            movementSpeed: Number(sc.get(sc.get(playerSchema, 'physicalBody', {}), 'movementSpeed', 0)),
+            worldPlayerSpeed: Number(sc.get(room.roomWorld, 'playerMovementSpeed', 0))
+        };
+    }
+
+    static fetchRecoveryTicks(serverManager)
+    {
+        let roomsIntervals = serverManager.featuresManager.featuresList.actions.package.roomAutoRecovery.roomsIntervals;
+        return {
+            roomsNames: RoomObjectsState.fetchRooms(serverManager.roomsManager, false).filter(
+                room => sc.hasOwn(roomsIntervals, room.roomId)
+            ).map(room => room.roomName),
+            ticksCount: Object.keys(roomsIntervals).length
         };
     }
 
@@ -221,6 +242,9 @@ class GameplayE2eStateProbe
                         .startRoomTicks(room)
                 })
             );
+        });
+        app.get('/api/e2e/gameplay/recovery-ticks', async (request, response) => {
+            response.json(GameplayE2eStateProbe.fetchRecoveryTicks(serverManager));
         });
         app.post('/api/e2e/gameplay/scores-reset-check', async (request, response) => {
             response.json(await GameplayE2eStateProbe.runScoresResetCheck(

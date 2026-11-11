@@ -5,8 +5,8 @@
  * HTTP client for the e2e endpoints registered by E2eSeedAndRestoreEndpoints: seeds rows, preserves the stored rows a
  * spec changes and overrides config values for the parallel spec group of the running test (all undone by the reset
  * before the next test of that group) and loads the stored rows a spec asserts, including the inventory item of a
- * player seeded or loaded by the player name and the item key, and the stored value of a config path (null when the
- * row is missing).
+ * player seeded or loaded by the player name and the item key (and its quantity summed over its rows), and the stored
+ * value of a config path (null when the row is missing).
  *
  */
 
@@ -35,6 +35,16 @@ class E2eSeedAndRestoreApi
         return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/preserve', {group, entityKey, filters})).rows;
     }
 
+    static async updateWithPreserve(gameConfig, group, entityKey, filters, patch)
+    {
+        return (await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/data/update-with-preserve',
+            {group, entityKey, filters, patch}
+        )).updated;
+    }
+
     static async loadRows(gameConfig, entityKey, filters)
     {
         return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/load', {entityKey, filters})).rows;
@@ -43,6 +53,11 @@ class E2eSeedAndRestoreApi
     static async overrideConfig(gameConfig, group, path, value)
     {
         return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/config', {group, path, value});
+    }
+
+    static async removeConfig(gameConfig, group, path)
+    {
+        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/config', {group, path, remove: true});
     }
 
     static async fetchRowId(gameConfig, entityKey, filters)
@@ -88,6 +103,21 @@ class E2eSeedAndRestoreApi
             gameConfig,
             'itemsInventory',
             await E2eSeedAndRestoreApi.fetchInventoryFilters(gameConfig, playerName, itemKey)
+        );
+    }
+
+    static async fetchPlayerState(gameConfig, playerName)
+    {
+        return [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'playersState', {
+            player_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: playerName})
+        })].shift();
+    }
+
+    static async fetchInventoryQuantity(gameConfig, playerName, itemKey)
+    {
+        return (await E2eSeedAndRestoreApi.loadInventoryRows(gameConfig, playerName, itemKey)).reduce(
+            (totalQuantity, row) => totalQuantity + Number(row.qty),
+            0
         );
     }
 

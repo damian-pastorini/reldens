@@ -2,7 +2,13 @@
  *
  * Reldens - Collect Game Data
  *
- * Playwright globalSetup: boots the game server, collects player and object data, writes game-data.json.
+ * Playwright globalSetup: boots the game server (server-1) with the run config (E2eInstance.loadConfig(), the
+ * tests/config.json with the instance of an isolated run applied), collects player and object data, writes
+ * game-data.json (tests/e2e, or the instance results folder of an isolated run),
+ * registers the e2e endpoints and then starts every next numbered instance (E2eServerInstances, server-2) sharing its
+ * database. A numbered instance reuses startServer() and registerEndpoints() from its own process. The servers boot
+ * with the mailer off, so the app .env mailer service and its optional package never matter: the specs that send an
+ * email turn on the recording test sender (SecurityState.setMailerEnabled).
  *
  */
 
@@ -15,15 +21,31 @@ const { SecurityState } = require('./helpers/security-state');
 const { RoomObjectsState } = require('./helpers/room-objects-state');
 const { RoomMovementState } = require('./helpers/room-movement-state');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
+const { RoomAnchoredPlacement } = require('./helpers/room-anchored-placement');
+const { RoomAggressionPlacement } = require('./helpers/room-aggression-placement');
+const { RoomLinePlacement } = require('./helpers/room-line-placement');
+const { RoomChangePointPlacement } = require('./helpers/room-change-point-placement');
 const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
+const { WorldE2eStateProbe } = require('./helpers/world-e2e-state-probe');
 const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
 const { GameplayE2eStateProbe } = require('./helpers/gameplay-e2e-state-probe');
 const { LiveObjectsOverrides } = require('./helpers/live-objects-overrides');
+const { FeaturePropertiesOverrides } = require('./helpers/feature-properties-overrides');
+const { TimingObjectsProbe } = require('./helpers/timing-objects-probe');
+const { TeamsProbe } = require('./helpers/teams-probe');
+const { TradesProbe } = require('./helpers/trades-probe');
+const { DropsProbe } = require('./helpers/drops-probe');
+const { KillScoreSubscriberOverrides } = require('./helpers/kill-score-subscriber-overrides');
+const { E2eConsoleFileRedirect } = require('./helpers/e2e-console-file-redirect');
+const { InventoryGrowthProbe } = require('./helpers/inventory-growth-probe');
+const { CombatE2eState } = require('./helpers/combat-e2e-state');
 const { E2eAssetsEndpoints } = require('./helpers/e2e-assets-endpoints');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
 const { Login } = require('./helpers/login');
+const { E2eServerInstances } = require('./helpers/e2e-server-instances');
+const { E2eInstance } = require('./helpers/e2e-instance');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 const { ServerPathResolver } = require('../server-path-resolver');
 const { GameConst } = require('../../lib/game/constants');
@@ -38,15 +60,6 @@ class CollectGameData
     static OBJECT_TYPE_MULTIPLE = 7;
     static SPECS_ROOMS_NAMES = [Login.TOWN_ROOM_NAME, Login.FOREST_ROOM_NAME];
     static serverManager = null;
-
-    static loadConfig()
-    {
-        let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
-        if(!FileHandler.exists(configPath)) {
-            return null;
-        }
-        return FileHandler.fetchFileJson(configPath);
-    }
 
     static loadServerModules(serverPath)
     {
@@ -216,7 +229,7 @@ class CollectGameData
 
     static attachEventListeners(serverManager)
     {
-        let eventsFilePath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'server-events.jsonl');
+        let eventsFilePath = E2eInstance.generatedFilePath('server-events.jsonl');
         if(FileHandler.exists(eventsFilePath)) {
             FileHandler.writeFile(eventsFilePath, '');
         }
@@ -249,21 +262,39 @@ class CollectGameData
             ObjectsManager
         );
         let gameData = { players, rooms, items: itemsData };
-        let outputPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
+        let outputPath = E2eInstance.generatedFilePath('game-data.json');
         FileHandler.writeFile(outputPath, JSON.stringify(gameData, null, 4));
         Logger.info('[collect-game-data] Written: '+outputPath);
         CollectGameData.attachEventListeners(serverManager);
         await TestDataSetup.createGroupsUsers(serverManager.dataServer, config);
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
+        await CollectGameData.registerEndpoints(serverManager, config);
+    }
+
+    static async registerEndpoints(serverManager, config)
+    {
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
         SecurityState.registerEndpoints(serverManager, config);
         RoomObjectsState.registerEndpoints(serverManager);
         RoomMovementState.registerEndpoints(serverManager);
         RoomEnemyPlacement.registerEndpoints(serverManager);
+        RoomAnchoredPlacement.registerEndpoints(serverManager);
+        RoomAggressionPlacement.registerEndpoints(serverManager);
+        RoomLinePlacement.registerEndpoints(serverManager);
+        RoomChangePointPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
+        WorldE2eStateProbe.registerEndpoints(serverManager);
         E2eSeedAndRestoreEndpoints.registerEndpoints(serverManager);
         GameplayE2eStateProbe.registerEndpoints(serverManager);
         LiveObjectsOverrides.registerEndpoints(serverManager);
+        FeaturePropertiesOverrides.registerEndpoints(serverManager);
+        TimingObjectsProbe.registerEndpoints(serverManager);
+        TeamsProbe.registerEndpoints(serverManager);
+        TradesProbe.registerEndpoints(serverManager);
+        DropsProbe.registerEndpoints(serverManager);
+        KillScoreSubscriberOverrides.registerEndpoints(serverManager);
+        InventoryGrowthProbe.registerEndpoints(serverManager);
+        CombatE2eState.registerEndpoints(serverManager);
         E2eAssetsEndpoints.registerEndpoints(serverManager);
         await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
@@ -296,7 +327,7 @@ class CollectGameData
 
     static async startServerAndCollect(serverPath)
     {
-        let config = CollectGameData.loadConfig();
+        let config = E2eInstance.loadConfig();
         if(!config) {
             Logger.warning('[collect-game-data] No tests/config.json found, skipping.');
             return;
@@ -305,6 +336,15 @@ class CollectGameData
             Logger.warning('[collect-game-data] serverPath not found: '+serverPath+', skipping.');
             return;
         }
+        let server = await CollectGameData.startServer(serverPath, config);
+        process.stdout.write('Server: collecting game data...\n');
+        await CollectGameData.runDataCollection(server.serverManager, server.modules.ObjectsManager, config);
+        process.stdout.write('Server: ready\n\n');
+        await E2eServerInstances.startInstances();
+    }
+
+    static async startServer(serverPath, config)
+    {
         let modules = CollectGameData.loadServerModules(serverPath);
         let serverConfig = { projectRoot: serverPath };
         if(config.themeName) {
@@ -327,6 +367,7 @@ class CollectGameData
         process.env.RELDENS_ALLOW_RUN_BUNDLER = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CLIENT = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = bundleRequired ? '1' : '0';
+        process.env.RELDENS_MAILER_ENABLE = '0';
         DatabaseEnvVarsExporter.apply(config);
         let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
         if(effectivePort) {
@@ -345,21 +386,12 @@ class CollectGameData
         await StartupGuard.runStep(serverManager.createServers(), 'HTTP server creation');
         process.stdout.write('Server: starting game server (this may take a moment)...\n');
         await StartupGuard.runStep(serverManager.start(), 'Game server start');
-        process.stdout.write('Server: collecting game data...\n');
-        await CollectGameData.runDataCollection(serverManager, modules.ObjectsManager, config);
-        process.stdout.write('Server: ready\n\n');
+        return {serverManager, modules};
     }
 
-    static setupLogCapture()
+    static setupLogCapture(logFileName)
     {
-        let logPath = FileHandler.joinPaths(process.cwd(), 'test-results', 'server.log');
-        FileHandler.createFolder(FileHandler.joinPaths(process.cwd(), 'test-results'));
-        FileHandler.writeFile(logPath, '');
-        let writeLog = (...args) => {
-            FileHandler.appendToFile(logPath, args.map(a => 'object' === typeof a ? JSON.stringify(a) : ''+a).join(' ')+'\n');
-        };
-        console.log = writeLog;
-        console.error = writeLog;
+        let writeLog = E2eConsoleFileRedirect.redirect(logFileName, true);
         process.on('uncaughtException', (error) => {
             let errorDetails = error && error.stack ? error.stack : String(error);
             writeLog('Uncaught exception, the game server shuts down and ends the run: '+errorDetails);
@@ -369,13 +401,13 @@ class CollectGameData
 
     static async run()
     {
-        let config = CollectGameData.loadConfig();
+        let config = E2eInstance.loadConfig();
         if(!config || !config.serverPath) {
             Logger.warning('[collect-game-data] serverPath not configured, skipping server startup.');
             return;
         }
         process.stdout.write('Server: setting up log capture...\n');
-        CollectGameData.setupLogCapture();
+        CollectGameData.setupLogCapture('server.log');
         await CollectGameData.startServerAndCollect(ServerPathResolver.resolve(config.serverPath));
     }
 }

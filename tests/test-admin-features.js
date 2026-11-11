@@ -17,6 +17,7 @@ class TestAdminFeatures extends BaseTest
     constructor(config)
     {
         super(config);
+        this.isIntegration = true;
         this.projectRoot = process.cwd();
         this.testFiles = [];
         this.testPrefix = 'test-features-deterministic';

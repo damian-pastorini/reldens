@@ -468,7 +468,8 @@ REPLACE INTO `config` (`id`, `scope`, `path`, `value`, `type`) VALUES
 	(422, 'server', 'actions/pve/chaseTimeOut', '0', 2),
 	(423, 'server', 'autoRecovery/players/onlyOutOfBattle', '1', 3),
 	(424, 'server', 'players/death/autoConsumeRestorationItem', '1', 3),
-	(425, 'server', 'players/death/autoRevive', '1', 3);
+	(425, 'server', 'players/death/autoRevive', '1', 3),
+	(426, 'client', 'skills/animations/default_revive', '{"key":"default_revive","animationData":{"enabled":true,"type":"spritesheet","img":"heal_hit","frameWidth":64,"frameHeight":70,"start":0,"end":4,"repeat":0,"depthByPlayer":"above"}}', 4);
 
 REPLACE INTO `features` (`id`, `code`, `title`, `is_enabled`) VALUES
 	(1, 'chat', 'Chat', 1),

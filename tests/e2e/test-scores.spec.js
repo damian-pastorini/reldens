@@ -12,6 +12,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { KillScoreSteps } = require('./helpers/kill-score-steps');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -66,12 +67,11 @@ class TestScores
     {
         let seededScores = await TestScores.seedHighestScores(gameConfig, e2eGroup);
         await Login.loginRootPlayer(page, gameConfig, longRun);
-        let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
-        await page.locator(Selectors.hud.scoresOpen).waitFor({state: 'visible', timeout: uiTimeout});
-        await page.click(Selectors.hud.scoresOpen);
-        await expect(page.locator(Selectors.scores.dialog)).toBeVisible({timeout: uiTimeout});
+        await KillScoreSteps.openScoresPanel(page, longRun);
         let rowsLocator = page.locator(Selectors.scores.dialogRows);
-        await expect(rowsLocator.nth(seededScores.length - 1)).toBeVisible({timeout: uiTimeout});
+        await expect(rowsLocator.nth(seededScores.length - 1)).toBeVisible({
+            timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun)
+        });
         await screenshots.capture(page, 'scores-panel-highest-first');
         TestScores.expectHighestFirst(await TestScores.readScoresRows(rowsLocator), seededScores);
     }

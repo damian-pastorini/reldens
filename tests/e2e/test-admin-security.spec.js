@@ -10,6 +10,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { SecurityApi } = require('./helpers/security-api');
+const { AdminPanelSession } = require('./helpers/admin-panel-session');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
@@ -19,64 +20,15 @@ let expect = BaseE2eTest.expect;
 class TestAdminSecurity
 {
 
-    static adminPath(gameConfig)
-    {
-        return gameConfig.adminPath || '/reldens-admin';
-    }
-
-    static async openLogin(page, gameConfig, longRun)
-    {
-        await page.goto(TestAdminSecurity.adminPath(gameConfig)+'/login');
-        await expect(page.locator(Selectors.admin.loginForm)).toBeVisible(
-            { timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun) }
-        );
-    }
-
-    static async submitAdminLogin(page, gameConfig, longRun)
-    {
-        await TestAdminSecurity.openLogin(page, gameConfig, longRun);
-        await page.locator(Selectors.admin.loginEmail).fill(gameConfig.adminUser || 'root@yourgame.com');
-        await page.locator(Selectors.admin.loginPassword).fill(gameConfig.adminPassword || 'root');
-        await page.click(Selectors.admin.loginSubmit);
-        await page.waitForLoadState('networkidle');
-    }
-
-    static async loginAsAdmin(page, gameConfig, longRun)
-    {
-        await TestAdminSecurity.submitAdminLogin(page, gameConfig, longRun);
-        await expect(page.locator(Selectors.admin.dashboard)).toBeVisible(
-            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
-        );
-    }
-
-    static async fetchCookie(page, cookieName)
-    {
-        return (await page.context().cookies()).find((cookie) => cookieName === cookie.name);
-    }
-
-    static async fetchCsrfToken(page)
-    {
-        let csrfCookie = await TestAdminSecurity.fetchCookie(page, GameConst.ADMIN_CSRF_TOKEN_COOKIE);
-        expect(csrfCookie, 'The CSRF token cookie must be set').toBeTruthy();
-        return csrfCookie.value;
-    }
-
-    static async expectSuccessNotification(page, longRun)
-    {
-        await expect(page.locator(Selectors.admin.notificationSuccess)).toBeVisible(
-            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
-        );
-    }
-
     static async runLoginCookiesTest(page, screenshots, gameConfig, longRun)
     {
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         await screenshots.capture(page, 'admin-dashboard');
-        let sessionCookie = await TestAdminSecurity.fetchCookie(page, 'connect.sid');
+        let sessionCookie = await AdminPanelSession.fetchCookie(page, 'connect.sid');
         expect(sessionCookie, 'The session cookie must be set').toBeTruthy();
         expect(sessionCookie.httpOnly).toBe(true);
         expect(sessionCookie.sameSite).toBe('Lax');
-        let csrfCookie = await TestAdminSecurity.fetchCookie(page, GameConst.ADMIN_CSRF_TOKEN_COOKIE);
+        let csrfCookie = await AdminPanelSession.fetchCookie(page, GameConst.ADMIN_CSRF_TOKEN_COOKIE);
         expect(csrfCookie, 'The CSRF token cookie must be set').toBeTruthy();
         expect(csrfCookie.httpOnly).toBe(false);
         expect(csrfCookie.sameSite).toBe('Strict');
@@ -85,14 +37,14 @@ class TestAdminSecurity
 
     static async runMissingTokenTest(page, gameConfig, longRun)
     {
-        let adminPath = TestAdminSecurity.adminPath(gameConfig);
-        await TestAdminSecurity.openLogin(page, gameConfig, longRun);
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        await AdminPanelSession.openLogin(page, gameConfig, longRun);
         let loginResponse = await page.request.post(adminPath+'/login', {
             form: {email: gameConfig.adminUser || 'root@yourgame.com', password: gameConfig.adminPassword || 'root'},
             maxRedirects: 0
         });
         expect(loginResponse.status()).toBe(403);
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         let saveResponse = await page.request.post(adminPath+'/features/save', {
             form: {id: '1', code: 'chat', title: 'Chat', is_enabled: '1'},
             maxRedirects: 0
@@ -102,8 +54,8 @@ class TestAdminSecurity
 
     static async runEntitySaveAndDeleteTest(page, screenshots, gameConfig, longRun)
     {
-        let adminPath = TestAdminSecurity.adminPath(gameConfig);
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         await page.goto(adminPath+'/config/edit');
         let editForm = page.locator(Selectors.admin.editForm);
         await editForm.locator('[name="scope"]').fill('e2e');
@@ -112,31 +64,31 @@ class TestAdminSecurity
         await editForm.locator('select[name="type"]').selectOption('1');
         await screenshots.capture(page, 'config-row-filled');
         await page.click(Selectors.admin.saveButton);
-        await TestAdminSecurity.expectSuccessNotification(page, longRun);
+        await AdminPanelSession.expectSuccessNotification(page, longRun);
         expect(page.url()).toContain(adminPath+'/config/view');
         await page.click(Selectors.admin.deleteTopButton);
         await page.locator(Selectors.admin.dialogConfirm).filter({visible: true}).click();
-        await TestAdminSecurity.expectSuccessNotification(page, longRun);
+        await AdminPanelSession.expectSuccessNotification(page, longRun);
         await screenshots.capture(page, 'config-row-deleted');
     }
 
     static async runUploadEntitySaveTest(page, screenshots, gameConfig, longRun)
     {
-        let adminPath = TestAdminSecurity.adminPath(gameConfig);
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         await page.goto(adminPath+'/audio/edit?id=3');
         await expect(page.locator(Selectors.admin.editForm)).toHaveAttribute('enctype', 'multipart/form-data');
         await page.click(Selectors.admin.saveButton);
-        await TestAdminSecurity.expectSuccessNotification(page, longRun);
+        await AdminPanelSession.expectSuccessNotification(page, longRun);
         expect(page.url()).toContain(adminPath+'/audio/view');
         await screenshots.capture(page, 'upload-entity-saved');
     }
 
     static async runUploadRoutesTest(page, gameConfig, longRun)
     {
-        let adminPath = TestAdminSecurity.adminPath(gameConfig);
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
-        let csrfToken = await TestAdminSecurity.fetchCsrfToken(page);
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
+        let csrfToken = await AdminPanelSession.fetchCsrfToken(page);
         for(let uploadRoute of ['/objects-import', '/skills-import']){
             let rejectedResponse = await page.request.post(adminPath+uploadRoute, {
                 multipart: {generatorData: '{}'},
@@ -153,13 +105,13 @@ class TestAdminSecurity
 
     static async runLoginLimiterTest(page, gameConfig, longRun)
     {
-        let loginUrl = TestAdminSecurity.adminPath(gameConfig)+'/login';
-        await TestAdminSecurity.openLogin(page, gameConfig, longRun);
+        let loginUrl = AdminPanelSession.adminPath(gameConfig)+'/login';
+        await AdminPanelSession.openLogin(page, gameConfig, longRun);
         let failedLoginRequest = {
             form: {
                 email: 'e2e-limit-'+Date.now()+'@yourgame.com',
                 password: 'wrong-password',
-                _csrf: await TestAdminSecurity.fetchCsrfToken(page)
+                _csrf: await AdminPanelSession.fetchCsrfToken(page)
             },
             maxRedirects: 0
         };
@@ -179,7 +131,7 @@ class TestAdminSecurity
     {
         let banResult = await SecurityApi.banUser(gameConfig, gameConfig.e2eUsername || 'root');
         expect(banResult.ok, 'The administrator account must exist to be banned').toBeTruthy();
-        await TestAdminSecurity.submitAdminLogin(page, gameConfig, longRun);
+        await AdminPanelSession.submitAdminLogin(page, gameConfig, longRun);
         expect(page.url()).toContain('login-error=true');
         await expect(page.locator(Selectors.admin.dashboard)).toHaveCount(0);
         await screenshots.capture(page, 'banned-administrator-rejected');
@@ -187,8 +139,8 @@ class TestAdminSecurity
 
     static async runTilesetRoutesTokenTest(page, gameConfig, longRun)
     {
-        let tilesetPath = TestAdminSecurity.adminPath(gameConfig)+'/tileset-analyzer';
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let tilesetPath = AdminPanelSession.adminPath(gameConfig)+'/tileset-analyzer';
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         let uploadResponse = await page.request.post(tilesetPath+'/upload', {
             multipart: {tileSize: '32'},
             maxRedirects: 0
@@ -197,7 +149,7 @@ class TestAdminSecurity
         let deleteResponse = await page.request.delete(tilesetPath+'/sessions/e2e-missing-session', {maxRedirects: 0});
         expect(deleteResponse.status(), 'Tileset session delete without the token').toBe(403);
         let tokenDeleteResponse = await page.request.delete(tilesetPath+'/sessions/e2e-missing-session', {
-            headers: {'X-CSRF-Token': await TestAdminSecurity.fetchCsrfToken(page)},
+            headers: {'X-CSRF-Token': await AdminPanelSession.fetchCsrfToken(page)},
             maxRedirects: 0
         });
         expect(tokenDeleteResponse.status(), 'Tileset session delete with the token').not.toBe(403);
@@ -205,8 +157,8 @@ class TestAdminSecurity
 
     static async runLogoutTest(page, screenshots, gameConfig, longRun)
     {
-        let adminPath = TestAdminSecurity.adminPath(gameConfig);
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         let getLogoutResponse = await page.request.get(adminPath+'/logout', {maxRedirects: 0});
         expect(getLogoutResponse.status(), 'Logout over GET').not.toBe(302);
         await page.goto(adminPath);
@@ -228,7 +180,7 @@ class TestAdminSecurity
 
     static async runBannedLoggedAdministratorTest(page, screenshots, gameConfig, longRun)
     {
-        await TestAdminSecurity.loginAsAdmin(page, gameConfig, longRun);
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         let banResult = await SecurityApi.banUser(gameConfig, gameConfig.e2eUsername || 'root');
         expect(banResult.ok, 'The administrator account must exist to be banned').toBeTruthy();
         await page.reload();

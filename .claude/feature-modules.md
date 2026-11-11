@@ -24,6 +24,10 @@ Core game engine
 Core multiplayer room system
 - `server/scene.js` (RoomScene): Main game room with physics, collisions, objects
 - `server/login.js` (RoomLogin): Authentication and player initialization
+- Double login: a lobby login of an account that is already online ends the old session in every room, the scene
+  removes the old player (the old tab shows the session ended message) and the chat and lobby connections of the old
+  tab are closed; every room leave removes only its own session from `ActivePlayers`, so closing the old tab never
+  removes the sessions of the new one
 - `server/player-relocator.js` (PlayerRelocator): moves a player to a room and position decided by the server, without
   a change point (used by the teleport NPC and the death teleport, see `.claude/gameplay-features.md`)
 - Client connects via `lib/game/client/room-events.js` to handle server state synchronization

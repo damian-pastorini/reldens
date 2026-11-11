@@ -3,7 +3,9 @@
  * Reldens - Navigation Helper
  *
  * Provides page actions for the page load (with the pending requests reported when the network never gets idle), room
- * transitions (the walk can skip its canvas focus click), waiting for room state, and keyboard movement.
+ * transitions (the walk can skip its canvas focus click), waiting for room state, and keyboard movement (a walking
+ * step stops the player only while it is still in the room it walked in, the step that crosses a change point ends in
+ * a new scene that has no walking player, its player is still being created).
  *
  */
 
@@ -118,11 +120,15 @@ class Navigation
 
     static async executeMovementStep(page, dirs, stepMs)
     {
+        let walkRoomName = await Navigation.getCurrentRoomName(page);
         await Navigation.sendPlayerDirections(page, dirs);
         await page.waitForTimeout(stepMs);
-        await page.evaluate(() => {
+        await page.evaluate((roomName) => {
+            if(roomName !== window.reldens.activeRoomEvents.roomName){
+                return;
+            }
             window.reldens.getActiveScene().player.stop();
-        });
+        }, walkRoomName);
     }
 
     static async walkTowardWorldPoint(page, worldX, worldY, stepMs)

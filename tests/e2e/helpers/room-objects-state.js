@@ -3,19 +3,16 @@
  * Reldens - Room Objects State
  *
  * Server side e2e endpoints for the objects of a live scene room: the snapshot of every body with state (position,
- * velocity, bodies in contact, tile, original tile, the destination and steps of the path it follows, state, players
- * in battle and the random movement tiles and max delay),
+ * velocity, bodies in contact, tile, original tile, the destination and steps of the path it follows, state, the count
+ * and the ids of the players in battle and the random movement tiles and max delay),
  * so the specs read the exact server data instead of guessing from the sprites; the switch that disables the enemies
  * of a room (or only the aggressive ones) until the next players reset, so the specs that are not about those enemies
  * are never interrupted by an attack;
- * the random movement stop and the attack position next to a player used by the enemy placement (RoomEnemyPlacement),
- * a walkable position where the placed body does not overlap any colliding body (that player included), so the physics
- * never push it, tried in a fixed order (40px right, left, down and up, then the 40px diagonals, then 32px right,
- * left, down and up, rounded to whole pixels as the synced state), so a player surrounded by bodies on its sides (the
- * mining rocks cluster) still gets a position; the player placement next to another player, out of contact with its
- * body and inside the short attack range, so a player versus player hit never pushes the target; and the player
+ * the random movement stop and the body placement used by the placement helpers (RoomAnchoredPlacement,
+ * RoomEnemyPlacement), the rectangle over bodies check; and the player
  * affected property (hp) set on the live player and sent to its client, so the specs that need a death set the exact
- * life the next hit removes instead of depending on the enemies damage rate.
+ * life the next hit removes instead of depending on the enemies damage rate (the answer holds the value set, read
+ * before the stats save, since an enemy hit can land while the save runs).
  *
  */
 
@@ -25,13 +22,6 @@ const { Logger, sc } = require('@reldens/utils');
 
 class RoomObjectsState
 {
-
-    static ATTACK_DISTANCE = 40;
-    static ATTACK_OFFSETS = [
-        {x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1},
-        {x: 0.71, y: 0.71}, {x: -0.71, y: 0.71}, {x: 0.71, y: -0.71}, {x: -0.71, y: -0.71},
-        {x: 0.8, y: 0}, {x: -0.8, y: 0}, {x: 0, y: 0.8}, {x: 0, y: -0.8}
-    ];
 
     static findRoom(serverManager, roomName)
     {
@@ -120,7 +110,7 @@ class RoomObjectsState
     static mapObjectSnapshot(roomObject, room)
     {
         let objectBody = roomObject.objectBody;
-        return {
+        let snapshot = {
             key: roomObject.key,
             bodyKey: sc.get(objectBody.bodyState, 'key', roomObject.key),
             assetKey: sc.get(roomObject.clientParams, 'asset_key', roomObject.key),
@@ -136,12 +126,14 @@ class RoomObjectsState
             destination: RoomObjectsState.mapPathDestination(objectBody.autoMoving),
             pathSteps: sc.isArray(objectBody.autoMoving) ? objectBody.autoMoving.length : 0,
             inState: objectBody.bodyState.inState,
-            inBattle: Object.keys(sc.get(sc.get(roomObject, 'battle', {}), 'inBattleWithPlayers', {})).length,
+            inBattlePlayers: Object.keys(sc.get(sc.get(roomObject, 'battle', {}), 'inBattleWithPlayers', {})),
             isAggressive: true === roomObject.isAggressive,
             maxTiles: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxTiles', 0),
             maxDelay: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxDelay', 0),
             movesCount: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'movesCount', 0)
         };
+        snapshot.inBattle = snapshot.inBattlePlayers.length;
+        return snapshot;
     }
 
     static disableEnemy(enemyObject, affectedProperty)
@@ -200,33 +192,6 @@ class RoomObjectsState
         );
     }
 
-    static findAttackPosition(room, playerBody, placedBody)
-    {
-        let grid = room.roomWorld.pathFinder.grid;
-        let bodiesBounds = room.roomWorld.bodies.filter(
-            body => placedBody !== body && false !== body.collisionResponse
-        ).map(body => body.getAABB());
-        let placedBounds = placedBody.getAABB();
-        for(let offset of RoomObjectsState.ATTACK_OFFSETS){
-            let x = Math.round(playerBody.position[0] + offset.x * RoomObjectsState.ATTACK_DISTANCE);
-            let y = Math.round(playerBody.position[1] + offset.y * RoomObjectsState.ATTACK_DISTANCE);
-            let tilePosition = playerBody.positionToTiles(x, y);
-            if(!grid.isWalkableAt(tilePosition.currentCol, tilePosition.currentRow)){
-                continue;
-            }
-            let isOverBodies = RoomObjectsState.isRectOverBodies({
-                left: placedBounds.lowerBound[0] - placedBody.position[0] + x,
-                right: placedBounds.upperBound[0] - placedBody.position[0] + x,
-                top: placedBounds.lowerBound[1] - placedBody.position[1] + y,
-                bottom: placedBounds.upperBound[1] - placedBody.position[1] + y
-            }, bodiesBounds);
-            if(!isOverBodies){
-                return {x, y};
-            }
-        }
-        return false;
-    }
-
     static placeObjectBody(objectBody, position)
     {
         objectBody.position = [position.x, position.y];
@@ -234,8 +199,7 @@ class RoomObjectsState
         objectBody.bodyState.x = position.x;
         objectBody.bodyState.y = position.y;
         let tilePosition = objectBody.positionToTiles(position.x, position.y);
-        objectBody.originalCol = tilePosition.currentCol;
-        objectBody.originalRow = tilePosition.currentRow;
+        Object.assign(objectBody, tilePosition, {originalCol: tilePosition.currentCol, originalRow: tilePosition.currentRow});
     }
 
     static stopRandomMovement(roomObject)
@@ -250,30 +214,6 @@ class RoomObjectsState
         return true;
     }
 
-    static placePlayerNearPlayer(room, playerName, nearPlayerName)
-    {
-        let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
-        if(!playerSchema){
-            return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
-        }
-        let nearPlayerSchema = RoomObjectsState.findPlayerByName(room, nearPlayerName);
-        if(!nearPlayerSchema){
-            return {error: 'Player '+nearPlayerName+' not found in room '+room.roomName+'.'};
-        }
-        let position = RoomObjectsState.findAttackPosition(
-            room,
-            nearPlayerSchema.physicalBody,
-            playerSchema.physicalBody
-        );
-        if(!position){
-            return {error: 'No walkable tile next to the player '+nearPlayerName+'.'};
-        }
-        playerSchema.physicalBody.resetAuto();
-        playerSchema.physicalBody.stopFull();
-        RoomObjectsState.placeObjectBody(playerSchema.physicalBody, position);
-        return {position};
-    }
-
     static async setPlayerAffectedProperty(room, playerName, value)
     {
         let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
@@ -282,8 +222,9 @@ class RoomObjectsState
         }
         let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
         playerSchema.stats[affectedProperty] = value;
+        let changed = {affectedProperty, value: playerSchema.stats[affectedProperty]};
         await room.savePlayerStats(playerSchema, room.getClientById(playerSchema.sessionId));
-        return {affectedProperty, value: playerSchema.stats[affectedProperty]};
+        return changed;
     }
 
     static async respondForRoom(serverManager, roomName, response, roomAction)
@@ -316,18 +257,6 @@ class RoomObjectsState
             let onlyAggressive = true === sc.get(request.body, 'onlyAggressive', false);
             let exceptBodyKey = String(sc.get(request.body, 'exceptBodyKey', ''));
             response.json({disabled: room ? RoomObjectsState.disableEnemies(room, onlyAggressive, exceptBodyKey) : 0});
-        });
-        app.post('/api/e2e/room-objects/place-player', async (request, response) => {
-            await RoomObjectsState.respondForRoom(
-                serverManager,
-                sc.get(request.body, 'roomName', ''),
-                response,
-                async (room) => RoomObjectsState.placePlayerNearPlayer(
-                    room,
-                    sc.get(request.body, 'playerName', ''),
-                    sc.get(request.body, 'nearPlayerName', '')
-                )
-            );
         });
         app.post('/api/e2e/room-objects/player-affected-property', async (request, response) => {
             await RoomObjectsState.respondForRoom(

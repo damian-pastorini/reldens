@@ -13,11 +13,15 @@ The project provides three main CLI entry points:
 
 ```bash
 # Run tests: ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT, never `npm test`
-# (it targets an external server on the tests/config.json port that nothing starts)
+# (it targets an external server on the tests/config.json port that nothing starts); the only exception is the
+# unit-only mode below, the unit tests need neither the database nor a server
 # Unit and integration tests, boots its own server (RELDENS_TESTS_CONFIRMED=1 skips the confirmation)
 npm run test:default
 # Or with filters
 npm run test:default -- --filter="test-name" --break-on-error
+# Only the unit tests: no database reset, no self-hosted server, the integration tests (isIntegration) are skipped
+npm run test:unit
+npm run test:unit -- --filter="test-name"
 # E2E tests, boots its own server
 npm run test:e2e -- --db-reset=<tests/config.json dbName>
 
