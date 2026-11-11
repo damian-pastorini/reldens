@@ -16,8 +16,9 @@ const { TimingMiningSteps } = require('./helpers/timing-mining-steps');
 const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
-const { KillScoreSteps } = require('./helpers/kill-score-steps');
 const { DeathObserverSteps } = require('./helpers/death-observer-steps');
+const { TestCombatDeath } = require('./helpers/test-combat-death');
+const { ObserverSteps } = require('./helpers/observer-steps');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
@@ -28,7 +29,6 @@ let expect = BaseE2eTest.expect;
 class TestTimingObjectsStats
 {
 
-    static ENEMY_OBJECT_TYPE = 4;
     static LIFE_STEP = 1;
     static RULE_CHECK_MS = 500;
     static SECOND_STAT_KEY = 'mp';
@@ -52,20 +52,11 @@ class TestTimingObjectsStats
 
     static async runHitRuleOffTest(context)
     {
-        let passiveEnemyArea = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']).find(
-            area => TestTimingObjectsStats.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
-        );
-        expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
+        let passiveEnemyKey = TestCombatDeath.loadPassiveEnemyKey();
         let mining = await TimingMiningSteps.prepare(context, {cancelOnHit: false});
         let lifeBefore = (await TestTimingObjectsStats.fetchPlayer(context.gameConfig)).life;
         await TimingObjectSession.startTiming(context.page, mining.rockKey, mining.serverTimeout);
-        let enemyAttack = await RoomObjectsApi.startEnemyAttack(
-            context.gameConfig,
-            Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName,
-            passiveEnemyArea.assetKey
-        );
-        expect(enemyAttack.enemyKey, 'The enemy attack must start: '+enemyAttack.error).toBeTruthy();
+        await TestCombatDeath.startEnemyAttack(context.gameConfig, passiveEnemyKey);
         await expect.poll(
             async () => (await TestTimingObjectsStats.fetchPlayer(context.gameConfig)).life,
             {message: 'The enemy hits the miner', timeout: mining.serverTimeout}
@@ -131,23 +122,10 @@ class TestTimingObjectsStats
         let mining = await TimingMiningSteps.prepare(context);
         test.setTimeout(test.info().timeout + TimeConstants.forLongRun(TimeConstants.GAME_START * 2, context.longRun));
         let minerSessionId = await DeathObserverSteps.fetchSessionId(context.page);
-        await Login.loginAndStartGame(
-            context.secondPage,
-            context.gameConfig.e2eUsername2,
-            context.gameConfig.e2ePassword2 || context.gameConfig.e2ePassword,
-            context.gameConfig.e2ePlayerName2,
-            context.longRun,
-            false,
-            Login.FOREST_ROOM_NAME
-        );
-        let thirdPage = await KillScoreSteps.loginThirdInForest(context);
-        let placed = await RoomObjectsApi.placePlayerNearPlayer(
-            context.gameConfig,
-            Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName2,
-            context.gameConfig.e2ePlayerName
-        );
-        expect(placed.position, 'The attacker must be placed next to the miner: '+placed.error).toBeTruthy();
+        let secondGameConfig = Login.fetchSecondPlayerConfig(context.gameConfig);
+        await Login.startConfigPlayer(context.secondPage, secondGameConfig, context.longRun, Login.FOREST_ROOM_NAME);
+        let thirdPage = (await Login.startThirdPlayer(context, Login.FOREST_ROOM_NAME)).clientPage;
+        await ObserverSteps.placeSecondNextToFirst(context.gameConfig);
         await Phaser.waitForPlayerBySessionId(context.secondPage, minerSessionId, TimeConstants.SCENE_LOAD);
         for(let otherPage of [context.secondPage, thirdPage]){
             await TimingObjectSession.recordTimingActions(otherPage);
