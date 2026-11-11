@@ -6,7 +6,8 @@
  * rock where the case waits for it): the room holds the respawn instances limit of rocks with distinct keys on distinct
  * tiles; a mined rock is hidden for every client, can be walked through, gets no timing while it waits, and respawns
  * active, shown, colliding and blocking the player again, on a tile where a player standing on the old place is out of
- * reach, and a second player mines it; a player that joins while the rock waits does not see it; and while a rock of
+ * reach (the respawn pinned for the group to the closest tile out of reach before the rock is mined), and a second
+ * player mines it; a player that joins while the rock waits does not see it; and while a rock of
  * the cluster is mined only that rock shows the progress bar, two players on two rocks each see only their own bar and
  * get their own reward, and the first one completing leaves the bar and the timing of the other running.
  *
@@ -19,7 +20,6 @@ const { MovementScenario } = require('./helpers/movement-scenario');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Navigation } = require('./helpers/navigation');
-const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
@@ -49,9 +49,12 @@ class TestInteractiveObjectsRocks
         );
     }
 
-    static async mineRock(context, rules = {})
+    static async mineRock(context, rules = {}, pinRespawn = false)
     {
         let mining = await TimingMiningSteps.prepare(context, rules);
+        if(pinRespawn){
+            await TimingObjectSession.pinRespawnOutOfReach(context.gameConfig, context.e2eGroup, mining.rockKey);
+        }
         test.setTimeout(test.info().timeout + TimeConstants.forLongRun(TimeConstants.GAME_START, context.longRun));
         await TimingObjectSession.startTiming(context.page, mining.rockKey, mining.serverTimeout);
         await TimingMiningSteps.expectCompleted(context.page, mining, 'The rock is mined');
@@ -73,8 +76,12 @@ class TestInteractiveObjectsRocks
             context.gameConfig.e2ePlayerName,
             context.longRun
         );
-        let tile = [Math.floor(position.x / Navigation.TILE_SIZE), Math.floor(position.y / Navigation.TILE_SIZE)];
-        return await MovementScenario.movePlayer(context.page, walkContext, tile, timeout);
+        return await MovementScenario.movePlayer(
+            context.page,
+            walkContext,
+            [Math.floor(position.x / Navigation.TILE_SIZE), Math.floor(position.y / Navigation.TILE_SIZE)],
+            timeout
+        );
     }
 
     static async runRocksLimitTest(context)
@@ -105,7 +112,11 @@ class TestInteractiveObjectsRocks
     static async runRespawnedRockTest(context)
     {
         let secondGameConfig = await TestInteractiveObjectsRocks.enterSecond(context);
-        let mining = await TestInteractiveObjectsRocks.mineRock(context, {respawnTime: TestInteractiveObjectsRocks.SHORT_RESPAWN_MS});
+        let mining = await TestInteractiveObjectsRocks.mineRock(
+            context,
+            {respawnTime: TestInteractiveObjectsRocks.SHORT_RESPAWN_MS},
+            true
+        );
         await expect.poll(
             async () => (await TimingObjectSession.fetchTimingState(context.gameConfig, mining.rockKey)).inState,
             {message: 'The rock respawns', timeout: TestInteractiveObjectsRocks.SHORT_RESPAWN_MS + mining.serverTimeout}
