@@ -7,14 +7,17 @@
  * column, so the same room always gives the same tile, the player tile when it already fits) with a clear straight line
  * to the given direction (RoomPlayerPlacement.findClearLineTile with the bullet start bounds, no other body crosses
  * it), and places the given enemies (their random movement stopped) on that line, one every given tiles step, the
- * first one the closest to the player, and returns the player and the enemies positions; the wall line places the
- * player and a target player on the two free walkable tiles at both sides of a wall tile (RoomTileKindsClassifier wall tiles), the closest to the player, so a bullet shot
- * at the target ends on that wall.
+ * first one the closest to the player, and returns the player and the enemies positions; the player placement on the
+ * line of an object moves the object (its random movement stopped) the same way to the closest free tile with a clear
+ * line along the right, left, down and up directions at the given distances, and the player on that line; the wall
+ * line places the player and a target player on the two free walkable tiles at both sides of a wall tile
+ * (RoomTileKindsClassifier wall tiles), the closest to the player, so a bullet shot at the target ends on that wall.
  *
  */
 
 const { RoomObjectsState } = require('./room-objects-state');
 const { RoomPlayerPlacement } = require('./room-player-placement');
+const { RoomMovementState } = require('./room-movement-state');
 const { RoomAggressionPlacement } = require('./room-aggression-placement');
 const { RoomTileKindsClassifier } = require('./room-tile-kinds-classifier');
 const { CombatE2eState } = require('./combat-e2e-state');
@@ -47,7 +50,7 @@ class RoomLinePlacement
         }
     }
 
-    static findLineStartTile(room, line, ignoredBodies)
+    static findLineStart(room, line, ignoredBodies)
     {
         let bodiesBounds = room.roomWorld.bodies.filter(
             body => !ignoredBodies.includes(body) && !body.isWall && false !== body.collisionResponse
@@ -63,15 +66,44 @@ class RoomLinePlacement
                 || startA.tile[0] - startB.tile[0]
         ).filter(
             start => RoomAggressionPlacement.isFreeTile(room, start.tile[0], start.tile[1], bodiesBounds)
-                && RoomPlayerPlacement.findClearLineTile(
-                    room,
-                    start.tile,
-                    RoomPlayerPlacement.shotStartBounds(room, start.tile),
-                    [line.length],
-                    ignoredBodies,
-                    [line.direction]
-                )
-        )].map(start => start.tile).shift();
+        ).map(start => ({
+            fromTile: start.tile,
+            tile: RoomPlayerPlacement.findClearLineTile(
+                room,
+                start.tile,
+                RoomPlayerPlacement.shotStartBounds(room, start.tile),
+                line.distances,
+                ignoredBodies,
+                line.directions
+            )
+        })).filter(start => start.tile), false].shift();
+    }
+
+    static placePlayerInLineOfObject(room, playerName, objectKey, sessionId, distances)
+    {
+        let subjects = RoomPlayerPlacement.fetchPlacementSubjects(room, playerName, objectKey, sessionId);
+        if(subjects.error){
+            return subjects;
+        }
+        let objectBody = subjects.roomObject.objectBody;
+        let lineStart = RoomLinePlacement.findLineStart(
+            room,
+            {
+                fromTile: RoomLinePlacement.fetchTile(objectBody),
+                distances,
+                directions: RoomLinePlacement.LINE_DIRECTIONS
+            },
+            [objectBody, subjects.playerSchema.physicalBody]
+        );
+        if(!lineStart){
+            return {error: 'No free tile with a clear line around the object '+objectKey+' in '+room.roomName+'.'};
+        }
+        RoomMovementState.placeObjectOnTile(room, objectKey, lineStart.fromTile[0], lineStart.fromTile[1]);
+        return RoomPlayerPlacement.placePlayerOnPosition(
+            subjects.playerSchema,
+            subjects.roomObject,
+            RoomLinePlacement.tileCenter(room, lineStart.tile)
+        );
     }
 
     static placeEnemiesOnLine(room, sessionId, bodyKeys, tilesStep, direction)
@@ -81,18 +113,19 @@ class RoomLinePlacement
         if(!playerSchema || enemies.some(enemyObject => !enemyObject)){
             return {error: 'Player session '+sessionId+' or one of the enemies not found in '+room.roomName+'.'};
         }
-        let startTile = RoomLinePlacement.findLineStartTile(
+        let lineStart = RoomLinePlacement.findLineStart(
             room,
             {
                 fromTile: RoomLinePlacement.fetchTile(playerSchema.physicalBody),
-                length: tilesStep * enemies.length,
-                direction
+                distances: [tilesStep * enemies.length],
+                directions: [direction]
             },
             [playerSchema.physicalBody, ...enemies.map(enemyObject => enemyObject.objectBody)]
         );
-        if(!startTile){
+        if(!lineStart){
             return {error: 'No free tile with a clear line of tiles to '+String(direction)+' in '+room.roomName+'.'};
         }
+        let startTile = lineStart.fromTile;
         let playerPosition = RoomLinePlacement.tileCenter(room, startTile);
         RoomAggressionPlacement.placePlayer(playerSchema, playerPosition);
         return {playerPosition, positions: enemies.map((enemyObject, enemyIndex) => {
@@ -182,6 +215,17 @@ class RoomLinePlacement
                 )
             );
         });
+        RoomMovementState.registerActionEndpoint(
+            serverManager,
+            '/api/e2e/room-objects/place-player-in-line-of-object',
+            (room, body) => RoomLinePlacement.placePlayerInLineOfObject(
+                room,
+                sc.get(body, 'playerName', ''),
+                sc.get(body, 'objectKey', ''),
+                String(sc.get(body, 'sessionId', '')),
+                String(sc.get(body, 'distances', '')).split(',').map(Number)
+            )
+        );
         Logger.info('[room-line-placement] Line placement endpoints registered.');
     }
 
