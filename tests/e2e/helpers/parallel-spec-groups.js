@@ -5,8 +5,9 @@
  * The e2e specs groups. Every group is a Playwright project with one worker, so its specs run one after the other, it
  * logs in with its own test users set and its players start in its own room (the players reset places them on the
  * default return point of that room), so the groups never share a player or a room and run at the same time. The specs
- * that change the server wide state (the security limits, the bans and the address lists), create players or use more
- * than one room run in the exclusive group, after every other group ended, and its players reset restores every room.
+ * that change the server wide state (the security limits, the bans, the address lists and any config value, which is
+ * one server config read by every group and sent to every client that logs in), create players or use more than one
+ * room run in the exclusive group, after every other group ended, and its players reset restores every room.
  * The users set 0 is the one configured in tests/config.json (root, root2 and root3), the next sets add the user number
  * to the base names (root4 to root6 and ImRoot4 to ImRoot6 for the set 1), those users are created on the setup as a
  * copy of the users set 0 (TestUsersSetup).
@@ -50,7 +51,6 @@ class ParallelSpecGroups
                 'test-combat-target-guards.spec.js',
                 'test-combat-broadcasts.spec.js',
                 'test-enemy-battle-start.spec.js',
-                'test-enemy-battle-end.spec.js',
                 'test-combat-animations.spec.js',
                 'test-combat-pvp.spec.js',
                 'test-combat-bullet-obstacle-hits.spec.js',
@@ -69,8 +69,6 @@ class ParallelSpecGroups
                 'test-timing-objects-miners.spec.js',
                 'test-objects-movement.spec.js',
                 'test-object-animation-frame-ranges.spec.js',
-                'test-auto-recovery.spec.js',
-                'test-kill-score.spec.js',
                 'test-item-growth.spec.js'
             ]
         },
@@ -79,38 +77,17 @@ class ParallelSpecGroups
             startRoomName: ParallelSpecGroups.SOCIAL_ROOM_NAME,
             resetsEveryRoom: false,
             specs: [
-                'test-chat.spec.js',
-                'test-chat-messages.spec.js',
                 'test-chat-private.spec.js',
-                'test-chat-global.spec.js',
-                'test-chat-ui.spec.js',
-                'test-chat-system.spec.js',
                 'test-teams.spec.js',
                 'test-teams-invites.spec.js',
                 'test-teams-members.spec.js',
-                'test-teams-box.spec.js',
                 'test-clans.spec.js',
-                'test-clans-create.spec.js',
-                'test-clans-invites.spec.js',
                 'test-trading.spec.js',
-                'test-trading-exchanges.spec.js',
-                'test-trading-invites.spec.js',
-                'test-trading-requests.spec.js',
-                'test-trading-offers.spec.js',
-                'test-trading-boxes.spec.js',
                 'test-items.spec.js',
-                'test-items-actions.spec.js',
-                'test-items-display.spec.js',
-                'test-items-rules.spec.js',
                 'test-rewards.spec.js',
-                'test-rewards-claims.spec.js',
-                'test-rewards-panel.spec.js',
-                'test-rewards-login-days.spec.js',
-                'test-scores.spec.js',
                 'test-locale-selector.spec.js',
                 'test-quests-tracking.spec.js',
-                'test-game-login.spec.js',
-                'test-ad-skins.spec.js'
+                'test-game-login.spec.js'
             ]
         },
         exclusive: {
@@ -221,7 +198,31 @@ class ParallelSpecGroups
                 'test-chat-combat.spec.js',
                 'test-scores-reset.spec.js',
                 'test-scores-page.spec.js',
-                'test-route-limits.spec.js'
+                'test-route-limits.spec.js',
+                'test-enemy-battle-end.spec.js',
+                'test-auto-recovery.spec.js',
+                'test-kill-score.spec.js',
+                'test-chat.spec.js',
+                'test-chat-messages.spec.js',
+                'test-chat-global.spec.js',
+                'test-chat-ui.spec.js',
+                'test-chat-system.spec.js',
+                'test-teams-box.spec.js',
+                'test-clans-create.spec.js',
+                'test-clans-invites.spec.js',
+                'test-trading-exchanges.spec.js',
+                'test-trading-invites.spec.js',
+                'test-trading-requests.spec.js',
+                'test-trading-offers.spec.js',
+                'test-trading-boxes.spec.js',
+                'test-items-actions.spec.js',
+                'test-items-display.spec.js',
+                'test-items-rules.spec.js',
+                'test-rewards-claims.spec.js',
+                'test-rewards-panel.spec.js',
+                'test-rewards-login-days.spec.js',
+                'test-scores.spec.js',
+                'test-ad-skins.spec.js'
             ]
         }
     };
