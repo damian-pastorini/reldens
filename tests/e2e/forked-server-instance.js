@@ -7,7 +7,8 @@
  * (CollectGameData.startServer, its config from tests/config.json with its "servers" entry) on its own port, registers
  * the same e2e endpoints with the players snapshots of the shared database, answers "ready" to the global setup, and on
  * "shutdown" runs the same teardown as server-1 (ServerTeardown) and ends; it also ends when the global setup process
- * is gone, so no instance keeps its port after an aborted run.
+ * is gone, so no instance keeps its port after an aborted run. Both listeners are attached before the startup, so a
+ * run stopped while the instance is still booting ends it too.
  *
  */
 
@@ -22,6 +23,14 @@ class ForkedServerInstance
 
     static async run()
     {
+        process.on('disconnect', () => process.exit(0));
+        process.on('message', async (message) => {
+            if(E2eServerInstances.SHUTDOWN_MESSAGE !== message){
+                return;
+            }
+            await ServerTeardown.run();
+            process.exit(0);
+        });
         let serverKey = sc.get(process.env, E2eServerInstances.SERVER_KEY_ENV, '');
         let serverUrl = sc.get(E2eServerInstances.fetchServersUrls(), serverKey, '');
         if('' === serverUrl){
@@ -33,14 +42,6 @@ class ForkedServerInstance
         process.env.RELDENS_E2E_PORT = new URL(serverUrl).port;
         let server = await CollectGameData.startServer(ServerPathResolver.resolve(config.serverPath), config);
         await CollectGameData.registerEndpoints(server.serverManager, config);
-        process.on('message', async (message) => {
-            if(E2eServerInstances.SHUTDOWN_MESSAGE !== message){
-                return;
-            }
-            await ServerTeardown.run();
-            process.exit(0);
-        });
-        process.on('disconnect', () => process.exit(0));
         process.send(E2eServerInstances.READY_MESSAGE);
     }
 
