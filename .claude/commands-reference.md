@@ -18,6 +18,9 @@ The project provides three main CLI entry points:
 npm run test:default
 # Or with filters
 npm run test:default -- --filter="test-name" --break-on-error
+# Only the unit tests: no database reset, no self-hosted server, the integration tests (isIntegration) are skipped
+npm run test:unit
+npm run test:unit -- --filter="test-name"
 # E2E tests, boots its own server
 npm run test:e2e -- --db-reset=<tests/config.json dbName>
 
