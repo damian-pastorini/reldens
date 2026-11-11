@@ -165,6 +165,16 @@ class GameplayE2eStateApi
         );
     }
 
+    static async changeEnemyActions(gameConfig, group, roomName, bodyKey, properties)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/combat/enemy-actions',
+            {group, roomName, bodyKey, properties}
+        );
+    }
+
     static async changePlayerBody(gameConfig, group, roomName, playerName, properties)
     {
         return await SecurityApi.request(
