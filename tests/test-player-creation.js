@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { PlayerCreation } = require('../lib/game/server/player-creation');
 const { PlayerRoomState } = require('../lib/game/server/player-room-state');
+const timersPromises = require('timers/promises');
 
 class TestPlayerCreation extends BaseTest
 {
@@ -40,6 +41,127 @@ class TestPlayerCreation extends BaseTest
             roomsSelection: {allowOnRegistration: false}
         });
         return creationSetup;
+    }
+
+    createNamesCheckingSetup()
+    {
+        let creationSetup = this.createCreationSetup(4, true);
+        creationSetup.playerCreation.usersManager = {
+            isNameAvailable: async (name) => {
+                creationSetup.checkedNames.push(name);
+                return !creationSetup.createdPlayers.some(
+                    createdPlayer => createdPlayer.name.toLowerCase() === name.toLowerCase()
+                );
+            },
+            createPlayer: async (playerData) => {
+                await timersPromises.setImmediate();
+                creationSetup.createdPlayers.push(playerData);
+                return {id: creationSetup.createdPlayers.length, name: playerData.name, state: {...playerData.state}};
+            }
+        };
+        return creationSetup;
+    }
+
+    renameOnCreateBefore(creationSetup, newName)
+    {
+        return async (eventName, loginData, playerData) => {
+            creationSetup.emittedEvents.push(eventName);
+            if('reldens.createNewPlayerBefore' === eventName){
+                playerData.name = newName;
+            }
+        };
+    }
+
+    async createAtTheSameTime(creationSetup, playersNames)
+    {
+        return await Promise.all(playersNames.map((playerName, nameIndex) => {
+            return creationSetup.playerCreation.createNewPlayer({'new-player-name': playerName, user_id: nameIndex+1});
+        }));
+    }
+
+    async testTheSameNameCreatedAtTheSameTimeIsGivenOnce()
+    {
+        await this.test('two players created with the same name at the same time get the name only once', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            let results = await this.createAtTheSameTime(creationSetup, ['samename', 'samename']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [false, true]);
+            this.assert.strictEqual(
+                results[1].message,
+                'The player name is not available, please choose another name.'
+            );
+            this.assert.deepStrictEqual(creationSetup.createdPlayers.map(createdPlayer => createdPlayer.user_id), [1]);
+            this.assert.strictEqual(creationSetup.emittedEvents.pop(), 'reldens.playerNewNameUnavailable');
+        });
+    }
+
+    async testTheSameNameWithAnotherCaseWaitsForTheFirstCreation()
+    {
+        await this.test('the same name with another letter case waits for the first creation and is rejected', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            let results = await this.createAtTheSameTime(creationSetup, ['SameName', 'samename']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [false, true]);
+            this.assert.deepStrictEqual(creationSetup.createdPlayers.map(createdPlayer => createdPlayer.name), ['SameName']);
+        });
+    }
+
+    async testDifferentNamesCreatedAtTheSameTimeAreAllStored()
+    {
+        await this.test('players created with different names at the same time are all stored', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            let results = await this.createAtTheSameTime(creationSetup, ['first', 'second']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [false, false]);
+            this.assert.deepStrictEqual(
+                creationSetup.createdPlayers.map(createdPlayer => createdPlayer.name).sort(),
+                ['first', 'second']
+            );
+        });
+    }
+
+    async testTheNameSetByTheCreateBeforeListenerIsTheCheckedOne()
+    {
+        await this.test('the name changed by a create before listener is the one checked and given once', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            creationSetup.playerCreation.events = {emit: this.renameOnCreateBefore(creationSetup, 'renamed')};
+            let results = await this.createAtTheSameTime(creationSetup, ['first', 'second']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [false, true]);
+            this.assert.deepStrictEqual(creationSetup.checkedNames, ['renamed', 'renamed']);
+            this.assert.deepStrictEqual(creationSetup.createdPlayers.map(createdPlayer => createdPlayer.name), ['renamed']);
+        });
+    }
+
+    async testAFailedNameCheckDoesNotBlockTheNextCreationWithThatName()
+    {
+        await this.test('a failed name check returns the creation error and the next creation with that name runs', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            let isNameAvailable = creationSetup.playerCreation.usersManager.isNameAvailable;
+            let loadError = new Error('Players load failed.');
+            creationSetup.playerCreation.usersManager.isNameAvailable = async () => {
+                creationSetup.playerCreation.usersManager.isNameAvailable = isNameAvailable;
+                throw loadError;
+            };
+            let results = await this.createAtTheSameTime(creationSetup, ['samename', 'samename']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [true, false]);
+            this.assert.strictEqual(results[0].message, 'There was an error creating your player, please try again.');
+            this.assert.ok(creationSetup.emittedEvents.includes('reldens.createNewPlayerCriticalError'));
+            this.assert.deepStrictEqual(creationSetup.createdPlayers.map(createdPlayer => createdPlayer.user_id), [2]);
+        });
+    }
+
+    async testAFailedStoreReturnsTheCreationError()
+    {
+        await this.test('a failed player store returns the creation error and frees the name for the next creation', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            let createPlayer = creationSetup.playerCreation.usersManager.createPlayer;
+            let insertError = new Error('Player insert failed.');
+            creationSetup.playerCreation.usersManager.createPlayer = async () => {
+                creationSetup.playerCreation.usersManager.createPlayer = createPlayer;
+                throw insertError;
+            };
+            let results = await this.createAtTheSameTime(creationSetup, ['samename', 'samename']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [true, false]);
+            this.assert.strictEqual(results[0].message, 'There was an error creating your player, please try again.');
+            this.assert.deepStrictEqual(creationSetup.createdPlayers.map(createdPlayer => createdPlayer.user_id), [2]);
+        });
     }
 
     async testTheShortPlayerNameIsRejected()
