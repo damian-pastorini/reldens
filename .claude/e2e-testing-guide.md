@@ -319,13 +319,15 @@ worker, so its specs run one after the other, and the groups run at the same tim
 
 - `world` - the town specs that need the town layout (NPCs, player and object pathfinding), users set 0 (`root`,
   `root2`, `root3`), start room `reldens-new-age-town`
-- `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames, auto recovery,
-  kill score and item growth, users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - chat, teams, clans, trading, items, rewards, scores, locale selector, quests, the game login flow and the
-  ad skins, users set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
-- `exclusive` - the specs that change the server wide state (login and admin security, the scores reset), create
-  players (authentication, character system) or use more than one room (movement, client interpolation, teleport NPC,
-  death teleport), users set 0, it runs after every other group ended and its reset restores every room
+- `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames and item growth,
+  users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
+- `social` - private chat, teams, clans, trading, items, rewards, locale selector, quests and the game login flow, users
+  set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
+- `exclusive` - the specs that change the server wide state (login and admin security, the scores reset and every spec
+  that overrides a config value: the config is one for the whole server and its client values reach every player that
+  logs in, so a parallel group would get them), create players (authentication, character system) or use more than one
+  room (movement, client interpolation, teleport NPC, death teleport), users set 0, it runs after every other group
+  ended and its reset restores every room
 
 Players collide with every other body, so two groups never share a room: every group starts its players on the
 default return point of its own start room and the per test reset only touches the group players and rooms. The
