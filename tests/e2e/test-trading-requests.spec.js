@@ -8,7 +8,8 @@
  * inviter left the room is rejected and the server keeps opening trades; a trade with oneself or with a missing session
  * sends nothing; starting a new trade cancels the open exchange while the box of the old partner stays open; two
  * players inviting the same player give one request box per inviter; an unrelated player gets no trade message or box;
- * two players that invite each other and both accept get one consistent trade; and a player in a trade that accepts
+ * two players that invite each other and both accept get one consistent trade (the offer is sent once both players got
+ * the trade box of both accepts, each accept starts the same exchange again); and a player in a trade that accepts
  * another invite ends the old trade for its old partner.
  *
  */
@@ -133,8 +134,8 @@ class TestTradingRequests
         await TradeSteps.waitForMessages(second, InventoryConst.ACTIONS.TRADE_START, 1);
         await TradeSteps.answer(second, first);
         await TradeSteps.answer(first, second);
-        await TradeSteps.waitForMessages(first, InventoryConst.ACTIONS.TRADE_SHOW, 1);
-        await first.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        await TradeSteps.waitForMessages(first, InventoryConst.ACTIONS.TRADE_SHOW, 2);
+        await TradeSteps.waitForMessages(second, InventoryConst.ACTIONS.TRADE_SHOW, 2);
         let potionId = await TradeSteps.fetchItemId(context, first, context.gameConfig.e2eConsumableItemId);
         await TradeSteps.offer(first, second, potionId, 1);
         await TradeSteps.expectOffered(context, first, {[potionId]: 1}, 'The first player offers from its own side');
