@@ -2,7 +2,11 @@
  *
  * Reldens - Collect Game Data
  *
- * Playwright globalSetup: boots the game server, collects player and object data, writes game-data.json.
+ * Playwright globalSetup: boots the game server (server-1), collects player and object data, writes game-data.json,
+ * registers the e2e endpoints and then starts every next numbered instance (E2eServerInstances, server-2) sharing its
+ * database. A numbered instance reuses startServer() and registerEndpoints() from its own process. The servers boot
+ * with the mailer off, so the app .env mailer service and its optional package never matter: the specs that send an
+ * email turn on the recording test sender (SecurityState.setMailerEnabled).
  *
  */
 
@@ -37,6 +41,7 @@ const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
 const { Login } = require('./helpers/login');
+const { E2eServerInstances } = require('./helpers/e2e-server-instances');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 const { ServerPathResolver } = require('../server-path-resolver');
 const { GameConst } = require('../../lib/game/constants');
@@ -268,6 +273,11 @@ class CollectGameData
         CollectGameData.attachEventListeners(serverManager);
         await TestDataSetup.createGroupsUsers(serverManager.dataServer, config);
         await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config);
+        await CollectGameData.registerEndpoints(serverManager, config);
+    }
+
+    static async registerEndpoints(serverManager, config)
+    {
         let snapshots = await PlayerStateReset.captureSnapshots(serverManager.dataServer, config);
         SecurityState.registerEndpoints(serverManager, config);
         RoomObjectsState.registerEndpoints(serverManager);
@@ -330,6 +340,15 @@ class CollectGameData
             Logger.warning('[collect-game-data] serverPath not found: '+serverPath+', skipping.');
             return;
         }
+        let server = await CollectGameData.startServer(serverPath, config);
+        process.stdout.write('Server: collecting game data...\n');
+        await CollectGameData.runDataCollection(server.serverManager, server.modules.ObjectsManager, config);
+        process.stdout.write('Server: ready\n\n');
+        await E2eServerInstances.startInstances();
+    }
+
+    static async startServer(serverPath, config)
+    {
         let modules = CollectGameData.loadServerModules(serverPath);
         let serverConfig = { projectRoot: serverPath };
         if(config.themeName) {
@@ -352,6 +371,7 @@ class CollectGameData
         process.env.RELDENS_ALLOW_RUN_BUNDLER = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CLIENT = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = bundleRequired ? '1' : '0';
+        process.env.RELDENS_MAILER_ENABLE = '0';
         DatabaseEnvVarsExporter.apply(config);
         let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
         if(effectivePort) {
@@ -370,14 +390,12 @@ class CollectGameData
         await StartupGuard.runStep(serverManager.createServers(), 'HTTP server creation');
         process.stdout.write('Server: starting game server (this may take a moment)...\n');
         await StartupGuard.runStep(serverManager.start(), 'Game server start');
-        process.stdout.write('Server: collecting game data...\n');
-        await CollectGameData.runDataCollection(serverManager, modules.ObjectsManager, config);
-        process.stdout.write('Server: ready\n\n');
+        return {serverManager, modules};
     }
 
-    static setupLogCapture()
+    static setupLogCapture(logFileName)
     {
-        let writeLog = E2eConsoleFileRedirect.redirect('server.log', true);
+        let writeLog = E2eConsoleFileRedirect.redirect(logFileName, true);
         process.on('uncaughtException', (error) => {
             let errorDetails = error && error.stack ? error.stack : String(error);
             writeLog('Uncaught exception, the game server shuts down and ends the run: '+errorDetails);
@@ -393,7 +411,7 @@ class CollectGameData
             return;
         }
         process.stdout.write('Server: setting up log capture...\n');
-        CollectGameData.setupLogCapture();
+        CollectGameData.setupLogCapture('server.log');
         await CollectGameData.startServerAndCollect(ServerPathResolver.resolve(config.serverPath));
     }
 }
