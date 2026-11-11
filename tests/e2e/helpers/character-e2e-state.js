@@ -58,7 +58,8 @@ class CharacterE2eState
             response.json({ok: true});
         });
         app.post('/api/e2e/characters/banned-names', (request, response) => {
-            serverManager.loginManager.usersManager.bannedNames = String(sc.get(request.body, 'bannedNames', ''));
+            let usersManager = serverManager.loginManager.usersManager;
+            usersManager.bannedNames = usersManager.mapBannedNames(sc.get(request.body, 'bannedNames', ''));
             response.json({ok: true});
         });
         app.post('/api/e2e/characters/empty-classes', (request, response) => {
