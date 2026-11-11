@@ -2,7 +2,8 @@
  *
  * Reldens - Test Authentication Double Login
  *
- * Tests the same account used from more than one tab: the first session in another scene or still on the selection,
+ * Tests the same account used from more than one tab: the first session in another scene or still on the selection
+ * (its lobby closed with the session ended message while only the second tab enters the game),
  * the position and stats handed to the second session, the sprites seen by a third client, the connections and active
  * sessions left behind, the failed state save and the tabs closed on the selection or in the game. The server side
  * values come from the e2e state endpoints and the stored rows.
@@ -82,13 +83,9 @@ class TestAuthenticationDoubleLogin
     {
         await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
         await Login.startConfigPlayer(secondPage, gameConfig, longRun);
-        await page.waitForTimeout(TestAuthenticationDoubleLogin.NOTHING_CHANGED_WAIT_MS);
-        await expect(page.locator(Selectors.reloadModal.container), 'The selection is not disconnected').toBeHidden();
-        expect(await Login.selectPlayer(page, gameConfig.e2ePlayerName)).toBe(true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
-        await page.waitForSelector(Selectors.body.gameEngineStarted, {
-            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
-        });
+        await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
+        await expect(page.locator(Selectors.body.gameEngineStarted), 'The first tab never enters the game').toHaveCount(0);
+        expect(await Navigation.getCurrentRoomName(secondPage), 'The second tab plays').toBe(Login.TOWN_ROOM_NAME);
         await screenshots.capture(page, 'double-login-first-on-selection');
     }
 
@@ -230,7 +227,7 @@ class TestAuthenticationDoubleLogin
             test('first session in another scene is removed from it', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runDifferentScenesTest(page, secondPage, screenshots, gameConfig, longRun);
             });
-            test('first session on the selection is not disconnected', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+            test('first session on the selection ends with the session ended message', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runFirstOnSelectionTest(page, secondPage, screenshots, gameConfig, longRun);
             });
             test('second session loads the first session state', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
