@@ -8,6 +8,7 @@ const { BaseTest } = require('./base-test');
 const { PlayerCreation } = require('../lib/game/server/player-creation');
 const { PlayerRoomState } = require('../lib/game/server/player-room-state');
 const timersPromises = require('timers/promises');
+const { FileHandler } = require('@reldens/server-utils');
 
 class TestPlayerCreation extends BaseTest
 {
@@ -224,15 +225,55 @@ class TestPlayerCreation extends BaseTest
         });
     }
 
-    async testTheLongPlayerNameIsCutByCharactersNotByCodeUnits()
+    async testTheLongPlayerNameIsCleanedBeforeItIsCut()
     {
-        await this.test('a long name is cut by characters, so a character at the limit is never split', async () => {
+        await this.test('a long name is cleaned before it is cut, so a removed character never takes a place', async () => {
             let creationSetup = this.createCreationSetup(4, true);
             let result = await creationSetup.playerCreation.createNewPlayer(
-                {'new-player-name': 'a'.repeat(254)+'\u{1F600}b', user_id: 1}
+                {'new-player-name': 'a'.repeat(254)+'\u{1F600} b', user_id: 1}
             );
             this.assert.strictEqual(result.error, false);
-            this.assert.strictEqual([...creationSetup.createdPlayers].shift().name, 'a'.repeat(254)+'\u{1F600}');
+            this.assert.strictEqual([...creationSetup.createdPlayers].shift().name, 'a'.repeat(254)+'b');
+        });
+    }
+
+    async testThePlayerNameIsCleanedToTheAllowedCharacters()
+    {
+        await this.test('the spaces, accents and HTML are removed from the name before it is checked and stored', async () => {
+            let creationSetup = this.createCreationSetup(4, true);
+            let htmlPayload = FileHandler.readFile(
+                FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'stored-html-payload.html')
+            ).trim();
+            let result = await creationSetup.playerCreation.createNewPlayer(
+                {'new-player-name': '  Hér o_1.x-2 '+htmlPayload+' ', user_id: 1}
+            );
+            let cleanedName = 'Hro_1.x-2imgsrcxonerrorwindow.e2eStoredScriptRantrue';
+            this.assert.strictEqual(result.error, false);
+            this.assert.deepStrictEqual(creationSetup.checkedNames, [cleanedName]);
+            this.assert.strictEqual([...creationSetup.createdPlayers].shift().name, cleanedName);
+        });
+    }
+
+    async testANameTooShortAfterTheCleanupIsRejected()
+    {
+        await this.test('a name that is too short once cleaned is rejected before the player is stored', async () => {
+            let creationSetup = this.createCreationSetup(4, true);
+            // @possible-hallucinated-undefined-method
+            let result = await creationSetup.playerCreation.createNewPlayer({'new-player-name': ' a é b ', user_id: 1});
+            this.assert.strictEqual(result.message, 'Invalid player name, please choose another name.');
+            this.assert.deepStrictEqual(creationSetup.checkedNames, []);
+            this.assert.strictEqual(creationSetup.createdPlayers.length, 0);
+            this.assert.deepStrictEqual(creationSetup.emittedEvents, ['reldens.playerNewName']);
+        });
+    }
+
+    async testTheSameNameWithSpacesAtTheSameTimeIsGivenOnce()
+    {
+        await this.test('the same name sent with spaces by two users at the same time is given only once', async () => {
+            let creationSetup = this.createNamesCheckingSetup();
+            let results = await this.createAtTheSameTime(creationSetup, ['Hero', 'Hero ']);
+            this.assert.deepStrictEqual(results.map(result => result.error), [false, true]);
+            this.assert.deepStrictEqual(creationSetup.createdPlayers.map(createdPlayer => createdPlayer.name), ['Hero']);
         });
     }
 
