@@ -7,7 +7,8 @@
  * interaction area), checked on the first player recorded messages and inventory and on the second player recorded
  * messages and stored reward: a move of the first player cancels only its mining and the second one is rewarded; an
  * enemy hit on the first player cancels only its mining and the second one is rewarded; and the first player attacking
- * the second one while both mine cancels only the second mining and the first one completes.
+ * the second one while both mine (its attack range unlimited for the group, the other rock respawns on a random tile
+ * that can be out of the attack range) cancels only the second mining and the first one completes.
  *
  */
 
@@ -17,6 +18,7 @@ const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
+const { CombatSkillCasting } = require('./helpers/combat-skill-casting');
 const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
@@ -114,6 +116,12 @@ class TestTimingObjectsMiners
     static async runFirstAttacksSecondTest(context)
     {
         let miners = await TestTimingObjectsMiners.enterTwoMiners(context);
+        await CombatSkillCasting.changeSkill(
+            {gameConfig: context.gameConfig, roomName: Login.FOREST_ROOM_NAME, playerName: context.gameConfig.e2ePlayerName},
+            context.e2eGroup,
+            ForestEnemyKill.ATTACK_SKILL_KEY,
+            {range: 0}
+        );
         let secondSessionId = await context.secondPage.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
         await Phaser.waitForPlayerBySessionId(context.page, secondSessionId, TimeConstants.SCENE_LOAD);
         await context.page.evaluate(
