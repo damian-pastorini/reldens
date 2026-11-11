@@ -5,8 +5,9 @@
  * Tests what a death stores and how its timers run (DeathReviveSteps kills the player in the forest with a real enemy
  * hit): the death stores the life 0 and the death position; the player revived in place and reloaded keeps its full life
  * and its forest position; the player revived in town and reloaded starts in the town on its return point with its full
- * life; a game over time of 0 revives the player with a body that can walk; and without the auto revive the first
- * revive message tells the seconds left rounded up, at least one.
+ * life; a game over time of 0 revives the player with a body that walks (placed from the server on the closest free tile
+ * with a clear line, the death position can be closed by bodies and walls, and walked to the end of that line); and
+ * without the auto revive the first revive message tells the seconds left rounded up, at least one.
  *
  */
 
@@ -16,9 +17,12 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { Navigation } = require('./helpers/navigation');
+const { MovementScenario } = require('./helpers/movement-scenario');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ActionsConst } = require('../../lib/actions/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -26,7 +30,7 @@ class TestDeathStoredStateAndTimers
 {
 
     static TELEPORT_OFF = {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false};
-    static WALK_MS = 600;
+    static WALK_TILES_DISTANCES = [3, 2, 1];
 
     static async reloadAndLogin(context, roomName)
     {
@@ -99,12 +103,18 @@ class TestDeathStoredStateAndTimers
             {[ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT]: 0},
             TestDeathStoredStateAndTimers.TELEPORT_OFF
         ), 0);
-        let revivedPlayer = await DeathReviveSteps.expectAliveInForest(context);
-        await Navigation.walkInDirection(context.page, 'ArrowDown', TestDeathStoredStateAndTimers.WALK_MS);
-        let walkedPlayer = await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME);
-        expect([walkedPlayer.x, walkedPlayer.y], 'The revived body walks').not.toEqual(
-            [revivedPlayer.x, revivedPlayer.y]
+        await DeathReviveSteps.expectAliveInForest(context);
+        let navTimeout = TimeConstants.forLongRun(TimeConstants.NAVIGATION, context.longRun);
+        let lineStart = await RoomObjectsApi.placePlayerOnLineStart(
+            context.page,
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            navTimeout,
+            TestDeathStoredStateAndTimers.WALK_TILES_DISTANCES
         );
+        expect(lineStart.reached, 'The revived body is placed on a clear line: '+lineStart.error).toBe(true);
+        let walked = await MovementScenario.walkPlayerToTile(context, Login.FOREST_ROOM_NAME, lineStart.tile, navTimeout);
+        expect(walked.done, 'The revived body walks: '+sc.toJsonString(walked.last)).toBe(true);
     }
 
     static async expectFirstReviveWait(context, gameOverTimeOut, expectedSeconds)
