@@ -21,6 +21,7 @@ const { SecurityState } = require('./helpers/security-state');
 const { RoomObjectsState } = require('./helpers/room-objects-state');
 const { RoomMovementState } = require('./helpers/room-movement-state');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
+const { RoomAnchoredPlacement } = require('./helpers/room-anchored-placement');
 const { RoomAggressionPlacement } = require('./helpers/room-aggression-placement');
 const { RoomLinePlacement } = require('./helpers/room-line-placement');
 const { RoomChangePointPlacement } = require('./helpers/room-change-point-placement');
@@ -277,6 +278,7 @@ class CollectGameData
         RoomObjectsState.registerEndpoints(serverManager);
         RoomMovementState.registerEndpoints(serverManager);
         RoomEnemyPlacement.registerEndpoints(serverManager);
+        RoomAnchoredPlacement.registerEndpoints(serverManager);
         RoomAggressionPlacement.registerEndpoints(serverManager);
         RoomLinePlacement.registerEndpoints(serverManager);
         RoomChangePointPlacement.registerEndpoints(serverManager);
