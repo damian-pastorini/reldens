@@ -27,8 +27,9 @@ let expect = BaseE2eTest.expect;
 class TestCombat
 {
     static DIRECT_ATTACK_KEY = 'attackShort';
-    static gameDataPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
-    static gameData = FileHandler.exists(TestCombat.gameDataPath) ? FileHandler.fetchFileJson(TestCombat.gameDataPath) : null;
+    static gameData = FileHandler.exists(BaseE2eTest.gameDataPath)
+        ? FileHandler.fetchFileJson(BaseE2eTest.gameDataPath)
+        : null;
     static rootPlayerData = TestCombat.gameData && TestCombat.gameData.players && TestCombat.gameData.players.root
         ? TestCombat.gameData.players.root
         : null;
