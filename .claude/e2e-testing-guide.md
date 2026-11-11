@@ -308,9 +308,11 @@ user can never take the placement.
 The players reset before every test (`/api/e2e/reset-players`, with the group of the test) first waits until no scene
 room holds a player of that group (`PlayerStateReset.waitForTestPlayersToLeave`: the closed page of the previous test
 leaves, the room saves the player and removes it), so no previous session stays in a room the next test uses or
-overwrites the restored state; then it restores the stats, the inventory and the state of the group players (placed
-on the default return point of the group start room), and the enemies and the random movement stopped by a setup
-request (`RoomEnemiesReset.restoreAll`, `RoomMovementState.restoreRandomMovement`) only in the group rooms.
+overwrites the restored state; then it restores the stats, the inventory, the scores and score details (back to the
+rows captured on the setup, so a kill of an earlier test never leaves a score row) and the state of the group players
+(placed on the default return point of the group start room), and the enemies, the random movement stopped by a setup
+request and the drops left by the tests (`RoomEnemiesReset.restoreAll`, `RoomMovementState.restoreRandomMovement`,
+`DropsProbe.clearRoomsDrops`) only in the group rooms.
 
 ## Parallel spec groups
 
