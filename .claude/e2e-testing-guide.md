@@ -300,6 +300,21 @@ a body the path finder grid does not know (a tree, another object) blocks the pl
 - the town movement specs (`test-movement.spec.js` and both pathfinding specs, through
   `MovementScenario.pauseMovingObjects`) stop every moving NPC and trader of the room and place it back on its spawn
   tile, so the walks, the routes and the blocked targets always run on the same room layout
+- `POST /api/e2e/room-objects/place-player-on-line-start` (`{roomName, sessionId, distances}`,
+  `RoomLinePlacement.placePlayerOnLineStart`) - places the player on the closest free tile around its current tile
+  (closest distance first, then the lowest row and column) that has a clear line of tiles at one of the `distances`,
+  and returns that `position` and the walk target `tile`; `MovementScenario.walkPlayerToTile` walks the player to the
+  returned tile, so a walk (the zero game over revive case of `test-death-stored-state-and-timers.spec.js`) never stops
+  on a body
+- `POST /api/e2e/room-objects/place-player-next-to-object-with-room` (`{roomName, sessionId, playerName, objectKey,
+  enemyKey}`, `RoomEnemyPlacement.placePlayerNextToObjectWithRoom`) - places the player on the first of the 8 tiles
+  around an active object of that asset key (the objects sorted by key) inside the object interaction area
+  (`isValidInteraction`), free of other bodies and with room for the given enemy next to the player
+  (`RoomAnchoredPlacement.findAttackPosition`), so the enemy hit case of `test-timing-objects-cancel.spec.js` places
+  the enemy without moving the miner; `TimingObjectSession.prepareMining` uses it when an enemy key is given
+- `RoomMovementApi.waitForPlayerStill` waits until the server player has no path steps and no velocity, used after a
+  walk before the next action (`test-game-session-lifecycle.spec.js`, the mining restart of
+  `test-timing-objects-rules.spec.js`), so a body still moving never cancels or changes the next step
 
 Both placements receive the client `sessionId` (`room.sessionId`) and move that exact player schema
 (`RoomObjectsState.findPlayer`), never the first player found by name, so a body left by another session of the same
@@ -369,6 +384,11 @@ scene rooms to the specs, wrapped by `tests/e2e/helpers/room-objects-api.js`:
 fishing specs: enter the forest with its enemies disabled, place the player next to the first instance
 (`placeNextToObject`), read the reward quantity from the inventory, record the `timingStart`, `timingCancel` and
 `timingComplete` messages and start a timing on the placed instance.
+`TimingObjectSession.pinRespawnOutOfReach` (`POST /api/e2e/timing-objects/pin-respawn-out-of-reach`, `{roomName, group,
+objectKey, playerName}`, `TimingObjectsProbe.pinRespawnOutOfReach`) overrides the respawn tile of that object until the
+group reset: the free respawn tile closest to its old place among the tiles out of the interaction reach of the player
+(interaction area plus half a tile from the player position), falling back to the random tile, so the mined rock of
+`test-interactive-objects-rocks.spec.js` never respawns next to the miner.
 
 The game data (`collect-game-data.js`) collects the objects of the rooms the specs use (`SPECS_ROOMS_NAMES`: the town
 and the forest level 1), keyed by room name, whatever room the players were saved in, with per room object
