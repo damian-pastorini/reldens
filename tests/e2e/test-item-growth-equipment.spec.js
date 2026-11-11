@@ -131,12 +131,18 @@ class TestItemGrowthEquipment
         ).toBe(1);
         await RoomMessagesRecorder.sendMessage(context.page, {act: InventoryConst.ACTIONS.EQUIP, 'idx': started.item.inventoryId});
         await addedExperience;
-        let item = await ItemGrowthSteps.waitForStoredGrowth(context, {
-            level: TestItemGrowthEquipment.SECOND_LEVEL,
-            experience: threshold
-        });
-        expect(item.growthLevel, 'The level up running during the unequip still reaches the level').toBe(
-            TestItemGrowthEquipment.SECOND_LEVEL
+        await ItemGrowthSteps.waitForStoredGrowth(context, {level: TestItemGrowthEquipment.SECOND_LEVEL, experience: threshold});
+        let playerName = context.gameConfig.e2ePlayerName;
+        await expect.poll(
+            async () => (await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, playerName)).equipped,
+            {message: 'The unequip sent during the level up unequips the sword', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(false);
+        await ItemGrowthChecks.expectItemOnLevel(
+            context,
+            started,
+            await ItemGrowthSteps.fetchGrowingItem(context.gameConfig, playerName),
+            TestItemGrowthEquipment.SECOND_LEVEL,
+            false
         );
     }
 
