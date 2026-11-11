@@ -2,7 +2,8 @@
  *
  * Reldens - E2E Console File Redirect
  *
- * Redirects console.log and console.error of an e2e process to a file in test-results (the e2e server booted by the
+ * Redirects console.log and console.error of an e2e process to a file in the run results folder (test-results, or
+ * test-results/instances/<name> for an instance run, E2eInstance.resultsPath()) (the e2e server booted by the
  * global setup to server.log, its Logger prints with console.log, and the Playwright workers to tests.log). The logged
  * objects are inspected with a limited depth, so an object with circular references (a room or a player schema) never
  * throws from the log call and never breaks the server flow that logged it.
@@ -10,6 +11,7 @@
  */
 
 const util = require('util');
+const { E2eInstance } = require('./e2e-instance');
 const { FileHandler } = require('@reldens/server-utils');
 
 class E2eConsoleFileRedirect
@@ -26,7 +28,7 @@ class E2eConsoleFileRedirect
 
     static redirect(fileName, clearFile)
     {
-        let resultsPath = FileHandler.joinPaths(process.cwd(), 'test-results');
+        let resultsPath = E2eInstance.resultsPath();
         let logPath = FileHandler.joinPaths(resultsPath, fileName);
         FileHandler.createFolder(resultsPath);
         if(clearFile){
