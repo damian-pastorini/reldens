@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { LoginManager } = require('../lib/game/server/login-manager');
 const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
+const { JsonResponseRecorder } = require('./fixtures/json-response-recorder');
 
 class TestLoginManagerDisconnect extends BaseTest
 {
@@ -116,12 +117,7 @@ class TestLoginManagerDisconnect extends BaseTest
             loginManager.userDisconnection = userDisconnection;
             userDisconnection.disconnectUserByLoginData = async () => Promise.reject({message: 'Storage.'});
             let responses = [];
-            let response = {json: (responseData) => responses.push(responseData)};
-            response.status = (statusCode) => {
-                responses.push(statusCode);
-                return response;
-            };
-            await loginManager.handleDisconnectUserRequest({body: {}}, response);
+            await loginManager.handleDisconnectUserRequest({body: {}}, new JsonResponseRecorder().create(responses));
             this.assert.deepStrictEqual(responses, [500, {isSuccess: false}]);
         });
     }
