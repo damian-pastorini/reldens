@@ -3,7 +3,7 @@
  * Reldens - Timing Object Session
  *
  * Shared steps of the timing objects specs (chest, mining rocks and fishing spots): enter the forest with its enemies
- * disabled, place the player from the server next to the first instance of an object (its random movement stopped and
+ * disabled, disable the player in the forest, place the player from the server next to the first instance of an object (its random movement stopped and
  * the player on the closest free walkable tile), read a reward item quantity from the inventory, record the timing
  * messages the server sends to the player (timingStart, timingCancel, timingComplete) and start a timing on the
  * reached instance; prepare a mining (the player next to the first mining rock with the inventory open and the reward
@@ -17,11 +17,13 @@ const { Login } = require('./login');
 const { Phaser } = require('./phaser');
 const { RoomObjectsApi } = require('./room-objects-api');
 const { SecurityApi } = require('./security-api');
+const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { Navigation } = require('./navigation');
 const { ObjectChase } = require('./object-chase');
 const { PhaserRange } = require('./phaser-range');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
+const { GameConst } = require('../../../lib/game/constants');
 const { sc } = require('@reldens/utils');
 
 class TimingObjectSession
@@ -38,6 +40,17 @@ class TimingObjectSession
             'The forest enemies must be disabled before using the interactive objects'
         ).toBeGreaterThan(0);
         return forestData;
+    }
+
+    static async disableForestPlayer(gameConfig)
+    {
+        let disabled = await GameplayE2eStateApi.setPlayerState(
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            gameConfig.e2ePlayerName,
+            GameConst.STATUS.DISABLED
+        );
+        expect(disabled.inState, 'The player is disabled: '+disabled.error).toBe(GameConst.STATUS.DISABLED);
     }
 
     static async placeNextToObject(page, gameConfig, objectAssetKey, timeout, label)
