@@ -27,6 +27,7 @@ const { FeaturePropertiesOverrides } = require('./helpers/feature-properties-ove
 const { TimingObjectsProbe } = require('./helpers/timing-objects-probe');
 const { TeamsProbe } = require('./helpers/teams-probe');
 const { TradesProbe } = require('./helpers/trades-probe');
+const { DropsProbe } = require('./helpers/drops-probe');
 const { KillScoreSubscriberOverrides } = require('./helpers/kill-score-subscriber-overrides');
 const { E2eConsoleFileRedirect } = require('./helpers/e2e-console-file-redirect');
 const { InventoryGrowthProbe } = require('./helpers/inventory-growth-probe');
@@ -284,6 +285,7 @@ class CollectGameData
         TimingObjectsProbe.registerEndpoints(serverManager);
         TeamsProbe.registerEndpoints(serverManager);
         TradesProbe.registerEndpoints(serverManager);
+        DropsProbe.registerEndpoints(serverManager);
         KillScoreSubscriberOverrides.registerEndpoints(serverManager);
         InventoryGrowthProbe.registerEndpoints(serverManager);
         CombatE2eState.registerEndpoints(serverManager);
