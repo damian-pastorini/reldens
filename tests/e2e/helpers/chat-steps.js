@@ -3,11 +3,11 @@
  * Reldens - Chat Steps
  *
  * The steps of the chat specs: the group players logged in (the first two on the spec pages and the third one on its
- * own client page), the chat messages a client receives recorded from both rooms that send them (the scene room for the
- * room messages and the system lines, the global chat room for the global, private and error messages), each with the
- * room it came from, the chat opened and a text typed and sent like a player does (ENTER on the input), a raw chat
- * message sent to the scene room or to the global chat room like a modified client would, and the text a chat tab
- * shows.
+ * own client page, also added to two players already logged in, with the chat of every page recorded), the chat
+ * messages a client receives recorded from both rooms that send them (the scene room for the room messages and the
+ * system lines, the global chat room for the global, private and error messages), each with the room it came from,
+ * the chat opened and a text typed and sent like a player does (ENTER on the input), a raw chat message sent to the
+ * scene room or to the global chat room like a modified client would, and the text a chat tab shows.
  *
  */
 
@@ -27,6 +27,11 @@ class ChatSteps
     {
         await Login.loginRootPlayer(context.page, context.gameConfig, context.longRun);
         await Login.loginRootPlayer(context.secondPage, context.gameConfig, context.longRun, '2');
+        return await ChatSteps.recordPlayersChat(context, withThird);
+    }
+
+    static async recordPlayersChat(context, withThird = false)
+    {
         let pages = [context.page, context.secondPage];
         if(withThird){
             let thirdClient = await Login.openClientPage(context.page, context.gameConfig);
