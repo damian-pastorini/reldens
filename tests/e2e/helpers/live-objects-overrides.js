@@ -3,7 +3,8 @@
  * Reldens - Live Objects Overrides
  *
  * Server side e2e endpoints that change a property of the live objects of a scene room (the private params the objects
- * read on every use: the enemies "killScore" and "autoRecovery", the teleport NPC options and destinations) or of a
+ * read on every use: the enemies "killScore" and "autoRecovery", or a nested value reached by its path like
+ * "rewards/0/hasDropBody", the teleport NPC options and destinations) or of a
  * live body (the movement speed of a player or an object) or of the scene room itself (a flag read when the room was
  * created, like the players last state handler), make the next calls of a method (of a scene room or of another live
  * server object, like the kill score subscriber) fail the way the method fails on a storage error (rejected, like the
@@ -59,10 +60,25 @@ class LiveObjectsOverrides
         if(0 === enemies.length){
             return {error: 'Enemy '+enemyKey+' not found in room '+room.roomName+'.'};
         }
-        for(let enemyObject of enemies){
-            LiveObjectsOverrides.changeProperty(groupKey, enemyObject, propertyKey, value, removeProperty);
+        let pathKeys = propertyKey.split('/');
+        let lastKey = pathKeys.pop();
+        let targets = enemies.map(enemyObject => LiveObjectsOverrides.fetchPathTarget(enemyObject, pathKeys));
+        if(targets.some(target => !target)){
+            return {error: 'Property path '+propertyKey+' not found in the enemies '+enemyKey+'.'};
+        }
+        for(let target of targets){
+            LiveObjectsOverrides.changeProperty(groupKey, target, lastKey, value, removeProperty);
         }
         return {changedEnemies: enemies.length};
+    }
+
+    static fetchPathTarget(root, pathKeys)
+    {
+        let target = root;
+        for(let pathKey of pathKeys){
+            target = target?.[pathKey];
+        }
+        return target;
     }
 
     static addTeleportOption(room, groupKey, objectKey, optionKey, option, destination)
