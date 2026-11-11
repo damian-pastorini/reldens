@@ -2,7 +2,9 @@
  *
  * Reldens - Collect Game Data
  *
- * Playwright globalSetup: boots the game server (server-1), collects player and object data, writes game-data.json,
+ * Playwright globalSetup: boots the game server (server-1) with the run config (E2eInstance.loadConfig(), the
+ * tests/config.json with the instance of an isolated run applied), collects player and object data, writes
+ * game-data.json (tests/e2e, or the instance results folder of an isolated run),
  * registers the e2e endpoints and then starts every next numbered instance (E2eServerInstances, server-2) sharing its
  * database. A numbered instance reuses startServer() and registerEndpoints() from its own process. The servers boot
  * with the mailer off, so the app .env mailer service and its optional package never matter: the specs that send an
@@ -42,6 +44,7 @@ const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
 const { Login } = require('./helpers/login');
 const { E2eServerInstances } = require('./helpers/e2e-server-instances');
+const { E2eInstance } = require('./helpers/e2e-instance');
 const { DatabaseEnvVarsExporter } = require('../database-env-vars-exporter');
 const { ServerPathResolver } = require('../server-path-resolver');
 const { GameConst } = require('../../lib/game/constants');
@@ -56,15 +59,6 @@ class CollectGameData
     static OBJECT_TYPE_MULTIPLE = 7;
     static SPECS_ROOMS_NAMES = [Login.TOWN_ROOM_NAME, Login.FOREST_ROOM_NAME];
     static serverManager = null;
-
-    static loadConfig()
-    {
-        let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
-        if(!FileHandler.exists(configPath)) {
-            return null;
-        }
-        return FileHandler.fetchFileJson(configPath);
-    }
 
     static loadServerModules(serverPath)
     {
@@ -234,7 +228,7 @@ class CollectGameData
 
     static attachEventListeners(serverManager)
     {
-        let eventsFilePath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'server-events.jsonl');
+        let eventsFilePath = E2eInstance.generatedFilePath('server-events.jsonl');
         if(FileHandler.exists(eventsFilePath)) {
             FileHandler.writeFile(eventsFilePath, '');
         }
@@ -267,7 +261,7 @@ class CollectGameData
             ObjectsManager
         );
         let gameData = { players, rooms, items: itemsData };
-        let outputPath = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'game-data.json');
+        let outputPath = E2eInstance.generatedFilePath('game-data.json');
         FileHandler.writeFile(outputPath, JSON.stringify(gameData, null, 4));
         Logger.info('[collect-game-data] Written: '+outputPath);
         CollectGameData.attachEventListeners(serverManager);
@@ -331,7 +325,7 @@ class CollectGameData
 
     static async startServerAndCollect(serverPath)
     {
-        let config = CollectGameData.loadConfig();
+        let config = E2eInstance.loadConfig();
         if(!config) {
             Logger.warning('[collect-game-data] No tests/config.json found, skipping.');
             return;
@@ -405,7 +399,7 @@ class CollectGameData
 
     static async run()
     {
-        let config = CollectGameData.loadConfig();
+        let config = E2eInstance.loadConfig();
         if(!config || !config.serverPath) {
             Logger.warning('[collect-game-data] serverPath not configured, skipping server startup.');
             return;
