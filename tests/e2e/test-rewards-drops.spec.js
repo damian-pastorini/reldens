@@ -97,7 +97,7 @@ class TestRewardsDrops
         let dropsKill = await KillRewardsSteps.enterBothWithDrops(context, 1, {
             [TestRewardsDrops.DROPS_PATH+'disappearTime']: disappearTime
         });
-        let dropId = [...dropsKill.drops].shift().id;
+        let dropId = [...Object.keys(Object.assign({}, ...await DeathDropSteps.fetchDrops(context.page)))].shift();
         await context.page.waitForTimeout(TestRewardsDrops.DISAPPEAR_MS + KillRewardsSteps.SETTLE_MS);
         expect(
             (await DeathDropSteps.fetchRoomDrops(context.gameConfig)).filter(drop => dropId === drop.id),
