@@ -52,9 +52,7 @@ class ActiveSessionsBuilder
      */
     static createRoom(roomClass, roomId, setup)
     {
-        let room = Object.create(roomClass.prototype);
-        room.roomId = roomId;
-        room.roomName = roomId;
+        let room = Object.create(roomClass.prototype, {roomId: {value: roomId}, roomName: {value: roomId}});
         room.loginManager = {activePlayers: setup.activePlayers};
         return room;
     }
