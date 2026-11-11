@@ -67,6 +67,8 @@ Flags accepted by `tests/e2e/run-tests.js`:
   need it fail on `E2eServerInstances.forServer()` with the instance named
 - `--skip-db-reset=server-1,server-2` - the database reset of the listed instances is skipped (with `--db-reset`), a
   database shared by several instances is reset only once
+- `--instance=<name>` - runs the suite as an isolated instance (see "Isolated instances"), the name uses lower case
+  letters, numbers and hyphens (`--instance=server-3`)
 - `--max-failures=<n>` - overrides the stop-on-failure limit
 - `--all` - runs every test regardless of failures
 
@@ -83,6 +85,28 @@ teardown shuts it down. A `servers` entry in `tests/config.json` overrides the c
 spec reaches `server-2` with `E2eServerInstances.forServer(gameConfig, 'server-2')`, the game config whose
 `serverBaseUrl` is used by the e2e endpoints requests (`SecurityApi`) and by the client pages it opens
 (`Login.openClientPage()`).
+
+## Isolated instances
+
+`--instance=<name>` runs a complete second suite from the same checkout at the same time as the default run (or as
+another instance), for example two sessions working on the same branch, without touching each other
+(`tests/e2e/helpers/e2e-instance.js`, the name is kept in `RELDENS_E2E_INSTANCE` for the whole run):
+- database: the `tests/config.json` `dbName` with the instance name appended, hyphens as underscores
+  (`reldens_local_server_3`); create it once (`CREATE DATABASE reldens_local_server_3 CHARACTER SET utf8mb4 COLLATE
+  utf8mb4_unicode_ci`), the run is confirmed with that name,
+  `npm run test:e2e -- --instance=server-3 --db-reset=reldens_local_server_3`, and an instance always runs with
+  `--db-reset` since its database starts empty
+- ports: its `server-1` looks for a free port from the `tests/config.json` port plus 20, its `server-2` on the next
+  free port, the same as the default run (`--port=<port>` still overrides it)
+- outputs: everything the default run writes in `test-results/` and `tests/e2e/` (playwright results, videos,
+  screenshots, `server.log`, `server-2.log`, `tests.log`, `game-data.json`, `server-events.jsonl`) goes to
+  `test-results/instances/<name>/`; the `--clean-output` of an instance removes only its folder and the one of the
+  default run keeps `test-results/instances/`
+- an `instances` entry in `tests/config.json` overrides any config value of one instance, like
+  `{"instances": {"server-3": {"dbName": "reldens_other_tests", "port": 5060}}}`
+
+Both runs still boot their servers from the same `serverPath` app, so they share its `.env` (the database values are
+overridden by each run), its theme and its client bundle.
 
 ## Stop on first failure
 
