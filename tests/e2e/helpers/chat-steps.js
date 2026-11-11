@@ -6,7 +6,8 @@
  * own client page, also added to two players already logged in, with the chat of every page recorded), the chat
  * messages a client receives recorded from both rooms that send them (the scene room for the room messages and the
  * system lines, the global chat room for the global, private and error messages), each with the room it came from,
- * the chat opened and a text typed and sent like a player does (ENTER on the input), a raw chat message sent to the
+ * read whole or without the joined and left notices (the global chat room sends the left notice of every player, also
+ * of the players of the other groups running at the same time), the chat opened and a text typed and sent like a player does (ENTER on the input), a raw chat message sent to the
  * scene room or to the global chat room like a modified client would, and the text a chat tab shows.
  *
  */
@@ -22,6 +23,7 @@ class ChatSteps
 
     static SCENE_ROOM = 'scene';
     static CHAT_ROOM = 'chat';
+    static PRESENCE_NOTICES = [ChatConst.SNIPPETS.JOINED_ROOM, ChatConst.SNIPPETS.LEFT_ROOM];
 
     static async enterPlayers(context, withThird = false)
     {
@@ -71,6 +73,13 @@ class ChatSteps
     static async fetchChat(page)
     {
         return await page.evaluate(() => [...(window.e2eChatMessages || [])]);
+    }
+
+    static async fetchPlayersChat(page)
+    {
+        return (await ChatSteps.fetchChat(page)).filter(
+            message => !ChatSteps.PRESENCE_NOTICES.includes(message[ChatConst.MESSAGE.KEY])
+        );
     }
 
     static async fetchTexts(page, chatType = false)
