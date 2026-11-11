@@ -140,21 +140,6 @@ class KillScoreSteps
         return {experienceBefore, experienceAfter: await fetchExperience()};
     }
 
-    static async loginThirdInForest(context)
-    {
-        let thirdClient = await Login.openClientPage(context.page, context.gameConfig);
-        await Login.loginAndStartGame(
-            thirdClient.clientPage,
-            context.gameConfig.e2eUsername3,
-            context.gameConfig.e2ePassword3 || context.gameConfig.e2ePassword,
-            context.gameConfig.e2ePlayerName3,
-            context.longRun,
-            false,
-            Login.FOREST_ROOM_NAME
-        );
-        return thirdClient.clientPage;
-    }
-
     static async placeNextEnemy(page, gameConfig, longRun)
     {
         let placement = await ForestEnemyKill.placeEnemyToKill(
