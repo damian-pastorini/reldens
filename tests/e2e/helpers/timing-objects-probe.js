@@ -9,9 +9,10 @@
  * the last checks interval before the timer ends, so the completion runs for a player that left the room),
  * the timing state of an object (its position, interaction area and cancel rules, running or not, its body state,
  * whether its shapes still collide and the respawn timer set by its last completion), the respawn of an object pinned
- * for the group to the closest free respawn tile farther than twice its interaction area plus one tile from the place it
- * leaves, so a player within reach of the old place is out of reach of the new one (instead of a random tile, which can
- * be the same tile or one next to it), and the next calls of a method of a player inventory manager (the
+ * for the group to the free respawn tile closest to the place it leaves among the tiles farther than its interaction
+ * area plus half a tile from a given player (instead of a random tile, which can be the same tile or one next to it;
+ * with no such free tile the respawn stays random and the error is logged), and the next calls of a method of a player
+ * inventory manager (the
  * "addItem" a completion runs) delayed, answering false (like a full inventory) or rejected, kept and restored per
  * parallel spec group by LiveObjectsOverrides.
  *
@@ -101,35 +102,50 @@ class TimingObjectsProbe
         };
     }
 
-    static pickOutOfReachTile(respawnArea, timingObject, objectIndex)
+    static pickOutOfReachTile(respawnArea, pin, objectIndex)
     {
-        let reach = Number(timingObject.interactionArea || 0) * 2 + respawnArea.world.mapJson.tilewidth;
-        let oldPosition = {x: timingObject.objectBody.position[0], y: timingObject.objectBody.position[1]};
-        let tileIndex = [...respawnArea.respawnTiles.filter(
-            index => !sc.hasOwn(respawnArea.usedTiles, index)
-        ).map(index => ({
+        let reach = Number(pin.timingObject.interactionArea || 0) + respawnArea.world.mapJson.tilewidth / 2;
+        let playerPosition = pin.playerBody.position;
+        let oldPosition = pin.timingObject.objectBody.position;
+        let tile = sc.get([...respawnArea.respawnTiles.map(index => ({
             index,
-            distance: Math.max(
-                Math.abs(respawnArea.respawnTilesData[index].x - oldPosition.x),
-                Math.abs(respawnArea.respawnTilesData[index].y - oldPosition.y)
+            tileData: respawnArea.respawnTilesData[index]
+        })).filter(
+            candidate => !sc.hasOwn(respawnArea.usedTiles, candidate.index) && reach < Math.max(
+                Math.abs(candidate.tileData.x - playerPosition[0]),
+                Math.abs(candidate.tileData.y - playerPosition[1])
             )
-        })).filter(tile => tile.distance > reach).sort(
-            (tileA, tileB) => tileA.distance - tileB.distance || tileA.index - tileB.index
-        )].map(tile => tile.index).shift();
+        ).map(candidate => ({
+            index: candidate.index,
+            distance: Math.max(
+                Math.abs(candidate.tileData.x - oldPosition[0]),
+                Math.abs(candidate.tileData.y - oldPosition[1])
+            )
+        })).sort((tileA, tileB) => tileA.distance - tileB.distance || tileA.index - tileB.index)], 0, false);
+        if(!tile){
+            Logger.error('[timing-objects-probe] No free respawn tile out of reach, the respawn tile stays random.');
+            return pin.fetchRandomTile(objectIndex);
+        }
         respawnArea.removeObjectPreviousUsedTile(objectIndex);
-        respawnArea.usedTiles[tileIndex] = objectIndex;
-        return {randomTileIndex: tileIndex, tileData: respawnArea.respawnTilesData[tileIndex]};
+        respawnArea.usedTiles[tile.index] = objectIndex;
+        return {randomTileIndex: tile.index, tileData: respawnArea.respawnTilesData[tile.index]};
     }
 
-    static pinRespawnOutOfReach(room, groupKey, objectKey)
+    static pinRespawnOutOfReach(room, groupKey, objectKey, playerName)
     {
         let timingObject = TimingObjectsProbe.findTimingObject(room, objectKey);
         let respawnArea = sc.get(room.roomWorld?.respawnAreas, timingObject?.respawnLayer, false);
-        if(!respawnArea){
-            return {error: 'Respawn area of the object '+objectKey+' not found in room '+room.roomName+'.'};
+        let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
+        if(!respawnArea || !playerSchema){
+            return {error: 'Respawn area of '+objectKey+' or player '+playerName+' not found in room '+room.roomName+'.'};
         }
+        let pin = {
+            timingObject,
+            playerBody: playerSchema.physicalBody,
+            fetchRandomTile: respawnArea.getRandomTile.bind(respawnArea)
+        };
         LiveObjectsOverrides.changeProperty(groupKey, respawnArea, 'getRandomTile', (objectIndex) => {
-            return TimingObjectsProbe.pickOutOfReachTile(respawnArea, timingObject, objectIndex);
+            return TimingObjectsProbe.pickOutOfReachTile(respawnArea, pin, objectIndex);
         }, false);
         return {objectKey, isRespawnPinned: true};
     }
@@ -195,7 +211,8 @@ class TimingObjectsProbe
                 async (room) => TimingObjectsProbe.pinRespawnOutOfReach(
                     room,
                     sc.get(request.body, 'group', ''),
-                    String(sc.get(request.body, 'objectKey', ''))
+                    String(sc.get(request.body, 'objectKey', '')),
+                    String(sc.get(request.body, 'playerName', ''))
                 )
             );
         });
