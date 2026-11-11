@@ -3,7 +3,10 @@
  * Reldens - Test Combat
  *
  * Tests targeting enemies, attack damage, skill casting by type, death, and revive. Every attack case places the
- * enemy from the server next to the player with its random movement stopped and targets that exact enemy body.
+ * enemy from the server next to the player with its random movement stopped and targets that exact enemy body. The
+ * own attack sprites case empties the actions of that enemy for the group, so its counter attack (the same default
+ * attack sprite) never adds a second attack sprite, and the effect skill case on the player itself disables every
+ * enemy of the room, so no enemy hit changes the healed stat.
  *
  */
 
@@ -137,6 +140,7 @@ class TestCombat
     static async runEffectSkillTest(page, screenshots, gameConfig, e2eGroup, longRun, skill, prefix)
     {
         let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
+        await RoomObjectsApi.disableEnemies(gameConfig, context.roomName);
         let targetEffect = await CombatSkillCasting.loadSkillRow(gameConfig, 'skillsSkillTargetEffects', skill.key);
         let effectValue = Number(targetEffect.value);
         let statKey = targetEffect.property_key.split('/').pop();
@@ -164,6 +168,9 @@ class TestCombat
         let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
         let attackKey = TestCombat.DIRECT_ATTACK_KEY;
         await CombatSkillCasting.changeSkill(context, e2eGroup, attackKey, {criticalChance: 0, range: 0});
+        await GameplayE2eStateApi.changeEnemyBattle(gameConfig, e2eGroup, context.roomName, context.bodyKey, {
+            actionsKeys: []
+        }, false);
         await SceneSpritesRecorder.start(page);
         await CombatSkillCasting.castSkill(page, context, attackKey, 1);
         let ownerAnimationKey = 'default'+ActionsConst.ACTIONS.SUFFIX.ATTACK;
