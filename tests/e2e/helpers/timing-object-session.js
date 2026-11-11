@@ -6,7 +6,8 @@
  * disabled, disable the player in the forest, place the player from the server next to the first instance of an object (its random movement stopped and
  * the player on the closest free walkable tile), read a reward item quantity from the inventory, record the timing
  * messages the server sends to the player (timingStart, timingCancel, timingComplete) and start a timing on the
- * reached instance; prepare a mining (the player next to the first mining rock with the inventory open and the reward
+ * reached instance; prepare a mining (the player next to the first mining rock, or next to the first rock where the
+ * given enemy fits beside the player so its attack never moves the player, with the inventory open and the reward
  * quantity read), wait the timing duration and check the reward quantity, and through TimingObjectsProbe change a
  * cancel rule of the object for the group, pin its respawn for the group to the closest tile out of reach of the old
  * place, read its timing state and override the inventory "addItem" of the player.
@@ -54,15 +55,24 @@ class TimingObjectSession
         expect(disabled.inState, 'The player is disabled: '+disabled.error).toBe(GameConst.STATUS.DISABLED);
     }
 
-    static async placeNextToObject(page, gameConfig, objectAssetKey, timeout, label)
+    static async placeNextToObject(page, gameConfig, objectAssetKey, timeout, label, enemyKey = '')
     {
-        let placement = await RoomObjectsApi.placePlayerNextToObject(
-            page,
-            gameConfig,
-            Login.FOREST_ROOM_NAME,
-            objectAssetKey,
-            timeout
-        );
+        let placement = '' === enemyKey
+            ? await RoomObjectsApi.placePlayerNextToObject(
+                page,
+                gameConfig,
+                Login.FOREST_ROOM_NAME,
+                objectAssetKey,
+                timeout
+            )
+            : await RoomObjectsApi.placePlayerNextToObjectWithRoom(
+                page,
+                gameConfig,
+                Login.FOREST_ROOM_NAME,
+                objectAssetKey,
+                enemyKey,
+                timeout
+            );
         expect(placement.reached, 'The player must be placed next to the '+label+': '+sc.toJsonString(placement)).toBe(true);
         return placement.bodyKey;
     }
@@ -130,7 +140,7 @@ class TimingObjectSession
         await TimingObjectSession.waitForTimingAction(page, 'timingStart', timeout);
     }
 
-    static async prepareMining(page, gameConfig, longRun)
+    static async prepareMining(page, gameConfig, longRun, enemyKey = '')
     {
         test.setTimeout(TimeConstants.forLongRun(TimingObjectSession.MINING_TEST_TIMEOUT, longRun));
         let rockAssetKey = gameConfig.e2eMiningRockKey || '';
@@ -143,7 +153,8 @@ class TimingObjectSession
             gameConfig,
             rockAssetKey,
             forestData.sceneTimeout,
-            'mining rock'
+            'mining rock',
+            enemyKey
         );
         await TimingObjectSession.openInventory(page, forestData.pauseMs);
         return {
