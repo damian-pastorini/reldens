@@ -8,7 +8,8 @@ server (see "App under test") and the unit and integration tests run with `RELDE
 test:default` (`tests/default/run-default.js`, it boots its own server on the `tests/config.json` port + 100), never
 with `npm test`, which targets an external server on the `tests/config.json` port that nothing starts (every admin
 integration test then fails with an empty `Error:`, the connection refused). Every checkout uses its own
-`tests/config.json` test database and ports.
+`tests/config.json` test database and ports. The only exception is `npm run test:unit` (`run-default.js --unit`), which
+runs the unit tests alone, without the database reset and the server, and skips the classes marked `isIntegration`.
 
 ## Commands
 
