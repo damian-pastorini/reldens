@@ -2,6 +2,10 @@
  *
  * Reldens - RockObject
  *
+ * A mining rock: the timing gives its item, disables the rock and starts its respawn. A message reaches the rock by its
+ * instance key, the stored object id is accepted only for a rock that is not a respawn instance, since every rock of a
+ * respawn area keeps the same template id and one message with it would start every rock in range.
+ *
  */
 
 const { TimingObject } = require('reldens/lib/objects/server/object/type/timing-object');
@@ -36,7 +40,7 @@ class RockObject extends TimingObject
 
     isValidId(data)
     {
-        return this.key === data?.id || false || Number(this.id) === Number(data?.id || false);
+        return this.key === data?.id || (!this.respawnBehavior && Number(this.id) === Number(data?.id || false));
     }
 
     async completeTiming(client, room, playerSchema)
