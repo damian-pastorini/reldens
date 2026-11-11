@@ -22,7 +22,9 @@ class TestAdminRoleBlackList
     static async prepareBlackList(page, gameConfig, longRun)
     {
         let rootUser = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', {username: gameConfig.e2eUsername})].shift();
-        await SecurityApi.setAdminBlackList(gameConfig, {[rootUser.role_id]: [TestAdminRoleBlackList.BLOCKED_PATH]});
+        await SecurityApi.request(gameConfig, 'POST', '/api/e2e/security/admin-black-list', {
+            blackList: {[rootUser.role_id]: [TestAdminRoleBlackList.BLOCKED_PATH]}
+        });
         await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
         return AdminPanelSession.adminPath(gameConfig);
     }
