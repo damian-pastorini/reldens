@@ -6,7 +6,9 @@
  * e2e tests to ensure isolation. Every reset belongs to one parallel spec group (ParallelSpecGroups) and only touches
  * that group: it first waits until no scene room holds a player of the group (the closed page of the previous test
  * makes its session leave, and the room leave saves the player and then removes it, so its pending save never
- * overwrites the restored state and its body never stays in a room the next test uses), then the group players are
+ * overwrites the restored state and its body never stays in a room the next test uses; a session still there after the
+ * wait, left by a room leave that failed, is removed with its team and its active player entry), the team invites sent
+ * by the group players are cleared (the teams plugin keeps them over a new login), then the group players are
  * reset to full HP, placed on the default return point of the group start room, and have all equipped items
  * unequipped, the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
  * enemies and the random movement are restored only in the group rooms.
@@ -213,6 +215,28 @@ class PlayerStateReset
         return false;
     }
 
+    static removeStaleSessions(serverManager, snapshots)
+    {
+        let playerNames = Object.keys(snapshots).map(playerId => snapshots[playerId].playerName);
+        let teams = sc.get(serverManager.featuresManager.featuresList?.teams?.package, 'teams', {});
+        for(let staleSession of PlayerStateReset.findTestPlayersSessions(serverManager.roomsManager.createdInstances, playerNames)){
+            let room = staleSession.room;
+            let playerSchema = room.state.players.get(staleSession.sessionId);
+            Logger.warning('[player-state-reset] Removing the session of '+playerSchema.playerName+' left by a failed room leave.');
+            delete teams[playerSchema.currentTeam];
+            room.removeAllPlayerReferences(playerSchema, staleSession.sessionId);
+            room.loginManager.activePlayers.removeByRoomAndSessionId(staleSession.sessionId, room.roomId);
+        }
+    }
+
+    static clearTeamInvites(serverManager, snapshots)
+    {
+        let teamPendingInvites = sc.get(serverManager.featuresManager.featuresList?.teams?.package, 'teamPendingInvites', {});
+        for(let playerId of Object.keys(snapshots)){
+            delete teamPendingInvites[playerId];
+        }
+    }
+
     static async registerResetEndpoint(serverManager, snapshots, config)
     {
         let startPoints = await PlayerStateReset.fetchGroupsStartPoints(serverManager.dataServer);
@@ -227,6 +251,8 @@ class PlayerStateReset
                     serverManager.roomsManager.createdInstances,
                     groupSnapshots
                 );
+                PlayerStateReset.removeStaleSessions(serverManager, groupSnapshots);
+                PlayerStateReset.clearTeamInvites(serverManager, groupSnapshots);
                 await SecurityState.resetAll(serverManager);
                 LiveObjectsOverrides.restoreGroup(groupKey);
                 await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
