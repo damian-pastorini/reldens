@@ -14,17 +14,71 @@
  * experience its stored rewards give on its death and its "killScore" private param (0 when it has none). The enemy
  * battle starts the battle of an already placed enemy without moving it, a single attack loop, so the enemy keeps
  * hitting the player in place (each player hit starts more loops, which chase and push the player when the skill
- * delay is not over).
+ * delay is not over). The player placement next to an object with room for an enemy puts the player on the first free
+ * tile around an active object of the given asset (objects by key, fixed offsets order) that is inside the object
+ * interaction area and has a free attack position for that enemy, so a later enemy attack never moves the player.
  *
  */
 
 const { RoomObjectsState } = require('./room-objects-state');
 const { RoomAnchoredPlacement } = require('./room-anchored-placement');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
+const { GameConst } = require('../../../lib/game/constants');
 const { Logger, sc } = require('@reldens/utils');
 
 class RoomEnemyPlacement
 {
+
+    static SPOT_OFFSETS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+
+    static fetchObjectSpots(room, objectAssetKey)
+    {
+        let mapJson = room.roomWorld.mapJson;
+        return RoomObjectsState.fetchObjectsWithState(room).filter(
+            roomObject => objectAssetKey === sc.get(roomObject.clientParams, 'asset_key', '')
+                && GameConst.STATUS.ACTIVE === sc.get(roomObject.objectBody.bodyState, 'inState', 0)
+        ).sort((objectA, objectB) => String(objectA.key).localeCompare(String(objectB.key))).flatMap(roomObject => {
+            let body = roomObject.objectBody;
+            let objectTile = body.positionToTiles(body.position[0], body.position[1]);
+            return RoomEnemyPlacement.SPOT_OFFSETS.map(offset => ({
+                roomObject,
+                position: {
+                    x: (objectTile.currentCol + offset[0]) * mapJson.tilewidth + mapJson.tilewidth / 2,
+                    y: (objectTile.currentRow + offset[1]) * mapJson.tileheight + mapJson.tileheight / 2
+                }
+            }));
+        });
+    }
+
+    static placePlayerNextToObjectWithRoom(room, playerName, sessionId, objectAssetKey, enemyKey)
+    {
+        let found = RoomEnemyPlacement.findPlayerAndEnemy(room, playerName, enemyKey, sessionId);
+        if(found.error){
+            return found;
+        }
+        let playerBody = found.playerSchema.physicalBody;
+        let enemyBody = found.enemyObject.objectBody;
+        let bodiesBounds = RoomAnchoredPlacement.fetchOtherBodiesBounds(room, [playerBody, enemyBody]);
+        let spot = [...RoomEnemyPlacement.fetchObjectSpots(room, objectAssetKey).filter(
+            candidate => candidate.roomObject.isValidInteraction(candidate.position.x, candidate.position.y)
+                && RoomAnchoredPlacement.isFreeAttackTile(
+                    room,
+                    playerBody,
+                    playerBody,
+                    candidate.position,
+                    bodiesBounds
+                )
+                && RoomAnchoredPlacement.findAttackPosition(room, playerBody, enemyBody, candidate.position)
+        ), false].shift();
+        if(!spot){
+            return {error: 'No tile next to a '+objectAssetKey+' with room for '+enemyKey+' in '+room.roomName+'.'};
+        }
+        RoomAnchoredPlacement.placePlayerBody(playerBody, spot.position);
+        return {
+            bodyKey: sc.get(spot.roomObject.objectBody.bodyState, 'key', spot.roomObject.key),
+            position: spot.position
+        };
+    }
 
     static findPlayerAndEnemy(room, playerName, enemyKey, sessionId)
     {
@@ -118,6 +172,21 @@ class RoomEnemyPlacement
 
     static registerEndpoints(serverManager)
     {
+        let withRoomPath = '/api/e2e/room-objects/place-player-next-to-object-with-room';
+        serverManager.app.post(withRoomPath, async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => RoomEnemyPlacement.placePlayerNextToObjectWithRoom(
+                    room,
+                    sc.get(request.body, 'playerName', ''),
+                    String(sc.get(request.body, 'sessionId', '')),
+                    String(sc.get(request.body, 'objectKey', '')),
+                    String(sc.get(request.body, 'enemyKey', ''))
+                )
+            );
+        });
         serverManager.app.post('/api/e2e/room-objects/enemy-attack', async (request, response) => {
             await RoomObjectsState.respondForRoom(
                 serverManager,
