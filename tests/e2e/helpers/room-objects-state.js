@@ -234,8 +234,7 @@ class RoomObjectsState
         objectBody.bodyState.x = position.x;
         objectBody.bodyState.y = position.y;
         let tilePosition = objectBody.positionToTiles(position.x, position.y);
-        objectBody.originalCol = tilePosition.currentCol;
-        objectBody.originalRow = tilePosition.currentRow;
+        Object.assign(objectBody, tilePosition, {originalCol: tilePosition.currentCol, originalRow: tilePosition.currentRow});
     }
 
     static stopRandomMovement(roomObject)
