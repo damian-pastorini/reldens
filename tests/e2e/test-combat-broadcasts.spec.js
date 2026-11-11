@@ -6,9 +6,11 @@
  * hit and effect sprites of another player, the enemy life bar updates, the death animation, the removed life bar and
  * the cleared target when the enemy dies, the restored full life bar when it respawns, a single battle end, a single
  * experience reward and a single kill score (the players scores rows are preserved for the group reset) when two
- * players kill it at once, the enemy fighting only its first player (or both with chaseMultiple, the first player only
- * holds the aggression and leaves the enemy shot area, and the second player is placed on a clear shot line, so the
- * enemy bullet never ends on another body), and the PvP damage chat message sent to the attacker and the target but
+ * players kill it at once, the enemy fighting only its first player, the second player out of its battle and never
+ * attacked (or with chaseMultiple the second player in its battle and hit too: every enemy action gets an unlimited
+ * range for the group, so the random action pick always attacks instead of a chase; the first player only holds the
+ * aggression and leaves the enemy shot area, and the second player is placed on a clear shot line, so the enemy bullet
+ * never ends on another body), and the PvP damage chat message sent to the attacker and the target but
  * not to a third player.
  *
  */
@@ -38,6 +40,7 @@ class TestCombatBroadcasts
     static FIRST_PLAYER_TILES = 3;
     static SECOND_PLAYER_TILES = [2, 3, 4, 5, 6];
     static ENEMY_TURNS_MS = 3000;
+    static UNLIMITED_RANGE = 0;
 
     static async prepareAttack(page, gameConfig, e2eGroup, longRun)
     {
@@ -232,15 +235,27 @@ class TestCombatBroadcasts
             secondContext.playerName
         )).life;
         let secondLife = await fetchSecondLife();
+        let secondPlayerId = String(await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {
+            name: secondContext.playerName
+        }));
+        let fetchInBattlePlayers = async () => (await CombatSkillCasting.fetchEnemySnapshot(context)).inBattlePlayers;
         expect(await CombatSkillCasting.fetchEnemyInBattle(context), 'Held in battle with the first player').toBe(1);
         await CombatSkillCasting.castSkill(secondPage, secondContext, TestCombatBroadcasts.ATTACK_SHORT, 1);
         await page.waitForTimeout(TestCombatBroadcasts.ENEMY_TURNS_MS);
-        expect(await CombatSkillCasting.fetchEnemyInBattle(context), 'The busy enemy ignores the second player').toBe(1);
+        expect(await fetchInBattlePlayers(), 'The busy enemy ignores the second player').not.toContain(secondPlayerId);
+        expect(await CombatSkillCasting.fetchEnemyInBattle(context), 'The busy enemy keeps only its first player').toBe(1);
         expect(await fetchSecondLife(), 'The busy enemy never attacks the second player').toBe(secondLife);
         await GameplayE2eStateApi.changeEnemyBattle(gameConfig, e2eGroup, context.roomName, context.bodyKey, {
             chaseMultiple: true
         });
+        await GameplayE2eStateApi.changeEnemyActions(gameConfig, e2eGroup, context.roomName, context.bodyKey, {
+            range: TestCombatBroadcasts.UNLIMITED_RANGE
+        });
         await CombatSkillCasting.castSkill(secondPage, secondContext, TestCombatBroadcasts.ATTACK_SHORT, 2);
+        await expect.poll(
+            fetchInBattlePlayers,
+            {message: 'With chaseMultiple the second player joins the enemy battle', timeout: context.timeout}
+        ).toContain(secondPlayerId);
         await expect.poll(
             fetchSecondLife,
             {message: 'With chaseMultiple the enemy fights the second player too', timeout: context.timeout}
