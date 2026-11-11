@@ -194,14 +194,15 @@ class TestPlayerReviveDisplay extends BaseTest
 
     async testBattleBroadcastsTheRevivePosition()
     {
-        await this.test('the battle revive broadcasts who revived and where, and restores the player', async () => {
+        await this.test('the battle revive broadcasts where, restores the player and keeps its body out of the removal queue', async () => {
             let broadcasts = [];
             let addedBodies = [];
             let activatedStates = [];
             let body = {id: 'player-body'};
+            let otherBody = {id: 'bullet-body'};
             let targetSchema = {sessionId: 'revived', state: {x: 70, y: 80}, stats: {hp: 0}, statsBase: {hp: 100}};
             let room = {
-                roomWorld: {addBody: (addedBody) => addedBodies.push(addedBody)},
+                roomWorld: {removeBodies: [body, otherBody], addBody: (addedBody) => addedBodies.push(addedBody)},
                 activePlayerBySessionId: () => true,
                 activatePlayer: (playerSchema, newState) => activatedStates.push(newState),
                 savePlayerStats: async () => true,
@@ -211,6 +212,7 @@ class TestPlayerReviveDisplay extends BaseTest
             this.assert.strictEqual(await battle.revivePlayer(room, body, targetSchema, 'hp', {}), true);
             this.assert.deepStrictEqual(broadcasts, [{act: GameConst.REVIVED, t: 'revived', x: 70, y: 80}]);
             this.assert.deepStrictEqual(addedBodies, [body]);
+            this.assert.deepStrictEqual(room.roomWorld.removeBodies, [otherBody]);
             this.assert.deepStrictEqual(activatedStates, [GameConst.STATUS.ACTIVE]);
             this.assert.strictEqual(targetSchema.stats.hp, 100);
         });
