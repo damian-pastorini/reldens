@@ -3,8 +3,9 @@
  * Reldens - Combat E2e State
  *
  * Server side e2e endpoints for the combat rules: the live stats of a player (saved and sent to its client) or of an
- * enemy body (and the enemy body state, restored with the enemies on the players reset), the properties of a player skill changed through LiveObjectsOverrides (restored with the parallel spec
- * group on the players reset), the room custom data (allActionsDisabled, disallowedActions, pvpEnabled) and the PvP
+ * enemy body (and the enemy body state, restored with the enemies on the players reset), the properties of a player
+ * skill, of an enemy battle or object and of every action of an enemy changed through LiveObjectsOverrides (restored
+ * with the parallel spec group on the players reset), the room custom data (allActionsDisabled, disallowedActions, pvpEnabled) and the PvP
  * switch the players get on their room join (the server/actions/pvp/enabled value read on the server start) changed the
  * same way, the skill snapshot (uses, last state, activation and the owner casting flag) and the
  * applied damages and run logic end states of a player skills, recorded from its class path events since the record
@@ -121,6 +122,19 @@ class CombatE2eState
             isBattle ? found.enemyObject.battle : found.enemyObject,
             properties
         );
+    }
+
+    static changeEnemyActions(room, groupKey, bodyKey, properties)
+    {
+        let found = CombatE2eState.findEnemy(room, bodyKey);
+        if(found.error){
+            return found;
+        }
+        let actions = sc.get(found.enemyObject, 'actions', {});
+        for(let actionKey of Object.keys(actions)){
+            CombatE2eState.changeProperties(groupKey, actions[actionKey], properties);
+        }
+        return {changed: Object.keys(properties), actions: Object.keys(actions)};
     }
 
     static changePlayerBody(room, groupKey, playerName, properties)
@@ -267,6 +281,19 @@ class CombatE2eState
                     sc.get(request.body, 'bodyKey', ''),
                     sc.get(request.body, 'properties', {}),
                     false !== sc.get(request.body, 'isBattle', true)
+                )
+            );
+        });
+        app.post('/api/e2e/combat/enemy-actions', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => CombatE2eState.changeEnemyActions(
+                    room,
+                    sc.get(request.body, 'group', ''),
+                    sc.get(request.body, 'bodyKey', ''),
+                    sc.get(request.body, 'properties', {})
                 )
             );
         });
