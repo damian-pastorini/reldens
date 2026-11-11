@@ -8,9 +8,12 @@
  * its stop held for the group (the checks interval finds a player gone and stops nothing, like a player that leaves in
  * the last checks interval before the timer ends, so the completion runs for a player that left the room),
  * the timing state of an object (its position, interaction area and cancel rules, running or not, its body state,
- * whether its shapes still collide and the respawn timer set by its last completion) and the next calls of a method of a player inventory manager (the "addItem" a
- * completion runs) delayed, answering false (like a full inventory) or rejected, kept and restored per parallel spec
- * group by LiveObjectsOverrides.
+ * whether its shapes still collide and the respawn timer set by its last completion), the respawn of an object pinned
+ * for the group to the closest free respawn tile farther than twice its interaction area plus one tile from the place it
+ * leaves, so a player within reach of the old place is out of reach of the new one (instead of a random tile, which can
+ * be the same tile or one next to it), and the next calls of a method of a player inventory manager (the
+ * "addItem" a completion runs) delayed, answering false (like a full inventory) or rejected, kept and restored per
+ * parallel spec group by LiveObjectsOverrides.
  *
  */
 
@@ -98,6 +101,39 @@ class TimingObjectsProbe
         };
     }
 
+    static pickOutOfReachTile(respawnArea, timingObject, objectIndex)
+    {
+        let reach = Number(timingObject.interactionArea || 0) * 2 + respawnArea.world.mapJson.tilewidth;
+        let oldPosition = {x: timingObject.objectBody.position[0], y: timingObject.objectBody.position[1]};
+        let tileIndex = [...respawnArea.respawnTiles.filter(
+            index => !sc.hasOwn(respawnArea.usedTiles, index)
+        ).map(index => ({
+            index,
+            distance: Math.max(
+                Math.abs(respawnArea.respawnTilesData[index].x - oldPosition.x),
+                Math.abs(respawnArea.respawnTilesData[index].y - oldPosition.y)
+            )
+        })).filter(tile => tile.distance > reach).sort(
+            (tileA, tileB) => tileA.distance - tileB.distance || tileA.index - tileB.index
+        )].map(tile => tile.index).shift();
+        respawnArea.removeObjectPreviousUsedTile(objectIndex);
+        respawnArea.usedTiles[tileIndex] = objectIndex;
+        return {randomTileIndex: tileIndex, tileData: respawnArea.respawnTilesData[tileIndex]};
+    }
+
+    static pinRespawnOutOfReach(room, groupKey, objectKey)
+    {
+        let timingObject = TimingObjectsProbe.findTimingObject(room, objectKey);
+        let respawnArea = sc.get(room.roomWorld?.respawnAreas, timingObject?.respawnLayer, false);
+        if(!respawnArea){
+            return {error: 'Respawn area of the object '+objectKey+' not found in room '+room.roomName+'.'};
+        }
+        LiveObjectsOverrides.changeProperty(groupKey, respawnArea, 'getRandomTile', (objectIndex) => {
+            return TimingObjectsProbe.pickOutOfReachTile(respawnArea, timingObject, objectIndex);
+        }, false);
+        return {objectKey, isRespawnPinned: true};
+    }
+
     static overrideInventoryMethod(room, groupKey, playerName, methodKey, behavior)
     {
         let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
@@ -145,6 +181,18 @@ class TimingObjectsProbe
                 sc.get(request.body, 'roomName', ''),
                 response,
                 async (room) => TimingObjectsProbe.holdTimingStop(
+                    room,
+                    sc.get(request.body, 'group', ''),
+                    String(sc.get(request.body, 'objectKey', ''))
+                )
+            );
+        });
+        app.post('/api/e2e/timing-objects/pin-respawn-out-of-reach', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => TimingObjectsProbe.pinRespawnOutOfReach(
                     room,
                     sc.get(request.body, 'group', ''),
                     String(sc.get(request.body, 'objectKey', ''))
