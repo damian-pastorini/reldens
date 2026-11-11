@@ -169,12 +169,14 @@ See `.claude/environment-variables.md` for the full list.
 
 ## Essential Commands
 
-The unit, integration and e2e suites are self-hosted: each one resets the `tests/config.json` database and boots its own server on that checkout ports. `npm test` targets an external server on the `tests/config.json` port that nothing starts, so the admin integration tests fail with an empty `Error:` (connection refused).
+**ALL TESTS (UNIT, INTEGRATION, E2E) MUST ALWAYS RUN IN THEIR OWN SELF-HOSTED ENVIRONMENT.** Never run `npm test` in a checkout: it targets an external server on the `tests/config.json` port that nothing starts, so every admin integration test fails with an empty `Error:` (connection refused). Every checkout uses its own `tests/config.json` test database and ports. The only exception is the unit-only mode (`npm run test:unit`): the unit tests need neither the database nor a server, so it skips the database reset, the server boot and every test class marked `isIntegration`, and it can run while another run uses the test database.
 
 ```bash
 # Unit and integration tests, self-hosted: resets the tests/config.json database and boots its own server from the
 # serverPath app on the tests/config.json port + 100 (RELDENS_TESTS_CONFIRMED=1 skips the confirmation)
 npm run test:default
+# Unit tests only: no database reset, no server, the integration tests (isIntegration) are skipped
+npm run test:unit
 # E2E tests, self-hosted: the Playwright globalSetup boots its own server (see .claude/e2e-testing-guide.md)
 npm run test:e2e -- --db-reset=<tests/config.json dbName>
 # Build styles and client
@@ -213,6 +215,7 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/e2e-testing-guide.md` - E2E suite: commands, its own database, app bundle and browser requirements
 - `.claude/environment-variables.md` - All `RELDENS_*` variables
 - `.claude/feature-modules.md` - All feature modules
+- `.claude/gameplay-features.md` - Auto recovery, teleport NPC, points per kill, item growth, death teleport, scores reset per period and ad skins
 - `.claude/storage-architecture.md` - Entity management deep dive
 - `.claude/entities-reference.md` - All 79 entity types
 - `.claude/entities-generation-guide.md` - Generated entities output and the Prisma steps
