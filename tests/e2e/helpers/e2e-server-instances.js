@@ -13,7 +13,10 @@
  * events manager singleton), which answers "ready" once its e2e endpoints are registered and shuts down gracefully
  * when the global teardown asks it to (an instance already ended, by an exit or a signal, is skipped, and one whose
  * IPC channel is closed is killed). A spec reaches an instance with forServer(gameConfig, 'server-2'), the game
- * config with that instance URL used by the e2e endpoints requests and the client pages it opens.
+ * config with that instance URL used by the e2e endpoints requests and the client pages it opens. A run config with
+ * crossServerNamesCheck on (with a "servers" entry giving server-2 its own dbName) boots every server with all the run
+ * servers URLs in RELDENS_ROOMS_DATABASES (fetchAllServersUrls(), server-1 port given in RELDENS_E2E_FIRST_SERVER_PORT),
+ * so the usernames, emails and player names are checked between the servers.
  *
  */
 
@@ -31,6 +34,7 @@ class E2eServerInstances
     static SERVER_KEY_PREFIX = 'server-';
     static SERVERS_COUNT = 2;
     static PORTS_ENV = 'RELDENS_E2E_SERVERS_PORTS';
+    static FIRST_SERVER_PORT_ENV = 'RELDENS_E2E_FIRST_SERVER_PORT';
     static SERVER_KEY_ENV = 'RELDENS_E2E_SERVER_KEY';
     static READY_MESSAGE = 'ready';
     static SHUTDOWN_MESSAGE = 'shutdown';
@@ -45,6 +49,16 @@ class E2eServerInstances
             serversUrls[serverKey] = 'http://localhost:'+serversPorts[serverKey];
         }
         return serversUrls;
+    }
+
+    static fetchAllServersUrls()
+    {
+        let allServersUrls = ['http://localhost:'+sc.get(process.env, E2eServerInstances.FIRST_SERVER_PORT_ENV, '')];
+        let serversUrls = E2eServerInstances.fetchServersUrls();
+        for(let serverKey of Object.keys(serversUrls)){
+            allServersUrls.push(serversUrls[serverKey]);
+        }
+        return allServersUrls;
     }
 
     static fetchServerConfig(config, serverKey)
