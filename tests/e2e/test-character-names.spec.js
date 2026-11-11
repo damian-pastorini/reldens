@@ -4,7 +4,8 @@
  *
  * Tests the names accepted and rejected on the players creation: the short and empty names the client never sends,
  * the server minimum length, the names already used in any letter case, the same name created by two users at the same
- * time (only one of them gets it), the banned names, the guests names, the exact
+ * time (only one of them gets it), the banned names, the guests names, the names with spaces and HTML cleaned to the
+ * allowed characters and shown as text, the exact
  * minimum and the names with HTML shown as text.
  *
  */
@@ -129,15 +130,19 @@ class TestCharacterNames
         expect((await CharacterCreation.loadPlayers(gameConfig, playerName)).length).toBe(1);
     }
 
+    static CLEANED_HTML_PAYLOAD = 'imgsrcxonerrorwindow.e2eStoredScriptRantrue';
     static HTML_PAYLOAD_EFFECTS = () => [!window.e2eStoredScriptRan, document.querySelectorAll('img[src="x"]').length];
 
     static async runHtmlNameTest(page, secondPage, screenshots, gameConfig, longRun)
     {
-        let playerName = FileHandler.readFile(TestCharacterNames.STORED_HTML_PATH).trim()+Date.now().toString(36);
+        let nameSuffix = Date.now().toString(36);
+        let sentName = FileHandler.readFile(TestCharacterNames.STORED_HTML_PATH).trim()+' '+nameSuffix;
+        let playerName = TestCharacterNames.CLEANED_HTML_PAYLOAD+nameSuffix;
         let chatMessage = 'e2e-html-name-'+Date.now();
         await Login.loginRootPlayer(secondPage, gameConfig, longRun, '2');
-        await CharacterCreation.createPlayerInRoom(page, gameConfig, longRun, playerName, Login.TOWN_ROOM_NAME);
-        expect(await page.evaluate(() => window.reldens.playerData.name)).toBe(playerName);
+        await CharacterCreation.createPlayerInRoom(page, gameConfig, longRun, sentName, Login.TOWN_ROOM_NAME);
+        expect(await page.evaluate(() => window.reldens.playerData.name), 'The HTML and spaces are removed').toBe(playerName);
+        expect((await CharacterCreation.loadPlayers(gameConfig, playerName)).length).toBe(1);
         await page.click(Selectors.hud.chatOpen);
         await page.locator(Selectors.chat.input).fill(chatMessage);
         await page.click(Selectors.chat.send);
@@ -178,7 +183,7 @@ class TestCharacterNames
             test('name of exactly three characters creates the player', async ({ page, gameConfig, longRun }) => {
                 await TestCharacterNames.runExactMinimumTest(page, gameConfig, longRun);
             });
-            test('name with HTML is shown as text', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+            test('name with HTML and spaces is cleaned and shown as text', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestCharacterNames.runHtmlNameTest(page, secondPage, screenshots, gameConfig, longRun);
             });
         });
