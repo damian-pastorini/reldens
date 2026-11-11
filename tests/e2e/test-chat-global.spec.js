@@ -62,7 +62,7 @@ class TestChatGlobal
             'The sender gets the rejection'
         );
         await context.secondPage.waitForTimeout(TestChatGlobal.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(context.secondPage), 'The other client sees nothing').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'The other client sees nothing').toEqual([]);
     }
 
     static async runCooldownTest(context)
@@ -88,11 +88,11 @@ class TestChatGlobal
             expect(await TestChatGlobal.fetchStoredRows(context.gameConfig, String(rawText).replace('#', '')), 'No row').toEqual([]);
         }
         await context.secondPage.waitForTimeout(TestChatGlobal.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(context.secondPage), 'Nothing is delivered').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
         await ChatSteps.sendRaw(context.page, {[ChatConst.MESSAGE.KEY]: 'e2e-no-prefix-cooldown'}, true);
         await ChatSteps.sendRaw(context.page, {[ChatConst.MESSAGE.KEY]: '#e2e-after-no-prefix'}, true);
         await context.secondPage.waitForTimeout(TestChatGlobal.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(context.secondPage), 'The message with no prefix uses the cooldown').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'The message with no prefix uses the cooldown').toEqual([]);
     }
 
     static async runOverColumnTest(context)
