@@ -4,7 +4,8 @@
  *
  * Shared setup and checks of the player and object movement specs: the town player login and the scenario context
  * (room, player, the e2eNpcKey object, the navigation timeout and the server snapshot readers), the pointer move of the
- * player to a tile with the server trail until it stands still on it, the walk to a tile on a line of tiles no room
+ * player to a tile with the server trail until it stands still on it (also for the configured player of a spec context
+ * in any room), the walk to a tile on a line of tiles no room
  * body crosses (checked by the server) that returns the final server state of the stopped player, and the blocked
  * tiles found in a trail, so every movement spec reads the same server data the same way. The town NPCs and traders
  * get their random movement stopped
@@ -216,6 +217,21 @@ class MovementScenario
         return await RoomMovementApi.collectTrail(
             context.fetchPlayer,
             (player) => context.isStill(player) && tile[0] === player.currentCol && tile[1] === player.currentRow,
+            timeout
+        );
+    }
+
+    static async walkPlayerToTile(context, roomName, tile, timeout)
+    {
+        return await MovementScenario.movePlayer(
+            context.page,
+            MovementScenario.createWalkContext(
+                context.gameConfig,
+                roomName,
+                context.gameConfig.e2ePlayerName,
+                context.longRun
+            ),
+            tile,
             timeout
         );
     }
