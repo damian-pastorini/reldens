@@ -10,7 +10,8 @@
  * the client state and the player sprite on the placed position, optionally some tiles away from the object), the enemy
  * attack on a player, the battle of an already placed enemy, the player
  * placement next to another player, the enemies placed on a clear line from a player moved to a free tile (waiting for
- * the client on the player position), the player affected property (hp) value and the attack on the targeted body
+ * the client on the player position), the player moved to the closest free tile with a clear line (the line end tile
+ * returned), the player affected property (hp) value and the attack on the targeted body
  * repeated until a condition is reached.
  *
  */
@@ -168,6 +169,17 @@ class RoomObjectsApi
             gameConfig,
             '/api/e2e/room-objects/place-player-in-line-of-object',
             {roomName, objectKey, distances: distances.join(',')},
+            timeout
+        );
+    }
+
+    static async placePlayerOnLineStart(page, gameConfig, roomName, timeout, distances)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-on-line-start',
+            {roomName, distances: distances.join(',')},
             timeout
         );
     }
