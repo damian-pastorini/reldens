@@ -3,10 +3,12 @@
  * Reldens - Room Line Placement
  *
  * Server side e2e endpoints that put bodies on a straight line, so a physical skill bullet meets them in a known order:
- * the enemies line places the given enemies (their random movement stopped) on the tiles of a clear straight line from
- * the player tile to the given direction (RoomPlayerPlacement.findClearLineTile, no other body crosses it), one every
- * given tiles step, the first one the closest to the player; the wall line places the player and a target player on the two free walkable
- * tiles at both sides of a wall tile (RoomTileKindsClassifier wall tiles), the closest to the player, so a bullet shot
+ * the enemies line moves the player to the closest free walkable tile (closest distance first, then the lowest row and
+ * column, so the same room always gives the same tile, the player tile when it already fits) with a clear straight line
+ * to the given direction (RoomPlayerPlacement.findClearLineTile with the bullet start bounds, no other body crosses
+ * it), and places the given enemies (their random movement stopped) on that line, one every given tiles step, the
+ * first one the closest to the player, and returns the player and the enemies positions; the wall line places the
+ * player and a target player on the two free walkable tiles at both sides of a wall tile (RoomTileKindsClassifier wall tiles), the closest to the player, so a bullet shot
  * at the target ends on that wall.
  *
  */
@@ -22,6 +24,7 @@ class RoomLinePlacement
 {
 
     static LINE_DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    static MAX_START_TILES_RADIUS = 8;
 
     static fetchTile(body)
     {
@@ -36,6 +39,41 @@ class RoomLinePlacement
         return {x: (tileBounds.left + tileBounds.right) / 2, y: (tileBounds.top + tileBounds.bottom) / 2};
     }
 
+    static appendStartTiles(startTiles, fromTile, column)
+    {
+        let radius = RoomLinePlacement.MAX_START_TILES_RADIUS;
+        for(let row = fromTile[1] - radius; row <= fromTile[1] + radius; row++){
+            startTiles.push({tile: [column, row], distance: Math.hypot(column - fromTile[0], row - fromTile[1])});
+        }
+    }
+
+    static findLineStartTile(room, line, ignoredBodies)
+    {
+        let bodiesBounds = room.roomWorld.bodies.filter(
+            body => !ignoredBodies.includes(body) && !body.isWall && false !== body.collisionResponse
+        ).map(body => body.getAABB());
+        let radius = RoomLinePlacement.MAX_START_TILES_RADIUS;
+        let startTiles = [];
+        for(let column = line.fromTile[0] - radius; column <= line.fromTile[0] + radius; column++){
+            RoomLinePlacement.appendStartTiles(startTiles, line.fromTile, column);
+        }
+        return [...startTiles.sort(
+            (startA, startB) => startA.distance - startB.distance
+                || startA.tile[1] - startB.tile[1]
+                || startA.tile[0] - startB.tile[0]
+        ).filter(
+            start => RoomAggressionPlacement.isFreeTile(room, start.tile[0], start.tile[1], bodiesBounds)
+                && RoomPlayerPlacement.findClearLineTile(
+                    room,
+                    start.tile,
+                    RoomPlayerPlacement.shotStartBounds(room, start.tile),
+                    [line.length],
+                    ignoredBodies,
+                    [line.direction]
+                )
+        )].map(start => start.tile).shift();
+    }
+
     static placeEnemiesOnLine(room, sessionId, bodyKeys, tilesStep, direction)
     {
         let playerSchema = RoomObjectsState.findPlayer(room, '', sessionId);
@@ -43,32 +81,24 @@ class RoomLinePlacement
         if(!playerSchema || enemies.some(enemyObject => !enemyObject)){
             return {error: 'Player session '+sessionId+' or one of the enemies not found in '+room.roomName+'.'};
         }
-        let playerBody = playerSchema.physicalBody;
-        let line = {
-            fromTile: RoomLinePlacement.fetchTile(playerBody),
-            bounds: playerBody.getAABB(),
-            length: tilesStep * enemies.length
-        };
-        let isClearLine = RoomPlayerPlacement.findClearLineTile(
+        let startTile = RoomLinePlacement.findLineStartTile(
             room,
-            line.fromTile,
             {
-                left: line.bounds.lowerBound[0],
-                right: line.bounds.upperBound[0],
-                top: line.bounds.lowerBound[1],
-                bottom: line.bounds.upperBound[1]
+                fromTile: RoomLinePlacement.fetchTile(playerSchema.physicalBody),
+                length: tilesStep * enemies.length,
+                direction
             },
-            [line.length],
-            [playerBody, ...enemies.map(enemyObject => enemyObject.objectBody)],
-            [direction]
+            [playerSchema.physicalBody, ...enemies.map(enemyObject => enemyObject.objectBody)]
         );
-        if(!isClearLine){
-            return {error: 'No clear line of tiles from the player in '+room.roomName+' to '+String(direction)+'.'};
+        if(!startTile){
+            return {error: 'No free tile with a clear line of tiles to '+String(direction)+' in '+room.roomName+'.'};
         }
-        return {positions: enemies.map((enemyObject, enemyIndex) => {
+        let playerPosition = RoomLinePlacement.tileCenter(room, startTile);
+        RoomAggressionPlacement.placePlayer(playerSchema, playerPosition);
+        return {playerPosition, positions: enemies.map((enemyObject, enemyIndex) => {
             let position = RoomLinePlacement.tileCenter(room, [
-                line.fromTile[0] + direction[0] * tilesStep * (enemyIndex + 1),
-                line.fromTile[1] + direction[1] * tilesStep * (enemyIndex + 1)
+                startTile[0] + direction[0] * tilesStep * (enemyIndex + 1),
+                startTile[1] + direction[1] * tilesStep * (enemyIndex + 1)
             ]);
             RoomObjectsState.stopRandomMovement(enemyObject);
             RoomObjectsState.placeObjectBody(enemyObject.objectBody, position);
