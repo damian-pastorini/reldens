@@ -223,6 +223,9 @@ item is stored and added.
 `Battle.clientDeathUpdate()` (`lib/actions/server/battle.js`) stores the revive timer in the `playerDeathTimer` private
 data and emits `reldens.playerDeath` with `revivePlayerCallback`, the battle revive bound to the room, the body, the
 player, the affected property and the client, so the listeners never receive the battle.
+The death queues the player body for removal (`roomWorld.removeBodies`, processed on the next world step), and
+`Battle.revivePlayer()` takes the body off that queue before adding it back, so a revive that runs before that step
+(`players/gameOver/timeOut` 0) never ends with the revived player without body.
 `ActionsPlugin.setup()` (`lib/actions/server/plugin.js`) logs a missing events manager, data server or config.
 `listenEvents()` checks the events manager once and attaches nothing without it, and `listenConfigRequiredEvents()`
 checks the config once and attaches none of the listeners that need it without it (the player class path and skills
@@ -401,7 +404,9 @@ its ID; the disabled ads are never found.
   and the play stays closed
 
 `InventoryMessageActions` (`lib/inventory/server/message-actions.js`) rejects the equip of an item key that is not in
-the inventory or of an item without `equip()`, and the use of an item without `use()`.
+the inventory or of an item without `equip()`, and the use of an item without `use()`. The equip waits until the
+equipped item of the same group is unequipped (`unEquipPrevious()`) before equipping the new one, so the modifiers of
+the previous item are always reverted before the new item modifiers apply.
 
 ## Events added
 
