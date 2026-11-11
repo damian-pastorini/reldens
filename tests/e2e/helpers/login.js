@@ -11,6 +11,7 @@ const { Selectors } = require('../selectors');
 const { TimeConstants } = require('./time-constants');
 const { Navigation } = require('./navigation');
 const { SecurityApi } = require('./security-api');
+const { RoomObjectsApi } = require('./room-objects-api');
 
 class Login
 {
@@ -194,12 +195,12 @@ class Login
         return client;
     }
 
-    static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '')
+    static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '', skipUiSelectors = false)
     {
         let username = gameConfig['e2eUsername'+userKeySuffix] || 'root'+userKeySuffix;
         let password = gameConfig['e2ePassword'+userKeySuffix] || 'root';
         let playerName = gameConfig['e2ePlayerName'+userKeySuffix] || 'ImRoot'+userKeySuffix;
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors);
     }
 
     static async loginAndEnterForest(page, gameConfig, longRun)
@@ -220,6 +221,14 @@ class Login
         );
         expect(inForest, 'Player must reach '+Login.FOREST_ROOM_NAME).toBeTruthy();
         return { pauseMs, sceneTimeout, navTimeout };
+    }
+
+    static async moveThroughChangePoint(page, gameConfig, roomName, nextRoomName)
+    {
+        let placed = await RoomObjectsApi.placePlayerOnChangePoint(page, gameConfig, roomName, nextRoomName);
+        expect(placed.position, 'The player is placed on the change point to '+nextRoomName+': '+placed.error).toBeTruthy();
+        await Navigation.waitForRoom(page, nextRoomName, TimeConstants.ROOM_TRANSITION);
+        expect(await Navigation.getCurrentRoomName(page), 'The player reaches '+nextRoomName).toBe(nextRoomName);
     }
 }
 
