@@ -70,15 +70,9 @@ class TestInteractiveObjectsRocks
 
     static async walkToTile(context, position, timeout)
     {
-        let walkContext = MovementScenario.createWalkContext(
-            context.gameConfig,
+        return await MovementScenario.walkPlayerToTile(
+            context,
             Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName,
-            context.longRun
-        );
-        return await MovementScenario.movePlayer(
-            context.page,
-            walkContext,
             [Math.floor(position.x / Navigation.TILE_SIZE), Math.floor(position.y / Navigation.TILE_SIZE)],
             timeout
         );
