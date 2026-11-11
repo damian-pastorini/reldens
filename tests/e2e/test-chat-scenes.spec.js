@@ -54,7 +54,7 @@ class TestChatScenes
         let text = 'e2e-other-scene-private-'+Date.now();
         await ChatSteps.sendText(context.page, '@'+context.gameConfig.e2ePlayerName2+' '+text);
         await expect.poll(
-            async () => (await ChatSteps.fetchChat(context.secondPage)).map(message => [message.room, message[ChatConst.MESSAGE.KEY].trim()]),
+            async () => (await ChatSteps.fetchPlayersChat(context.secondPage)).map(message => [message.room, message[ChatConst.MESSAGE.KEY].trim()]),
             {message: 'The recipient in another scene gets it from the chat room', timeout: TimeConstants.SERVER_RESPONSE}
         ).toEqual([[ChatSteps.CHAT_ROOM, text]]);
     }
@@ -83,16 +83,7 @@ class TestChatScenes
         let secondGameConfig = Login.fetchSecondPlayerConfig(context.gameConfig);
         await Login.startConfigPlayer(context.page, context.gameConfig, context.longRun, Login.TOWN_ROOM_NAME);
         await Login.startConfigPlayer(context.secondPage, secondGameConfig, context.longRun, Login.FOREST_ROOM_NAME);
-        let thirdClient = await Login.openClientPage(context.page, context.gameConfig);
-        await Login.loginAndStartGame(
-            thirdClient.clientPage,
-            context.gameConfig.e2eUsername3,
-            context.gameConfig.e2ePassword3 || context.gameConfig.e2ePassword,
-            context.gameConfig.e2ePlayerName3,
-            context.longRun,
-            false,
-            Login.TOWN_ROOM_NAME
-        );
+        let thirdClient = await Login.startThirdPlayer(context, Login.TOWN_ROOM_NAME);
         await ChatSteps.recordChat(thirdClient.clientPage);
         let placed = await RoomObjectsApi.placePlayerOnChangePoint(context.secondPage, secondGameConfig, Login.FOREST_ROOM_NAME, Login.TOWN_ROOM_NAME);
         expect(placed.position, 'The second player is placed on the change point to the town: '+placed.error).toBeTruthy();
