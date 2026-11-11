@@ -84,15 +84,8 @@ class TestTimingObjectsCompletion
     {
         let mining = await TimingMiningSteps.prepare(context);
         test.setTimeout(test.info().timeout + TimeConstants.forLongRun(TimeConstants.GAME_START, context.longRun));
-        await Login.loginAndStartGame(
-            context.secondPage,
-            context.gameConfig.e2eUsername2,
-            context.gameConfig.e2ePassword2 || context.gameConfig.e2ePassword,
-            context.gameConfig.e2ePlayerName2,
-            context.longRun,
-            false,
-            Login.FOREST_ROOM_NAME
-        );
+        let secondGameConfig = Login.fetchSecondPlayerConfig(context.gameConfig);
+        await Login.startConfigPlayer(context.secondPage, secondGameConfig, context.longRun, Login.FOREST_ROOM_NAME);
         let placed = await RoomObjectsApi.placePlayerNextToObject(
             context.secondPage,
             Login.fetchSecondPlayerConfig(context.gameConfig),
