@@ -4,7 +4,9 @@
  *
  * Tests a game session from the login to the logout: the state saved and restored, the logout seen by others, the page
  * reload, the dropped connection, the room closing message, the closed connection, the scene change rejected mid game,
- * the feature room join failure, the quick relogin, the dead state handler, the login records and the played time.
+ * the feature room join failure, the quick relogin, the dead state handler, the login records and the played time. The
+ * walk that changes the saved position pauses the town moving objects (a wandering NPC can push the player after its
+ * position is read) and reads the position once the server shows the player stopped.
  *
  */
 
@@ -12,6 +14,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { Navigation } = require('./helpers/navigation');
 const { MovementScenario } = require('./helpers/movement-scenario');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
@@ -21,6 +24,7 @@ const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
 const { ChatConst } = require('../../lib/chat/constants');
 const GameTranslations = require('../../lib/game/client/snippets/en_US');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -31,15 +35,22 @@ class TestGameSessionLifecycle
     static SETTLE_MS = 1000;
     static CLOSING_SECONDS = 1;
 
-    static async fetchTownPlayer(gameConfig)
+    static async walkRight(page, gameConfig)
     {
-        return await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
-    }
-
-    static async walkRight(page)
-    {
+        await MovementScenario.pauseMovingObjects(gameConfig, Login.TOWN_ROOM_NAME);
         await Navigation.walkInDirection(page, 'ArrowRight', TestGameSessionLifecycle.WALK_MS);
-        await page.waitForTimeout(TestGameSessionLifecycle.SETTLE_MS);
+        let walkContext = MovementScenario.createWalkContext(
+            gameConfig,
+            Login.TOWN_ROOM_NAME,
+            gameConfig.e2ePlayerName,
+            false
+        );
+        let stopped = await RoomMovementApi.collectTrail(
+            walkContext.fetchPlayer,
+            walkContext.isStill,
+            walkContext.navTimeout
+        );
+        expect(stopped.done, 'The player must stop after the walk: '+sc.toJsonString(stopped.last)).toBe(true);
     }
 
     static async logout(page, longRun)
@@ -57,11 +68,6 @@ class TestGameSessionLifecycle
         });
     }
 
-    static async fetchUserRow(gameConfig)
-    {
-        return (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', {username: gameConfig.e2eUsername})).shift();
-    }
-
     static async fetchStoredState(gameConfig)
     {
         return (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'playersState', {
@@ -71,18 +77,19 @@ class TestGameSessionLifecycle
 
     static async runLogoutAndReloginTest(page, screenshots, gameConfig, longRun)
     {
+        let playerName = gameConfig.e2ePlayerName;
         await Login.loginRootPlayer(page, gameConfig, longRun);
-        let initialPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        let initialPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         let loweredLife = Math.floor(initialPlayer.totalLife / 2);
-        await RoomObjectsApi.setPlayerAffectedProperty(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName, loweredLife);
-        await TestGameSessionLifecycle.walkRight(page);
-        let loggedOutPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        await RoomObjectsApi.setPlayerAffectedProperty(gameConfig, Login.TOWN_ROOM_NAME, playerName, loweredLife);
+        await TestGameSessionLifecycle.walkRight(page, gameConfig);
+        let loggedOutPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         await TestGameSessionLifecycle.logout(page, longRun);
         await expect(page.locator(Selectors.reloadModal.container), 'No server down modal').toHaveCount(0);
         let storedState = await TestGameSessionLifecycle.fetchStoredState(gameConfig);
         expect([storedState.x, storedState.y]).toEqual([Math.trunc(loggedOutPlayer.x), Math.trunc(loggedOutPlayer.y)]);
         await Login.loginRootPlayer(page, gameConfig, longRun);
-        let restoredPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        let restoredPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         expect([restoredPlayer.x, restoredPlayer.y]).toEqual([storedState.x, storedState.y]);
         expect(restoredPlayer.life, 'The stats must be restored').toBe(loweredLife);
         await screenshots.capture(page, 'relogin-restored-state');
@@ -142,12 +149,13 @@ class TestGameSessionLifecycle
             seconds: TestGameSessionLifecycle.CLOSING_SECONDS
         });
         await TestGameSessionLifecycle.expectModalText(page, GameTranslations.game.errors.roomClosed, longRun);
-        let modalPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        let playerName = gameConfig.e2ePlayerName;
+        let modalPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         await page.keyboard.down('ArrowRight');
         await page.waitForTimeout(TestGameSessionLifecycle.WALK_MS);
         await page.keyboard.up('ArrowRight');
         await page.waitForTimeout(TestGameSessionLifecycle.SETTLE_MS);
-        let afterKeysPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        let afterKeysPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         expect([afterKeysPlayer.x, afterKeysPlayer.y], 'The keys must not reach the game').toEqual([
             modalPlayer.x,
             modalPlayer.y
@@ -201,12 +209,13 @@ class TestGameSessionLifecycle
 
     static async runQuickReloginTest(page, secondPage, gameConfig, longRun)
     {
+        let playerName = gameConfig.e2ePlayerName;
         await Login.loginRootPlayer(page, gameConfig, longRun);
-        await TestGameSessionLifecycle.walkRight(page);
-        let closedPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        await TestGameSessionLifecycle.walkRight(page, gameConfig);
+        let closedPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         await page.goto('about:blank');
         await Login.loginRootPlayer(secondPage, gameConfig, longRun);
-        let reloggedPlayer = await TestGameSessionLifecycle.fetchTownPlayer(gameConfig);
+        let reloggedPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         expect([reloggedPlayer.x, reloggedPlayer.y], 'The saved position must be loaded').toEqual([
             Math.trunc(closedPlayer.x),
             Math.trunc(closedPlayer.y)
@@ -223,12 +232,17 @@ class TestGameSessionLifecycle
         await RoomObjectsApi.setPlayerAffectedProperty(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName, 0);
         await TestGameSessionLifecycle.logout(page, longRun);
         await Login.loginRootPlayer(page, gameConfig, longRun);
-        return (await TestGameSessionLifecycle.fetchTownPlayer(gameConfig)).inState;
+        return (await GameplayE2eStateApi.fetchPlayer(
+            gameConfig,
+            Login.TOWN_ROOM_NAME,
+            gameConfig.e2ePlayerName
+        )).inState;
     }
 
     static async runLoginRecordsTest(page, screenshots, gameConfig, longRun)
     {
-        let storedUser = await TestGameSessionLifecycle.fetchUserRow(gameConfig);
+        let usersFilter = {username: gameConfig.e2eUsername};
+        let storedUser = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', usersFilter)).shift();
         let loginsBefore = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLogin', {user_id: storedUser.id})).length;
         await Login.loginRootPlayer(page, gameConfig, longRun);
         await expect(page.locator(GameConst.SELECTORS.FORMS_CONTAINER)).toHaveCount(0);
@@ -237,7 +251,9 @@ class TestGameSessionLifecycle
         expect(await page.evaluate(() => window.reldens.initialGameData.guestPassword), 'No guest password').toBe('');
         let logins = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLogin', {user_id: storedUser.id});
         expect(logins.length).toBe(loginsBefore + 1);
-        expect((await TestGameSessionLifecycle.fetchUserRow(gameConfig)).login_count).toBe(Number(storedUser.login_count) + 1);
+        expect((await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', usersFilter)).shift().login_count).toBe(
+            Number(storedUser.login_count) + 1
+        );
         await screenshots.capture(page, 'login-records');
     }
 
@@ -263,12 +279,15 @@ class TestGameSessionLifecycle
 
     static async runPlayedTimeTest(page, gameConfig, longRun)
     {
-        let storedUser = await TestGameSessionLifecycle.fetchUserRow(gameConfig);
+        let usersFilter = {username: gameConfig.e2eUsername};
+        let storedUser = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', usersFilter)).shift();
         await Login.loginRootPlayer(page, gameConfig, longRun);
         await page.waitForTimeout(TestGameSessionLifecycle.SETTLE_MS * 2);
         await TestGameSessionLifecycle.logout(page, longRun);
         await expect.poll(
-            async () => Number((await TestGameSessionLifecycle.fetchUserRow(gameConfig)).played_time),
+            async () => Number(
+                (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', usersFilter)).shift().played_time
+            ),
             {message: 'The played time must grow'}
         ).toBeGreaterThan(Number(storedUser.played_time));
         await expect.poll(async () => Boolean(
