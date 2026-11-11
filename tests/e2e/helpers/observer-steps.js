@@ -3,7 +3,7 @@
  * Reldens - Observer Steps
  *
  * Client steps shared by the specs with a second player that watches the first one: the forest quest NPC dialog opened
- * by a player placed next to it, and the team of both group players (the first player targets the second one with the
+ * by a player placed next to it, the second player placed next to the first one in the forest, and the team of both group players (the first player targets the second one with the
  * same client method the sprite click calls, invites it from the target box and the second one accepts), and the wait
  * until the rewards of the first player reach both team members (the reward targets count of an empty reward).
  *
@@ -41,15 +41,20 @@ class ObserverSteps
         ).not.toHaveCount(0, {timeout: TimeConstants.UI_OPEN});
     }
 
-    static async joinTeam(context, secondSessionId)
+    static async placeSecondNextToFirst(gameConfig)
     {
         let placed = await RoomObjectsApi.placePlayerNearPlayer(
-            context.gameConfig,
+            gameConfig,
             Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName2,
-            context.gameConfig.e2ePlayerName
+            gameConfig.e2ePlayerName2,
+            gameConfig.e2ePlayerName
         );
         expect(placed.position, 'The second player must be placed next to the first one: '+placed.error).toBeTruthy();
+    }
+
+    static async joinTeam(context, secondSessionId)
+    {
+        await ObserverSteps.placeSecondNextToFirst(context.gameConfig);
         await Phaser.waitForPlayerBySessionId(context.page, secondSessionId, TimeConstants.SCENE_LOAD);
         await context.page.evaluate(
             (targetSessionId) => window.reldens.getCurrentPlayer().setTargetPlayerById(targetSessionId),
