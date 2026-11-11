@@ -67,7 +67,7 @@ class TestChatPrivate
         await TestChatPrivate.expectPrivate(context.page, [text], 'The sender gets its message');
         await TestChatPrivate.expectPrivate(context.secondPage, [text], 'The recipient gets the message');
         await pages[2].waitForTimeout(TestChatPrivate.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(pages[2]), 'The unrelated player gets nothing').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(pages[2]), 'The unrelated player gets nothing').toEqual([]);
         expect(await pages[2].evaluate(
             (senderName) => Object.values(window.reldens.getCurrentPlayer().players).some(
                 player => senderName === player.playerName && Boolean(player.overheadTextSprite)
@@ -87,7 +87,7 @@ class TestChatPrivate
                 .toContainText(ChatTranslations.chat.playerNotFound.replace('%playerName', recipientName));
             await context.page.waitForTimeout(TestChatPrivate.COOLDOWN_MS);
         }
-        expect(await ChatSteps.fetchChat(context.secondPage), 'Nothing is delivered').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
     }
 
     static async runSelfMessageTest(context)
@@ -104,8 +104,8 @@ class TestChatPrivate
         await ChatSteps.sendText(context.page, '@'+context.gameConfig.e2ePlayerName2);
         await expect(context.page.locator(Selectors.chat.input), 'The input is cleared').toHaveValue('');
         await context.secondPage.waitForTimeout(TestChatPrivate.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(context.page), 'Nothing is sent').toEqual([]);
-        expect(await ChatSteps.fetchChat(context.secondPage), 'Nothing is delivered').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.page), 'Nothing is sent').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
     }
 
     static async runTamperedTest(context)
@@ -125,7 +125,7 @@ class TestChatPrivate
         await ChatSteps.recordChat(context.secondPage);
         await ChatSteps.sendRaw(context.page, noRecipientMessage, true);
         await context.secondPage.waitForTimeout(TestChatPrivate.SETTLE_MS);
-        expect(await ChatSteps.fetchChat(context.secondPage), 'Nothing is delivered').toEqual([]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
         expect(await TestChatPrivate.fetchStoredRows(context.gameConfig, noRecipientMessage[ChatConst.MESSAGE.KEY]), 'No row')
             .toEqual([]);
     }
