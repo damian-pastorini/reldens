@@ -7,7 +7,8 @@
  * on (the move rule off) leaving the rock interaction area cancels with one timingCancel, no reward and the rock still
  * active, colliding and without a new respawn; with it on, a short walk along the rock side keeps the mining and it
  * rewards; with the move rule off (the out of range rule on or off) the mining completes after a short walk or after
- * leaving the area; a cancelled mining started again on the same rock completes with one reward; a player still walking
+ * leaving the area; a cancelled mining started again on the same rock (once the server shows the player stopped, a body
+ * still moving cancels the new mining by the move rule) completes with one reward; a player still walking
  * when the mining starts is cancelled; a direction key held against the rock starts the mining touching it (the
  * collision moves the body back, so the move rule cancels it, ISSUE #70); and a move after timingComplete sends no
  * timingCancel.
@@ -19,6 +20,8 @@ const { TimingMiningSteps } = require('./helpers/timing-mining-steps');
 const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { Navigation } = require('./helpers/navigation');
 const { Phaser } = require('./helpers/phaser');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
@@ -76,6 +79,12 @@ class TestTimingObjectsRules
             async () => (await TimingObjectSession.fetchTimingState(context.gameConfig, mining.rockKey)).isActive,
             {message: 'The cancelled rock is free', timeout: mining.serverTimeout}
         ).toBe(false);
+        await RoomMovementApi.waitForPlayerStill(
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            context.gameConfig.e2ePlayerName,
+            mining.serverTimeout
+        );
         await TimingObjectSession.startTiming(context.page, mining.rockKey, mining.serverTimeout);
         await TimingMiningSteps.expectCompleted(context.page, mining, 'The restarted mining completes');
     }
