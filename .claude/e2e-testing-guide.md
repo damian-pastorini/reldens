@@ -62,8 +62,26 @@ Flags accepted by `tests/e2e/run-tests.js`:
 - `--db-reset=<dbName>` - drops every table and rebuilds the database from `migrations/production` before the run;
   the value must match `dbName` in `tests/config.json` (`--db-reset=reldens_local`), otherwise the run stops without
   touching the database, so a wrong `dbName` can never drop another database
+- `--skip-servers=server-2` - the second game server instance is not created (see "Server instances"), the specs that
+  need it fail on `E2eServerInstances.forServer()` with the instance named
+- `--skip-db-reset=server-1,server-2` - the database reset of the listed instances is skipped (with `--db-reset`), a
+  database shared by several instances is reset only once
 - `--max-failures=<n>` - overrides the stop-on-failure limit
 - `--all` - runs every test regardless of failures
+
+## Server instances
+
+Every run boots the numbered game servers `server-1` and `server-2` (`tests/e2e/helpers/e2e-server-instances.js`):
+both share the `tests/config.json` database and the `RELDENS_SIGNED_TOKENS_SECRET` of the app `.env`, `server-1` runs
+on the found e2e port and `server-2` on the next free port (`run-tests.js` passes them in `RELDENS_E2E_SERVERS_PORTS`).
+`server-1` boots in the Playwright global setup process (`collect-game-data.js`), `server-2` in its own child process
+(`tests/e2e/forked-server-instance.js`, a second `ServerManager` in one process would share the events manager
+singleton) with the same startup and the same e2e endpoints, it logs to `test-results/server-2.log` and the global
+teardown shuts it down. A `servers` entry in `tests/config.json` overrides the config of one instance, like
+`{"servers": {"server-2": {"serverPath": "../other-checkout/app"}}}`. The per test reset runs on every instance and a
+spec reaches `server-2` with `E2eServerInstances.forServer(gameConfig, 'server-2')`, the game config whose
+`serverBaseUrl` is used by the e2e endpoints requests (`SecurityApi`) and by the client pages it opens
+(`Login.openClientPage()`).
 
 ## Stop on first failure
 
