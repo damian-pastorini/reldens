@@ -9,9 +9,10 @@
  * overwrites the restored state and its body never stays in a room the next test uses; a session still there after the
  * wait, left by a room leave that failed, is removed with its team and its active player entry), the team invites sent
  * by the group players are cleared (the teams plugin keeps them over a new login), then the group players are
- * reset to full HP, placed on the default return point of the group start room, and have all equipped items
- * unequipped, the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
- * enemies and the random movement are restored only in the group rooms.
+ * reset to full HP, placed on the default return point of the group start room, have all equipped items unequipped
+ * and their scores and score details back to the rows captured on the setup (a kill of an earlier test never leaves a
+ * score row the next test does not expect), the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
+ * enemies and the random movement are restored and the drops left by the tests removed only in the group rooms.
  *
  */
 
@@ -19,6 +20,7 @@ const { setTimeout: waitMs } = require('timers/promises');
 const { Logger, sc } = require('@reldens/utils');
 const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
+const { DropsProbe } = require('./drops-probe');
 const { RoomMovementState } = require('./room-movement-state');
 const { LiveObjectsOverrides } = require('./live-objects-overrides');
 const { SecurityState } = require('./security-state');
@@ -29,6 +31,7 @@ class PlayerStateReset
 {
     static LEAVE_CHECKS = 100;
     static LEAVE_CHECK_MS = 100;
+    static SCORES_ENTITIES = ['scores', 'scoresDetail'];
 
     static async captureSnapshots(dataServer, config)
     {
@@ -52,6 +55,7 @@ class PlayerStateReset
                 stats,
                 state,
                 inventoryItems: inventoryItems || [],
+                scoresRows: await PlayerStateReset.loadScoresRows(dataServer, playerId),
                 userId: user.id,
                 username: testUser.username,
                 playerName: matched.name
@@ -84,6 +88,39 @@ class PlayerStateReset
                 qty: invItem.qty,
                 remaining_uses: invItem.remaining_uses
             });
+        }
+    }
+
+    static async loadScoresRows(dataServer, playerId)
+    {
+        let scoresRows = {};
+        for(let entityKey of PlayerStateReset.SCORES_ENTITIES){
+            scoresRows[entityKey] = await dataServer.getEntity(entityKey).loadBy('player_id', playerId) || [];
+        }
+        return scoresRows;
+    }
+
+    static async restorePlayerScores(dataServer, playerId, scoresRows)
+    {
+        for(let entityKey of PlayerStateReset.SCORES_ENTITIES){
+            await PlayerStateReset.restorePlayerRows(
+                dataServer.getEntity(entityKey),
+                playerId,
+                sc.get(scoresRows, entityKey, [])
+            );
+        }
+    }
+
+    static async restorePlayerRows(repository, playerId, snapshotRows)
+    {
+        let snapshotIds = snapshotRows.map(row => String(row.id));
+        for(let currentRow of await repository.loadBy('player_id', playerId) || []){
+            if(!snapshotIds.includes(String(currentRow.id))){
+                await repository.deleteById(currentRow.id);
+            }
+        }
+        for(let snapshotRow of snapshotRows){
+            await repository.updateById(snapshotRow.id, TestDataSetup.copyRow(snapshotRow, {}));
         }
     }
 
@@ -167,6 +204,7 @@ class PlayerStateReset
             let snap = snapshots[playerId];
             await PlayerStateReset.restorePlayerStats(dataServer, snap.stats);
             await PlayerStateReset.restorePlayerInventory(dataServer, playerId, snap.inventoryItems || []);
+            await PlayerStateReset.restorePlayerScores(dataServer, playerId, snap.scoresRows);
             await PlayerStateReset.clearRewardsState(dataServer, playerId);
             if(snap.userId){
                 await PlayerStateReset.ensureTodayLogin(dataServer, snap.userId);
@@ -263,6 +301,7 @@ class PlayerStateReset
                 );
                 await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config, groupUsers);
                 await RoomEnemiesReset.restoreAll(serverManager.roomsManager, roomsNames);
+                DropsProbe.clearRoomsDrops(serverManager.roomsManager, roomsNames);
                 RoomMovementState.restoreRandomMovement(serverManager.roomsManager, roomsNames);
                 response.json({ ok: true });
             } catch(error){
