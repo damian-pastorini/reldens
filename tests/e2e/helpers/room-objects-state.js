@@ -11,7 +11,8 @@
  * the random movement stop and the body placement used by the placement helpers (RoomAnchoredPlacement,
  * RoomEnemyPlacement), the rectangle over bodies check; and the player
  * affected property (hp) set on the live player and sent to its client, so the specs that need a death set the exact
- * life the next hit removes instead of depending on the enemies damage rate.
+ * life the next hit removes instead of depending on the enemies damage rate (the answer holds the value set, read
+ * before the stats save, since an enemy hit can land while the save runs).
  *
  */
 
@@ -221,8 +222,9 @@ class RoomObjectsState
         }
         let affectedProperty = room.config.get('client/actions/skills/affectedProperty');
         playerSchema.stats[affectedProperty] = value;
+        let changed = {affectedProperty, value: playerSchema.stats[affectedProperty]};
         await room.savePlayerStats(playerSchema, room.getClientById(playerSchema.sessionId));
-        return {affectedProperty, value: playerSchema.stats[affectedProperty]};
+        return changed;
     }
 
     static async respondForRoom(serverManager, roomName, response, roomAction)
