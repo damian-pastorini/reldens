@@ -2,10 +2,11 @@
  *
  * Reldens - Test Kill Score Attackers
  *
- * Tests who is scored by a kill (KillScoreRulesSteps, the attack range check off for the attackers that are not next to
- * the target): an enemy and a player killed with the physical attack bullet skill are scored (the target is on the left
+ * Tests who is scored by a kill (KillScoreRulesSteps, the attack range check off for every attacker, so a player that
+ * logs in on the shared return point and pushes the target never puts it out of reach): an enemy and a player killed with the physical attack bullet skill are scored (the target is on the left
  * of the attacker, the only direction the bullet hit resolves, see real-issues.md); two players that hit the same enemy
- * and the same player at the same time give a single kill score; an attacker that kills an enemy in the forest, changes
+ * and the same player at the same time give a single kill score; an attacker that kills an enemy in the forest (the
+ * forest observer logs in first and is moved next to the chest, so nobody stands on the return point), changes
  * to the town and kills a player there keeps both kills on its same score row and the town broadcast reaches the town
  * only, the forest player gets none; and a guest player that kills an enemy gets its score row and its score line.
  *
@@ -23,6 +24,7 @@ const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -84,9 +86,11 @@ class TestKillScoreAttackers
             Login.FOREST_ROOM_NAME,
             [placement.bodyKey],
             TestKillScoreAttackers.LINE_TILES_STEP,
-            TestKillScoreAttackers.LEFT_DIRECTION
+            TestKillScoreAttackers.LEFT_DIRECTION,
+            TimeConstants.SCENE_LOAD
         );
         expect(line.positions, 'The enemy must be placed on the left of the player: '+line.error).toHaveLength(1);
+        expect(line.reached, 'The client must show the player on the line start').toBe(true);
         await CombatSkillCasting.targetEnemy(context.page, {bodyKey: placement.bodyKey});
         let totalBefore = await KillScoreSteps.fetchTotalScore(context.gameConfig, scoreData.playerId);
         await KillScoreSteps.attackUntil(
@@ -130,6 +134,7 @@ class TestKillScoreAttackers
         let placement = await KillScoreSteps.placeEnemyWithKillScore(context.page, context.gameConfig, context.longRun);
         await Login.loginAndEnterForest(context.secondPage, Login.fetchSecondPlayerConfig(context.gameConfig), context.longRun);
         await KillScoreRulesSteps.prepareSecondPlayerKill(context, placement.bodyKey);
+        await KillScoreRulesSteps.useDirectAttack(context, Login.FOREST_ROOM_NAME, context.gameConfig.e2ePlayerName);
         let playerIds = [scoreData.playerId, secondScoreData.playerId];
         let before = await TestKillScoreAttackers.fetchKillsSum(context, playerIds, 'npcs_kills_count');
         await TestKillScoreAttackers.clickAttackTogether(context);
@@ -149,7 +154,7 @@ class TestKillScoreAttackers
         let {scoreData, secondScoreData} = await KillScoreRulesSteps.prepareTwoPlayers(context);
         await Login.loginAndEnterForest(context.page, context.gameConfig, context.longRun);
         await Login.loginAndEnterForest(context.secondPage, Login.fetchSecondPlayerConfig(context.gameConfig), context.longRun);
-        let victimPage = await KillScoreSteps.loginThirdInForest(context);
+        let victimPage = (await Login.startThirdPlayer(context, Login.FOREST_ROOM_NAME)).clientPage;
         let victimName = context.gameConfig.e2ePlayerName3;
         let placed = await RoomObjectsApi.placePlayerNearPlayer(
             context.gameConfig,
@@ -190,8 +195,16 @@ class TestKillScoreAttackers
     static async runRoomChangeKillsTest(context)
     {
         let scoreData = await KillScoreRulesSteps.prepare(context);
+        let forestPage = (await Login.startThirdPlayer(context, Login.FOREST_ROOM_NAME)).clientPage;
+        await TimingObjectSession.placeNextToObject(
+            forestPage,
+            context.gameConfig,
+            context.gameConfig.e2eChestKey,
+            TimeConstants.SCENE_LOAD,
+            'chest, away from the return point the attacker logs in on'
+        );
         await KillScoreSteps.placeEnemyWithKillScore(context.page, context.gameConfig, context.longRun);
-        let forestPage = await KillScoreSteps.loginThirdInForest(context);
+        await KillScoreRulesSteps.useDirectAttack(context, Login.FOREST_ROOM_NAME, context.gameConfig.e2ePlayerName);
         await RoomMessagesRecorder.start(forestPage);
         await KillScoreSteps.attackUntilKill(context.page, context.gameConfig);
         await expect.poll(
