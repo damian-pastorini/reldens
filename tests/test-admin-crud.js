@@ -16,6 +16,7 @@ class TestAdminCrud extends BaseTest
     constructor(config)
     {
         super(config);
+        this.isIntegration = true;
         this.entitiesWithoutRequiredFK = EntitiesList.getEntitiesWithoutRequiredFK();
         this.entitiesWithRequiredFK = EntitiesList.getEntitiesWithRequiredFK();
         this.entitiesWithUploadsButNoRequiredFK = EntitiesList.getEntitiesWithUploadsButNoRequiredFK();
