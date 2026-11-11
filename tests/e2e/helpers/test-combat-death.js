@@ -19,34 +19,49 @@ class TestCombatDeath
 {
     static POLL_STEP_MS = 500;
     static LAST_HIT_POINTS = 1;
+    static ENEMY_OBJECT_TYPE = 4;
 
     static async killPlayerWithEnemyAttack(page, gameConfig, enemyAssetKey, timeout)
     {
-        let playerName = sc.get(gameConfig, 'e2ePlayerName', 'ImRoot');
         let lastHitPoints = await RoomObjectsApi.setPlayerAffectedProperty(
             gameConfig,
             Login.FOREST_ROOM_NAME,
-            playerName,
+            sc.get(gameConfig, 'e2ePlayerName', 'ImRoot'),
             TestCombatDeath.LAST_HIT_POINTS
         );
         expect(lastHitPoints.value, 'The player last hit points must be set: '+sc.get(lastHitPoints, 'error', ''))
             .toBe(TestCombatDeath.LAST_HIT_POINTS);
+        await TestCombatDeath.startEnemyAttack(gameConfig, enemyAssetKey);
+        await TestCombatDeath.waitForPlayerHpCondition(page, 'dead', timeout);
+    }
+
+    static async startEnemyAttack(gameConfig, enemyAssetKey)
+    {
         let enemyAttack = await RoomObjectsApi.startEnemyAttack(
             gameConfig,
             Login.FOREST_ROOM_NAME,
-            playerName,
+            sc.get(gameConfig, 'e2ePlayerName', 'ImRoot'),
             enemyAssetKey
         );
         expect(enemyAttack.enemyKey, 'The enemy attack must start: '+sc.get(enemyAttack, 'error', '')).toBeTruthy();
-        await TestCombatDeath.waitForPlayerHpCondition(page, 'dead', timeout);
+        return enemyAttack;
+    }
+
+    static loadPassiveEnemyKey()
+    {
+        let passiveEnemyArea = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']).find(
+            area => TestCombatDeath.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
+        );
+        expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
+        return passiveEnemyArea.assetKey;
     }
 
     static loadOtherEnemyKey(gameConfig)
     {
         let respawnAreas = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']);
-        let configuredLayerName = respawnAreas.find(area => gameConfig.e2eEnemyKey === area.assetKey).layerName;
         return respawnAreas.find(
-            respawnArea => gameConfig.e2eEnemyKey !== respawnArea.assetKey && configuredLayerName === respawnArea.layerName
+            otherArea => gameConfig.e2eEnemyKey !== otherArea.assetKey
+                && otherArea.layerName === respawnAreas.find(area => gameConfig.e2eEnemyKey === area.assetKey).layerName
         ).assetKey;
     }
 
@@ -81,14 +96,14 @@ class TestCombatDeath
             return false;
         }
         return page.waitForFunction(
-            (cond) => {
+            () => {
                 let playerData = window.reldens && window.reldens.playerData;
                 if(!playerData || !playerData.stats){
                     return false;
                 }
                 return Number(playerData.stats.hp) <= 0;
             },
-            condition,
+            null,
             { timeout }
         );
     }
