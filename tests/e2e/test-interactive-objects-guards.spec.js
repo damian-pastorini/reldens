@@ -4,8 +4,9 @@
  *
  * Tests which interaction messages start a timing on the forest timing objects (TimingMiningSteps, the messages sent
  * from the client as a tampered client would): a wrong id to the rocks or to the fishing spots and a different act with
- * a valid rock id start nothing; the shared rock template id sent next to the rocks cluster starts at most one timing;
- * a player in range of two rocks gets one active timing; a disabled player starts nothing; a room with every action
+ * a valid rock id start nothing; the shared rock template id sent next to the rocks cluster starts nothing, a respawn
+ * rock answers only its own key; a player in range of two rocks gets exactly one timing, on the first rock; a disabled
+ * player starts nothing; a room with every action
  * disabled or with the interaction act disallowed (its custom data changed for the group) starts nothing; a rock with
  * the run on hit rule (changed for the group) starts when the player walks into it and starts no second timing for
  * another player walking into it; the progress bar and the tool are shown during the timing and removed at the end; and
@@ -22,7 +23,6 @@ const { Navigation } = require('./helpers/navigation');
 const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
-const { GameConst } = require('../../lib/game/constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -89,9 +89,7 @@ class TestInteractiveObjectsGuards
     {
         let mining = await TestInteractiveObjectsGuards.prepare(context);
         await TestInteractiveObjectsGuards.sendInteraction(context.page, mining.rockKey, {useTemplateId: true});
-        await context.page.waitForTimeout(TestInteractiveObjectsGuards.SETTLE_MS);
-        expect(await TimingObjectSession.fetchRecordedActions(context.page), 'The shared template id starts a timing')
-            .toContain(TimingMiningSteps.START);
+        await TestInteractiveObjectsGuards.expectNoTiming(context.page, 'The shared template id starts no respawn rock');
     }
 
     static async runTwoRocksInRangeTest(context)
@@ -111,21 +109,17 @@ class TestInteractiveObjectsGuards
         await TestInteractiveObjectsGuards.sendInteraction(context.page, mining.rockKey, {});
         await TestInteractiveObjectsGuards.sendInteraction(context.page, rockInRange.bodyKey, {});
         await context.page.waitForTimeout(TestInteractiveObjectsGuards.SETTLE_MS);
-        expect(await TimingObjectSession.fetchRecordedActions(context.page), 'The first timing starts').toContain(TimingMiningSteps.START);
+        let startedKeys = (await TimingObjectSession.fetchRecordedMessages(context.page)).map(message => message.key);
+        expect(await TimingObjectSession.fetchRecordedActions(context.page), 'One timing starts').toEqual([TimingMiningSteps.START]);
+        expect(startedKeys, 'The first rock runs the timing').toEqual([mining.rockKey]);
     }
 
     static async runDisabledPlayerTest(context)
     {
         let mining = await TestInteractiveObjectsGuards.prepare(context);
-        let disabled = await GameplayE2eStateApi.setPlayerState(
-            context.gameConfig,
-            Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName,
-            GameConst.STATUS.DISABLED
-        );
-        expect(disabled.inState, 'The player is disabled: '+disabled.error).toBe(GameConst.STATUS.DISABLED);
+        await TimingObjectSession.disableForestPlayer(context.gameConfig);
         await TestInteractiveObjectsGuards.sendInteraction(context.page, mining.rockKey, {});
-        await context.page.waitForTimeout(TestInteractiveObjectsGuards.SETTLE_MS);
+        await TestInteractiveObjectsGuards.expectNoTiming(context.page, 'The disabled player starts no timing');
     }
 
     static async runRoomActionsTest(context, customData, message)
@@ -196,10 +190,10 @@ class TestInteractiveObjectsGuards
             test('wrong ids and a different act start no timing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsGuards.runWrongIdsTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('shared rock template id starts at most one timing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('shared rock template id starts no respawn rock', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsGuards.runTemplateIdTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('player in range of two rocks gets one active timing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('player in range of two rocks gets exactly one timing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsGuards.runTwoRocksInRangeTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('disabled player starts no timing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
