@@ -4,6 +4,7 @@
  *
  */
 
+const timersPromises = require('timers/promises');
 const { BaseTest } = require('./base-test');
 const { RoomScene } = require('../lib/rooms/server/scene');
 const { GameConst } = require('../lib/game/constants');
@@ -19,17 +20,29 @@ class TestSceneJoinAdmission extends BaseTest
         roomScene.disposeTimeoutTimer = joinSetup.disposeTimeoutTimer;
         roomScene.events = {emit: async (eventName) => joinSetup.emittedEvents.push(eventName)};
         roomScene.config = {
-            server: {rooms: {validation: {enabled: false}}},
+            server: {rooms: {validation: joinSetup.validation}},
             client: {rooms: {selection: {allowOnRegistration: false, allowOnLogin: false}}}
         };
-        roomScene.loginManager = {isGuestUser: () => false};
+        roomScene.loginManager = {
+            isGuestUser: () => joinSetup.isGuest,
+            roomsManager: {availableRoomsGuest: joinSetup.guestRooms},
+            activePlayers: {add: () => joinSetup.activePlayers.push(true)}
+        };
         roomScene.createPlayerOnScene = async () => joinSetup.createdPlayers.push(true);
         return roomScene;
     }
 
-    async joinScene(userModel)
+    async joinScene(userModel, joinOptions)
     {
-        let joinSetup = {emittedEvents: [], createdPlayers: [], disposeTimeoutTimer: {timerId: 'dispose-timer'}};
+        let joinSetup = Object.assign({
+            emittedEvents: [],
+            createdPlayers: [],
+            activePlayers: [],
+            disposeTimeoutTimer: {timerId: 'dispose-timer'},
+            validation: {enabled: false},
+            isGuest: false,
+            guestRooms: {}
+        }, joinOptions);
         let roomScene = this.createSceneRoom(joinSetup);
         joinSetup.joinError = await roomScene.onJoin({sessionId: 'session-a'}, {}, userModel)
             .then(() => false)
@@ -63,6 +76,43 @@ class TestSceneJoinAdmission extends BaseTest
         });
     }
 
+    async testTheGuestJoinOutsideTheGuestRoomsIsRejected()
+    {
+        await this.test('a guest join to a room outside the guest rooms is rejected by the rooms validation', async () => {
+            let joinSetup = await this.joinScene(
+                {id: 1, username: 'guest', player: {id: 7, state: {scene: 'reldens-town'}}},
+                {isGuest: true, guestRooms: {forest: {roomName: 'reldens-forest'}}}
+            );
+            this.assert.strictEqual(joinSetup.joinError, GameConst.JOIN_GAME_ERROR_MESSAGE);
+            this.assert.strictEqual(joinSetup.createdPlayers.length, 0);
+            this.assert.strictEqual(joinSetup.activePlayers.length, 0);
+            this.assert.deepStrictEqual(
+                joinSetup.emittedEvents.filter((eventName) => 'reldens.joinRoomInvalid' === eventName),
+                ['reldens.joinRoomInvalid']
+            );
+            this.assert.deepStrictEqual(joinSetup.remainingTimer, {timerId: 'dispose-timer'});
+        });
+    }
+
+    async testTheJoinOnTheSavedRoomIsAdmitted()
+    {
+        await this.test('a player or guest join to its saved room is admitted and clears the dispose timer', async () => {
+            let validRoomsJoin = {validation: {enabled: true, valid: 'reldens-town'}};
+            let guestJoin = {isGuest: true, guestRooms: {town: {roomName: 'reldens-town'}}};
+            for(let joinOptions of [{}, validRoomsJoin, guestJoin]){
+                let joinSetup = await this.joinScene(
+                    {id: 1, username: 'player', player: {id: 7, state: {scene: 'reldens-town'}}},
+                    joinOptions
+                );
+                this.assert.strictEqual(joinSetup.joinError, false);
+                this.assert.strictEqual(joinSetup.createdPlayers.length, 1);
+                this.assert.strictEqual(joinSetup.activePlayers.length, 1);
+                this.assert.deepStrictEqual(joinSetup.emittedEvents, ['reldens.joinRoomStart', 'reldens.joinRoomEnd']);
+                this.assert.strictEqual(joinSetup.remainingTimer, false);
+            }
+        });
+    }
+
     async testTheSceneRoomIsNotCreatedWhileTheServerIsOverloaded()
     {
         await this.test('a scene room is not created while the server is overloaded', async () => {
@@ -73,6 +123,40 @@ class TestSceneJoinAdmission extends BaseTest
                 {message: GameConst.SERVER_BUSY_MESSAGE}
             );
             this.assert.deepStrictEqual(creatingInstances, {});
+        });
+    }
+
+    createLeavingSceneRoom(remainingClients, disposedRooms)
+    {
+        let roomScene = Object.create(RoomScene.prototype, {roomName: {value: 'reldens-house-1'}});
+        roomScene.disposeTimeoutMs = 30;
+        roomScene.disposeTimeoutTimer = false;
+        roomScene.playersLastStateTimers = {};
+        roomScene.clients = remainingClients;
+        roomScene.playerBySessionIdFromState = (sessionId) => ({player_id: 7, sessionId});
+        roomScene.savePlayedTime = async () => true;
+        roomScene.savePlayerStats = async () => true;
+        roomScene.savePlayerState = async () => true;
+        roomScene.removePlayer = async () => true;
+        roomScene.removeActivePlayer = () => true;
+        roomScene.disconnect = () => disposedRooms.push(remainingClients.length);
+        return roomScene;
+    }
+
+    async testTheLastPlayerLeavingDisposesTheRoomAfterTheTimeout()
+    {
+        await this.test('the last player leaving disposes the room after the dispose timeout, a player still in it keeps it', async () => {
+            let disposedRooms = [];
+            let emptyRoom = this.createLeavingSceneRoom([], disposedRooms);
+            let occupiedRoom = this.createLeavingSceneRoom([{sessionId: 'session-b'}], disposedRooms);
+            await emptyRoom.onLeave({sessionId: 'session-a'}, true);
+            await occupiedRoom.onLeave({sessionId: 'session-a'}, true);
+            let disposedBeforeTheTimeout = [...disposedRooms];
+            await timersPromises.setTimeout(emptyRoom.disposeTimeoutMs * 3);
+            this.assert.deepStrictEqual(
+                [disposedBeforeTheTimeout, disposedRooms, occupiedRoom.disposeTimeoutTimer],
+                [[], [0], false]
+            );
         });
     }
 
