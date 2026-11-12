@@ -6,8 +6,9 @@
  * list (like the users plugin "usePlayerSpeedProperty" or the rewards subscriber "splitExperience", values the features
  * read from the config once on start; an array item is reached by its index in the path, like
  * "rewards/package/rewardsEventsHandler/activeRewards/0/eventData"), and that cancels a server event for a group (a
- * listener added once per event name sets continueEvent false on the event data while the cancelled flag of that event
- * is on), both kept and restored per parallel spec group by LiveObjectsOverrides.
+ * listener added once per event name sets the given flag of the event data, continueEvent by default or the flag of
+ * that event like continueStart, false while the cancelled flag of that event is on, and counts every event it
+ * cancelled, read by event name), both kept and restored per parallel spec group by LiveObjectsOverrides.
  *
  */
 
@@ -18,6 +19,7 @@ class FeaturePropertiesOverrides
 {
 
     static cancelledEvents = {};
+    static cancelledEventsCounts = {};
 
     static changeFeatureProperty(serverManager, groupKey, featurePath, propertyKey, value)
     {
@@ -29,18 +31,24 @@ class FeaturePropertiesOverrides
         return {featurePath, propertyKey, value: target[propertyKey]};
     }
 
-    static cancelEvent(serverManager, groupKey, eventName)
+    static cancelEvent(serverManager, groupKey, eventName, flagKey)
     {
         if(!sc.hasOwn(FeaturePropertiesOverrides.cancelledEvents, eventName)){
             FeaturePropertiesOverrides.cancelledEvents[eventName] = false;
+            FeaturePropertiesOverrides.cancelledEventsCounts[eventName] = 0;
             serverManager.events.on(eventName, (event) => {
                 if(FeaturePropertiesOverrides.cancelledEvents[eventName]){
-                    event.continueEvent = false;
+                    event[flagKey] = false;
+                    FeaturePropertiesOverrides.cancelledEventsCounts[eventName]++;
                 }
             });
         }
         LiveObjectsOverrides.changeProperty(groupKey, FeaturePropertiesOverrides.cancelledEvents, eventName, true, false);
-        return {eventName, cancelled: FeaturePropertiesOverrides.cancelledEvents[eventName]};
+        return {
+            eventName,
+            cancelled: FeaturePropertiesOverrides.cancelledEvents[eventName],
+            cancelledCount: FeaturePropertiesOverrides.cancelledEventsCounts[eventName]
+        };
     }
 
     static registerEndpoints(serverManager)
@@ -58,8 +66,12 @@ class FeaturePropertiesOverrides
             response.json(FeaturePropertiesOverrides.cancelEvent(
                 serverManager,
                 sc.get(request.body, 'group', ''),
-                String(sc.get(request.body, 'eventName', ''))
+                String(sc.get(request.body, 'eventName', '')),
+                String(sc.get(request.body, 'flagKey', 'continueEvent'))
             ));
+        });
+        serverManager.app.get('/api/e2e/live-objects/cancelled-events', (request, response) => {
+            response.json(FeaturePropertiesOverrides.cancelledEventsCounts);
         });
         Logger.info('[feature-properties-overrides] Feature properties overrides endpoint registered.');
     }
