@@ -5,7 +5,7 @@
  * Builds the scores period reset under test with the stubs it uses: the config row repository with conditional
  * updates, the scores and details repositories (newest id first loads, deletes up to an id, failing reads), a scene
  * room with a connected and a disconnected player, a room still being created and a game room, plus the pending claim
- * values and the scores messages the scene room players receive.
+ * values, the scores messages the scene room players receive and a row added to a repository while its delete runs.
  *
  */
 
@@ -24,6 +24,9 @@ class ScoresPeriodResetBuilder
         this.storedScoreId = 1;
         this.storedDetailId = 4;
         this.lastPeriodRowId = 390;
+        this.checkDate = new Date('2026-10-18T10:00:00Z');
+        this.checkPeriodKey = '2026-10-18';
+        this.storedPeriodKey = '2026-10-17';
     }
 
     buildPendingValue(periodKey, claimedAt, scoresMaxId, detailsMaxId)
@@ -51,6 +54,15 @@ class ScoresPeriodResetBuilder
         repository.preserveEntityState = () => ({});
         repository.restoreEntityState = () => true;
         return repository;
+    }
+
+    addRowOnDelete(repository, row)
+    {
+        let deleteRows = repository.delete;
+        repository.delete = async (filters) => {
+            repository.rows.push(row);
+            return await deleteRows(filters);
+        };
     }
 
     createRepositories(lastPeriodValue, scoresRows)
