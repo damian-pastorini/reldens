@@ -256,21 +256,24 @@ class TestCrossServerNamesCheck extends BaseTest
 
     async testTheCheckedServersAreTheValidConfiguredUrlsWithoutThisServer()
     {
-        await this.test('the checked servers are the valid configured URLs without this server public URL', async () => {
-            let configuredServers = ' http://server-a:8080 , http://server-b:8080,not an url,, http://server-c:8080/';
+        await this.test('the checked servers are the valid configured URLs without trailing slashes nor this server', async () => {
+            let configuredServers = ' http://server-a:8080/ , http://server-b:8080,not an url,, http://server-c:8080//'
+                +',http://server-d:8080/game/';
             let loginManager = this.createLoginManager({
                 'server/rooms/databases': configuredServers,
                 'server/publicUrl': this.serverAUrl
             });
             this.assert.deepStrictEqual(loginManager.fetchNamesCheckServersUrls(), [
                 'http://server-b:8080',
-                'http://server-c:8080/'
+                'http://server-c:8080',
+                'http://server-d:8080/game'
             ]);
             let withoutPublicUrl = this.createLoginManager({'server/rooms/databases': configuredServers});
             this.assert.deepStrictEqual(withoutPublicUrl.fetchNamesCheckServersUrls(), [
                 'http://server-a:8080',
                 'http://server-b:8080',
-                'http://server-c:8080/'
+                'http://server-c:8080',
+                'http://server-d:8080/game'
             ]);
             this.assert.deepStrictEqual(this.createLoginManager({}).fetchNamesCheckServersUrls(), []);
         });
