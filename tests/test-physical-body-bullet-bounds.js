@@ -4,8 +4,8 @@
  *
  * Tests the removal of an invalid bullet body: a bullet outside the world bounds on any side is queued for the world
  * removal with its state id, a bullet inside the bounds or on their edges is kept, a bullet without state id is only
- * queued in the world, a body that is not a bullet is never queued, and a stopped bullet is removed unless the speed
- * threshold on bullets is off.
+ * queued in the world, a body that is not a bullet is never queued, and a stopped bullet or a bullet slower than the
+ * threshold of its shot speed is stopped and removed unless the speed threshold on bullets is off.
  *
  */
 
@@ -89,6 +89,21 @@ class TestPhysicalBodyBulletBounds extends BaseTest
             let keptBullet = this.createBullet([160, 128], {applySpeedThresholdOnBullets: false}, {});
             keptBullet.velocity = [0, 0];
             this.assert.deepStrictEqual(this.readRemoval(keptBullet), [false, []]);
+        });
+    }
+
+    async testASlowBulletIsStoppedAndRemovedUnlessTheThresholdIsOff()
+    {
+        await this.test('a bullet slower than the threshold of its shot speed is stopped and removed unless the threshold is off', async () => {
+            let slowBullet = this.createBullet([160, 128], {}, {});
+            slowBullet.velocity = [20, 3];
+            this.assert.deepStrictEqual(
+                [this.readRemoval(slowBullet), slowBullet.velocity],
+                [[true, [TestPhysicalBodyBulletBounds.STATE_ID]], [0, 0]]
+            );
+            let flyingBullet = this.createBullet([160, 128], {applySpeedThresholdOnBullets: false}, {});
+            flyingBullet.velocity = [20, 3];
+            this.assert.deepStrictEqual([this.readRemoval(flyingBullet), flyingBullet.velocity], [[false, []], [20, 3]]);
         });
     }
 
