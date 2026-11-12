@@ -7,7 +7,9 @@
  * check claims the new period key, deletes every scores row and the open scores panel receives the empty top scores.
  * The scores rows and the last period key row are preserved and restored by the group reset. The check is a server
  * call with nothing on screen, so the long run opens the panel and stops the town NPCs before the recording starts and
- * captions the panel rows, before and after the reset, and the period change with their real values.
+ * captions the panel rows, before and after the reset, and the period change with their real values. The reset also
+ * empties the open panels of the players in the same and in another scene room and sets their own scores to 0, a panel
+ * closed during the reset opens emptied, and a player away during the reset logs in to the reset scores.
  *
  */
 
@@ -18,6 +20,8 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { ShowcaseSteps } = require('./helpers/showcase-steps');
+const { KillScoreSteps } = require('./helpers/kill-score-steps');
+const { ScoresResetSteps } = require('./helpers/scores-reset-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ScoresPeriodKeyBuilder } = require('../../lib/scores/server/scores-period-key-builder');
@@ -40,6 +44,78 @@ class TestScoresReset
         );
     }
 
+    static async seedScore(gameConfig, e2eGroup, playerName)
+    {
+        return await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'scores', {
+            player_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: playerName}),
+            total_score: TestScoresReset.SEEDED_SCORE,
+            players_kills_count: 0,
+            npcs_kills_count: 0
+        });
+    }
+
+    static async expectOwnScore(page, expectedScore, message)
+    {
+        await KillScoreSteps.openScoresPanel(page, false);
+        await expect.poll(async () => (await KillScoreSteps.fetchPanelContent(page)).myScore, {
+            message,
+            timeout: TimeConstants.SERVER_RESPONSE
+        }).toBe(expectedScore);
+    }
+
+    static async expectResetPanel(page, message)
+    {
+        await KillScoreSteps.openScoresPanel(page, false);
+        await expect.poll(async () => await KillScoreSteps.fetchPanelContent(page), {
+            message,
+            timeout: TimeConstants.SERVER_RESPONSE
+        }).toEqual({rows: [], myScore: 0});
+    }
+
+    static async expectReset(gameConfig)
+    {
+        let periodKeys = await ScoresResetSteps.resetFromPreviousPeriod(gameConfig, new Date());
+        expect(periodKeys.checkResult, 'The new period resets the scores').toEqual({
+            periodKey: periodKeys.currentPeriodKey,
+            resetScores: true
+        });
+    }
+
+    static async runPanelsResetTest(context)
+    {
+        let gameConfig = context.gameConfig;
+        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 4, context.longRun));
+        await ScoresResetSteps.enableReset(gameConfig, context.e2eGroup);
+        await TestScoresReset.seedScore(gameConfig, context.e2eGroup, gameConfig.e2ePlayerName);
+        await TestScoresReset.seedScore(gameConfig, context.e2eGroup, gameConfig.e2ePlayerName3);
+        await Login.loginRootPlayer(context.page, gameConfig, context.longRun);
+        await TestScoresReset.expectOwnScore(context.page, TestScoresReset.SEEDED_SCORE, 'The town player own score');
+        await Login.loginRootPlayer(context.secondPage, gameConfig, context.longRun, '2');
+        await KillScoreSteps.openScoresPanel(context.secondPage, context.longRun);
+        await context.secondPage.locator(Selectors.scores.dialog+' .box-close').click();
+        await expect(context.secondPage.locator(Selectors.scores.dialog), 'The second panel is closed').toBeHidden();
+        let forestPage = (await Login.startThirdPlayer(context, Login.FOREST_ROOM_NAME)).clientPage;
+        await TestScoresReset.expectOwnScore(forestPage, TestScoresReset.SEEDED_SCORE, 'The forest player own score');
+        await TestScoresReset.expectReset(gameConfig);
+        await TestScoresReset.expectResetPanel(context.page, 'The open town panel is emptied and its own score is 0');
+        await TestScoresReset.expectResetPanel(forestPage, 'The open forest panel is emptied and its own score is 0');
+        await TestScoresReset.expectResetPanel(context.secondPage, 'The panel closed during the reset opens emptied');
+    }
+
+    static async runLoginAfterResetTest(context)
+    {
+        let gameConfig = context.gameConfig;
+        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 3, context.longRun));
+        await ScoresResetSteps.enableReset(gameConfig, context.e2eGroup);
+        await TestScoresReset.seedScore(gameConfig, context.e2eGroup, gameConfig.e2ePlayerName);
+        await Login.loginRootPlayer(context.page, gameConfig, context.longRun);
+        await TestScoresReset.expectOwnScore(context.page, TestScoresReset.SEEDED_SCORE, 'The own score before leaving');
+        await context.page.reload();
+        await TestScoresReset.expectReset(gameConfig);
+        await Login.loginRootPlayer(context.page, gameConfig, context.longRun);
+        await TestScoresReset.expectResetPanel(context.page, 'The login after the reset shows the reset data');
+    }
+
     static async runScoresResetTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
         await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'scores', {});
@@ -48,12 +124,7 @@ class TestScoresReset
             path: ScoresConst.RESET.LAST_PERIOD_KEY.PATH
         });
         await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, ScoresConst.RESET.CONFIG_PATHS.ENABLED, true);
-        await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'scores', {
-            player_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName2}),
-            total_score: TestScoresReset.SEEDED_SCORE,
-            players_kills_count: 0,
-            npcs_kills_count: 0
-        });
+        await TestScoresReset.seedScore(gameConfig, e2eGroup, gameConfig.e2ePlayerName2);
         await Login.loginRootPlayer(page, gameConfig, longRun);
         let uiTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun);
         await page.locator(Selectors.hud.scoresOpen).waitFor({state: 'visible', timeout: uiTimeout});
@@ -106,6 +177,12 @@ class TestScoresReset
         test.describe('Scores Reset', () => {
             test('scores reset on a new period deletes the scores and empties the scores panel', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestScoresReset.runScoresResetTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('scores reset empties the panels in the same and other rooms, the own scores and a closed panel', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
+                await TestScoresReset.runPanelsResetTest({page, secondPage, gameConfig, e2eGroup, longRun});
+            });
+            test('player away during the scores reset logs in to the reset scores', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestScoresReset.runLoginAfterResetTest({page, gameConfig, e2eGroup, longRun});
             });
         });
     }
