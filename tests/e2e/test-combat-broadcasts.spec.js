@@ -3,8 +3,11 @@
  * Reldens - Test Combat Broadcasts
  *
  * Tests what the other clients of the room get from a fight on a placed forest enemy (CombatSkillCasting): the attack,
- * hit and effect sprites of another player, the enemy life bar updates, the death animation, the removed life bar and
- * the cleared target when the enemy dies, the restored full life bar when it respawns, a single battle end, a single
+ * hit and effect sprites of another player, the enemy life bar updates, the death animation, the removed life bar, the
+ * cleared target and the enemy sprite hidden on both clients when the enemy dies, the restored full life bar and the
+ * enemy sprite shown again on both clients when it respawns active (its sprite jumps to the respawn body position in
+ * one frame, the respawn avoids the interpolation, and it is hidden again once the enemies are disabled from the
+ * server), a single battle end, a single
  * experience reward and a single kill score (the players scores rows are preserved for the group reset) when two
  * players kill it at once, the enemy fighting only its first player, the second player out of its battle and never
  * attacked (or with chaseMultiple the second player in its battle and hit too: every enemy action gets an unlimited
@@ -23,8 +26,10 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { SceneSpritesRecorder } = require('./helpers/scene-sprites-recorder');
 const { Login } = require('./helpers/login');
+const { Navigation } = require('./helpers/navigation');
 const { Selectors } = require('./selectors');
 const { ActionsConst } = require('../../lib/actions/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -41,6 +46,35 @@ class TestCombatBroadcasts
     static SECOND_PLAYER_TILES = [2, 3, 4, 5, 6];
     static ENEMY_TURNS_MS = 3000;
     static UNLIMITED_RANGE = 0;
+    static READ_ENEMY_VISIBLE = (enemyKey) => Boolean(
+        window.reldens.getActiveScene().objectsAnimations[enemyKey]?.sceneSprite?.visible
+    );
+    static RECORD_ENEMY_MOVES = (enemyKey) => {
+        let scene = window.reldens.getActiveScene();
+        let readSprite = () => [scene.objectsAnimations[enemyKey].sceneSprite].map((sprite) => [sprite.x, sprite.y]).pop();
+        let recorder = {scene, moves: [], last: readSprite(), hadEntry: false};
+        recorder.onPreUpdate = () => {
+            recorder.hadEntry = enemyKey in scene.interpolateObjectsPositions;
+        };
+        recorder.onPostUpdate = () => {
+            let current = readSprite();
+            if(current[0] === recorder.last[0] && current[1] === recorder.last[1]){
+                return;
+            }
+            let body = window.reldens.activeRoomEvents.room.state.bodies.get(enemyKey);
+            recorder.moves.push({hadEntry: recorder.hadEntry, from: recorder.last, to: current, body: [body.x, body.y]});
+            recorder.last = current;
+        };
+        scene.events.on('preupdate', recorder.onPreUpdate);
+        scene.events.on('postupdate', recorder.onPostUpdate);
+        window.e2eEnemyMovesRecorder = recorder;
+    };
+    static STOP_ENEMY_MOVES = () => {
+        let recorder = window.e2eEnemyMovesRecorder;
+        recorder.scene.events.off('preupdate', recorder.onPreUpdate);
+        recorder.scene.events.off('postupdate', recorder.onPostUpdate);
+        return recorder.moves;
+    };
 
     static async prepareAttack(page, gameConfig, e2eGroup, longRun)
     {
@@ -133,13 +167,40 @@ class TestCombatBroadcasts
         ).toBe(false);
         let deadEnemyBar = await TestCombatBroadcasts.fetchClientEnemyBar(secondPage, context.enemyKey);
         expect(deadEnemyBar.isDrawn, 'The dead enemy life bar is removed').toBe(false);
+        await expect.poll(
+            async () => Promise.all([page, secondPage].map(
+                (clientPage) => clientPage.evaluate(TestCombatBroadcasts.READ_ENEMY_VISIBLE, context.enemyKey)
+            )),
+            {message: 'Every client hides the dead enemy sprite', timeout: context.timeout}
+        ).toEqual([false, false]);
         await screenshots.capture(secondPage, 'enemy-death-broadcast');
+        await secondPage.evaluate(TestCombatBroadcasts.RECORD_ENEMY_MOVES, context.enemyKey);
         let totalLife = (await GameplayE2eStateApi.fetchEnemyLife(gameConfig, context.roomName, context.bodyKey)).totalLife;
         await expect.poll(
             async () => (await TestCombatBroadcasts.fetchClientEnemyBar(secondPage, context.enemyKey)).value,
             {message: 'The respawned full life must reach the second client', timeout: respawnTime + context.timeout}
         ).toBe(totalLife);
         expect(await CombatSkillCasting.fetchEnemyLife(context), 'Respawned with full stats').toBe(totalLife);
+        await expect.poll(
+            async () => Promise.all([page, secondPage].map(
+                (clientPage) => clientPage.evaluate(TestCombatBroadcasts.READ_ENEMY_VISIBLE, context.enemyKey)
+            )),
+            {message: 'Every client shows the respawned active enemy sprite again', timeout: context.timeout}
+        ).toEqual([true, true]);
+        let respawnJumps = (await secondPage.evaluate(TestCombatBroadcasts.STOP_ENEMY_MOVES)).filter(
+            (move) => !move.hadEntry && Navigation.TILE_SIZE < Math.hypot(move.to[0] - move.from[0], move.to[1] - move.from[1])
+        );
+        expect(
+            respawnJumps.map((move) => sc.toJsonString(move.to) === sc.toJsonString(move.body)),
+            'The respawned enemy sprite jumps to its body position in one frame with no interpolation entry'
+        ).toEqual([true]);
+        await RoomObjectsApi.disableEnemies(gameConfig, context.roomName, false);
+        await expect.poll(
+            async () => Promise.all([page, secondPage].map(
+                (clientPage) => clientPage.evaluate(TestCombatBroadcasts.READ_ENEMY_VISIBLE, context.enemyKey)
+            )),
+            {message: 'Every client hides the disabled enemy sprite', timeout: context.timeout}
+        ).toEqual([false, false]);
     }
 
     static async preservePlayersScores(gameConfig, e2eGroup, playersNames)
