@@ -7,8 +7,9 @@
  * that group: it first waits until no scene room holds a player of the group (the closed page of the previous test
  * makes its session leave, and the room leave saves the player and then removes it, so its pending save never
  * overwrites the restored state and its body never stays in a room the next test uses; a session still there after the
- * wait, left by a room leave that failed, is removed with its team and its active player entry), the team invites sent
- * by the group players are cleared (the teams plugin keeps them over a new login), then the group players are
+ * wait, left by a room leave that failed, is removed with its team and its active player entry), the teams owned by the
+ * group players (a team left with no players), the team invites they sent and their team records of a scene change are
+ * cleared (the teams plugin keeps them over a new login), then the group players are
  * reset to full HP, placed on the default return point of the group start room, have all equipped items unequipped
  * and their scores and score details back to the rows captured on the setup (a kill of an earlier test never leaves a
  * score row the next test does not expect), the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
@@ -267,11 +268,16 @@ class PlayerStateReset
         }
     }
 
-    static clearTeamInvites(serverManager, snapshots)
+    static clearTeamsPlayersState(serverManager, snapshots)
     {
-        let teamPendingInvites = sc.get(serverManager.featuresManager.featuresList?.teams?.package, 'teamPendingInvites', {});
+        let teamsPlugin = sc.get(serverManager.featuresManager.featuresList?.teams, 'package', {});
+        let teams = sc.get(teamsPlugin, 'teams', {});
+        let teamPendingInvites = sc.get(teamsPlugin, 'teamPendingInvites', {});
+        let teamChangingRoomPlayers = sc.get(teamsPlugin, 'teamChangingRoomPlayers', {});
         for(let playerId of Object.keys(snapshots)){
+            delete teams[playerId];
             delete teamPendingInvites[playerId];
+            delete teamChangingRoomPlayers[playerId];
         }
     }
 
@@ -290,7 +296,7 @@ class PlayerStateReset
                     groupSnapshots
                 );
                 PlayerStateReset.removeStaleSessions(serverManager, groupSnapshots);
-                PlayerStateReset.clearTeamInvites(serverManager, groupSnapshots);
+                PlayerStateReset.clearTeamsPlayersState(serverManager, groupSnapshots);
                 await SecurityState.resetAll(serverManager);
                 LiveObjectsOverrides.restoreGroup(groupKey);
                 await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
