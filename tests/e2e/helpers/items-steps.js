@@ -6,7 +6,9 @@
  * start room, a stat lowered under its base value, the stat, equipped state and stored active state expected, the
  * attack bonus of the stored percent modifier of an item (rounded like the modifiers calculator) and the configured
  * equipable item equipped, the inventory panel opened, the custom data of an item changed for the group and the group key of an item (its modifier
- * applied to the attack before the next action, the equipped flag is set before the modifiers are applied).
+ * applied to the attack before the next action, the equipped flag is set before the modifiers are applied); and the
+ * quantities of item keys set on the live inventory of a player (in its room or the group start room) and expected
+ * on the stored inventory.
  *
  */
 
@@ -15,6 +17,7 @@ const { TradeSteps } = require('./trade-steps');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { ParallelSpecGroups } = require('./parallel-spec-groups');
+const { SecurityApi } = require('./security-api');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
 const { InventoryConst } = require('../../../lib/inventory/constants');
@@ -102,6 +105,35 @@ class ItemsSteps
         let [itemRow] = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'itemsItem', {key: itemKey});
         let [groupRow] = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'itemsGroup', {id: itemRow.group_id});
         return groupRow.key;
+    }
+
+    static async setQuantities(context, player, quantities)
+    {
+        let roomName = sc.get(player, 'roomName', ParallelSpecGroups.fetchGroup(context.e2eGroup).startRoomName);
+        for(let itemKey of Object.keys(quantities)){
+            let changed = await SecurityApi.request(context.gameConfig, 'POST', '/api/e2e/inventory/item-quantity', {
+                roomName,
+                playerName: player.playerName,
+                itemKey,
+                qty: quantities[itemKey]
+            });
+            expect(changed.qty, 'The '+itemKey+' quantity is set: '+changed.error).toBe(quantities[itemKey]);
+        }
+    }
+
+    static async expectStoredQuantities(context, player, quantities, message)
+    {
+        await expect.poll(async () => {
+            let storedQuantities = {};
+            for(let itemKey of Object.keys(quantities)){
+                storedQuantities[itemKey] = await E2eSeedAndRestoreApi.fetchInventoryQuantity(
+                    context.gameConfig,
+                    player.playerName,
+                    itemKey
+                );
+            }
+            return storedQuantities;
+        }, {message, timeout: TimeConstants.SERVER_RESPONSE}).toEqual(quantities);
     }
 
     static async equipAxe(context, player)
