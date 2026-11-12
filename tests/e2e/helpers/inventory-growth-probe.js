@@ -7,7 +7,8 @@
  * one inventory item or of the inventory growth applier delayed or failed for the spec group (LiveObjectsOverrides,
  * counted per item or applier and method), like the item unequip that fails in the middle of a level up or the growth
  * save that fails on the storage; an item given to the live inventory through the rewards add item flow (an item
- * obtained during the game); an experience reward given through the rewards subscriber, split between the player team
+ * obtained during the game); the quantity of an item key set on the live inventory (every item of the key removed and
+ * one item with the quantity added, both through the inventory events that store them); an experience reward given through the rewards subscriber, split between the player team
  * members with the split mode set for the group (with the experience 0 it only counts the reward targets); and
  * experience added to the player class path directly, the experience a player gets from something that is not a kill
  * (a quest or a reward).
@@ -113,6 +114,25 @@ class InventoryGrowthProbe
         return {inventoryId: addedItem.getInventoryId()};
     }
 
+    static async setItemQuantity(room, playerName, itemKey, qty)
+    {
+        let found = InventoryGrowthProbe.fetchInventory(room, playerName);
+        if(found.error){
+            return found;
+        }
+        let manager = found.manager;
+        for(let item of manager.findItemsByPropertyValue('key', itemKey)){
+            await manager.removeItem(item.getInventoryId());
+        }
+        if(0 < qty){
+            await manager.addItem(manager.createItemInstance(itemKey, qty));
+        }
+        return {qty: manager.findItemsByPropertyValue('key', itemKey).reduce(
+            (totalQty, item) => totalQty + Number(item.qty),
+            0
+        )};
+    }
+
     static async giveExperienceReward(serverManager, room, requestBody)
     {
         let playerName = sc.get(requestBody, 'playerName', '');
@@ -188,6 +208,19 @@ class InventoryGrowthProbe
                     room,
                     sc.get(request.body, 'playerName', ''),
                     String(sc.get(request.body, 'itemKey', ''))
+                )
+            );
+        });
+        app.post('/api/e2e/inventory/item-quantity', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.body, 'roomName', ''),
+                response,
+                async (room) => await InventoryGrowthProbe.setItemQuantity(
+                    room,
+                    sc.get(request.body, 'playerName', ''),
+                    String(sc.get(request.body, 'itemKey', '')),
+                    Number(sc.get(request.body, 'qty', 0))
                 )
             );
         });
