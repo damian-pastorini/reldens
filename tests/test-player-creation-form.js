@@ -11,11 +11,12 @@ const { GameConst } = require('../lib/game/constants');
 class TestPlayerCreationForm extends BaseTest
 {
 
-    createGameManager(failingSend = false)
+    createGameManager(failingSend = false, isConnectionOpen = true)
     {
         let gameManager = {isCreatingPlayer: false, sentMessages: [], emittedEvents: [], alerts: []};
         gameManager.events = {emitSync: (eventName) => gameManager.emittedEvents.push(eventName)};
         gameManager.gameRoom = {
+            connection: {isOpen: isConnectionOpen},
             send: (type, message) => {
                 if(failingSend){
                     throw {message: 'The connection is closed.'};
@@ -70,6 +71,42 @@ class TestPlayerCreationForm extends BaseTest
             this.assert.strictEqual(this.submit(gameManager, 'ab'), false);
             this.assert.deepStrictEqual(gameManager.sentMessages, []);
             this.assert.strictEqual(gameManager.isCreatingPlayer, false);
+        });
+    }
+
+    async testAClosedConnectionAlertsTheReloadWithoutSending()
+    {
+        await this.test('a closed game room connection alerts the reload and sends nothing', async () => {
+            let gameManager = this.createGameManager(false, false);
+            this.assert.strictEqual(this.submit(gameManager, 'NewHero'), false);
+            this.assert.deepStrictEqual(gameManager.alerts, ['translated:game.errors.connectionLost']);
+            this.assert.deepStrictEqual(gameManager.sentMessages, []);
+            this.assert.deepStrictEqual(gameManager.emittedEvents, []);
+            this.assert.strictEqual(gameManager.isCreatingPlayer, false);
+        });
+    }
+
+    async testAMissingGameRoomAlertsTheReloadWithoutSending()
+    {
+        await this.test('a missing game room or connection alerts the reload and sends nothing', async () => {
+            for(let gameRoom of [null, {}]){
+                let gameManager = this.createGameManager();
+                gameManager.gameRoom = gameRoom;
+                this.assert.strictEqual(this.submit(gameManager, 'NewHero'), false);
+                this.assert.deepStrictEqual(gameManager.alerts, ['translated:game.errors.connectionLost']);
+                this.assert.strictEqual(gameManager.isCreatingPlayer, false);
+            }
+        });
+    }
+
+    async testTheFormSendsOnceTheConnectionIsOpenAgain()
+    {
+        await this.test('the form sends the creation once the game room connection is open again', async () => {
+            let gameManager = this.createGameManager(false, false);
+            this.submit(gameManager, 'NewHero');
+            gameManager.gameRoom.connection.isOpen = true;
+            this.assert.strictEqual(this.submit(gameManager, 'NewHero'), true);
+            this.assert.strictEqual(gameManager.sentMessages.length, 1);
         });
     }
 
