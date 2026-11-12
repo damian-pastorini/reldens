@@ -12,7 +12,8 @@
  * another invite keeps the server running; the owner removing the only member disbands the team; a leave from a
  * player with no team changes nothing; a reload of the member of a team of two ends it and closes the owner box (a
  * member of a team of three leaving by a disconnection crashes, ISSUE #140); a team is not restored after both
- * players log in again; and the team chat lines are stored with the teams type.
+ * players log in again; and the team chat lines are stored with the teams type, each rejected, accepted, entered,
+ * left and disbanded line stored once for the player that received it.
  *
  */
 
@@ -212,6 +213,40 @@ class TestTeamsMembers
         await expect(players[1].page.locator('[id^="box-'+TeamsConst.KEY+'"]'), 'No box is restored').toHaveCount(0);
     }
 
+    static async runStoredLinesTest(context)
+    {
+        let players = await TestTeamsMembers.enter(context);
+        let gameConfig = context.gameConfig;
+        let fetchStoredLines = async () => (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'chat', {
+            message_type: ChatConst.TYPES.TEAMS
+        })).filter(row => players.some(player => player.playerId === row.player_id));
+        let storedIdsBefore = (await fetchStoredLines()).map(row => row.id);
+        await TeamSteps.invite(players[0], players[2]);
+        await TeamSteps.waitForInvite(gameConfig, players[0], players[2]);
+        await TeamSteps.answer(players[2], players[0], TeamSteps.DECLINE);
+        await TeamSteps.formTeam(gameConfig, players[0], [players[1], players[2]]);
+        await TestTeamsMembers.leave(players[2]);
+        await TeamSteps.expectTeams(gameConfig, [[players[0].playerId, TeamSteps.sortedIds(players.slice(0, 2))]], 'Left');
+        await TestTeamsMembers.leave(players[0]);
+        await TeamSteps.expectTeams(gameConfig, [], 'The owner disbands the team');
+        let leftLine = TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.LEFT, '');
+        let disbandedLine = TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.DISBANDED, players[0].playerName);
+        let expectedRows = [
+            [players[0].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.INVITE_REJECTED, players[2].playerName)],
+            [players[1].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.INVITE_ACCEPTED, players[1].playerName)],
+            [players[2].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.INVITE_ACCEPTED, players[2].playerName)],
+            [players[1].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.ENTER, players[2].playerName)],
+            [players[0].playerId, leftLine],
+            [players[1].playerId, leftLine],
+            [players[0].playerId, disbandedLine],
+            [players[1].playerId, disbandedLine]
+        ];
+        await expect.poll(async () => (await fetchStoredLines()).filter(row => !storedIdsBefore.includes(row.id)).map(
+            row => [row.player_id, row.message]
+        ).sort(), {message: 'Every team line is stored with the teams type', timeout: TimeConstants.SERVER_RESPONSE})
+            .toEqual(expectedRows.sort());
+    }
+
     static run()
     {
         test.describe('Teams Members', () => {
@@ -250,6 +285,9 @@ class TestTeamsMembers
             });
             test('member reload closes the owner box and no team is restored after new logins', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTeamsMembers.runReloadAndReloginTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('rejected, accepted, entered, left and disbanded lines are stored with the teams type', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTeamsMembers.runStoredLinesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
         });
     }
