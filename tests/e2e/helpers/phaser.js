@@ -140,7 +140,7 @@ class Phaser
         }, {key: objKey, offset: offsetPixels});
     }
 
-    static async clickObjectAwayFromOwnPlayer(page, objKey, offsetPixels, isDoubleClick = false)
+    static async clickObjectAwayFromOwnPlayer(page, objKey, offsetPixels, isDoubleClick = false, button = 'left')
     {
         await Phaser.waitForCameraOnObject(page, objKey);
         let clickPoint = await Phaser.fetchObjectPointClearOfPlayers(page, objKey, offsetPixels);
@@ -148,7 +148,11 @@ class Phaser
             return false;
         }
         let canvasBox = await page.locator(Selectors.canvas).boundingBox();
-        await page.mouse[isDoubleClick ? 'dblclick' : 'click'](canvasBox.x + clickPoint.x, canvasBox.y + clickPoint.y);
+        await page.mouse[isDoubleClick ? 'dblclick' : 'click'](
+            canvasBox.x + clickPoint.x,
+            canvasBox.y + clickPoint.y,
+            {button}
+        );
         return true;
     }
 
