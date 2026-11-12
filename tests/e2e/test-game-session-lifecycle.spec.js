@@ -5,8 +5,9 @@
  * Tests a game session from the login to the logout: the state saved and restored, the logout seen by others, the page
  * reload, the dropped connection, the room closing message, the closed connection, the scene change rejected mid game,
  * the feature room join failure, the quick relogin, the dead state handler, the login records and the played time. The
- * walk that changes the saved position pauses the town moving objects (a wandering NPC can push the player after its
- * position is read) and reads the position once the server shows the player stopped.
+ * walk that changes the saved position and the room closing keys check pause the town moving objects (a wandering NPC
+ * can push the player after its position is read), the walk reads the position once the server shows the player
+ * stopped.
  *
  */
 
@@ -137,6 +138,7 @@ class TestGameSessionLifecycle
     static async runRoomClosingTest(page, screenshots, gameConfig, longRun)
     {
         await Login.loginRootPlayer(page, gameConfig, longRun);
+        await MovementScenario.pauseMovingObjects(gameConfig, Login.TOWN_ROOM_NAME);
         await SecurityApi.request(gameConfig, 'POST', '/api/e2e/game-session/room-closing', {
             roomName: Login.TOWN_ROOM_NAME,
             seconds: TestGameSessionLifecycle.CLOSING_SECONDS
