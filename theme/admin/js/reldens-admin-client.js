@@ -50,6 +50,8 @@ class AdminClient
             mapsWizardMissingElementsFilesError: 'Maps could not be generated, the layer elements files or the '
                 +'tile sheet image were not found in the session folder and no sample could be resolved from '
                 +'the installed packages.',
+            mapsWizardInvalidFileNameError: 'Maps could not be generated, the map, tile sheet, composite and layer '
+                +'elements names must be file names without folders.',
             mapJsonNotFound: 'Map could not be imported, the generated map JSON file was not found.',
             mapJsonEmpty: 'Map could not be imported, the generated map JSON file is empty.',
             mapJsonNotLoaded: 'Map could not be imported, the generated map JSON could not be loaded.',
