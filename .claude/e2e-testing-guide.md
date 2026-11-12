@@ -337,14 +337,15 @@ request and the drops left by the tests (`RoomEnemiesReset.restoreAll`, `RoomMov
 
 ## Parallel spec groups
 
-The specs run in groups (`tests/e2e/helpers/parallel-spec-groups.js`), every group is a Playwright project with one
+The specs run in groups (`tests/e2e/helpers/parallel-spec-groups.js`, the specs of every group are listed in
+`tests/e2e/helpers/parallel-spec-groups-list.js`, where a new spec is added), every group is a Playwright project with one
 worker, so its specs run one after the other, and the groups run at the same time:
 
 - `world` - the town specs that need the town layout (NPCs, player and object pathfinding), users set 0 (`root`,
   `root2`, `root3`), start room `reldens-new-age-town`
 - `forest` - combat, stats, interactive objects, timing objects, objects movement, animation frames and item growth,
   users set 1 (`root4` to `root6`), start room `reldens-forest-level-1`
-- `social` - private chat, teams, clans, trading, items, rewards, locale selector, quests and the game login flow, users
+- `social` - private chat, teams, clans, trading, items, rewards, locale selector and the game login flow, users
   set 2 (`root7` to `root9`), start room `reldens-new-age-town-house-01`
 - `exclusive` - the specs that change the server wide state (login and admin security, the scores reset and every spec
   that overrides a config value: the config is one for the whole server and its client values reach every player that
@@ -509,13 +510,200 @@ placements wait for the client sprite on the placed position, not only for the s
 - `test-item-growth.spec.js` (forest) - the equipped growing sword stores the kill experience and level in its
   `items_inventory.customData` and the player attack grows with the scaled modifier; the long run steps tell the attack
   before and after the equip and, after the level up, the stored experience and level (the game panels never show them)
-- `test-ad-skins.spec.js` (social) - the skin ticket use keeps the ticket, the played skin ad consumes it and rewards
+- `test-ad-skins.spec.js` (exclusive) - the skin ticket use keeps the ticket, the played skin ad consumes it and rewards
   the skin item, and equipping it changes the server and client avatar until it is unequipped; a failed skin ad (the
   mock calls the provider error callback after the server opened the play) closes the play keeping the ticket and gives
   no skin item
+- `test-ad-skins-display.spec.js` (exclusive) - the skin item seeded in the inventory: its equip is stored as active and
+  seen by the other client in the room and by a player joining after, the unequip stores it inactive and restores the
+  class path avatar on every client; the skin is applied again after a new login (seen by the player already in the
+  room) and after a scene change and back, an unequipped one is not; a trashed equipped skin restores the avatar; a walk
+  plays the skin walk animation. `SkinSteps` (`tests/e2e/helpers/skin-steps.js`) loads the skin ad, ticket and reward
+  item keys from the stored rows and reads or waits for a player sprite avatar, texture and animation; it also enters
+  the group players with their skin tickets seeded and the skin ad enabled (`enterWithTickets()`), sends the skin ad
+  start and end messages with the wait for the provider minimum duration (`playAd()`, `endAdAfterMinimumDuration()`)
+  and checks the stored played skin ads and ticket and skin item quantities
+- `test-movement-return-points.spec.js` (exclusive) - every change point tile of both ways between the sample rooms
+  (the town and the forest, the town houses, the forest levels one to six, the first house floors, the second house
+  gravity room and the bots forest house) leads to the next room and saves the player on the next room return point of
+  the previous room. `ChangePointsSteps` (`tests/e2e/helpers/change-points-steps.js`) reads the rooms, change points and
+  return points rows, builds the round trips that use every tile, places the player on each tile body
+  (`RoomObjectsApi.placePlayerOnChangePoint()` with a tile index, `GET /api/e2e/room-objects/change-points` lists the
+  stored change points of a room with their created body and walkable tile) and waits for the player to leave the
+  previous room before checking the stored arrival, because that room leave saves the state again (ISSUE #331). The
+  bots forest is entered by its return point stored as the player state before the login
+  (`ChangePointsSteps.storeRoomArrival()`)
+- `test-movement-rules.spec.js` (world) - the town moving objects paused and the player placed on the town return point
+  before every walk: every direction message moves the body on its axis and sign and the stop stands it still; two
+  directions at once move it at the movement speed normalized on both axes, and four directions at once from a still
+  body keep that normalized speed on both axes (the server runs one interval per held direction, so the order of those
+  timers picks the signs); pointer moves with huge, non numeric or fractional tiles leave the player on its tile and
+  the next walk still works; a burst of direction messages carrying position and time values moves the body only at
+  the movement speed
+- `test-movement-keyboard.spec.js` (world) - every arrow and WASD key pressed on the page moves the player on its axis
+  and sign with a single direction message and its release sends the stop; the arrows typed in the focused chat input
+  send no direction (only the release stop) and move the player again once the input loses the focus, and the same for
+  the quantity input of the trader buy tab (opened by the trader interaction and its buy value); releasing one of
+  two held keys sends the stop for every direction and the key still held sends its direction again; the keys held
+  while the scene transition or the scene change flag is on send no direction; an open NPC dialog with no input focused
+  keeps the arrow keys working. The keys are
+  pressed once the scene fade-in ended with no input focused (the scene ignores them before). The movement
+  messages a player sends are recorded on the server (`GameplayE2eStateApi.recordMovementMessages()` and
+  `fetchMovementMessages()`, the gameplay probe listens to `reldens.beforeSceneExecuteMessages`)
+- `test-movement-pointer.spec.js` (world) - real canvas clicks (`Navigation.navigateToWorldPoint()` with the mouse
+  button, after `Navigation.waitForCameraSettled()`): the sample `primaryMove` is off, so the secondary button walks the
+  player to the clicked tile with one pointer move and shows the pointer arrow while the primary button moves nothing,
+  and with `primaryMove` set on in the client config the secondary button moves nothing and the primary one walks; a
+  touch tap (`Navigation.TOUCH_BUTTON`, from a page opened by `Login.openClientPage()` with `{hasTouch: true}`) walks
+  the player and its touch end sends the joystick stop; a second click destroys the first arrow; a click with the chat input focused blurs it and walks; a click on an NPC
+  sprite sends no pointer move; a disabled player keys and clicks send only stops and the player walks again once
+  active; the client pointer arrow off shows no arrow and the client tap movement off sends no pointer move. The
+  joystick controller (registered by default, `useJoystick` and `useJoystickOnLowResolutions` default on) sends a stop
+  on every document mouse release, so every click is recorded as its pointer move followed by a stop
+- `test-movement-controls.spec.js` (world) - every on-screen arrow button pressed walks the player with one direction
+  message and the opacity class while pressed, and its release stops it (the button and the joystick document release
+  both send a stop), the same with a touch held on every button from a page opened with `{hasTouch: true}` (the touch
+  start and end sent with the Chromium `Input.dispatchTouchEvent`, Playwright only has the tap); the mouse leaving a pressed button stops the player while the mouse is still down; and a right
+  click on the canvas has its browser menu prevented; on a 700px wide page (resized after the login, the joystick
+  scrolled into view) the joystick replaces the arrow buttons and its thumb drag walks every axis, stops inside the
+  threshold and on the release. The recording starts after the button hover, because every button mouse out sends a
+  stop (ISSUE #335). The controls box is created once by the first scene preloader of the session, so its options are
+  set before the engine starts (`InitialClientConfig.overrideBeforeEngine()`, an init script that hooks the
+  `reldens.beforeCreateEngine` event and assigns the values after the login game config merge): with only the low
+  resolutions joystick on the box gets both joystick classes and the arrows walk; with the controls off no arrow
+  button nor joystick is shown (the login skips the HUD selectors check) and the keyboard still walks the player
+- `test-movement-world-bounds.spec.js` (world) - the own player placed on the free walkable tile closest to each town
+  map border (`/api/e2e/room-borders/place-player`, `RoomBorderPlacement`, read inside the map only, the path finder
+  grid has an extra column and row outside it) and pushed against that border with its direction, then stopped: the
+  stopped server body stays inside the map and, once the client settled, the sample collideWorldBounds keeps the sprite
+  body inside the world bounds and the camera is clamped on that border; with collideWorldBounds off (set before the
+  engine starts) the sprite follows the server body. A body held against a wall bounces a few pixels on every step, so
+  the server position is read after the client settled
+- `test-client-interpolation-observers.spec.js` (exclusive) - the bullets seen by another client of the forest: a bullet
+  shot by the first player at a passive enemy and one shot by the aggressive Tree (the sample enemy with the
+  attackBullet skill, its battle started by `RoomObjectsApi.startEnemyBattle()`) are recorded on the observer client
+  (`InterpolationFramesRecorder` with the bullets), follow the interpolation of their entries, render their texture
+  and are destroyed on the observer and on the first player client once they end; the sample fireball bullet renders
+  the texture of its flight direction; and the town NPC placement and walk back (`ObjectInterpolationSteps`, shared
+  with the object test of `test-client-interpolation.spec.js`) are recorded on another client of the town; the same
+  NPC walked with its area grid before the second player logs in is created on the joining client on its current body
+  (`InterpolationFramesRecorder.waitForObjectOnBody()`), and both clients show it on its body after its next walk
+- `test-client-interpolation-states.spec.js` (exclusive) - the first player walks a long pointer path in the town (the
+  second player placed next to the town NPC first, so the first one stands alone on the return point) and, once its
+  sprite moves on both clients, its page closes (the other client removes its sprite without errors) or the server sets
+  it disabled or dead (`GameplayE2eStateApi.setPlayerState()`): on both clients its interpolation entry ends and its
+  sprite stays still for the next frames
+- `test-client-interpolation-speed.spec.js` (exclusive) - the interpolationSpeed set before the engine starts: the
+  speed 1 lands every moving frame on its state target, another value steps the sprite with that value
+- `test-client-interpolation-disabled.spec.js` (exclusive) - with the clientInterpolation config overridden off for
+  the group, every frame that moves another player sprite (observer client), the town NPC sprite and a bullet sprite
+  (observer client, `BulletObserverSetup`) leaves it exactly on its state with no interpolation entry
+- `test-scene-interpolation-entries.spec.js` (exclusive) - the live objects interpolation with crafted entries: a
+  sprite 0.49 pixels away ends its entry in place, 0.5 pixels away keeps it and steps, and an object animation with
+  "bullet" in its key is moved by the object path
+- `test-scene-tileset-animations.spec.js` (exclusive) - the town tileset animations are registered, every one is
+  destroyed on the change to the forest and the forest registers its own
+- `test-player-name-sprites.spec.js` (exclusive) - the client/ui/players name options set on the first client before
+  its engine starts (`InitialClientConfig.overrideBeforeEngine()`): the own name off with a names limit shows only the
+  other player name cut to the limit, the names off with the own name on shows only the own full name
+- `test-player-walk-animations.spec.js` (exclusive) - the walker alone on the town return point (`WalkObserverSetup`)
+  walks a clear line while both clients record its sprite every frame: the moving frames play the walk animation of
+  the line direction (the last move places the sprite on the stopped state and stops it), the name sprite keeps its
+  relative position and the depth is the sprite Y plus its body height
+- `test-minimap.spec.js` (exclusive) - the sample round minimap: the open button shows the minimap camera and its
+  circle and the close button hides them; the player marker follows the player walk on the minimap image (polled
+  until the marker offset is zero, the marker updates one frame before the sprite interpolation); a closed minimap
+  stays hidden in the next room (one left open is closed by the room change, ISSUE #336)
+- `test-movement-gravity.spec.js` (exclusive) - the sample gravity room, entered by its return point stored as the
+  player state before the login (`ChangePointsSteps.storeRoomArrival()`), with the player placed on a wall by
+  `RoomMovementApi.placePlayer()` (`POST /api/e2e/movement/player-place`, half the 25px body above the wall top): the
+  down key sends its direction and moves nobody; the up key jumps the player off the floor and it lands back on it;
+  walking off a platform ledge falls, the stop in the air only stops the horizontal move and the player lands on a
+  lower wall; the up key held under a platform jumps the player through it to stand on top (pass walls from below);
+  a canvas click sends no pointer move and a pointer move finds no path (the room has no path finder). The room has no
+  objects in the collected game data, so it is entered with `MovementScenario.enterReadyRoom(context, room, false)`
+- `test-movement-scene-changes.spec.js` (exclusive) - a change point to a busy room (`WorldE2eStateApi.blockSceneChanges()`)
+  gets the translated busy chat line, keeps the player walking and its retry after the block changes the room; the
+  other client in the origin room gets the scene change broadcast, keeps its scene visible and removes the sprite and
+  the target of the player that left; the client already in the destination room shows the arriving player with its
+  name, avatar and direction; the room and position stored by a change point are loaded on the next login; a second
+  visit to a room reuses its preloader scene (`reldens.createdPreloaderRecurring`); and a logout with a direction held
+  leaves no movement interval in the room (`GameplayE2eStateApi.fetchMovementIntervals()`).
+- `test-movement-change-points.spec.js` (exclusive) - a player placed below the forest change point
+  (`RoomMovementApi.placePlayer()`) that walks into it with the up key held arrives standing still on the forest return
+  point and walks again once the scene fade ends (the test repeats the key down like a real held key: the keys of the
+  new scene only see the key events sent after they exist); a pointer move onto the change point tile finds no path
+  (the change point tiles are blocked on the path finder grid); and the town house door object with no collision
+  response is walked through from the town return point of the house into the house
+- `test-movement-other-clients.spec.js` (exclusive) - the sprites a client shows for the other players of its room,
+  read with the player engine offsets added back: a player that walked away before another client logs in is shown on
+  its current server position and was added from the players queue (filled while the client engine has not started);
+  a client logging in while another player walks a long pointer path sees it moving and stopping on its server
+  position (the path ends three tiles before the map border, a sprite near the border is kept inside the world bounds);
+  and an NPC dialog stays open when another player of the room changes scene
+  The player dropped on the center of a change point body is pushed by the physics against the map border, so the walk
+  after a rejected change starts from the room return point placed on the server
+- `test-game-session-interruptions.spec.js` (exclusive) - a send while the room connection is closing (the socket
+  `close()` sets the closing state at once, the send in the same page step is skipped without the connection lost
+  modal, the room leave of the closed connection shows its server down modal); the F5 key marking the forced
+  disconnection, so the connection the server drops right after shows no server down modal; a scene change whose
+  reconnect fails after the next room join (a client `reldens.joinedRoom` listener throws) showing the reconnect modal;
+  and the players state handler of the town switched on with its time out (`/api/e2e/game-session/state-handler`): the
+  player joined without life is blocked (with a time out longer than the test), turns active once a short time out
+  ends, and the player that leaves before it keeps the dead state on its removed schema
+  (`/api/e2e/game-session/watch-player` keeps the schema to read it after the leave)
+- `test-ad-skins-tickets.spec.js` (exclusive) - two tickets give two rewarded skin ads, each consuming one ticket (the
+  consumed ticket row is deleted and the play stored as ended); a ticket trashed while the ad plays gives no skin item;
+  two ticket uses sent at once give one skin item; the ticket use plays the skin ad on its own client only and never
+  consumes the ticket of the other player in the room
+- `test-ad-skins-ad-states.spec.js` (exclusive) - a skin ad ended while an open trade locks the inventory gives no skin
+  item and keeps the ticket; a ticket traded away during the ad gives no skin item to anyone; the movement of a player
+  in a skin ad is ignored until the ad ends (the walk to a clear line tile works again after the ad failure); the ad
+  start of a walking player clears its movement intervals and stops it; a page
+  reload during the ad keeps the ticket and the open play, the player is active on the new login and the kept ticket
+  plays the ad again
+- `test-ads-event-videos.spec.js` (exclusive) - the sample room activation ad played by the e2e SDK mock when the player
+  logs in to its room (the SDK loads after the room activation, the provider queues the ad until it is ready) rewards
+  its item without a ticket and stores the play as ended
 - `test-teleport-npc.spec.js` (exclusive) - the teleport NPC option moves the player to its destination room; the long
   run moves the pointer off the NPC after the click (`ShowcaseSteps.clickObjectAndLeave()`), because a pointer that goes
   from the sprite to a DOM dialog never fires its pointer out and the green hover highlight stays on
+- `test-teleport-npc-destinations.spec.js` and `test-teleport-npc-relocations.spec.js` (exclusive) - the town teleport
+  NPC dialog opened next to it (`TeleportNpcSteps`), with an e2e destination option added to the live NPC for the
+  group (`GameplayE2eStateApi.addTeleportOption()`) and the option sent as the dialog option message: the "Nowhere"
+  option, a destination position and direction, an invalid position, a same room destination on both clients, an
+  invalid room, a guest room without allowGuest (the guest rooms computed with allowOnRooms off), an option out of the
+  options and out of reach; a disabled player, a blocked destination room, a failed state save, two option messages
+  at once, an option while walking, the origin and destination room observers, two dialogs open and the stored room
+  on the next login
+- `test-teleport-npc-arrivals.spec.js`, `test-teleport-npc-options.spec.js`, `test-teleport-npc-observers.spec.js` and
+  `test-teleport-npc-teams.spec.js` (exclusive) - the town teleport NPC Portia (`TeleportNpcSteps`): where a destination
+  leaves the player (return point, position and direction, the stored room, the closed dialogs and the reconnect modal
+  of a rejected join); the option checks (invalid values, another object id, out of reach, the room custom data, a
+  second teleport and a guest); what the other town player keeps (its target cleared, its own NPC dialog, the game over
+  box, a skill or a cast on the teleported player); and the clan kept by a teleported member (a team is disbanded,
+  ISSUE #351). The direct PvP attack and kill steps live in `helpers/test-combat-death.js`
+- `test-death-player-kill.spec.js` (exclusive) - a player killed by another player with the death teleport on revives
+  in the town, and with the death teleport off the teleport NPC dialog choice is ignored and the player revives in the
+  town room at the game over time
+- `test-npc-dialogs.spec.js`, `test-npc-dialog-players.spec.js` and `test-npc-rewards.spec.js` (exclusive) - the town
+  NPC dialogs (`helpers/npc-dialog-steps.js`: the NPC random movement stopped on its original tile, the player placed
+  next to it, the room custom data and one live object property changed for the group through
+  `/api/e2e/live-objects/object-property`): the stored title and content, the close and the pause list, the
+  interaction out of reach or disallowed, the real canvas click; the dialogs of several players and the scene change;
+  and the healer, weapons master and quest NPC options with their answers and items
+- `test-trader-shop.spec.js` and `test-trader-rules.spec.js` (exclusive) - the town trader Gimly
+  (`helpers/trader-steps.js`, the player inventory preserved and the traded quantities set on the live inventory, the
+  prices and rewards read from the stored rows): the real Buy and Sell buttons, the cart, the confirmed texts, the
+  bought and sold items stored and kept after a new login; the refused items without coins or with invalid
+  quantities, the unknown actions and sub actions, a sub action with no transaction (the live trader transactions
+  cleared first, ISSUE #356), a confirm after the close, out of reach with and without the close, two players at once,
+  one player closing while the other confirms and the clean shop after a new login
+- `test-animation-objects.spec.js` (exclusive) - the town house door run on hit and visible to the room (both clients
+  play it, the other client rewinds and pauses it after its stored restart time) or changed to be visible only to the
+  player, and Alfred run on action visible only to the player or changed to the room (the animation messages recorded
+  on both clients and the sprite animation events watched); the door walk is
+  `ChangePointsSteps.walkUpIntoRoom()`
 - `test-death-teleport.spec.js` (exclusive) - the dead player revives in the town, or in the forest consuming the
   restoration item seeded or rewarded by the resurrection ad played while dead; without the restoration item auto
   consume the game over box asks to use the item (yes revives in the forest consuming it, no keeps it and revives in
@@ -529,7 +717,45 @@ placements wait for the client sprite on the placed position, not only for the s
   how the case goes on, the choice, the revive) and the clicks hover the button near its corner, so the recorded cursor
   never hides its label
 - `test-scores-reset.spec.js` (exclusive) - the check on a new period deletes every score and empties the open scores
-  panel; the scores rows and the last period key row are preserved and created again by the group reset
+  panel, the panels of the players in the same and in another scene room (`Login.startThirdPlayer()` in the forest)
+  with their own scores at 0, a panel closed during the reset and the panel of a player away during the reset after
+  its login; the scores rows and the last period key row are preserved and created again by the group reset
+- `test-scores-panel.spec.js` (exclusive) - the scores panel own score line, configured labels, close and reopen, the
+  join broadcast of the room only and the panel across a scene change; the scores rows of the group players are
+  preserved and every seeded total is set over the highest stored score, so the seeded rows are always in the top 10;
+  `test-scores-page.spec.js` (exclusive) covers the full scores page pager, invalid page parameters and page sizes, the
+  tied scores order and the title. Both check a player named with the stored HTML payload
+  (`KillScoreSteps.createHtmlNamedPlayer()`, seeded straight in the database since the player creation cleans the
+  names) shown as text with no script run (`KillScoreSteps.expectNameAsText()`)
+- `test-teams-scene-change.spec.js` (exclusive) - the team kept across a scene change (`TeamSteps.changeScene()` places
+  the player on the change point and records its room messages and chat again once the preloader of the new scene runs),
+  the owner client of the team after the owner scene change (`GET /api/e2e/teams/owner-session`), a team deleted while
+  the member changes the scene (its join to the next room held by a `page.route()` on the matchmake request) and a team
+  update received before the UI scene exists (`POST /api/e2e/teams/changing-room-record` seeds the scene change record
+  of a logged out player); the cases that end with a team of three disband it before the pages close
+- `test-teams-cancelled-events.spec.js` (exclusive) - every cancellable team and clan event cancelled for the group
+  (`TeamSteps.cancelEvent()`, `POST /api/e2e/live-objects/cancel-event` with the flag of that event); the clan cases wait
+  for the cancelled run of the event (`TeamSteps.waitForCancelled()` reads the count of every cancelled event from
+  `GET /api/e2e/live-objects/cancelled-events`) instead of a fixed pause
+- `test-clans-members.spec.js` and `test-clans-sessions.spec.js` (exclusive) - the clan leave, remove and disband
+  flows, the members across reloads, scene changes and logins, and the clan lines. `ClanSteps.enterWithClan()` seeds a
+  clan level modifier of `atk`, enters the group players, preserves their clan rows and creates the clan with the given
+  members, and `ClanSteps.seedGroupClan()` seeds a clan before the logins (with the owner player id as clan id for the
+  shared leave class case, which needs that id free: every clan spec preserves the clan rows it creates). The clan
+  message received before the UI scene exists is forced by holding the preloader loading template
+  (`**/assets/html/ui-loading.html`) until the clan update is queued on the page
+
+- `test-locale-selector-rules.spec.js` and `test-locale-selector-sessions.spec.js` (exclusive, they change the shared
+  locales and the town room custom data) - the language selector with one locale left, the guest default locale, a
+  saved locale disabled later, the options labels, the save error of a change blocked by the room actions (translated
+  in the active locale), after a scene change and only for its player, a change right before a reload, after the
+  connection closed, from a dead player and from a guest. `LocaleSteps` seeds the locales and snippets for the group
+  (the server locales are reloaded through `POST /api/e2e/data/reload-locales`, and again by the group reset), changes
+  a locale row with its values preserved, preserves the user locale rows and reads the client active locale
+
+- `test-quests-tracking.spec.js` (exclusive, it seeds global quest rows that every player gets and changes the rooms) -
+  the quest keys of the player and global rows on every room join, a row added during the session or after the logout
+  and the guest rows; the seeded `questsProgress` rows use the `e2e-quest-` keys and only those keys are compared
 
 `RoomEnemiesReset` (run by the player reset before every test) resets the path of every respawned body
 (`resetAuto`), as `EnemyObject.respawn` does, otherwise a body moved to a new respawn tile keeps walking its old random
