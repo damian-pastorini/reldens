@@ -9,7 +9,8 @@
  * sprite on the state position and ends the entry, an entry already on the sprite position ends without moving it and
  * a sprite without entry is never moved by the update. The players positions are rounded to 2 decimals and use the
  * players size offsets, the objects and bullets positions are rounded to integers. Every frame also keeps the texture
- * its sprite renders while it is visible, so a bullet flying with a missing texture or hidden fails the spec. The page
+ * its sprite renders while it is visible, so a bullet flying with a missing texture or hidden fails the spec, and for
+ * the objects whether the sprite depth is the object Y plus the sprite height (counted in the summary). The page
  * errors are collected, so a failing client update (like a missing import) fails the spec.
  *
  */
@@ -40,6 +41,8 @@ class InterpolationFramesRecorder
             let readPosition = (sprite) => sprite ? {x: sprite.x, y: sprite.y} : false;
             let readEntry = (entry) => entry ? {x: entry.x, y: entry.y, mov: Boolean(entry.mov)} : false;
             let readRenderedTexture = (sprite) => sprite?.visible && 0 < sprite.alpha ? sprite.texture?.key : false;
+            let isObjectDepthByY = (target) => 'object' !== target.kind || !target.sprite?.sceneSprite
+                || target.sprite.sceneSprite.depth === target.sprite.y + target.sprite.sceneSprite.height;
             let fetchTargets = () => [
                 ...tracked.players.map(key => ({
                     kind: 'player',
@@ -81,7 +84,8 @@ class InterpolationFramesRecorder
                     entry: pendingFrame.entry,
                     after,
                     isEntryKept: Boolean(target.entries[target.key]),
-                    renderedTexture: readRenderedTexture(target.sprite)
+                    renderedTexture: readRenderedTexture(target.sprite),
+                    isObjectDepthByY: isObjectDepthByY(target)
                 });
                 return true;
             };
@@ -184,10 +188,12 @@ class InterpolationFramesRecorder
             placed: 0,
             current: 0,
             longestPlacedJump: 0,
-            renderedTextures: []
+            renderedTextures: [],
+            objectDepthMismatches: 0
         };
         for(let frame of recording.frames.filter(recordedFrame => kind === recordedFrame.kind)){
             summary.frames++;
+            summary.objectDepthMismatches += frame.isObjectDepthByY ? 0 : 1;
             if(frame.renderedTexture && !summary.renderedTextures.includes(frame.renderedTexture)){
                 summary.renderedTextures.push(frame.renderedTexture);
             }
