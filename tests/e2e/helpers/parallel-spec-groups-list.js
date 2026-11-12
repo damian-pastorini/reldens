@@ -90,6 +90,7 @@ module.exports.ParallelSpecGroupsList = {
             'test-admin-no-session-posts.spec.js',
             'test-admin-login-guards.spec.js',
             'test-admin-entity-errors.spec.js',
+            'test-admin-maps-wizard-file-names.spec.js',
             'test-admin-login-identity.spec.js',
             'test-admin-role-black-list.spec.js',
             'test-admin-ip-lists.spec.js',
