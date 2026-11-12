@@ -9,6 +9,7 @@ const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { RelocationRoomBuilder } = require('./fixtures/relocation-room-builder');
 const { Pve } = require('../lib/actions/server/pve');
 const { PlayerRelocator } = require('../lib/rooms/server/player-relocator');
+const { AnimationObject } = require('../lib/objects/server/object/type/animation-object');
 const { GameConst } = require('../lib/game/constants');
 const timersPromises = require('timers/promises');
 
@@ -80,6 +81,22 @@ class TestPveChaseTimeOut extends BaseTest
             this.assert.strictEqual(setup.originMoves, 1);
             this.assert.deepStrictEqual(setup.pve.inBattleWithPlayers, {});
             this.assert.deepStrictEqual(setup.pve.lastHitAt, {});
+        });
+    }
+
+    async testChaseWithoutPathFinderLeavesTheBattle()
+    {
+        await this.test('a chase of an object body without world or world path finder fails and the enemy leaves the battle', async () => {
+            for(let objectWorld of [false, {}]){
+                let setup = this.createChaseSetup(0);
+                setup.pve.targetObject.chaseBody = AnimationObject.prototype.chaseBody;
+                setup.pve.targetObject.objectBody.world = objectWorld;
+                await setup.pve.chasePlayer(setup.playerSchema, {}, {});
+                this.assert.deepStrictEqual(
+                    [setup.delayedStarts, setup.originMoves, setup.pve.inBattleWithPlayers],
+                    [0, 1, {}]
+                );
+            }
         });
     }
 
