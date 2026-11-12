@@ -189,10 +189,12 @@ class Login
         });
     }
 
-    static async openClientPage(page, gameConfig)
+    static async openClientPage(page, gameConfig, contextOptions = {})
     {
         let client = {
-            clientContext: await page.context().browser().newContext({baseURL: SecurityApi.baseUrl(gameConfig)})
+            clientContext: await page.context().browser().newContext(
+                Object.assign({baseURL: SecurityApi.baseUrl(gameConfig)}, contextOptions)
+            )
         };
         client.clientPage = await client.clientContext.newPage();
         Login.openedClientContexts.push(client.clientContext);
