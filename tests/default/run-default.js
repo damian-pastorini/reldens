@@ -80,9 +80,18 @@ class RunDefault
     {
         let parts = [];
         for(let arg of args){
-            parts.push('object' === typeof arg ? sc.toJsonString(arg) : ''+arg);
+            parts.push('object' === typeof arg ? this.formatObjectArg(arg) : ''+arg);
         }
         return parts.join(' ');
+    }
+
+    formatObjectArg(arg)
+    {
+        try {
+            return sc.toJsonString(arg);
+        } catch(error) {
+            return '[not serializable '+sc.get(arg?.constructor, 'name', 'object')+': '+error.message+']';
+        }
     }
 
     async execute()
