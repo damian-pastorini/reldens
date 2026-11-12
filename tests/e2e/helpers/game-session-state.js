@@ -4,13 +4,14 @@
  *
  * Server side e2e endpoints for the game sessions: drops the socket of a player without a close handshake, sends the
  * room closing message, rejects the joins to one room by its origin, makes the last login record fail, removes the
- * game config from the initial game data and switches the players state handler of a room. The reset restores every
- * value before every test.
+ * game config from the initial game data, switches the players state handler of a room (with its time out) and keeps a
+ * player schema to read its state after the player left the room. The reset restores every value before every test.
  *
  */
 
 const { sc } = require('@reldens/utils');
 const { RoomsConst } = require('../../../lib/rooms/constants');
+const { RoomObjectsState } = require('./room-objects-state');
 
 class GameSessionState
 {
@@ -19,6 +20,7 @@ class GameSessionState
     static isGameConfigStripped = false;
     static usersLoginRepository = false;
     static stateHandlerRooms = [];
+    static watchedPlayer = false;
 
     static fetchRoom(serverManager, roomName)
     {
@@ -32,10 +34,12 @@ class GameSessionState
         if(GameSessionState.usersLoginRepository){
             serverManager.loginManager.usersManager.usersLoginRepository = GameSessionState.usersLoginRepository;
         }
-        for(let changedRoom of GameSessionState.stateHandlerRooms){
+        for(let changedRoom of GameSessionState.stateHandlerRooms.reverse()){
             changedRoom.room.applyPlayersLastStateHandler = changedRoom.value;
+            changedRoom.room.playersStateHandlerTimeOut = changedRoom.timeOut;
         }
         GameSessionState.stateHandlerRooms = [];
+        GameSessionState.watchedPlayer = false;
     }
 
     static registerEndpoints(serverManager)
@@ -85,9 +89,33 @@ class GameSessionState
         });
         app.post('/api/e2e/game-session/state-handler', (request, response) => {
             let room = GameSessionState.fetchRoom(serverManager, sc.get(request.body, 'roomName', ''));
-            GameSessionState.stateHandlerRooms.push({room, value: room.applyPlayersLastStateHandler});
+            GameSessionState.stateHandlerRooms.push({
+                room,
+                value: room.applyPlayersLastStateHandler,
+                timeOut: room.playersStateHandlerTimeOut
+            });
             room.applyPlayersLastStateHandler = true === sc.get(request.body, 'enabled', false);
+            room.playersStateHandlerTimeOut = Number(sc.get(request.body, 'timeOut', room.playersStateHandlerTimeOut));
             response.json({ok: true});
+        });
+        app.post('/api/e2e/game-session/watch-player', (request, response) => {
+            GameSessionState.watchedPlayer = RoomObjectsState.findPlayerByName(
+                GameSessionState.fetchRoom(serverManager, sc.get(request.body, 'roomName', '')),
+                sc.get(request.body, 'playerName', '')
+            ) || false;
+            response.json({
+                ok: Boolean(GameSessionState.watchedPlayer),
+                inState: GameSessionState.watchedPlayer ? GameSessionState.watchedPlayer.state.inState : false
+            });
+        });
+        app.get('/api/e2e/game-session/watched-player', (request, response) => {
+            response.json({
+                inState: GameSessionState.watchedPlayer ? GameSessionState.watchedPlayer.state.inState : false,
+                inRoom: Boolean(
+                    GameSessionState.fetchRoom(serverManager, sc.get(request.query, 'roomName', ''))
+                        ?.playerBySessionIdFromState(GameSessionState.watchedPlayer.sessionId)
+                )
+            });
         });
     }
 
