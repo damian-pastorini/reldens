@@ -11,6 +11,7 @@ const { ClanFactory } = require('../lib/teams/server/clan-factory');
 const { ClanLeave } = require('../lib/teams/server/message-actions/clan-leave');
 const { ClanJoin } = require('../lib/teams/server/message-actions/clan-join');
 const { ChatMessageActions } = require('../lib/teams/server/message-actions/chat-message-actions');
+const { TeamsConst } = require('../lib/teams/constants');
 const { Modifier } = require('@reldens/modifiers');
 const { EventsManager } = require('@reldens/utils');
 
@@ -122,6 +123,115 @@ class TestClanLevelModifiers extends BaseTest
             ]);
             this.assert.deepStrictEqual(teamsPlugin.clans, {});
             this.assert.deepStrictEqual(savedChatMessages, ['ImRoot has disbanded the clan.']);
+        });
+    }
+
+    createClanWithOnlineMembers(chatLines)
+    {
+        let events = new EventsManager();
+        new ChatMessageActions({
+            events,
+            chatPlugin: {chatManager: {saveMessage: async () => true}}
+        }).clanMemberLeavingEventListener();
+        let clan = new Clan({id: 10, owner: {player_id: '1', playerName: 'ImRoot'}});
+        let schemas = {};
+        for(let playerId of ['1', '2', '3']){
+            schemas[playerId] = ClanFixturesBuilder.createOwnerSchema(playerId, 'ImRoot'+('1' === playerId ? '' : playerId));
+            chatLines[playerId] = [];
+            let client = ClanFixturesBuilder.createChatRecordingClient(chatLines[playerId]);
+            clan.join(schemas[playerId], client, {player_id: Number(playerId)});
+        }
+        return {
+            schemas,
+            teamsPlugin: ClanFixturesBuilder.createTeamsPlugin({
+                events,
+                clans: {10: clan},
+                dataServer: ClanFixturesBuilder.createClanJoinDataServer([])
+            })
+        };
+    }
+
+    async testEveryMemberGetsTheDisbandedLineOfTheOwner()
+    {
+        await this.test('the owner disband sends every member the disbanded line with the owner name', async () => {
+            let chatLines = {};
+            let clanSetup = this.createClanWithOnlineMembers(chatLines);
+            this.assert.strictEqual(await ClanLeave.execute(clanSetup.schemas[1], clanSetup.teamsPlugin, '1'), true);
+            let disbandedLine = ['ImRoot has disbanded the clan.'];
+            this.assert.deepStrictEqual(chatLines, {1: disbandedLine, 2: disbandedLine, 3: disbandedLine});
+        });
+    }
+
+    async testALeavingMemberGetsTheLeftLineAndARemovedMemberTheRemovedLine()
+    {
+        await this.test('a member leaving gets the left line and a member removed by the owner the removed line', async () => {
+            let chatLines = {};
+            let clanSetup = this.createClanWithOnlineMembers(chatLines);
+            await ClanLeave.fromMessage({act: TeamsConst.ACTIONS.CLAN_LEAVE, id: 10}, clanSetup.schemas[2], clanSetup.teamsPlugin);
+            await ClanLeave.fromMessage(
+                {act: TeamsConst.ACTIONS.CLAN_REMOVE, id: 10, remove: '3'},
+                clanSetup.schemas[1],
+                clanSetup.teamsPlugin
+            );
+            this.assert.deepStrictEqual(chatLines, {
+                1: [],
+                2: ['ImRoot2 has left the clan.'],
+                3: ['ImRoot3 has been removed from the clan.']
+            });
+            this.assert.deepStrictEqual(Object.keys(clanSetup.teamsPlugin.clans[10].members), ['1']);
+        });
+    }
+
+    async testTheOwnerRemoveOfItsOwnNumericIdDisbandsTheClan()
+    {
+        await this.test('the owner remove of its own id sent as a number disbands the clan', async () => {
+            let chatLines = {};
+            let clanSetup = this.createClanWithOnlineMembers(chatLines);
+            await ClanLeave.fromMessage(
+                {act: TeamsConst.ACTIONS.CLAN_REMOVE, id: 10, remove: 1},
+                clanSetup.schemas[1],
+                clanSetup.teamsPlugin
+            );
+            this.assert.deepStrictEqual(clanSetup.teamsPlugin.clans, {});
+            this.assert.deepStrictEqual(chatLines[2], ['ImRoot has disbanded the clan.']);
+            this.assert.strictEqual(clanSetup.schemas[3].privateData.clan, false);
+        });
+    }
+
+    async testACancelledJoinUpdateSavesNoPlayerData()
+    {
+        await this.test('a cancelled clan players update stops the join before the player data save', async () => {
+            let persistedActs = [];
+            let joiningSchema = ClanFixturesBuilder.createOwnerSchema('2', 'ImRoot2');
+            joiningSchema.privateData.clan = false;
+            joiningSchema.persistData = async (params) => persistedActs.push(params.act);
+            let events = new EventsManager();
+            events.on('reldens.beforeClanUpdatePlayers', (event) => {
+                event.continueBeforeJoinUpdate = false;
+            });
+            let clan = new Clan({id: 20, owner: {player_id: '3', playerName: 'ImRoot3'}, pendingInvites: {2: true}});
+            let teamsPlugin = ClanFixturesBuilder.createTeamsPlugin({
+                events,
+                clans: {20: clan},
+                dataServer: ClanFixturesBuilder.createClanJoinDataServer([])
+            });
+            this.assert.strictEqual(await ClanJoin.execute({send: () => true}, {id: 20}, {}, joiningSchema, teamsPlugin), false);
+            this.assert.deepStrictEqual(persistedActs, []);
+            this.assert.deepStrictEqual(Object.keys(clan.members), ['2']);
+        });
+    }
+
+    async testTheOwnerJoinReplacesTheOwnerClient()
+    {
+        await this.test('the owner joining the clan becomes the owner client and a member join keeps it', async () => {
+            let loaderClient = {send: () => true};
+            let clan = new Clan({id: 10, owner: {player_id: 1, playerName: 'ImRoot'}, ownerClient: loaderClient});
+            clan.join(ClanFixturesBuilder.createPlayerSchema('2'), loaderClient, {player_id: 2});
+            this.assert.strictEqual(clan.ownerClient, loaderClient);
+            let ownerClient = {send: () => true};
+            clan.join(ClanFixturesBuilder.createPlayerSchema('1'), ownerClient, {player_id: 1});
+            this.assert.strictEqual(clan.ownerClient, ownerClient);
+            this.assert.strictEqual(clan.clients[1], ownerClient);
         });
     }
 
