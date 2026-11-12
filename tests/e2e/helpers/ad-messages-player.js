@@ -46,9 +46,7 @@ class AdMessagesPlayer
             [providerPath+'/enabled']: 1,
             [providerPath+'/sdkUrl']: E2eAssetsEndpoints.ASSETS_PATH+E2eAssetsEndpoints.SDK_MOCK_FILE
         };
-        for(let configPath of Object.keys(configOverrides)){
-            await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, configPath, configOverrides[configPath]);
-        }
+        await AdMessagesPlayer.overrideConfigs(gameConfig, e2eGroup, configOverrides);
         return {
             id: adRow.id,
             minimumDurationMs: Number(await E2eSeedAndRestoreApi.fetchConfigValue(
@@ -75,6 +73,13 @@ class AdMessagesPlayer
         await page.evaluate(() => {
             window.CrazyGames.SDK.failNextAd = true;
         });
+    }
+
+    static async overrideConfigs(gameConfig, e2eGroup, configOverrides)
+    {
+        for(let configPath of Object.keys(configOverrides)){
+            await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, configPath, configOverrides[configPath]);
+        }
     }
 
     static async waitForPlayedAd(page, enabledAd, timeout)
