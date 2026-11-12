@@ -40,6 +40,7 @@ class TimeConstants
     static ENEMY_KILL = 170000;
     static TIMING_OBJECT_COMPLETE = 15000;
     static STEP_READ = 4000;
+    static MAPS_GENERATION = 30000;
 
     static forLongRun(value, longRun)
     {
