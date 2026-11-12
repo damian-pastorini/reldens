@@ -12,7 +12,8 @@
  * sorts the bodies by their left bound, the enemy in between is then the first body of the hit, which is the only order
  * the skill hit resolves (a bullet that flies to the right is resolved as the hit body itself, see real-issues.md). A
  * fireball shot at a player standing behind a wall (the two players at both sides of a wall tile) ends on the wall: no
- * damage, no hit and the target keeps its life.
+ * damage, no hit and the target keeps its life, the bullet sprite flies and is destroyed and the bullet body is removed
+ * from the room state.
  *
  */
 
@@ -24,6 +25,7 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { Login } = require('./helpers/login');
 const { Navigation } = require('./helpers/navigation');
+const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
 const { ActionsConst } = require('../../lib/actions/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -142,8 +144,20 @@ class TestCombatBulletObstacleHits
         let targetLife = (await GameplayE2eStateApi.fetchPlayer(gameConfig, context.roomName, targetName)).life;
         await RoomMessagesRecorder.start(page);
         await CombatSkillCasting.targetPlayer(page, targetSessionId);
+        await InterpolationFramesRecorder.start(page, {bullets: true});
         await CombatSkillCasting.clickWhenReady(page, context, fireball);
         await CombatSkillCasting.waitForEndStates(context, fireball, 1);
+        expect(
+            await InterpolationFramesRecorder.waitForBulletsFlightEnd(page, context.timeout),
+            'The bullet sprite flies and is destroyed once the bullet ends on the wall'
+        ).toBe(true);
+        await InterpolationFramesRecorder.stop(page);
+        expect(
+            await page.evaluate(() => [...window.reldens.activeRoomEvents.room.state.bodies.keys()].filter(
+                (bodyKey) => -1 !== bodyKey.indexOf('bullet')
+            )),
+            'The bullet body ended on the wall is removed from the room state'
+        ).toEqual([]);
         await CombatSkillCasting.expectNothingApplied(page, context, 0, EnemyAggressionSteps.QUIET_MS, 'Ends on the wall');
         let hitAct = fireball+ActionsConst.ACTIONS.SUFFIX.HIT;
         expect(await RoomMessagesRecorder.fetchMessages(page, hitAct), 'No hit').toEqual([]);
