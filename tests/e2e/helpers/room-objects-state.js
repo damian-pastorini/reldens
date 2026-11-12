@@ -42,10 +42,15 @@ class RoomObjectsState
         );
     }
 
-    static fetchObjectsWithState(room)
+    static fetchRoomObjects(room)
     {
         let roomObjects = sc.get(room.objectsManager, 'roomObjects', {});
-        return Object.keys(roomObjects).map(objectIndex => roomObjects[objectIndex]).filter(
+        return Object.keys(roomObjects).map(objectIndex => roomObjects[objectIndex]);
+    }
+
+    static fetchObjectsWithState(room)
+    {
+        return RoomObjectsState.fetchRoomObjects(room).filter(
             roomObject => roomObject.objectBody && roomObject.objectBody.bodyState
         );
     }
@@ -130,7 +135,8 @@ class RoomObjectsState
             isAggressive: true === roomObject.isAggressive,
             maxTiles: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxTiles', 0),
             maxDelay: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'maxDelay', 0),
-            movesCount: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'movesCount', 0)
+            movesCount: sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'movesCount', 0),
+            openDialogs: Object.keys(sc.get(sc.get(roomObject, 'randomMovementBehavior', {}), 'openDialogs', {})).sort()
         };
         snapshot.inBattle = snapshot.inBattlePlayers.length;
         return snapshot;
