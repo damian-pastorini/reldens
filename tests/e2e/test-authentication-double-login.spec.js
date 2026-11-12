@@ -2,7 +2,9 @@
  *
  * Reldens - Test Authentication Double Login
  *
- * Tests the same account used from more than one tab: the first session in another scene or still on the selection
+ * Tests the same account used from more than one tab: the first session walking with a direction held (ended with the
+ * session ended message, its body removed and the second session standing still), the first session in another scene
+ * or still on the selection
  * (its lobby closed with the session ended message while only the second tab enters the game),
  * the position and stats handed to the second session, the sprites seen by a third client, the connections and active
  * sessions left behind, the failed state save and the tabs closed on the selection or in the game. The server side
@@ -18,6 +20,9 @@ const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
+const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { GameConst } = require('../../lib/game/constants');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -53,16 +58,14 @@ class TestAuthenticationDoubleLogin
         }, playerName);
     }
 
-    static async fetchTownPlayer(gameConfig)
-    {
-        return await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
-    }
-
     static async walkAndWaitForMove(sessionPage, gameConfig, playerBefore)
     {
         await Navigation.walkInDirection(sessionPage, 'ArrowRight', TestAuthenticationDoubleLogin.WALK_MS);
         await sessionPage.waitForTimeout(TestAuthenticationDoubleLogin.NOTHING_CHANGED_WAIT_MS);
-        expect((await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig)).x, 'The player must move').not.toBe(playerBefore.x);
+        expect(
+            (await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName)).x,
+            'The player must move'
+        ).not.toBe(playerBefore.x);
     }
 
     static async runDifferentScenesTest(page, secondPage, screenshots, gameConfig, longRun)
@@ -79,6 +82,29 @@ class TestAuthenticationDoubleLogin
         await screenshots.capture(secondPage, 'double-login-different-scenes');
     }
 
+    static async runWalkingFirstSessionTest(page, secondPage, gameConfig, longRun)
+    {
+        await Login.startConfigPlayer(page, gameConfig, longRun);
+        let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName});
+        await RoomMessagesRecorder.sendMessage(page, {dir: GameConst.RIGHT});
+        await expect.poll(
+            async () => GameplayE2eStateApi.fetchMovementIntervals(gameConfig, Login.TOWN_ROOM_NAME, playerId),
+            {message: 'The first session walks right', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toEqual([playerId+'_'+GameConst.RIGHT]);
+        await Login.startConfigPlayer(secondPage, gameConfig, longRun);
+        await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
+        await expect.poll(
+            async () => LoginServerApi.fetchPlayersInRoom(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName),
+            {message: 'Only the second session body stays in the room', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(1);
+        await RoomMovementApi.waitForPlayerStill(
+            gameConfig,
+            Login.TOWN_ROOM_NAME,
+            gameConfig.e2ePlayerName,
+            TimeConstants.SERVER_RESPONSE
+        );
+    }
+
     static async runFirstOnSelectionTest(page, secondPage, screenshots, gameConfig, longRun)
     {
         await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
@@ -92,7 +118,7 @@ class TestAuthenticationDoubleLogin
     static async runStateHandedOverTest(page, secondPage, screenshots, gameConfig, longRun)
     {
         await Login.startConfigPlayer(page, gameConfig, longRun);
-        let initialPlayer = await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig);
+        let initialPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
         await RoomObjectsApi.setPlayerAffectedProperty(
             gameConfig,
             Login.TOWN_ROOM_NAME,
@@ -100,10 +126,10 @@ class TestAuthenticationDoubleLogin
             Math.floor(initialPlayer.totalLife / 2)
         );
         await TestAuthenticationDoubleLogin.walkAndWaitForMove(page, gameConfig, initialPlayer);
-        let firstSessionPlayer = await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig);
+        let firstSessionPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
         await Login.startConfigPlayer(secondPage, gameConfig, longRun);
         await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
-        let secondSessionPlayer = await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig);
+        let secondSessionPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
         expect(secondSessionPlayer.x).toBe(firstSessionPlayer.x);
         expect(secondSessionPlayer.y).toBe(firstSessionPlayer.y);
         expect(secondSessionPlayer.stats).toEqual(firstSessionPlayer.stats);
@@ -132,7 +158,7 @@ class TestAuthenticationDoubleLogin
         await TestAuthenticationDoubleLogin.walkAndWaitForMove(
             secondPage,
             gameConfig,
-            await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig)
+            await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName)
         );
         let testMessage = 'e2e-double-login-'+Date.now();
         await secondPage.click(Selectors.hud.chatOpen);
@@ -209,9 +235,9 @@ class TestAuthenticationDoubleLogin
         await TestAuthenticationDoubleLogin.walkAndWaitForMove(
             page,
             gameConfig,
-            await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig)
+            await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName)
         );
-        let lastPosition = await TestAuthenticationDoubleLogin.fetchTownPlayer(gameConfig);
+        let lastPosition = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
         await page.goto('about:blank');
         await expect.poll(async () => await TestAuthenticationDoubleLogin.fetchSpritesCount(secondPage, playerName)).toBe(0);
         let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: playerName});
@@ -226,6 +252,9 @@ class TestAuthenticationDoubleLogin
         test.describe('Authentication Double Login', () => {
             test('first session in another scene is removed from it', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runDifferentScenesTest(page, secondPage, screenshots, gameConfig, longRun);
+            });
+            test('first session walking ends with the session ended message and leaves the second session still', async ({ page, secondPage, gameConfig, longRun }) => {
+                await TestAuthenticationDoubleLogin.runWalkingFirstSessionTest(page, secondPage, gameConfig, longRun);
             });
             test('first session on the selection ends with the session ended message', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runFirstOnSelectionTest(page, secondPage, screenshots, gameConfig, longRun);
