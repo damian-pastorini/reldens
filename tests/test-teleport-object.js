@@ -6,7 +6,10 @@
 
 const { BaseTest } = require('./base-test');
 const { RelocationRoomBuilder } = require('./fixtures/relocation-room-builder');
+const { RandomMovementBodyBuilder } = require('./fixtures/random-movement-body-builder');
 const { TeleportObject } = require('../lib/objects/server/object/type/teleport-object');
+const { ObjectRandomMovement } = require('../lib/objects/server/object/object-random-movement');
+const { ObjectsManager } = require('../lib/objects/server/manager');
 const { ObjectsConst } = require('../lib/objects/constants');
 const { GameConst } = require('../lib/game/constants');
 const { sc } = require('@reldens/utils');
@@ -18,13 +21,14 @@ class TestTeleportObject extends BaseTest
     {
         super(config);
         this.roomBuilder = new RelocationRoomBuilder();
+        this.bodyBuilder = new RandomMovementBodyBuilder();
         this.interactionDistance = 64;
         this.teleportId = 43;
         this.invalidRoomName = 'reldens-invalid-room';
         this.positionDestination = {room: this.roomBuilder.forestRoom.roomName, x: 300, y: 200, dir: GameConst.LEFT};
     }
 
-    createTeleport(playerState)
+    createTeleport(playerState, extraPrivateParams = {})
     {
         let teleport = new TeleportObject({
             events: {},
@@ -32,14 +36,14 @@ class TestTeleportObject extends BaseTest
             dataServer: {},
             client_key: 'teleport_master_1',
             id: this.teleportId,
-            private_params: sc.toJsonString({
+            private_params: sc.toJsonString(Object.assign({
                 destinations: {
                     '1': {room: this.roomBuilder.forestRoom.roomName},
                     '2': {room: this.invalidRoomName},
                     '4': this.positionDestination,
                     '5': {room: this.roomBuilder.forestRoom.roomId}
                 }
-            }),
+            }, extraPrivateParams)),
             client_params: sc.toJsonString({
                 content: 'Where would you like to go?',
                 options: {
@@ -55,9 +59,9 @@ class TestTeleportObject extends BaseTest
         return teleport;
     }
 
-    async selectOption(setup, optionKey)
+    async selectOption(setup, optionKey, extraPrivateParams = {})
     {
-        return await this.createTeleport(setup.playerSchema.state).executeMessageActions(
+        return await this.createTeleport(setup.playerSchema.state, extraPrivateParams).executeMessageActions(
             setup.client,
             {act: GameConst.BUTTON_OPTION, id: this.teleportId, value: optionKey},
             setup.room,
@@ -152,6 +156,17 @@ class TestTeleportObject extends BaseTest
         });
     }
 
+    async testCustomInvalidDestinationMessageReplacesTheDefault()
+    {
+        await this.test('a custom invalid destination message replaces the default one', async () => {
+            let setup = this.roomBuilder.build(this.roomBuilder.townRoom.roomName);
+            let customMessage = 'This road is closed.';
+            this.assert.strictEqual(await this.selectOption(setup, '5', {invalidDestinationMessage: customMessage}), false);
+            this.assert.deepStrictEqual(setup.loadedRooms, []);
+            this.assert.strictEqual([...setup.client.sentMessages].pop().content, customMessage);
+        });
+    }
+
     async testDeadOrDisabledPlayerIsNotRelocated()
     {
         await this.test('a dead or disabled player gets the dialog closed and is never relocated', async () => {
@@ -183,6 +198,101 @@ class TestTeleportObject extends BaseTest
             this.assert.strictEqual(setup.savedStates, 1);
             this.assert.strictEqual(setup.broadcasts.length, 1);
             this.assert.strictEqual(setup.sceneChanges.length, 1);
+        });
+    }
+
+    async testOptionAtTheInteractionsDistanceEdges()
+    {
+        await this.test('an option just inside the interactions distance relocates and just outside is refused', async () => {
+            for(let [offset, expectedScene] of [
+                [this.interactionDistance - 1, this.roomBuilder.forestRoom.roomName],
+                [this.interactionDistance, this.roomBuilder.townRoom.roomName]
+            ]){
+                let setup = this.roomBuilder.build(this.roomBuilder.townRoom.roomName);
+                let teleport = this.createTeleport(setup.playerSchema.state);
+                setup.playerSchema.state.x += offset;
+                let result = await teleport.executeMessageActions(
+                    setup.client,
+                    {act: GameConst.BUTTON_OPTION, id: this.teleportId, value: '1'},
+                    setup.room,
+                    setup.playerSchema
+                );
+                this.assert.strictEqual(result, this.roomBuilder.forestRoom.roomName === expectedScene);
+                this.assert.strictEqual(setup.playerSchema.state.scene, expectedScene);
+                this.assert.deepStrictEqual(
+                    [...setup.client.sentMessages].pop(),
+                    {act: GameConst.CLOSE_UI_ACTION, id: this.teleportId}
+                );
+            }
+        });
+    }
+
+    createMovingTeleport(playerState)
+    {
+        let teleport = this.createTeleport(playerState);
+        teleport.state = {x: playerState.x, y: playerState.y};
+        teleport.randomMovementBehavior = new ObjectRandomMovement({
+            objectBody: this.bodyBuilder.build(),
+            getInBattlePlayers: () => ({})
+        });
+        return teleport;
+    }
+
+    async sendTeleportMessage(teleport, setup, client, message)
+    {
+        return await teleport.executeMessageActions(
+            client,
+            Object.assign({id: this.teleportId}, message),
+            setup.room,
+            setup.playerSchema
+        );
+    }
+
+    async testMovingTeleportStopsForTheDialogAndMovesAfterNowhere()
+    {
+        await this.test('a moving teleport NPC stops while its dialog is open and moves again after Nowhere', async () => {
+            let setup = this.roomBuilder.build(this.roomBuilder.townRoom.roomName);
+            let teleport = this.createMovingTeleport(setup.playerSchema.state);
+            await this.sendTeleportMessage(teleport, setup, setup.client, {act: ObjectsConst.OBJECT_INTERACTION});
+            this.assert.strictEqual(teleport.randomMovementBehavior.moveToRandomTile(), false);
+            this.assert.strictEqual(
+                await this.sendTeleportMessage(teleport, setup, setup.client, {act: GameConst.BUTTON_OPTION, value: '3'}),
+                false
+            );
+            this.assert.notStrictEqual(teleport.randomMovementBehavior.moveToRandomTile(), false);
+        });
+    }
+
+    async testMovingTeleportMovesAgainOnceTheTeleportedPlayerLeft()
+    {
+        await this.test('a moving teleport NPC moves again only once the teleported player left the room', async () => {
+            let setup = this.roomBuilder.build(this.roomBuilder.townRoom.roomName);
+            let teleport = this.createMovingTeleport(setup.playerSchema.state);
+            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
+            objectsManager.roomObjects = {[teleport.key]: teleport};
+            await this.sendTeleportMessage(teleport, setup, setup.client, {act: ObjectsConst.OBJECT_INTERACTION});
+            this.assert.strictEqual(
+                await this.sendTeleportMessage(teleport, setup, setup.client, {act: GameConst.BUTTON_OPTION, value: '1'}),
+                true
+            );
+            this.assert.strictEqual(teleport.randomMovementBehavior.moveToRandomTile(), false);
+            objectsManager.resumeObjectsMovementAfterInteraction(setup.client.sessionId);
+            this.assert.notStrictEqual(teleport.randomMovementBehavior.moveToRandomTile(), false);
+        });
+    }
+
+    async testMovingTeleportWaitsForEveryOpenDialog()
+    {
+        await this.test('a moving teleport NPC with two open dialogs moves again only when both are closed', async () => {
+            let setup = this.roomBuilder.build(this.roomBuilder.townRoom.roomName);
+            let teleport = this.createMovingTeleport(setup.playerSchema.state);
+            let otherClient = {sessionId: 'session-8', send: () => true};
+            await this.sendTeleportMessage(teleport, setup, setup.client, {act: ObjectsConst.OBJECT_INTERACTION});
+            await this.sendTeleportMessage(teleport, setup, otherClient, {act: ObjectsConst.OBJECT_INTERACTION});
+            await this.sendTeleportMessage(teleport, setup, setup.client, {act: GameConst.BUTTON_OPTION, value: '3'});
+            this.assert.strictEqual(teleport.randomMovementBehavior.moveToRandomTile(), false);
+            await this.sendTeleportMessage(teleport, setup, otherClient, {act: GameConst.CLOSE_UI_ACTION});
+            this.assert.notStrictEqual(teleport.randomMovementBehavior.moveToRandomTile(), false);
         });
     }
 
