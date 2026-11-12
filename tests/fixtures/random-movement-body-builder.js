@@ -64,6 +64,18 @@ class RandomMovementBodyBuilder
         }
     }
 
+    /**
+     * @param {Object} grid
+     * @param {number} firstTile
+     * @param {number} lastTile
+     */
+    blockArea(grid, firstTile, lastTile)
+    {
+        for(let column = firstTile; column <= lastTile; column++){
+            this.blockColumnTiles(grid, column, firstTile, lastTile);
+        }
+    }
+
 }
 
 module.exports.RandomMovementBodyBuilder = RandomMovementBodyBuilder;
