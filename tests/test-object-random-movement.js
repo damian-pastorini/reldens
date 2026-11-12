@@ -75,11 +75,11 @@ class TestObjectRandomMovement extends RandomMovementBaseTest
     {
         await this.test('there is no random target when every tile around the original tile is not walkable', async () => {
             let body = this.bodyBuilder.build();
-            let firstTile = this.originalTile - this.maxTiles;
-            let lastTile = this.originalTile + this.maxTiles;
-            for(let column = firstTile; column <= lastTile; column++){
-                this.bodyBuilder.blockColumnTiles(body.world.pathFinder.grid, column, firstTile, lastTile);
-            }
+            this.bodyBuilder.blockArea(
+                body.world.pathFinder.grid,
+                this.originalTile - this.maxTiles,
+                this.originalTile + this.maxTiles
+            );
             this.assert.strictEqual(this.createRandomMovement(body).findTargetTile(), false);
         });
     }
