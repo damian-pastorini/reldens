@@ -9,6 +9,7 @@ const { ObjectsPlugin } = require('../lib/objects/client/plugin');
 const { ObjectBattleAnimation } = require('../lib/objects/client/object-battle-animation');
 const { ObjectsConst } = require('../lib/objects/constants');
 const { ActionsConst } = require('../lib/actions/constants');
+const { ScheduledTimeouts } = require('./fixtures/scheduled-timeouts');
 
 class TestObjectsAnimationMessages extends BaseTest
 {
@@ -21,7 +22,6 @@ class TestObjectsAnimationMessages extends BaseTest
         this.attackKey = 'attackShort';
         this.deathMessage = {act: ActionsConst.BATTLE_ENDED, x: 320, y: 480, t: this.enemyKey, k: this.attackKey};
         this.retryProps = {missingSpritesTimeOut: 150, missingSpritesMaxRetries: 2};
-        this.scheduledTimeouts = [];
     }
 
     createAnimationScene(runAnimations)
@@ -53,31 +53,6 @@ class TestObjectsAnimationMessages extends BaseTest
         sprite.anims.on = (eventName, callback) => Object.assign(sprite.listeners, {[eventName]: callback});
         deathScene.sprites.push(sprite);
         return sprite;
-    }
-
-    withScheduledTimeouts(testCallback)
-    {
-        this.scheduledTimeouts = [];
-        let originalSetTimeout = global.setTimeout;
-        global.setTimeout = (callback, delay) => this.scheduledTimeouts.push({callback, delay});
-        try {
-            testCallback();
-        } catch(error) {
-            global.setTimeout = originalSetTimeout;
-            throw error;
-        }
-        global.setTimeout = originalSetTimeout;
-    }
-
-    runScheduledTimeouts()
-    {
-        let delays = [];
-        while(0 < this.scheduledTimeouts.length){
-            let nextTimeout = this.scheduledTimeouts.shift();
-            delays.push(nextTimeout.delay);
-            nextTimeout.callback();
-        }
-        return delays;
     }
 
     async testAnimationMessageRunsTheObjectAnimationAndIgnoresAnUnknownKey()
@@ -117,11 +92,11 @@ class TestObjectsAnimationMessages extends BaseTest
         await this.test('a death animation not loaded yet is retried every time out until available or the retries limit', async () => {
             let laterScene = this.createDeathScene([false, true], {});
             let missingScene = this.createDeathScene([false, false, false], {});
-            let scheduledDelays = [];
-            this.withScheduledTimeouts(() => {
+            let scheduledTimeouts = new ScheduledTimeouts();
+            let scheduledDelays = await scheduledTimeouts.capture(() => {
                 new ObjectBattleAnimation(this.retryProps).objectBattleEndAnimation(this.deathMessage, laterScene.gameManager);
                 new ObjectBattleAnimation(this.retryProps).objectBattleEndAnimation(this.deathMessage, missingScene.gameManager);
-                scheduledDelays = this.runScheduledTimeouts();
+                return scheduledTimeouts.runAll();
             });
             this.assert.deepStrictEqual(
                 [laterScene.sprites.map(sprite => sprite.key), missingScene.sprites.length, scheduledDelays],
