@@ -3,12 +3,13 @@
  * Reldens - Test Trading Boxes
  *
  * Tests the trade boxes of the group players (TradeSteps: the trade messages sent as a client sends them and the trade
- * box elements of each client): each box is titled with the other player; the own player target shows no start trade
- * button while the other player target shows it; the confirm button is disabled with nothing offered, enabled with an
+ * box elements of each client): each box is titled with the other player; the own player target and an NPC target (the
+ * target an object click shows) show no start trade button while the other player target shows it; the confirm button is disabled with nothing offered, enabled with an
  * offer and disabled again after the confirm, the other player sees the confirmed label and a disconfirm enables the
  * confirm again and clears that label; an offered part of a stack shows its quantity on the sending and the receiving
  * columns, stays listed and a new offer of the same item replaces the quantity on both, while a whole stack offered is
- * hidden from the own items; offers sent by both players at the same time show both offers on both boxes; and the trade
+ * hidden from the own items; a new trade between the same players after a cancel opens with no previous offer; offers
+ * sent by both players at the same time show both offers on both boxes; and the trade
  * titles configured for the group are used by the request box and the trade box.
  *
  */
@@ -17,6 +18,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { TradeSteps } = require('./helpers/trade-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { InventoryConst } = require('../../lib/inventory/constants');
+const { ObjectsConst } = require('../../lib/objects/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -64,6 +66,17 @@ class TestTradingBoxes
         }
         await expect(player.page.locator('.start-trade-'+other.sessionId+' button'), 'The other player can be traded').toBeVisible();
         await expect(player.page.locator('.start-trade-'+player.sessionId), 'No trade with the own player').toHaveCount(0);
+        let objectTargetName = await player.page.evaluate((objectType) => {
+            let scene = window.reldens.getActiveScene();
+            let animationKey = Object.keys(scene.objectsAnimations).find(key => scene.objectsAnimations[key].targetName);
+            let objectAnimation = scene.objectsAnimations[animationKey];
+            let objectTarget = {id: objectAnimation.key, type: objectType};
+            scene.player.currentTarget = objectTarget;
+            window.reldens.gameEngine.showTarget(objectAnimation.targetName, objectTarget, {});
+            return objectAnimation.targetName;
+        }, ObjectsConst.TYPE_OBJECT);
+        await expect(player.page.locator('#target-container'), 'The NPC is targeted').toContainText(objectTargetName);
+        await expect(player.page.locator('#target-container [class*="start-trade-"]'), 'No trade with an NPC').toHaveCount(0);
     }
 
     static async runConfirmButtonsTest(context)
@@ -110,6 +123,25 @@ class TestTradingBoxes
         });
     }
 
+    static async runNewTradeAfterCancelTest(context)
+    {
+        let [starter, partner] = await TestTradingBoxes.enter(context);
+        await TradeSteps.open(starter, partner);
+        let potionId = await TradeSteps.fetchItemId(context, starter, context.gameConfig.e2eConsumableItemId);
+        await TradeSteps.offer(starter, partner, potionId, 2);
+        await TestTradingBoxes.expectOfferQuantity(starter, partner, potionId, 2, 'The first trade offer');
+        await TradeSteps.close(starter, partner);
+        await TradeSteps.expectTradeOpen(context, starter, false, 'The first trade is cancelled');
+        await TradeSteps.open(starter, partner);
+        await TradeSteps.expectOffered(context, starter, {}, 'The new trade starts with no offer');
+        let starterBox = TestTradingBoxes.tradeBox(starter, partner);
+        await expect(starterBox.locator('.trade-col-2 .item-qty-'+potionId), 'No old offer on the sending column').toHaveCount(0);
+        await expect(TestTradingBoxes.tradeBox(partner, starter).locator('.trade-col-3 .item-qty-'+potionId), 'Nor received')
+            .toHaveCount(0);
+        await expect(starter.page.locator('.confirm-'+partner.sessionId), 'The confirm starts disabled').toBeDisabled();
+        await expect(starterBox.locator('.trade-col-1 .trade-item-'+potionId), 'The item is listed again').not.toHaveClass(/hidden/);
+    }
+
     static async runBothOffersTest(context)
     {
         let [starter, partner] = await TestTradingBoxes.enter(context);
@@ -146,7 +178,7 @@ class TestTradingBoxes
             test('each trade box is titled with the other player', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingBoxes.runTitlesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('own player target shows no start trade button', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('own player and NPC targets show no start trade button', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingBoxes.runTargetButtonTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('confirm buttons follow the offers and the confirmations', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
@@ -154,6 +186,9 @@ class TestTradingBoxes
             });
             test('offered quantities show on both boxes and whole stacks are hidden', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingBoxes.runOfferDisplayTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('new trade after a cancel opens with no previous offer', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingBoxes.runNewTradeAfterCancelTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('offers sent at the same time show on both boxes', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingBoxes.runBothOffersTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
