@@ -86,6 +86,40 @@ class TestScoresProvider extends BaseTest
         });
     }
 
+    async testTheTiedScoresAreOrderedById()
+    {
+        await this.test('the scores with the same total are ordered by id, so every player is listed on one page', async () => {
+            let scoresRepository = new SortedRowsRepository([
+                {id: 1, player_id: 1, total_score: 250, related_players: {name: 'ImRoot'}},
+                {id: 2, player_id: 1001, total_score: 40, related_players: {name: 'TestPlayerList'}},
+                {id: 3, player_id: 1002, total_score: 40, related_players: {name: 'TestPlayerEdit'}},
+                {id: 4, player_id: 1003, total_score: 40, related_players: {name: 'ImRoot3'}},
+                {id: 5, player_id: 1004, total_score: 10, related_players: {name: 'ImRoot2'}}
+            ], true);
+            let scoresProvider = this.createScoresProvider(scoresRepository);
+            let pagesNames = [];
+            for(let page of [1, 2, 3, 4]){
+                pagesNames.push((await scoresProvider.fetchTopScoresMappedData(2, page)).map((score) => score.playerName));
+            }
+            this.assert.deepStrictEqual(
+                pagesNames,
+                [['ImRoot', 'TestPlayerList'], ['TestPlayerEdit', 'ImRoot3'], ['ImRoot2'], []]
+            );
+            let topScoresNames = (await scoresProvider.fetchTopScoresMappedData(2)).map((score) => score.playerName);
+            this.assert.deepStrictEqual(topScoresNames, ['ImRoot', 'TestPlayerList'], 'The top scores cut');
+            let allScoresNames = (await scoresProvider.fetchTopScoresMappedData(5, 1)).map((score) => score.playerName);
+            this.assert.deepStrictEqual(
+                allScoresNames,
+                ['ImRoot', 'TestPlayerList', 'TestPlayerEdit', 'ImRoot3', 'ImRoot2'],
+                'The tied scores inside a page'
+            );
+            this.assert.deepStrictEqual(
+                scoresRepository.preserveEntityState(),
+                {limit: 0, offset: 0, sortBy: false, sortDirection: 'ASC'}
+            );
+        });
+    }
+
 }
 
 module.exports.TestScoresProvider = TestScoresProvider;
