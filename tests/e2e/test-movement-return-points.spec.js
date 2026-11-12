@@ -20,14 +20,6 @@ let test = BaseE2eTest.test;
 class TestMovementReturnPoints
 {
 
-    static FOREST_LEVELS = [
-        Login.FOREST_ROOM_NAME,
-        'reldens-forest-level-2',
-        'reldens-forest-level-3',
-        'reldens-forest-level-4',
-        'reldens-forest-level-5',
-        'reldens-forest-level-6'
-    ];
     static FIRST_HOUSE = 'reldens-house-1';
     static FIRST_HOUSE_FLOOR = 'reldens-house-1-2d-floor';
     static SECOND_HOUSE = 'reldens-house-2';
@@ -54,7 +46,7 @@ class TestMovementReturnPoints
 
     static buildForestLevelsChanges(topology, firstLevelIndex, lastLevelIndex)
     {
-        let levels = TestMovementReturnPoints.FOREST_LEVELS;
+        let levels = Login.FOREST_LEVELS;
         let roundTrips = [];
         for(let levelIndex = firstLevelIndex; levelIndex < lastLevelIndex; levelIndex++){
             roundTrips.push(...ChangePointsSteps.buildRoundTrips(topology, levels[levelIndex], levels[levelIndex + 1]));
