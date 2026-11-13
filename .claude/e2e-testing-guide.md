@@ -491,7 +491,8 @@ The shared helpers: `E2eSeedAndRestoreApi.seedInventoryItem()`, `loadInventoryRo
 provider for the group, with the provider `sdkUrl` set to the SDK mock `tests/e2e/assets/crazy-games-sdk-mock.js`
 served by `E2eAssetsEndpoints` at `/api/e2e/assets/`; the client loads the mock and plays the ad on its event: an
 advertisement overlay is shown for the provider minimum duration and the client provider sends the start and end
-messages, or the failed message after `failNextAd()`), `ForestEnemyKill` (`tests/e2e/helpers/forest-enemy-kill.js`:
+messages, or the failed message after `failNextAd()`; `loadSdkWithPage()` also enables the mock in the initial client
+config through `InitialClientConfig.merge()`, so it loads with the page like the real SDK), `ForestEnemyKill` (`tests/e2e/helpers/forest-enemy-kill.js`:
 the configured forest enemy placed and targeted with one hit point, with its full life in the long run) and
 `RoomObjectsApi.attackTargetUntil()` (the `attackShort` skill repeated until a condition is reached). The player
 placements wait for the client sprite on the placed position, not only for the state.
