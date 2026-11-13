@@ -92,7 +92,7 @@ See `.claude/feature-modules.md` for details on each module.
    - `themeManager.validateOrCreateTheme()` - copies assets to the dist folder
    - `startGameServerInstance()` - loads maps, creates Colyseus `GameServer`, initializes all managers
 5. Manager initialization order: `Mailer` -> `FeaturesManager` -> `UsersManager` -> `RoomsManager` -> `LoginManager` -> `ServerHealthMonitor` -> `defineServerRooms()`
-6. `FeaturesManager.loadFeatures()` queries the `features` table for `is_enabled=1`, instantiates each feature package, and calls `setup()` on it. After all features load, fires `reldens.serverConfigFeaturesReady`.
+6. `FeaturesManager.loadFeatures()` queries the `features` table for `is_enabled=1`, instantiates each feature package, and calls `setup()` on it. After all features load, fires `reldens.serverConfigFeaturesReady`; a listener that sets the event `continueProcess` to false stops the server start (the ads required SDK check does it when an SDK is not reachable).
 7. `RoomsManager` registers the login room and all scene rooms on the Colyseus game server.
 8. When `RELDENS_CREATE_CONFIG_FILE` is unset or `1`, the theme `config.js` is written and `ThemeManager.createClientBundle()` runs Parcel to build the client bundle if `RELDENS_ALLOW_RUN_BUNDLER=1`.
 9. After `reldens.serverBeforeListen` (the last point where plugins and the admin add their routes) `appServerFactory.enableErrorResponse(this.app)` registers the final Express error middleware (`manager.js`), routes added later skip it.
