@@ -239,11 +239,19 @@ Advertisement integration system
   closes the play without reward, a disabled player is activated again after `server/ads/videoMaximumDuration`, and
   the `reldens.beforeGiveAdRewardItem` subscribers can cancel a reward (see "Ads rewards rules" in
   `.claude/gameplay-features.md`)
-- The CrazyGames provider (`client/providers/crazy-games.js`) listens the video ads events on its activation, before
-  its SDK script loads (retried every `sdkRetryTime` up to `sdkMaxRetries`): an ad event fired while the SDK loads (the
-  activation of the login room) is queued by `crazy-games/videos-handler.js` and requested once the SDK is ready and no
-  adblock is detected, the same ad queued twice plays once, and no ad is requested while the SDK environment is
-  `disabled`, another ad plays or a non replay ad is in the played ads list
+- The client ads plugin is preloaded with the page (`FeaturesManager.preloadFeatures()` from
+  `GameManager.clientStart()`), so the SDK scripts of the providers enabled in the initial client config (`config.js`)
+  are appended before the login and loaded before the game starts; a provider enabled only in the login game config gets
+  its script appended on the provider activation (`client/sdk-handler.js`, every SDK URL is appended once)
+- The CrazyGames provider (`client/providers/crazy-games.js`) activates its banners and video ads once its SDK is found
+  (retried every `sdkRetryTime` up to `sdkMaxRetries`) and no adblock is detected, there is no ad queue; no ad is
+  requested while the SDK environment is `disabled`, another ad plays or a non replay ad is in the played ads list
+- `client/ads/general/sdkRequired` (off by default): on, the login forms stay hidden until every enabled provider SDK
+  script loads and when one fails the page shows the `.ads-sdk-error` block (theme `index.html`) and the game can not
+  start (`client/required-sdk-login-guard.js`); on the server start the SDK URLs of the enabled providers are requested
+  (`server/required-sdk-reachability-check.js`, timeout `server/ads/sdkCheckTimeout`, the relative URLs are served by
+  the same server and skipped) and one that fails stops the start (`continueProcess` of the
+  `reldens.serverConfigFeaturesReady` event); off, the game starts without the ads that could not load
 
 ### Sync (`lib/sync/`)
 Colyseus primitives isolation layer
