@@ -279,6 +279,22 @@ class TestCrossServerNamesCheck extends BaseTest
         });
     }
 
+    async testThisServerWithAPathAndATrailingSlashIsNotChecked()
+    {
+        await this.test('this server public URL with a path and a trailing slash is never a checked server', async () => {
+            let loginManager = this.createLoginManager({
+                'server/rooms/databases': 'http://server-d:8080/game/,http://server-b:8080',
+                'server/publicUrl': 'http://server-d:8080/game/'
+            });
+            this.assert.deepStrictEqual(loginManager.fetchNamesCheckServersUrls(), ['http://server-b:8080']);
+            let withoutSlash = this.createLoginManager({
+                'server/rooms/databases': 'http://server-d:8080/game/,http://server-b:8080',
+                'server/publicUrl': 'http://server-d:8080/game'
+            });
+            this.assert.deepStrictEqual(withoutSlash.fetchNamesCheckServersUrls(), ['http://server-b:8080']);
+        });
+    }
+
     async testTheCheckRouteAnswersTheResultAndAFailedResultOnErrors()
     {
         await this.test('the check route answers the check result and a failed result when the check fails', async () => {
