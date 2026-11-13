@@ -290,6 +290,13 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'health/maxMemoryPercent', '90', 2),
 	('server', 'health/remoteStatusTimeoutMs', '3000', 2);
 
+-- Ads SDK required: with ads/general/sdkRequired on, the login stays hidden until every enabled ads provider SDK loads
+-- (the game can not start if one fails) and the server start fails when an SDK URL does not answer within
+-- ads/sdkCheckTimeout milliseconds; off by default, so the game starts without the ads that could not load
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('client', 'ads/general/sdkRequired', '0', 3),
+	('server', 'ads/sdkCheckTimeout', '10000', 2);
+
 -- Allow the default administration role to send global chat messages (only when the default value was not changed)
 UPDATE `config` SET `value` = '1,99,9000' WHERE `scope` = 'server' AND `path` = 'chat/messages/global_allowed_roles' AND `value` = '1,9000';
 
