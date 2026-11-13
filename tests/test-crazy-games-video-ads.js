@@ -15,13 +15,14 @@ class TestCrazyGamesVideoAds extends BaseTest
     {
         builder.loadSdk();
         let provider = builder.createProvider(videoAds);
-        this.assert.strictEqual(await provider.activate(), true);
+        await provider.activate();
+        this.assert.deepStrictEqual(Object.keys(builder.listeners), videoAds.map(videoAd => videoAd.eventKey));
         return provider;
     }
 
-    async testAdFiredBeforeTheSdkLoadsIsRequestedOnceTheSdkLoads()
+    async testVideoAdsAreListenedOnceTheSdkLoadsOnARetry()
     {
-        await this.test('a video ad fired before the SDK loads is queued and requested once the SDK loads on a retry', async () => {
+        await this.test('the video ads are listened only once the SDK is found on a retry', async () => {
             let builder = new CrazyGamesProviderBuilder();
             let provider = builder.createProvider([builder.videoAd(5, builder.eventKey)]);
             this.assert.strictEqual(await builder.captureTimeouts(async () => await provider.activate()), false);
@@ -29,76 +30,50 @@ class TestCrazyGamesVideoAds extends BaseTest
                 builder.scheduledTimeouts.map(scheduledTimeout => scheduledTimeout.delayMs),
                 [provider.metaData.sdkRetryTime]
             );
-            this.assert.strictEqual(await builder.listeners[builder.eventKey](), false);
-            this.assert.deepStrictEqual(Object.keys(provider.videosHandler.queuedAds), ['5']);
-            this.assert.deepStrictEqual(builder.requestedAds, []);
+            this.assert.deepStrictEqual(builder.listeners, {});
             builder.loadSdk();
-            this.assert.deepStrictEqual(await builder.runScheduledTimeout(provider, 'activateSdk'), [true]);
+            await builder.runScheduledTimeout(provider, 'activate');
             this.assert.strictEqual(provider.retry, 1);
+            this.assert.deepStrictEqual(Object.keys(builder.listeners), [builder.eventKey]);
+            await builder.listeners[builder.eventKey]();
             this.assert.deepStrictEqual(builder.requestedAds.map(requestedAd => requestedAd.adType), ['midgame']);
-            this.assert.deepStrictEqual(provider.videosHandler.queuedAds, {});
-        });
-    }
-
-    async testSameAdFiredTwiceBeforeTheSdkLoadsIsRequestedOnce()
-    {
-        await this.test('the same ad fired twice before the SDK loads is requested once', async () => {
-            let builder = new CrazyGamesProviderBuilder();
-            let provider = builder.createProvider([builder.videoAd(5, builder.eventKey)]);
-            await builder.captureTimeouts(async () => await provider.activate());
-            await builder.listeners[builder.eventKey]();
-            await builder.listeners[builder.eventKey]();
-            builder.loadSdk();
-            await builder.runScheduledTimeout(provider, 'activateSdk');
-            this.assert.strictEqual(builder.requestedAds.length, 1);
         });
     }
 
     async testSdkMissingAfterTheMaximumRetriesStopsRetrying()
     {
-        await this.test('the SDK missing after the maximum retries stops retrying and keeps the ads queued', async () => {
+        await this.test('the SDK missing after the maximum retries stops retrying and listens no ad', async () => {
             let builder = new CrazyGamesProviderBuilder();
             let provider = builder.createProvider([builder.videoAd(5, builder.eventKey)]);
             provider.retry = provider.metaData.sdkMaxRetries;
             this.assert.strictEqual(await builder.captureTimeouts(async () => await provider.activate()), false);
             this.assert.deepStrictEqual(builder.scheduledTimeouts, []);
-            this.assert.strictEqual(await builder.listeners[builder.eventKey](), false);
-            this.assert.deepStrictEqual(Object.keys(provider.videosHandler.queuedAds), ['5']);
+            this.assert.deepStrictEqual(builder.listeners, {});
             this.assert.deepStrictEqual(builder.requestedAds, []);
         });
     }
 
     async testDisabledEnvironmentRequestsNoAd()
     {
-        await this.test('a disabled SDK environment requests no ad, also for an ad queued before the SDK loaded', async () => {
+        await this.test('a disabled SDK environment requests no ad', async () => {
             let builder = new CrazyGamesProviderBuilder();
             builder.environment = AdsConst.ENVIRONMENTS.DISABLED;
             let provider = await this.createActiveProvider(builder, [builder.videoAd(5, builder.eventKey)]);
             this.assert.strictEqual(await builder.listeners[builder.eventKey](), false);
-            let queuingBuilder = new CrazyGamesProviderBuilder();
-            queuingBuilder.environment = AdsConst.ENVIRONMENTS.DISABLED;
-            let queuingProvider = queuingBuilder.createProvider([queuingBuilder.videoAd(5, queuingBuilder.eventKey)]);
-            await queuingBuilder.captureTimeouts(async () => await queuingProvider.activate());
-            await queuingBuilder.listeners[queuingBuilder.eventKey]();
-            queuingBuilder.loadSdk();
-            await queuingBuilder.runScheduledTimeout(queuingProvider, 'activateSdk');
             this.assert.deepStrictEqual(builder.requestedAds, []);
-            this.assert.deepStrictEqual(queuingBuilder.requestedAds, []);
             this.assert.strictEqual(provider.environment, AdsConst.ENVIRONMENTS.DISABLED);
         });
     }
 
-    async testAdblockLeavesTheQueuedAdUnplayedAndRefusesTheNextAds()
+    async testAdblockListensNoAd()
     {
-        await this.test('an adblock detected on the SDK load plays no queued ad and refuses the next ad events', async () => {
+        await this.test('an adblock detected on the activation listens no ad', async () => {
             let builder = new CrazyGamesProviderBuilder();
             builder.adblockDetected = true;
-            let provider = builder.createProvider([builder.videoAd(5, builder.eventKey)]);
-            await builder.captureTimeouts(async () => await provider.activate());
-            await builder.listeners[builder.eventKey]();
             builder.loadSdk();
-            this.assert.deepStrictEqual(await builder.runScheduledTimeout(provider, 'activateSdk'), [false]);
-            this.assert.strictEqual(await builder.listeners[builder.eventKey](), false);
+            let provider = builder.createProvider([builder.videoAd(5, builder.eventKey)]);
+            this.assert.strictEqual(await provider.activate(), false);
+            this.assert.deepStrictEqual(builder.listeners, {});
             this.assert.deepStrictEqual(builder.requestedAds, []);
         });
     }
