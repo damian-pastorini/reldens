@@ -5,14 +5,17 @@
  * Tests the path movement of a body on a real path finder grid: a target on a blocked tile or a body without path
  * finder stops the body and restores its collision group, the walk back to the original tile with the objects
  * collisions disabled or not on return and the group restored on arrival, a chase with the objects collisions disabled
- * or not on chase, the return delay, the movement area check and a path with a missing first point.
+ * or not on chase, the return delay, the movement area check, a dead or disabled body not following its path, the
+ * respawn path finder limited to the respawn layer tiles and a path with a missing first point.
  *
  */
 
 const { RandomMovementBaseTest } = require('./fixtures/random-movement-base-test');
 const { ScheduledTimeouts } = require('./fixtures/scheduled-timeouts');
 const { AnimationObject } = require('../lib/objects/server/object/type/animation-object');
+const { RoomRespawn } = require('../lib/respawn/server/room-respawn');
 const { WorldConst } = require('../lib/world/constants');
+const { GameConst } = require('../lib/game/constants');
 
 class TestPhysicalBodyPathMovement extends RandomMovementBaseTest
 {
@@ -146,6 +149,56 @@ class TestPhysicalBodyPathMovement extends RandomMovementBaseTest
             this.assert.deepStrictEqual(
                 [withoutArea, body.isInsideMovementArea(insideTile), body.isInsideMovementArea(outsideColumnTile), body.isInsideMovementArea(outsideRowTile)],
                 [false, true, false, false]
+            );
+        });
+    }
+
+    async testADeadOrDisabledBodyDoesNotFollowItsPath()
+    {
+        await this.test('a body that dies or is disabled during its path does not move while an active one does', async () => {
+            let positionsMoved = [];
+            for(let inState of [GameConst.STATUS.DEATH, GameConst.STATUS.DISABLED, GameConst.STATUS.ACTIVE]){
+                let body = this.bodyBuilder.build();
+                body.moveToPoint({column: this.originalTile + 3, row: this.originalTile});
+                body.velocity = [...this.movingVelocity];
+                body.bodyState.inState = inState;
+                let startX = body.position[0];
+                body.integrate(0.1);
+                positionsMoved.push(startX !== body.position[0]);
+            }
+            this.assert.deepStrictEqual(positionsMoved, [false, false, true]);
+        });
+    }
+
+    async testTheRespawnPathFinderIsLimitedToTheRespawnLayerTiles()
+    {
+        await this.test('the respawn path finder only walks the respawn layer tiles and keeps the room grid', async () => {
+            let body = this.bodyBuilder.build();
+            let mapSize = body.world.mapJson.width;
+            let layerData = Array.from({length: mapSize * mapSize}).map((tileValue, tileIndex) => (
+                1 >= Math.abs(tileIndex % mapSize - this.originalTile)
+                && 1 >= Math.abs(Math.floor(tileIndex / mapSize) - this.originalTile)
+            ) ? 1 : 0);
+            let roomRespawn = new RoomRespawn({
+                events: {emit: () => true},
+                config: {},
+                dataServer: {},
+                layer: {name: 'respawn-area-monsters', data: layerData},
+                world: body.world
+            });
+            roomRespawn.parseMapForRespawnTiles();
+            let outsideTile = this.originalTile + 3;
+            body.pathFinder = roomRespawn.pathFinder;
+            this.assert.deepStrictEqual(
+                [
+                    roomRespawn.respawnTiles.length,
+                    roomRespawn.pathFinder.grid.isWalkableAt(this.originalTile + 1, this.originalTile + 1),
+                    roomRespawn.pathFinder.grid.isWalkableAt(outsideTile, this.originalTile),
+                    body.world.pathFinder.grid.isWalkableAt(outsideTile, this.originalTile),
+                    body.moveToPoint({column: outsideTile, row: this.originalTile}),
+                    body.moveToPoint({column: this.originalTile + 1, row: this.originalTile + 1}).length
+                ],
+                [9, true, false, true, false, 3]
             );
         });
     }
