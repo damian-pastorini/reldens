@@ -12,6 +12,7 @@
 
 const { BaseTest } = require('./base-test');
 const { PlayerEngine } = require('../lib/users/client/player-engine');
+const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { GameConst } = require('../lib/game/constants');
 
 class TestPlayerEngineAnimations extends BaseTest
@@ -22,27 +23,12 @@ class TestPlayerEngineAnimations extends BaseTest
 
     createEngine(configValues)
     {
-        let values = Object.assign({'client/players/animations/basedOnPress': true}, configValues);
-        return new PlayerEngine({
-            scene: {},
-            playerData: {
-                playerName: 'ImRoot',
-                avatarKey: TestPlayerEngineAnimations.AVATAR_KEY,
-                state: {scene: 'reldens-new-age-town', x: 100, y: 100, dir: GameConst.DOWN},
-                player_id: 1,
-                playedTime: 0
-            },
-            gameManager: {
-                config: {
-                    get: (path) => values[path],
-                    getWithoutLogs: (path, defaultValue) => path in values ? values[path] : defaultValue
-                },
-                events: {},
-                mappedAvatars: {[TestPlayerEngineAnimations.AVATAR_KEY]: TestPlayerEngineAnimations.MAPPED_AVATAR}
-            },
-            room: {sessionId: 'session-a'},
-            roomEvents: {}
-        });
+        return new PlayerEngine(GameplayPlayerBuilder.createPlayerEngineProps(
+            {},
+            TestPlayerEngineAnimations.AVATAR_KEY,
+            GameplayPlayerBuilder.createConfig(Object.assign({'client/players/animations/basedOnPress': true}, configValues)),
+            {[TestPlayerEngineAnimations.AVATAR_KEY]: TestPlayerEngineAnimations.MAPPED_AVATAR}
+        ));
     }
 
     playAnimation(engine, spritePosition, playerState)
