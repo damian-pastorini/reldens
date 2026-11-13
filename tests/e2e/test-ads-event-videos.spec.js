@@ -3,7 +3,7 @@
  * Reldens - Test Ads Event Videos
  *
  * Tests the event video ads played on a room activation (exclusive group, the sample room ad enabled with the e2e SDK
- * mock through AdMessagesPlayer, the played ads and the inventory rows of the player preserved and restored by the
+ * mock through AdMessagesPlayer and the mock loaded with the page like the real game SDK, the played ads and the inventory rows of the player preserved and restored by the
  * group reset): the room ad plays when the player logs in to its room and rewards its item without any ticket, and the
  * played ad is stored as ended; and a reward quantity above one of a single instance item (the sample coins) adds the
  * whole quantity.
@@ -32,6 +32,7 @@ class TestAdsEventVideos
         let gameConfig = context.gameConfig;
         let playerName = gameConfig.e2ePlayerName;
         let roomAd = await AdMessagesPlayer.enableAd(gameConfig, context.e2eGroup, TestAdsEventVideos.ROOM_AD_KEY, playerName);
+        await AdMessagesPlayer.loadSdkWithPage(context.page);
         let adVideoRow = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'adsEventVideo', {ads_id: roomAd.id})].shift();
         expect(adVideoRow.event_key, 'The sample room ad plays on the activation of the group start room').toBe(
             TestAdsEventVideos.ROOM_ACTIVATION_EVENT_PREFIX+Login.TOWN_ROOM_NAME
