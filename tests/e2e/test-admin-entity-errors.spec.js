@@ -105,8 +105,7 @@ class TestAdminEntityErrors
         let preventedResponse = await TestAdminEntityErrors.postForm(page, gameConfig, '/rooms/delete', csrfToken, {
             'ids[]': String(defaultRoomId)
         });
-        expect(preventedResponse.status(), 'Prevented delete').toBe(302);
-        expect(preventedResponse.headers()['location'], 'Prevented delete').not.toContain('success');
+        TestAdminEntityErrors.expectRedirect(preventedResponse, gameConfig, '/rooms?result=errorRoomDeleteIsDefault', 'Prevented delete');
         expect(
             (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'rooms', {id: Number(defaultRoomId)})).length,
             'The default room must be kept'
