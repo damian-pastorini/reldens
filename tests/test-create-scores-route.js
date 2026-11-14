@@ -15,24 +15,30 @@ const { sc } = require('@reldens/utils');
 class TestCreateScoresRoute extends BaseTest
 {
 
-    async requestScoresPage(query, scoresRepository, configValues = {}, scoresPath = '/scores')
+    async createScoresPage(scoresRepository, configValues, scoresPath = '/scores')
     {
-        let routes = {};
-        let renderedParams = [];
-        let createScoresRoute = new CreateScoresRoute({
+        let scoresPage = {routes: {}, renderedParams: []};
+        scoresPage.createScoresRoute = new CreateScoresRoute({
             themeManager: {
                 projectAssetsPath: FileHandler.joinPaths(process.cwd(), 'theme', 'default', 'assets'),
-                templateEngine: {render: async (template, params) => renderedParams.push(params)}
+                templateEngine: {render: async (template, params) => scoresPage.renderedParams.push(params)}
             },
             config: {getWithoutLogs: (path, defaultValue) => sc.get(configValues, path, defaultValue)},
             dataServer: {getEntity: (entityKey) => 'scores' === entityKey ? scoresRepository : {}}
         });
-        await createScoresRoute.execute(
-            {serverManager: {app: {get: (path, handler) => routes[path] = handler}}},
+        await scoresPage.createScoresRoute.execute(
+            {serverManager: {app: {get: (path, handler) => scoresPage.routes[path] = handler}}},
             scoresPath
         );
-        await routes[scoresPath]({query, body: {}}, {send: () => true});
-        return renderedParams.shift();
+        scoresPage.request = async (query) => await scoresPage.routes[scoresPath]({query, body: {}}, {send: () => true});
+        return scoresPage;
+    }
+
+    async requestScoresPage(query, scoresRepository, configValues = {}, scoresPath = '/scores')
+    {
+        let scoresPage = await this.createScoresPage(scoresRepository, configValues, scoresPath);
+        await scoresPage.request(query);
+        return scoresPage.renderedParams.shift();
     }
 
     async testACustomScoresPathIsTheRouteAndTheLinksPath()
@@ -175,6 +181,39 @@ class TestCreateScoresRoute extends BaseTest
                     'One page for '+pageSize
                 );
             }
+        });
+    }
+
+    async testThePageSizeAndTitleAreReadOnce()
+    {
+        await this.test('the page size and title are read when the route is created and only a config load changes them', async () => {
+            let scoresRepository = this.createScoresRepository();
+            let configValues = {'server/scores/fullTableView/pageSize': 25, 'server/scores/fullTableView/title': 'Top'};
+            let scoresPage = await this.createScoresPage(scoresRepository, configValues);
+            Object.assign(configValues, {'server/scores/fullTableView/pageSize': 1, 'server/scores/fullTableView/title': 'Best'});
+            await scoresPage.request({});
+            let firstLimit = scoresRepository.loadedQueries.shift().limit;
+            scoresPage.createScoresRoute.loadConfig();
+            scoresRepository.loadedQueries = [];
+            await scoresPage.request({});
+            this.assert.deepStrictEqual(
+                [
+                    [firstLimit, scoresRepository.loadedQueries.shift().limit],
+                    scoresPage.renderedParams.filter(params => sc.hasOwn(params, 'scoresTitle')).map(params => params.scoresTitle)
+                ],
+                [[25, 1], ['Top', 'Best']]
+            );
+        });
+    }
+
+    async testAConfigLoadWithoutConfigKeepsTheDefaults()
+    {
+        await this.test('a config load without config is refused and keeps the default page size and title', async () => {
+            let createScoresRoute = new CreateScoresRoute({dataServer: {getEntity: () => ({})}});
+            this.assert.deepStrictEqual(
+                [createScoresRoute.loadConfig(), createScoresRoute.pageSize, createScoresRoute.scoresTitle],
+                [false, ScoresConst.FULL_TABLE_PAGE_SIZE, '']
+            );
         });
     }
 
