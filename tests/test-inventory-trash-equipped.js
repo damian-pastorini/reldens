@@ -2,9 +2,9 @@
  *
  * Reldens - Test Inventory Trash Equipped
  *
- * Tests the trash message with the inventory manager stubbed: an equipped item is unequipped (after its pending growth)
- * before its removal, so its modifiers and equip effects are reverted; with the inventory locked by a trade the item
- * stays equipped and its removal is refused by the manager; and an unequipped item is only removed.
+ * Tests the trash message with the inventory manager stubbed: an equipped item is removed through the inventory manager
+ * (the @reldens/items-system Inventory removeItem unequips it before the removal); with the inventory locked by a trade
+ * the item stays equipped and its removal is refused by the manager; and an unequipped item is only removed.
  *
  */
 
@@ -41,13 +41,12 @@ class TestInventoryTrashEquipped extends BaseTest
         );
     }
 
-    async testATrashedEquippedItemIsUnequippedFirst()
+    async testATrashedEquippedItemIsRemovedThroughTheInventory()
     {
-        await this.test('a trashed equipped item is unequipped before its removal', async () => {
+        await this.test('a trashed equipped item is removed through the inventory manager', async () => {
             let player = this.createPlayer(true, false);
             await this.trashItem(player);
-            this.assert.deepStrictEqual(player.trashSteps, ['unequip', 'removed axe-1']);
-            this.assert.strictEqual(player.item.equipped, false);
+            this.assert.deepStrictEqual(player.trashSteps, ['removed axe-1']);
         });
     }
 
