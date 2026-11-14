@@ -110,6 +110,29 @@ class TestAdsRequiredSdkReachability extends BaseTest
         });
     }
 
+    async testTheSdkSettingsAreReadOnSetup()
+    {
+        await this.test('the SDK required, the check timeout and the server URLs are read once when the plugin is set up', async () => {
+            let configValues = {
+                [AdsConst.CONFIG_PATHS.SDK_REQUIRED]: true,
+                [AdsConst.CONFIG_PATHS.SDK_CHECK_TIMEOUT]: 1500,
+                'server/publicUrl': 'https://game.test',
+                'server/baseUrl': 'http://localhost:8080'
+            };
+            let plugin = new AdsPlugin();
+            plugin.setup({
+                events: {on: () => true},
+                dataServer: {getEntity: () => ({})},
+                config: {getWithoutLogs: (path, defaultValue) => sc.get(configValues, path, defaultValue)}
+            });
+            configValues[AdsConst.CONFIG_PATHS.SDK_REQUIRED] = false;
+            this.assert.deepStrictEqual(
+                [plugin.sdkRequired, plugin.sdkCheckTimeout, plugin.serverUrls],
+                [true, 1500, ['https://game.test', 'http://localhost:8080']]
+            );
+        });
+    }
+
     async testSdkNotRequiredNeverStopsTheStart()
     {
         await this.test('the server start continues without checking the SDK when it is not required', async () => {
