@@ -106,11 +106,7 @@ class TestScoresPeriodReset extends BaseTest
     {
         await this.test('the scores rows created after the claim are kept by the reset delete', async () => {
             let setup = this.builder.createSetup(this.previousPeriodKey);
-            let deleteScores = setup.repositories.scores.delete;
-            setup.repositories.scores.delete = async (filters) => {
-                setup.repositories.scores.rows.push({id: 3, player_id: 8, total_score: 5});
-                return await deleteScores(filters);
-            };
+            this.builder.addRowOnDelete(setup.repositories.scores, {id: 3, player_id: 8, total_score: 5});
             let checkResult = await setup.scoresPeriodReset.check(this.resetDate);
             this.assert.deepStrictEqual(checkResult, {periodKey: this.resetPeriodKey, resetScores: true});
             this.assert.deepStrictEqual(setup.repositories.scores.rows.map(row => row.id), [3]);

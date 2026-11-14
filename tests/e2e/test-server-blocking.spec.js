@@ -3,6 +3,8 @@
  * Reldens - Test Server Blocking
  *
  * Tests the overloaded server: the registration and the guest forms rejected with the busy message and nothing stored,
+ * a new game login rejected with the busy message while the player already in the game keeps walking, a scene change
+ * to a room next to the town that is not created rejected with the busy chat error while the player stays and walks,
  * the login accepted when the blocking is disabled and the server is only monitored, the player moving to a room
  * already created on this server accepted, and the scene room not created yet rejected with the translated busy
  * message on the players selection. No test creates the room used for the rejected creation.
@@ -16,6 +18,12 @@ const { Login } = require('./helpers/login');
 const { LoginServerApi } = require('./helpers/login-server-api');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { Navigation } = require('./helpers/navigation');
+const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
+const { ChangePointsSteps } = require('./helpers/change-points-steps');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
+const { ChatConst } = require('../../lib/chat/constants');
+const { sc } = require('@reldens/utils');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -74,6 +82,76 @@ class TestServerBlocking
             guestsCount
         );
         await screenshots.capture(page, 'server-blocking-guest');
+    }
+
+    static async runNewLoginBlockedTest(page, secondPage, screenshots, gameConfig, longRun)
+    {
+        let playingContext = await MovementScenario.start(secondPage, gameConfig, longRun);
+        await LoginServerApi.setServerOverloaded(gameConfig, true);
+        expect(
+            await Login.submitLoginExpectingError(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun),
+            'The new game login is rejected with the busy message'
+        ).toBe(GameConst.SERVER_BUSY_MESSAGE);
+        await TestServerBlocking.expectKeepsWalking(secondPage, playingContext);
+        await screenshots.capture(page, 'server-blocking-new-login');
+    }
+
+    static async expectKeepsWalking(page, playingContext)
+    {
+        let playingPlayer = await playingContext.fetchPlayer();
+        let origin = [playingPlayer.currentCol, playingPlayer.currentRow];
+        let tiles = await playingContext.fetchTiles(origin, 3);
+        let targetTile = WalkableTileLocator.DIRECTIONS.map(
+            direction => WalkableTileLocator.findWalkableAlong(tiles, origin, direction.step, [2, 1])
+        ).find(tile => tile);
+        expect(targetTile, 'A walkable tile next to the player in the game').toBeTruthy();
+        let walk = await MovementScenario.movePlayer(page, playingContext, targetTile, playingContext.navTimeout);
+        expect(
+            walk.done,
+            'The player in the game keeps walking: '+sc.toJsonString({origin, targetTile, lastStep: [...walk.trail].pop()})
+        ).toBe(true);
+    }
+
+    static async findNotCreatedTownRoom(gameConfig, topology)
+    {
+        for(let roomName of Object.keys(topology.roomsIds)){
+            let isTownNeighbor = 0 < ChangePointsSteps.fetchTiles(topology, Login.TOWN_ROOM_NAME, roomName).length;
+            if(isTownNeighbor && !await LoginServerApi.isRoomCreated(gameConfig, roomName)){
+                return roomName;
+            }
+        }
+        return false;
+    }
+
+    static async runSceneChangeBlockedTest(page, screenshots, gameConfig, longRun)
+    {
+        let playingContext = await MovementScenario.start(page, gameConfig, longRun);
+        let topology = await ChangePointsSteps.loadTopology(gameConfig);
+        let nextRoomName = await TestServerBlocking.findNotCreatedTownRoom(gameConfig, topology);
+        expect(nextRoomName, 'A room next to the town that is not created').toBeTruthy();
+        let arrival = ChangePointsSteps.fetchArrival(topology, Login.TOWN_ROOM_NAME, nextRoomName);
+        let placement = await RoomMovementApi.placePlayer(gameConfig, Login.TOWN_ROOM_NAME, playingContext.playerName, {
+            x: arrival.x,
+            y: arrival.y
+        });
+        expect(placement.position, 'The player stands below the '+nextRoomName+' change point: '+placement.error).toBeTruthy();
+        await RoomMessagesRecorder.start(page);
+        await LoginServerApi.setServerOverloaded(gameConfig, true);
+        await page.keyboard.down('ArrowUp');
+        await RoomMessagesRecorder.waitForMessage(page, ChatConst.CHAT_ACTION, TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun));
+        await page.keyboard.up('ArrowUp');
+        expect(
+            (await RoomMessagesRecorder.fetchMessages(page, ChatConst.CHAT_ACTION)).map(
+                message => [message[ChatConst.TYPES.KEY], message[ChatConst.MESSAGE.KEY]]
+            ),
+            'The player gets the busy room error'
+        ).toContainEqual([ChatConst.TYPES.ERROR, GameConst.ROOM_UNAVAILABLE.SERVER_BUSY]);
+        expect(
+            [await Navigation.getCurrentRoomName(page), await LoginServerApi.isRoomCreated(gameConfig, nextRoomName)],
+            'The player stays in the town and the next room is not created'
+        ).toEqual([Login.TOWN_ROOM_NAME, false]);
+        await TestServerBlocking.expectKeepsWalking(page, playingContext);
+        await screenshots.capture(page, 'server-blocking-scene-change');
     }
 
     static async runMonitorOnlyTest(page, screenshots, gameConfig, longRun)
@@ -156,6 +234,12 @@ class TestServerBlocking
             });
             test('guest is rejected with the busy message and no guest is created', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestServerBlocking.runGuestBlockedTest(page, screenshots, gameConfig, longRun);
+            });
+            test('a new game login is rejected with the busy message and the player already in the game keeps playing', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+                await TestServerBlocking.runNewLoginBlockedTest(page, secondPage, screenshots, gameConfig, longRun);
+            });
+            test('a scene change to a room not created is rejected with the busy message and the player keeps playing', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestServerBlocking.runSceneChangeBlockedTest(page, screenshots, gameConfig, longRun);
             });
             test('overloaded server with the blocking disabled accepts the login', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestServerBlocking.runMonitorOnlyTest(page, screenshots, gameConfig, longRun);

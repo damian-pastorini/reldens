@@ -19,6 +19,9 @@ class TestUserRegistration extends BaseTest
         let registrationSetup = {
             createdUsers: [],
             emittedEvents: [],
+            heldValues: [],
+            releasedValues: [],
+            isFreeOnOtherServers: true,
             invalidResult: {error: 'invalid'},
             now: Date.now()
         };
@@ -48,9 +51,78 @@ class TestUserRegistration extends BaseTest
             },
             passwordManager: Encryptor,
             loginAttempts: new LoginAttempts({maxAttempts: 1}),
+            crossServerNamesCheck: {
+                holdEverywhere: async (routePath, values) => {
+                    registrationSetup.heldValues.push(...values);
+                    return registrationSetup.isFreeOnOtherServers;
+                },
+                release: (routePath, values) => registrationSetup.releasedValues.push(...values)
+            },
             logUserData: (userData) => ({user: {username: userData.username}})
         });
         return registrationSetup;
+    }
+
+    async testAUsernameOrEmailUsedOnAnotherServerIsRejected()
+    {
+        await this.test('a username or email used or held on another server rejects the registration', async () => {
+            let registrationSetup = this.createRegistrationSetup([], 10);
+            registrationSetup.isFreeOnOtherServers = false;
+            let registrationResult = await this.processRegistrations(
+                registrationSetup,
+                [{username: 'player', email: 'player@test.com', password: 'secret'}]
+            );
+            this.assert.strictEqual(registrationResult, registrationSetup.invalidResult);
+            this.assert.deepStrictEqual(registrationSetup.heldValues, ['player', 'player@test.com']);
+            this.assert.deepStrictEqual(registrationSetup.releasedValues, []);
+            this.assert.strictEqual(registrationSetup.createdUsers.length, 0);
+            this.assert.deepStrictEqual(registrationSetup.emittedEvents, ['reldens.registrationInvalidParams']);
+        });
+    }
+
+    async testTheHeldUsernameAndEmailAreReleasedAfterTheStore()
+    {
+        await this.test('the username and email held on the other servers are released after the user is stored', async () => {
+            let registrationSetup = this.createRegistrationSetup([], 10);
+            await this.processRegistrations(
+                registrationSetup,
+                [{username: 'player', email: 'player@test.com', password: 'secret'}]
+            );
+            this.assert.strictEqual(registrationSetup.createdUsers.length, 1);
+            this.assert.deepStrictEqual(registrationSetup.heldValues, ['player', 'player@test.com']);
+            this.assert.deepStrictEqual(registrationSetup.releasedValues, ['player', 'player@test.com']);
+        });
+    }
+
+    async testTheHeldValuesAreReleasedWhenTheStoreFails()
+    {
+        await this.test('the username and email held on the other servers are released when the store fails', async () => {
+            let registrationSetup = this.createRegistrationSetup([], 10);
+            let storeError = new Error('User insert failed.');
+            registrationSetup.userRegistration.usersManager.createUser = async () => {
+                throw storeError;
+            };
+            await this.processRegistrations(
+                registrationSetup,
+                [{username: 'player', email: 'player@test.com', password: 'secret'}]
+            );
+            this.assert.deepStrictEqual(registrationSetup.releasedValues, ['player', 'player@test.com']);
+            this.assert.strictEqual(registrationSetup.emittedEvents.pop(), 'reldens.createNewUserError');
+        });
+    }
+
+    async testTheRejectedRegistrationsAndTheGuestsAreNotCheckedOnTheOtherServers()
+    {
+        await this.test('the registrations rejected before the check and the guests are never sent to the other servers', async () => {
+            let registrationSetup = this.createRegistrationSetup(['taken@test.com'], 10);
+            await this.processRegistrations(registrationSetup, [
+                {username: 'taken', email: 'taken@test.com', password: 'secret'},
+                {username: 'player', email: 'player@test.com', password: 'ab'}
+            ]);
+            await this.processGuests(registrationSetup, [{isGuest: true, isNewUser: true}]);
+            this.assert.deepStrictEqual(registrationSetup.heldValues, []);
+            this.assert.strictEqual(registrationSetup.createdUsers.length, 1);
+        });
     }
 
     async processRegistrations(registrationSetup, registrationRequests)

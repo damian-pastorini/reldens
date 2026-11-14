@@ -15,8 +15,6 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { DeathReviveSteps } = require('./helpers/death-revive-steps');
-const { CombatSkillCasting } = require('./helpers/combat-skill-casting');
-const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
@@ -35,9 +33,6 @@ let expect = BaseE2eTest.expect;
 class TestDeathPlayerKill
 {
 
-    static ATTACK_SHORT = 'attackShort';
-    static DIRECT_ATTACK = {criticalChance: 0, range: 0};
-    static LAST_LIFE = 1;
     static TELEPORT_OFF = {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false};
 
     static extendTimeout(context)
@@ -47,51 +42,6 @@ class TestDeathPlayerKill
             + TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, context.longRun)
             + TimeConstants.PLAYER_REVIVE
         );
-    }
-
-    static async killByPlayer(context, roomName)
-    {
-        let gameConfig = context.gameConfig;
-        let attacker = {
-            gameConfig,
-            roomName,
-            playerName: gameConfig.e2ePlayerName2,
-            timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, context.longRun)
-        };
-        await GameplayE2eStateApi.recordPlayerSkills(gameConfig, roomName, attacker.playerName);
-        await CombatSkillCasting.setPlayerStats(attacker, CombatSkillCasting.BALANCED_PLAYER_STATS);
-        await GameplayE2eStateApi.setPlayerStats(
-            gameConfig,
-            roomName,
-            gameConfig.e2ePlayerName,
-            CombatSkillCasting.BALANCED_ENEMY_STATS
-        );
-        await CombatSkillCasting.changeSkill(
-            attacker,
-            context.e2eGroup,
-            TestDeathPlayerKill.ATTACK_SHORT,
-            TestDeathPlayerKill.DIRECT_ATTACK
-        );
-        let placed = await RoomObjectsApi.placePlayerNearPlayer(
-            gameConfig,
-            roomName,
-            attacker.playerName,
-            gameConfig.e2ePlayerName
-        );
-        expect(placed.position, 'The attacker must be placed next to the player: '+placed.error).toBeTruthy();
-        let lastLife = await RoomObjectsApi.setPlayerAffectedProperty(
-            gameConfig,
-            roomName,
-            gameConfig.e2ePlayerName,
-            TestDeathPlayerKill.LAST_LIFE
-        );
-        expect(lastLife.value, 'The player last life must be set: '+lastLife.error).toBe(TestDeathPlayerKill.LAST_LIFE);
-        await CombatSkillCasting.targetPlayer(
-            context.secondPage,
-            await context.page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)
-        );
-        await CombatSkillCasting.castSkill(context.secondPage, attacker, TestDeathPlayerKill.ATTACK_SHORT, 1);
-        await TestCombatDeath.waitForPlayerHpCondition(context.page, 'dead', attacker.timeout);
     }
 
     static async runForestPlayerKillTest(context)
@@ -105,7 +55,7 @@ class TestDeathPlayerKill
             context.longRun
         );
         await RoomObjectsApi.disableEnemies(context.gameConfig, Login.FOREST_ROOM_NAME);
-        await TestDeathPlayerKill.killByPlayer(context, Login.FOREST_ROOM_NAME);
+        await TestCombatDeath.killPlayerByPlayer(context, Login.FOREST_ROOM_NAME);
         await DeathReviveSteps.expectRevivedInTown(context, await DeathReviveSteps.expectTownGameOverMessage(context, 0));
     }
 
@@ -116,7 +66,7 @@ class TestDeathPlayerKill
         await DeathReviveSteps.expectRevivedInTown(context, townRoomName);
         TestDeathPlayerKill.extendTimeout(context);
         await Login.loginRootPlayer(context.secondPage, context.gameConfig, context.longRun, '2');
-        await TestDeathPlayerKill.killByPlayer(context, townRoomName);
+        await TestCombatDeath.killPlayerByPlayer(context, townRoomName);
         await DeathReviveSteps.expectTownGameOverMessage(context, 0);
         let townRoom = (await DeathReviveSteps.fetchReviveLabels(context.gameConfig)).townRoom;
         await expect.poll(
@@ -157,7 +107,7 @@ class TestDeathPlayerKill
             shownDialog.locator('[data-option-value="'+teleportData.optionValue+'"]'),
             'The teleport NPC dialog shows its destination option'
         ).toBeVisible({timeout: TimeConstants.UI_OPEN});
-        await TestDeathPlayerKill.killByPlayer(context, Login.TOWN_ROOM_NAME);
+        await TestCombatDeath.killPlayerByPlayer(context, Login.TOWN_ROOM_NAME);
         await RoomMessagesRecorder.sendObjectMessage(
             context.page,
             teleportData.clientKey,

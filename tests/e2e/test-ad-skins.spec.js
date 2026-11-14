@@ -25,11 +25,10 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { LongRunShowcase } = require('./helpers/long-run-showcase');
 const { ShowcaseSteps } = require('./helpers/showcase-steps');
 const { ItemDetailsShowcase } = require('./helpers/item-details-showcase');
+const { SkinSteps } = require('./helpers/skin-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { UsersConst } = require('../../lib/users/constants');
 const UsersTranslations = require('../../lib/users/client/snippets/en_US');
-const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -39,33 +38,6 @@ class TestAdSkins
     static FAILURE_NOTICE_MS = 2500;
     static FAILURE_NOTICE_SELECTOR = '.mock-ad-failed';
     static FAILURE_NOTICE_TITLE = 'The ad failed';
-
-    static async loadSkinData(gameConfig)
-    {
-        let adsKey = await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, UsersConst.SKINS.CONFIG_PATHS.ADS_KEY);
-        let adVideoRow = [...await E2eSeedAndRestoreApi.loadRows(
-            gameConfig,
-            'adsEventVideo',
-            {ads_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'ads', {key: adsKey})}
-        )].shift();
-        let rewardItemKey = sc.toJson(adVideoRow.event_data, {}).rewardItemKey;
-        return {
-            adsKey,
-            ticketItemKey: await E2eSeedAndRestoreApi.fetchConfigValue(
-                gameConfig,
-                UsersConst.SKINS.CONFIG_PATHS.AD_TICKET_ITEM_KEY
-            ),
-            rewardItemKey,
-            skinKey: sc.toJson(
-                [...await E2eSeedAndRestoreApi.loadRows(
-                    gameConfig,
-                    'itemsItem',
-                    {key: rewardItemKey}
-                )].shift().customData,
-                {}
-            ).skinKey
-        };
-    }
 
     static async fetchAvatarKeys(page, gameConfig, roomName)
     {
@@ -174,7 +146,7 @@ class TestAdSkins
 
     static async prepareSkinAd(page, gameConfig, e2eGroup, longRun)
     {
-        let skinData = await TestAdSkins.loadSkinData(gameConfig);
+        let skinData = await SkinSteps.loadSkinData(gameConfig);
         let playerName = gameConfig.e2ePlayerName;
         let skinAd = await AdMessagesPlayer.enableAd(gameConfig, e2eGroup, skinData.adsKey, playerName);
         await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, e2eGroup, playerName, skinData.ticketItemKey, 1);

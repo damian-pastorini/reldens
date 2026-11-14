@@ -70,7 +70,9 @@ class Selectors
             submit: '#login-form [type="submit"]',
             error: '#login-form .response-error',
             guestForm: '#guest-form',
-            guestSubmit: '#guest-form [type="submit"]'
+            guestSubmit: '#guest-form [type="submit"]',
+            formsContainer: '.forms-container',
+            adsSdkError: '.ads-sdk-error'
         };
         this.reloadModal = {
             container: '.reload-modal',

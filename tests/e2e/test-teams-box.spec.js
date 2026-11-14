@@ -33,7 +33,8 @@ class TestTeamsBox
     static LABELS = {
         leaderNameTitle: 'E2E leader %leaderName',
         leaveLabel: 'E2E leave',
-        disbandLabel: 'E2E disband'
+        disbandLabel: 'E2E disband',
+        requestFromTitle: 'E2E request from'
     };
 
     static async enter(context, playersCount = 3, configValues = {})
@@ -56,6 +57,25 @@ class TestTeamsBox
     {
         await owner.page.locator('#box-open-'+TeamsConst.KEY+owner.playerId).click();
         await expect(owner.page.locator(TestTeamsBox.teamBox(owner)), 'The team box is open').toBeVisible();
+    }
+
+    static async runConfiguredRequestTest(context)
+    {
+        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 4, context.longRun));
+        await E2eSeedAndRestoreApi.overrideConfig(
+            context.gameConfig,
+            context.e2eGroup,
+            'client/team/labels/requestFromTitle',
+            TestTeamsBox.LABELS.requestFromTitle
+        );
+        let players = await TeamSteps.enterPlayers(context, 2);
+        await TeamSteps.invite(players[0], players[1]);
+        let requestBox = players[1].page.locator(TestTeamsBox.teamBox(players[0]));
+        await expect(requestBox, 'The configured request label').toContainText(TestTeamsBox.LABELS.requestFromTitle, {
+            timeout: TimeConstants.SERVER_RESPONSE
+        });
+        await expect(requestBox, 'The inviter name').toContainText(players[0].playerName);
+        await expect(requestBox, 'No default request label').not.toContainText(TeamsConst.LABELS.TEAM.REQUEST_FROM);
     }
 
     static async runBoxContentTest(context)
@@ -184,6 +204,9 @@ class TestTeamsBox
             });
             test('box uses the configured labels and shared properties', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTeamsBox.runConfiguredBoxTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('request box uses the configured request label', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTeamsBox.runConfiguredRequestTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('only the owner removes a member from the box', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTeamsBox.runRemoveButtonTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

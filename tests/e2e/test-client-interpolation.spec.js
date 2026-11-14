@@ -20,8 +20,7 @@ const { Navigation } = require('./helpers/navigation');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { ClientInterpolationShowcase } = require('./helpers/client-interpolation-showcase');
 const { ClientInterpolationBulletShowcase } = require('./helpers/client-interpolation-bullet-showcase');
-const { RoomMovementApi } = require('./helpers/room-movement-api');
-const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
+const { ObjectInterpolationSteps } = require('./helpers/object-interpolation-steps');
 const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -38,7 +37,6 @@ class TestClientInterpolation
     static BULLET_TILES_DISTANCES = [4, 3];
     static OTHER_PLAYER_TILES_DISTANCE = 2;
     static WALK_TILES_DISTANCES = [3, 2];
-    static OBJECT_TILES_DISTANCES = [2, 1];
 
     static expectFrames(summary, pageErrors, label)
     {
@@ -173,51 +171,14 @@ class TestClientInterpolation
         let context = await MovementScenario.start(page, gameConfig, longRun);
         let npc = await context.fetchNpc();
         expect(npc, 'The e2eNpcKey object must be in the town room').toBeTruthy();
-        let origin = [npc.originalCol, npc.originalRow];
         expect(
             await InterpolationFramesRecorder.waitForObjectOnBody(page, context.npcKey, false, context.navTimeout),
             'The NPC animation must be on its stopped body before the recording'
         ).toBe(true);
-        await ClientInterpolationShowcase.prepareObjectWalk(page, context, origin, longRun);
-        let tilesDistances = longRun
-            ? ClientInterpolationShowcase.OBJECT_TILES_DISTANCES
-            : TestClientInterpolation.OBJECT_TILES_DISTANCES;
-        let startTile = ClientInterpolationShowcase.pickObjectStartTile(
-            WalkableTileLocator.findWalkableTilesAlongDirections(
-                await context.fetchTiles(origin, Math.max(npc.maxTiles, ...tilesDistances) + 1),
-                origin,
-                tilesDistances
-            ),
-            origin,
-            longRun
-        );
-        expect(startTile, 'A walkable tile must exist next to the object original tile').toBeTruthy();
-        await InterpolationFramesRecorder.start(page, {objects: [context.npcKey]});
-        let placedNpc = await RoomMovementApi.placeObject(gameConfig, context.roomName, context.npcKey, startTile);
-        let isPlacementShown = await InterpolationFramesRecorder.waitForObjectOnBody(
-            page,
-            context.npcKey,
-            {x: placedNpc.x, y: placedNpc.y},
-            context.navTimeout
-        );
-        await ClientInterpolationShowcase.showObjectPlacement(page, startTile, longRun);
-        await RoomMovementApi.moveObjectToOriginalTile(gameConfig, context.roomName, context.npcKey, false);
-        let movement = await RoomMovementApi.collectTrail(
-            context.fetchNpc,
-            (snapshot) => context.isStill(snapshot) && origin[0] === snapshot.currentCol && origin[1] === snapshot.currentRow,
-            context.navTimeout
-        );
-        let isWalkShown = await InterpolationFramesRecorder.waitForObjectOnBody(page, context.npcKey, false, context.navTimeout);
-        let summary = InterpolationFramesRecorder.summarize(await InterpolationFramesRecorder.stop(page), 'object');
-        await ClientInterpolationShowcase.showWalkResult(page, 'The NPC is back on its tile', summary, longRun);
+        let recorded = await ObjectInterpolationSteps.recordPlacementAndWalkBack(page, page, context, npc, longRun);
+        await ClientInterpolationShowcase.showWalkResult(page, 'The NPC is back on its tile', recorded.summary, longRun);
         await screenshots.capture(page, 'object-walked-back');
-        expect(isPlacementShown, 'The object sprite must land on its placement').toBe(true);
-        expect(movement.done, 'The object must walk back to its original tile: '+sc.toJsonString(movement.last)).toBe(true);
-        expect(isWalkShown, 'The stopped object sprite must end on its body position').toBe(true);
-        TestClientInterpolation.expectFrames(summary, pageErrors, 'object');
-        expect(summary.longestPlacedJump, 'The object placement must move its sprite in one frame')
-            .toBeGreaterThanOrEqual(Navigation.TILE_SIZE);
-        expect(summary.partialMoving, 'The walking object sprite must step toward its moving body').toBeGreaterThan(0);
+        ObjectInterpolationSteps.expectRecording(recorded, pageErrors);
     }
 
     static async runBulletTest(page, screenshots, gameConfig, longRun)

@@ -10,7 +10,8 @@
  * targeted with a click, returning its level. The long run opens the scores panel before its recording starts. The
  * next enemy to kill is placed without a new login, a method of the kill score subscriber (or of its updater, provider
  * and sender) is delayed or failed for the group and its calls are read (KillScoreSubscriberOverrides), and the
- * subscriber runs a kill event mapped like the scores plugin listener maps it.
+ * subscriber runs a kill event mapped like the scores plugin listener maps it. A player named with the stored HTML
+ * payload is created for a user, and a shown name is checked as text with no script run and no payload image created.
  *
  */
 
@@ -27,6 +28,7 @@ const { LongRunShowcase } = require('./long-run-showcase');
 const { SecurityApi } = require('./security-api');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
+const { FileHandler } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
 class KillScoreSteps
@@ -38,6 +40,29 @@ class KillScoreSteps
     static LATE_SCORE_WALK_KEYS = ['ArrowDown', 'ArrowUp'];
     static LATE_SCORE_WALK_MS = TimeConstants.SERVER_RESPONSE / 2;
     static CALLS_KEY_PREFIX = 'killScore.';
+    static STORED_HTML_PATH = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'stored-html-payload.html');
+
+    static async createHtmlNamedPlayer(gameConfig, e2eGroup, username)
+    {
+        let htmlName = FileHandler.readFile(KillScoreSteps.STORED_HTML_PATH).trim();
+        await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'players', {
+            user_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'users', {username}),
+            name: htmlName
+        });
+        return htmlName;
+    }
+
+    static async expectNameAsText(nameLocator, htmlName)
+    {
+        await expect(nameLocator, 'The name shown as text').toHaveText(htmlName);
+        expect(
+            await nameLocator.page().evaluate(() => [
+                Boolean(window.e2eStoredScriptRan),
+                document.querySelectorAll('img[src="x"]').length
+            ]),
+            'No script ran and no image of the name was created'
+        ).toEqual([false, 0]);
+    }
 
     static async fetchScoreRows(gameConfig, playerId)
     {

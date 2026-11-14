@@ -312,6 +312,28 @@ class TestTeamAndClanInvites extends BaseTest
         });
     }
 
+    async testClanInviteSenderIsKeptUntilTheInviteIsUsed()
+    {
+        await this.test('a clan invite keeps its sender until the decline or the join that uses it', async () => {
+            let setup = this.createSetup();
+            let invitingClan = this.createInvitingClan(setup, {});
+            invitingClan.addInvite(4, this.otherPlayerId);
+            this.assert.strictEqual(invitingClan.declineInvite(4), this.otherPlayerId);
+            this.assert.strictEqual(invitingClan.declineInvite(4), false);
+            invitingClan.addInvite(5, this.otherPlayerId);
+            invitingClan.reserveInvite(5);
+            invitingClan.releaseInvite(5, false);
+            this.assert.deepStrictEqual(invitingClan.invitesSenders, {5: this.otherPlayerId});
+            invitingClan.reserveInvite(5);
+            invitingClan.releaseInvite(5, true);
+            this.assert.deepStrictEqual(invitingClan.invitesSenders, {});
+            this.assert.deepStrictEqual(invitingClan.pendingInvites, {});
+            invitingClan.addInvite(6, 'missing-sender');
+            delete invitingClan.invitesSenders[6];
+            this.assert.strictEqual(invitingClan.declineInvite(6), this.inviterId);
+        });
+    }
+
 }
 
 module.exports.TestTeamAndClanInvites = TestTeamAndClanInvites;

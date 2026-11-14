@@ -7,17 +7,18 @@
 const { BaseTest } = require('./base-test');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { PlayerSubscriber } = require('../lib/inventory/server/subscribers/player-subscriber');
+const { InventoryPlugin } = require('../lib/inventory/client/plugin');
 const { ItemBase, ItemsConst, ItemsEvents } = require('@reldens/items-system');
 const { EventsManager, sc } = require('@reldens/utils');
 
 class TestPlayerSubscriber extends BaseTest
 {
 
-    createSetup()
+    createSetup(configValues = {})
     {
-        let room = {config: GameplayPlayerBuilder.createConfig({
+        let room = {config: GameplayPlayerBuilder.createConfig(Object.assign({
             'inventory/groups/groupBaseData': {weapon: {key: 'weapon'}}
-        })};
+        }, configValues))};
         room.config.inventory = {items: {}};
         return {
             room,
@@ -71,6 +72,27 @@ class TestPlayerSubscriber extends BaseTest
             this.assert.deepStrictEqual(setup.client.sentMessages, [
                 {act: ItemsConst.ACTION_SET_GROUPS, owner: 7, groups: {weapon: {key: 'weapon'}}}
             ]);
+        });
+    }
+
+    async testTheInventoryUnequipOnRemoveIsConfigured()
+    {
+        await this.test('the server and client inventories get the same configured unequip on remove, on by default', async () => {
+            let unequipOnRemoveValues = [];
+            for(let configValues of [{}, {'client/players/inventory/unequipOnRemove': false}, {'client/players/inventory/unequipOnRemove': true}]){
+                let setup = this.createSetup(configValues);
+                await this.createInventory(setup);
+                let roomEvents = {gameManager: {config: setup.room.config}};
+                let clientPlugin = new InventoryPlugin();
+                clientPlugin.gameManager = roomEvents.gameManager;
+                clientPlugin.loadConfig();
+                clientPlugin.createInventoryInstance({sessionId: 'session-7'}, roomEvents);
+                unequipOnRemoveValues.push([
+                    setup.currentPlayer.inventory.manager.unequipOnRemove,
+                    roomEvents.gameManager.inventory.manager.unequipOnRemove
+                ]);
+            }
+            this.assert.deepStrictEqual(unequipOnRemoveValues, [[true, true], [false, false], [true, true]]);
         });
     }
 

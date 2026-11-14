@@ -2,7 +2,10 @@
  *
  * Reldens - Test Authentication Guests
  *
- * Tests the guests in the game and their cleanup: the scene join rejected for a room not allowed to guests, the scene
+ * Tests the guests in the game and their cleanup: the scene join rejected for a room not allowed to guests, the change
+ * point to the sample room without allowGuest (the first house floor) accepted with the sample
+ * server/players/guestUser/allowOnRooms on and rejected with the chat error line once the guest rooms are computed with
+ * it off, the scene
  * change with the server generated password, the random spawn, a guest used from two tabs, and the stale guests removed
  * or kept by the cleanup. The stale rows are seeded with a date older than the cleanup limit used by the test, so only
  * those rows can be selected.
@@ -19,9 +22,14 @@ const { MovementScenario } = require('./helpers/movement-scenario');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
+const { ChatSteps } = require('./helpers/chat-steps');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { ChangePointsSteps } = require('./helpers/change-points-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
+const { ChatConst } = require('../../lib/chat/constants');
+const ChatTranslations = require('../../lib/chat/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -32,6 +40,9 @@ class TestAuthenticationGuests
     static RECENT_DATE = '2030-01-01 00:00:00';
     static OLDER_THAN_TIME = Date.UTC(2002, 0, 1);
     static RANDOM_SPAWN_ROOM_NAME = 'reldens-bots-forest';
+    static HOUSE_ROOM_NAME = 'reldens-house-1';
+    static NOT_GUEST_ROOM_NAME = 'reldens-house-1-2d-floor';
+    static ALLOW_ON_ROOMS_PATH = 'server/players/guestUser/allowOnRooms';
     static async walkToForest(page, gameConfig, playerName, longRun)
     {
         let walkContext = MovementScenario.createWalkContext(gameConfig, Login.TOWN_ROOM_NAME, playerName, longRun);
@@ -51,6 +62,94 @@ class TestAuthenticationGuests
         });
         await expect(secondPage.locator(Selectors.body.gameEngineStarted), 'The join must be rejected').toHaveCount(0);
         await screenshots.capture(secondPage, 'guest-room-not-allowed');
+    }
+
+    static async runChangePointNotAllowedTest(page, gameConfig, longRun)
+    {
+        let guest = await CharacterCreation.enterGuestInGame(page, longRun, Login.TOWN_ROOM_NAME);
+        await expect(page.locator(Selectors.chat.tabContentGeneral), 'The chat shows the own joined line').toContainText(
+            guest.playerName,
+            {timeout: TimeConstants.SERVER_RESPONSE}
+        );
+        await ChatSteps.recordChat(page);
+        await SecurityApi.request(gameConfig, 'POST', '/api/e2e/login-server/guest-rooms-empty', {});
+        let placed = await RoomObjectsApi.placePlayerOnChangePoint(page, gameConfig, Login.TOWN_ROOM_NAME, Login.FOREST_ROOM_NAME);
+        expect(placed.position, 'The guest is placed on the change point to the forest: '+placed.error).toBeTruthy();
+        await TestAuthenticationGuests.expectChangePointErrorLine(page);
+        await ChatSteps.openChat(page);
+        await expect(page.locator(Selectors.chat.tabContentGeneral), 'The translated error line is shown')
+            .toContainText(ChatTranslations.chat.guestInvalidChangePoint);
+        expect(await Navigation.getCurrentRoomName(page), 'The guest stays in the town').toBe(Login.TOWN_ROOM_NAME);
+        expect(
+            (await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, guest.playerName)).scene,
+            'The server keeps the guest in the town'
+        ).toBe(Login.TOWN_ROOM_NAME);
+    }
+
+    static async expectChangePointErrorLine(page)
+    {
+        await expect.poll(
+            async () => (await ChatSteps.fetchChat(page)).filter(
+                message => ChatConst.SNIPPETS.GUEST_INVALID_CHANGE_POINT === message[ChatConst.MESSAGE.KEY]
+                    && ChatConst.TYPES.ERROR === message[ChatConst.TYPES.KEY]
+            ).length,
+            {message: 'The guest gets the error line', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(1);
+    }
+
+    static async runAllowOnRoomsTest(page, gameConfig, longRun)
+    {
+        let guest = await CharacterCreation.enterGuestInGame(page, longRun, Login.TOWN_ROOM_NAME);
+        await MovementScenario.waitForReadyScene(page);
+        let houseRoom = TestAuthenticationGuests.HOUSE_ROOM_NAME;
+        let floorRoom = TestAuthenticationGuests.NOT_GUEST_ROOM_NAME;
+        let context = {gameConfig};
+        let player = {page, playerName: guest.playerName};
+        let topology = await ChangePointsSteps.loadTopology(gameConfig);
+        await ChangePointsSteps.changeRoom(
+            context,
+            player,
+            topology,
+            ChangePointsSteps.buildWalk(topology, [Login.TOWN_ROOM_NAME, houseRoom]).pop()
+        );
+        expect(
+            Number(await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, TestAuthenticationGuests.ALLOW_ON_ROOMS_PATH)),
+            'The sample config allows the guests on every room'
+        ).toBe(1);
+        let floorChange = ChangePointsSteps.buildWalk(topology, [houseRoom, floorRoom]).pop();
+        await ChangePointsSteps.changeRoom(context, player, topology, floorChange);
+        expect(
+            (await GameplayE2eStateApi.fetchPlayer(gameConfig, floorRoom, guest.playerName)).scene,
+            'The server places the guest in the room without allowGuest'
+        ).toBe(floorRoom);
+        await ChangePointsSteps.changeRoom(
+            context,
+            player,
+            topology,
+            ChangePointsSteps.buildWalk(topology, [floorRoom, houseRoom]).pop()
+        );
+        await MovementScenario.waitForReadyScene(page);
+        let guestRooms = (await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/login-server/guest-rooms-allow-on-rooms',
+            {allowOnRooms: false}
+        )).guestRooms;
+        expect(
+            [guestRooms.includes(houseRoom), guestRooms.includes(floorRoom)],
+            'The guest rooms with allowOnRooms off keep only the rooms with allowGuest'
+        ).toEqual([true, false]);
+        await ChatSteps.recordChat(page);
+        let placed = await RoomObjectsApi.placePlayerOnChangePoint(
+            page,
+            gameConfig,
+            houseRoom,
+            floorRoom,
+            await ChangePointsSteps.resolveTile(context, floorChange)
+        );
+        expect(placed.position, 'The guest is placed on the change point to the floor: '+placed.error).toBeTruthy();
+        await TestAuthenticationGuests.expectChangePointErrorLine(page);
+        expect(await Navigation.getCurrentRoomName(page), 'The guest stays in the house').toBe(houseRoom);
     }
 
     static async runSceneChangeTest(page, screenshots, gameConfig, longRun)
@@ -110,9 +209,22 @@ class TestAuthenticationGuests
         let localeId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'locale', {});
         await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'usersLogin', userFilter);
         await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'usersLocale', {...userFilter, locale_id: localeId});
+        let scoreFilter = {player_id: stale.player.id};
+        await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'scores', {
+            ...scoreFilter,
+            total_score: 1,
+            players_kills_count: 0,
+            npcs_kills_count: 0
+        });
+        await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'questsProgress', {
+            ...scoreFilter,
+            quest_key: 'e2e-stale-guest-quest'
+        });
         expect(await LoginServerApi.runGuestsCleanup(gameConfig, TestAuthenticationGuests.OLDER_THAN_TIME)).toBe(1);
         expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', {id: stale.user.id})).toEqual([]);
         expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'players', {id: stale.player.id})).toEqual([]);
+        expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'scores', scoreFilter), 'The guest score row').toEqual([]);
+        expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'questsProgress', scoreFilter), 'The guest quests').toEqual([]);
         expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLogin', userFilter)).toEqual([]);
         expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLocale', userFilter)).toEqual([]);
     }
@@ -170,6 +282,12 @@ class TestAuthenticationGuests
         test.describe('Authentication Guests', () => {
             test('guest join of a room not allowed to guests is rejected', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationGuests.runRoomNotAllowedTest(page, secondPage, screenshots, gameConfig, longRun);
+            });
+            test('guest on a change point to a room not allowed to guests gets the error line', async ({ page, gameConfig, longRun }) => {
+                await TestAuthenticationGuests.runChangePointNotAllowedTest(page, gameConfig, longRun);
+            });
+            test('guest change point to a room without allowGuest is accepted with allowOnRooms on and rejected with it off', async ({ page, gameConfig, longRun }) => {
+                await TestAuthenticationGuests.runAllowOnRoomsTest(page, gameConfig, longRun);
             });
             test('guest changes the scene with the generated password', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationGuests.runSceneChangeTest(page, screenshots, gameConfig, longRun);

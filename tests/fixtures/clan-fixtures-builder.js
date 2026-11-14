@@ -7,6 +7,8 @@
 const { Clan } = require('../../lib/teams/server/clan');
 const { ClanFactory } = require('../../lib/teams/server/clan-factory');
 const { TeamsPlugin } = require('../../lib/teams/server/plugin');
+const { ChatConst } = require('../../lib/chat/constants');
+const { sc } = require('@reldens/utils');
 
 class ClanFixturesBuilder
 {
@@ -51,10 +53,10 @@ class ClanFixturesBuilder
         return {player_id: playerId, stats: {atk}, statsBase: {atk: 100}, privateData: {clan: 10}};
     }
 
-    static createOwnerSchema()
+    static createOwnerSchema(playerId = '1', playerName = 'ImRoot')
     {
-        let ownerSchema = this.createPlayerSchema();
-        ownerSchema.playerName = 'ImRoot';
+        let ownerSchema = this.createPlayerSchema(playerId);
+        ownerSchema.playerName = playerName;
         ownerSchema.state = {room_id: 1};
         ownerSchema.persistData = async () => true;
         ownerSchema.getPrivate = (key) => ownerSchema.privateData[key];
@@ -62,6 +64,17 @@ class ClanFixturesBuilder
             ownerSchema.privateData[key] = value;
         };
         return ownerSchema;
+    }
+
+    static createChatRecordingClient(chatLines)
+    {
+        let client = {send: false};
+        client.send = (type, message) => {
+            if(sc.hasOwn(message, ChatConst.MESSAGE.KEY)){
+                chatLines.push(message[ChatConst.MESSAGE.KEY]);
+            }
+        };
+        return client;
     }
 
     static createDeletionsRecorder(entityKey, deletedRows)

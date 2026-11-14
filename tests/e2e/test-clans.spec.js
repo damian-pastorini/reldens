@@ -2,7 +2,8 @@
  *
  * Reldens - Test Clans
  *
- * Tests the clans panel visibility, clan creation, and multi-player clan interactions. The clan level modifiers and the
+ * Tests the clans panel visibility, clan creation, and multi-player clan interactions. The clan creation case preserves
+ * the clan rows of the second group player, so the reset deletes the clan it creates. The clan level modifiers and the
  * owner disband cases use the third group player as the clan owner (the second one keeps the clan of the creation case):
  * the modifiers case preserves the owner clan rows, so the reset deletes the clan created by the test, and the disband
  * case seeds the clan and its memberships (the owner and the first group player, offline) before the owner logs in. The
@@ -222,7 +223,9 @@ class TestClans
                 await expect(page.locator(Selectors.clans.dialogContent)).toBeVisible();
                 await screenshots.capture(page, 'clan-panel-open');
             });
-            test('player can create a new clan', async ({ page, screenshots, gameConfig, longRun }) => {
+            test('player can create a new clan', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                let ownerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName2});
+                await TestClans.preserveClanRows(gameConfig, e2eGroup, ownerId);
                 let setup = await TestClans.loginAndOpenClanPanel(page, gameConfig, longRun);
                 let disbandButton = page.locator(Selectors.clans.disbandAction);
                 let alreadyInClan = await disbandButton.isVisible().catch(() => false);

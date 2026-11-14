@@ -82,6 +82,22 @@ class TestSkillHitAfterOwnerLeft extends BaseTest
         });
     }
 
+    async testChatDamageMessageIsSkippedForZeroDamage()
+    {
+        await this.test('a player skill dealing 0 damage sends no damage chat message', async () => {
+            let scenario = this.createChatScenario();
+            PlayerSkills.listenEvents(scenario.classPath, {damageMessages: true}, scenario.chatManager);
+            let target = {key: 'enemy-1', title: 'Enemy'};
+            await scenario.events.emit(
+                scenario.classPath.getOwnerEventKey()+'.'+SkillsEvents.SKILL_ATTACK_APPLY_DAMAGE,
+                {owner: scenario.classPath.owner, target},
+                target,
+                0
+            );
+            this.assert.deepStrictEqual([scenario.sentMessages, scenario.savedMessages], [[], []]);
+        });
+    }
+
     async testChatDamageMessageIsSkippedWhenTheOwnerLeftDuringTheHit()
     {
         await this.test('a skill hit after the owner left skips the damage chat message without throwing', async () => {

@@ -218,6 +218,33 @@ class TestPlayerReviveDisplay extends BaseTest
         });
     }
 
+    async testDisabledOrDeadTargetIsNotKilled()
+    {
+        await this.test('a disabled (in an ad) or dead target at zero life is not killed nor sent the game over', async () => {
+            let battle = new Battle({events: {}});
+            for(let inState of [GameConst.STATUS.DISABLED, GameConst.STATUS.DEATH]){
+                let deactivatedStates = [];
+                let sentMessages = [];
+                let targetSchema = {
+                    player_id: 1,
+                    state: {inState},
+                    stats: {hp: 0},
+                    isDeath: () => GameConst.STATUS.DEATH === inState,
+                    isDisabled: () => GameConst.STATUS.DISABLED === inState
+                };
+                let room = {deactivatePlayer: (playerSchema, newState) => deactivatedStates.push(newState)};
+                let targetClient = {send: (type, message) => sentMessages.push(message)};
+                this.assert.strictEqual(
+                    await battle.clientDeathUpdate(targetSchema, room, targetClient, 'hp', 'attacker'),
+                    false
+                );
+                this.assert.deepStrictEqual(deactivatedStates, []);
+                this.assert.deepStrictEqual(sentMessages, []);
+                this.assert.strictEqual(targetSchema.state.inState, inState);
+            }
+        });
+    }
+
 }
 
 module.exports.TestPlayerReviveDisplay = TestPlayerReviveDisplay;

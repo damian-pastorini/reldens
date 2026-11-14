@@ -119,11 +119,13 @@ class TestFirebaseConnector extends BaseTest
             appServerUrl
         );
         connector.initAuth(this.firebaseConfig);
-        let activeUserResult = await connector.setActiveUser(this.createFakeUser(getIdToken));
+        let signOuts = [];
+        connector.initializedApp = {firebase: {auth: () => ({signOut: () => signOuts.push(true)})}};
         return {
-            activeUserResult,
+            activeUserResult: await connector.setActiveUser(this.createFakeUser(getIdToken)),
             errorMessage: errorContainer.textContent,
-            startedGames: connector.gameManager.startedGames
+            startedGames: connector.gameManager.startedGames,
+            signOuts: signOuts.length
         };
     }
 
@@ -320,21 +322,21 @@ class TestFirebaseConnector extends BaseTest
 
     async testTheNotVerifiedIdTokenStopsTheLogin()
     {
-        await this.test('an ID token not verified by the server stops the login with an error', async () => {
+        await this.test('an ID token not verified by the server stops the login with an error and signs out', async () => {
             let responsesBodies = [sc.toJsonString({isSuccess: false}), sc.toJsonString({}), '{invalid-json'];
             for(let responseBody of responsesBodies){
                 let loginResult = await this.loginWithVerifyResponse(responseBody, async () => 'id-token');
                 this.assert.strictEqual(loginResult.activeUserResult, false);
                 this.assert.strictEqual(loginResult.errorMessage, 'Authentication error.');
                 this.assert.strictEqual(loginResult.receivedRequests.length, 1);
-                this.assert.deepStrictEqual(loginResult.startedGames, []);
+                this.assert.deepStrictEqual([loginResult.startedGames, loginResult.signOuts], [[], 1]);
             }
         });
     }
 
     async testTheFailedIdTokenRequestStopsTheLogin()
     {
-        await this.test('a failed or empty ID token stops the login with an error', async () => {
+        await this.test('a failed or empty ID token stops the login with an error and signs out', async () => {
             let tokenFailure = await this.loginWithVerifyResponse(this.verifiedResponse, async () => {
                 throw new Error('ID token error');
             });
@@ -344,6 +346,7 @@ class TestFirebaseConnector extends BaseTest
                 this.assert.strictEqual(loginResult.activeUserResult, false);
                 this.assert.strictEqual(loginResult.errorMessage, 'Authentication error.');
                 this.assert.deepStrictEqual(loginResult.startedGames, []);
+                this.assert.strictEqual(loginResult.signOuts, 1);
             }
             this.assert.deepStrictEqual(tokenFailure.receivedRequests, []);
             this.assert.deepStrictEqual(

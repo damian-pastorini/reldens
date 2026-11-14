@@ -2,9 +2,10 @@
  *
  * Reldens - Test Movement
  *
- * Tests arrow key movement, all directions, room transitions, minimap, and return-point on death. After the login the
- * moving NPCs and traders of the room are stopped and placed back on their spawn tiles, so every walk starts from the
- * same room layout.
+ * Tests arrow key movement, all directions, room transitions, minimap, return-point on death and the scene selected on
+ * login (the player starts on the default return point of the selected room, on the server and on its sprite). After
+ * the login the moving NPCs and traders of the room are stopped and placed back on their spawn tiles, so every walk
+ * starts from the same room layout.
  *
  */
 
@@ -15,6 +16,8 @@ const { Phaser } = require('./helpers/phaser');
 const { Navigation } = require('./helpers/navigation');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { ChangePointsSteps } = require('./helpers/change-points-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -62,10 +65,17 @@ class TestMovement
             + TimeConstants.PLAYER_REVIVE
         );
         await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, enemyKey, TimeConstants.ENEMY_KILL);
+        let dead = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName);
         await screenshots.capture(page, 'player-died-in-forest');
-        await Navigation.waitForRoom(page, returnRoom, TimeConstants.PLAYER_REVIVE);
-        let currentRoom = await Navigation.getCurrentRoomName(page);
-        expect(currentRoom).toBe(returnRoom);
+        expect(
+            await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE),
+            'The player revives'
+        ).toBe(true);
+        let revived = await GameplayE2eStateApi.fetchPlayer(gameConfig, returnRoom, gameConfig.e2ePlayerName);
+        expect(
+            [await Navigation.getCurrentRoomName(page), revived.scene, revived.x, revived.y],
+            'The player revives in the configured return room on the position where it died'
+        ).toEqual([returnRoom, returnRoom, dead.x, dead.y]);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'player-at-return-point-after-death');
     }
@@ -156,6 +166,7 @@ class TestMovement
         );
         let currentRoom = await Navigation.getCurrentRoomName(page);
         expect(currentRoom, 'Player must start in the selected scene '+Login.FOREST_ROOM_NAME).toBe(Login.FOREST_ROOM_NAME);
+        await ChangePointsSteps.expectOnDefaultReturnPoint({page, gameConfig}, Login.FOREST_ROOM_NAME);
         await screenshots.capture(page, 'started-in-selected-scene');
     }
 

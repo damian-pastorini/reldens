@@ -23,6 +23,7 @@ const { RoomMovementState } = require('./helpers/room-movement-state');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
 const { RoomAnchoredPlacement } = require('./helpers/room-anchored-placement');
 const { RoomAggressionPlacement } = require('./helpers/room-aggression-placement');
+const { RoomBorderPlacement } = require('./helpers/room-border-placement');
 const { RoomLinePlacement } = require('./helpers/room-line-placement');
 const { RoomChangePointPlacement } = require('./helpers/room-change-point-placement');
 const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
@@ -30,6 +31,7 @@ const { WorldE2eStateProbe } = require('./helpers/world-e2e-state-probe');
 const { E2eSeedAndRestoreEndpoints } = require('./helpers/e2e-seed-and-restore-endpoints');
 const { GameplayE2eStateProbe } = require('./helpers/gameplay-e2e-state-probe');
 const { LiveObjectsOverrides } = require('./helpers/live-objects-overrides');
+const { LiveObjectProperties } = require('./helpers/live-object-properties');
 const { FeaturePropertiesOverrides } = require('./helpers/feature-properties-overrides');
 const { TimingObjectsProbe } = require('./helpers/timing-objects-probe');
 const { TeamsProbe } = require('./helpers/teams-probe');
@@ -280,6 +282,7 @@ class CollectGameData
         RoomEnemyPlacement.registerEndpoints(serverManager);
         RoomAnchoredPlacement.registerEndpoints(serverManager);
         RoomAggressionPlacement.registerEndpoints(serverManager);
+        RoomBorderPlacement.registerEndpoints(serverManager);
         RoomLinePlacement.registerEndpoints(serverManager);
         RoomChangePointPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
@@ -287,6 +290,7 @@ class CollectGameData
         E2eSeedAndRestoreEndpoints.registerEndpoints(serverManager);
         GameplayE2eStateProbe.registerEndpoints(serverManager);
         LiveObjectsOverrides.registerEndpoints(serverManager);
+        LiveObjectProperties.registerEndpoints(serverManager);
         FeaturePropertiesOverrides.registerEndpoints(serverManager);
         TimingObjectsProbe.registerEndpoints(serverManager);
         TeamsProbe.registerEndpoints(serverManager);
@@ -368,6 +372,9 @@ class CollectGameData
         process.env.RELDENS_ALLOW_BUILD_CLIENT = bundleRequired ? '1' : '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = bundleRequired ? '1' : '0';
         process.env.RELDENS_MAILER_ENABLE = '0';
+        process.env.RELDENS_ROOMS_DATABASES = true === sc.get(config, 'crossServerNamesCheck', false)
+            ? E2eServerInstances.fetchAllServersUrls().join(',')
+            : '';
         DatabaseEnvVarsExporter.apply(config);
         let effectivePort = process.env.RELDENS_E2E_PORT || config.port;
         if(effectivePort) {
@@ -377,9 +384,14 @@ class CollectGameData
             process.env.RELDENS_APP_PORT = portStr;
             process.env.RELDENS_PUBLIC_URL = publicUrl;
         }
+        TestDataSetup.writeDisposableRoomsMaps(
+            serverPath,
+            sc.get(serverConfig, 'projectThemeName', GameConst.STRUCTURE.DEFAULT)
+        );
         let serverManager = new modules.ServerManager(serverConfig);
         serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
+            await TestDataSetup.createDisposableRooms(event.serverManager.dataServer);
             event.serverManager.configManager.server.health.blockingEnabled = false;
         });
         process.stdout.write('Server: creating HTTP server...\n');

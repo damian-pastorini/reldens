@@ -7,7 +7,8 @@
  * the provider "sdkUrl" pointing to the SDK mock served by the e2e server (E2eAssetsEndpoints). The client config is
  * sent on the login, so the ad is enabled before the player logs in; the client then loads the mock and plays the ad
  * when the ad event fires: the mock shows an advertisement overlay for the provider video minimum duration and the
- * client provider sends the same start and end (or failed) messages the real SDK callbacks send. The played ad rows of
+ * client provider sends the same start and end (or failed) messages the real SDK callbacks send. A spec that needs the
+ * SDK loaded with the page, like the real game, also enables the mock in the initial client config (loadSdkWithPage). The played ad rows of
  * the player for that ad are preserved (restored by the group reset, so no play of one test reaches the next one).
  *
  */
@@ -15,6 +16,7 @@
 const { expect } = require('@playwright/test');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { E2eAssetsEndpoints } = require('./e2e-assets-endpoints');
+const { InitialClientConfig } = require('./initial-client-config');
 const { AdsConst } = require('../../../lib/ads/constants');
 
 class AdMessagesPlayer
@@ -46,9 +48,7 @@ class AdMessagesPlayer
             [providerPath+'/enabled']: 1,
             [providerPath+'/sdkUrl']: E2eAssetsEndpoints.ASSETS_PATH+E2eAssetsEndpoints.SDK_MOCK_FILE
         };
-        for(let configPath of Object.keys(configOverrides)){
-            await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, configPath, configOverrides[configPath]);
-        }
+        await AdMessagesPlayer.overrideConfigs(gameConfig, e2eGroup, configOverrides);
         return {
             id: adRow.id,
             minimumDurationMs: Number(await E2eSeedAndRestoreApi.fetchConfigValue(
@@ -56,6 +56,15 @@ class AdMessagesPlayer
                 providerPath+'/videoMinimumDuration'
             ))
         };
+    }
+
+    static async loadSdkWithPage(page)
+    {
+        await InitialClientConfig.merge(
+            page,
+            AdMessagesPlayer.CLIENT_PROVIDERS_PATH+'/'+AdMessagesPlayer.MOCKED_PROVIDER_KEY,
+            {enabled: 1, sdkUrl: E2eAssetsEndpoints.ASSETS_PATH+E2eAssetsEndpoints.SDK_MOCK_FILE}
+        );
     }
 
     static async waitForProviderReady(page, timeout)
@@ -75,6 +84,13 @@ class AdMessagesPlayer
         await page.evaluate(() => {
             window.CrazyGames.SDK.failNextAd = true;
         });
+    }
+
+    static async overrideConfigs(gameConfig, e2eGroup, configOverrides)
+    {
+        for(let configPath of Object.keys(configOverrides)){
+            await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, configPath, configOverrides[configPath]);
+        }
     }
 
     static async waitForPlayedAd(page, enabledAd, timeout)

@@ -2,8 +2,10 @@
  *
  * Reldens - Teams Probe
  *
- * Server side e2e endpoint for the teams specs: the live teams of the teams plugin (each team by its owner id with its
- * owner and members player ids), the pending invites (by the inviting player id, the invited players ids) and the
+ * Server side e2e endpoints for the teams specs: the live teams of the teams plugin (each team by its owner id with its
+ * owner and members player ids), the session id of the owner client a team sends its owner messages to, the team
+ * record a scene change leaves for a player seeded for a logged out group player (the state a disconnection during a
+ * scene change leaves, so its next login joins that team again; the players reset deletes it), the pending invites (by the inviting player id, the invited players ids) and the
  * loaded clans (each clan by its id with its owner, members, connected players and pending invites players ids).
  *
  */
@@ -52,6 +54,20 @@ class TeamsProbe
     {
         serverManager.app.get('/api/e2e/teams/state', (request, response) => {
             response.json(TeamsProbe.fetchTeamsState(serverManager));
+        });
+        serverManager.app.post('/api/e2e/teams/changing-room-record', (request, response) => {
+            let teamsPlugin = sc.get(sc.get(serverManager.featuresManager.featuresList, 'teams', {}), 'package', {});
+            let playerId = Number(sc.get(request.body, 'playerId', 0));
+            teamsPlugin.teamChangingRoomPlayers[playerId] = {
+                teamId: Number(sc.get(request.body, 'teamId', 0)),
+                leavingPlayerSessionId: ''
+            };
+            response.json({record: teamsPlugin.teamChangingRoomPlayers[playerId]});
+        });
+        serverManager.app.get('/api/e2e/teams/owner-session', (request, response) => {
+            let teams = sc.get(sc.get(serverManager.featuresManager.featuresList, 'teams', {}), 'package', {}).teams;
+            let team = sc.get(teams || {}, sc.get(request.query, 'ownerId', ''), false);
+            response.json({ownerSessionId: team ? String(sc.get(team.ownerClient, 'sessionId', '')) : ''});
         });
         Logger.info('[teams-probe] Teams endpoints registered.');
     }

@@ -4,7 +4,8 @@
  *
  * HTTP client for the e2e room movement endpoints registered by RoomMovementState: the player and object bodies
  * snapshots, the path finder tiles around a tile (walkable, walls, change points and the other blocked tiles), the
- * object path, move, move back to the original tile, placement and random movement switch, and the trail collected
+ * object path, move, move back to the original tile, placement and random movement switch, the player placement on a
+ * given position, and the trail collected
  * from the server snapshots until a condition is met (like a player standing still: no path steps and no velocity),
  * so every movement spec asserts the exact server bodies.
  *
@@ -153,6 +154,16 @@ class RoomMovementApi
             ),
             'object',
             false
+        );
+    }
+
+    static async placePlayer(gameConfig, roomName, playerName, position)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/movement/player-place',
+            {roomName, playerName, x: position.x, y: position.y}
         );
     }
 

@@ -404,9 +404,10 @@ its ID; the disabled ads are never found.
   and the play stays closed
 
 `InventoryMessageActions` (`lib/inventory/server/message-actions.js`) rejects the equip of an item key that is not in
-the inventory or of an item without `equip()`, and the use of an item without `use()`. The equip waits until the
-equipped item of the same group is unequipped (`unEquipPrevious()`) before equipping the new one, so the modifiers of
-the previous item are always reverted before the new item modifiers apply.
+the inventory or of an item without `equip()`, and the use of an item without `use()`. The equip toggle is the
+`@reldens/items-system` `Inventory.toggleEquip()`: it waits until the equipped item of the same group is unequipped
+(`Inventory.unEquipPrevious()`) before equipping the new one, so the modifiers of the previous item are always reverted
+before the new item modifiers apply.
 
 ## Events added
 

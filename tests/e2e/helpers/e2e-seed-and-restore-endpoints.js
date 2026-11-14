@@ -14,8 +14,9 @@
  * seeded row delete. The locales reload runs the snippets ConfigurationEnricher again, so a seeded locale reaches the
  * client config sent on the next login. The config values that the running server reads only once (the config rows
  * are never hot plugged, a server restart applies them) are read again after every override and restore: the death
- * relocator, the rooms auto recovery, the kill score subscriber and the player creation (the player name lengths and
- * the rooms selection), created again with the new values, like the restart that loads them.
+ * relocator, the rooms auto recovery, the kill score subscriber, the scores page size and title and the player creation
+ * (the player name lengths and the rooms selection), created again with the new values, like the restart that loads
+ * them.
  *
  */
 
@@ -162,6 +163,7 @@ class E2eSeedAndRestoreEndpoints
             config: scoresPlugin.config,
             dataServer: scoresPlugin.dataServer
         });
+        scoresPlugin.createScoresRoute.loadConfig();
         serverManager.loginManager.playerCreation = serverManager.loginManager.createPlayerCreation();
     }
 

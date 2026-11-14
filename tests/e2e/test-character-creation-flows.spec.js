@@ -3,7 +3,7 @@
  * Reldens - Test Character Creation Flows
  *
  * Tests the players creation flows beyond the name: the invalid or missing initial state, the storage failure, the
- * forged and incomplete create messages, the chosen
+ * forged and incomplete create messages, the creation with the game room connection closed, the chosen
  * and missing class paths with their avatar, the avatar preview options and the missing classes.
  *
  */
@@ -13,7 +13,10 @@ const { CharacterCreation } = require('./helpers/character-creation');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
+const { TimeConstants } = require('./helpers/time-constants');
+const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
+const GameTranslations = require('../../lib/game/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -153,9 +156,26 @@ class TestCharacterCreationFlows
         await screenshots.capture(page, 'missing-classes');
     }
 
+    static async runClosedConnectionTest(page, screenshots, gameConfig, longRun)
+    {
+        let playerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await page.evaluate(() => window.reldens.gameRoom.connection.close());
+        await expect.poll(async () => await page.evaluate(() => window.reldens.gameRoom.connection.isOpen)).toBe(false);
+        await CharacterCreation.submitCreateForm(page, playerName);
+        await expect(page.locator(Selectors.reloadModal.message)).toHaveText(GameTranslations.game.errors.connectionLost, {
+            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+        });
+        expect(await CharacterCreation.loadPlayers(gameConfig, playerName), 'No player stored').toEqual([]);
+        await screenshots.capture(page, 'creation-connection-lost');
+    }
+
     static run()
     {
         test.describe('Character Creation Flows', () => {
+            test('creation with the game room connection closed shows the connection lost modal', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestCharacterCreationFlows.runClosedConnectionTest(page, screenshots, gameConfig, longRun);
+            });
             test('invalid initial room shows the initial state error', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestCharacterCreationFlows.runInvalidInitialRoomTest(page, gameConfig, e2eGroup, longRun);
             });

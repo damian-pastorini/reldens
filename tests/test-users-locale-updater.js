@@ -216,6 +216,63 @@ class TestUsersLocaleUpdater extends BaseTest
         });
     }
 
+    async testAChangeAtTheLastChangeTimeIsIgnored()
+    {
+        await this.test('a locale change with the same time as the last received change is not saved', async () => {
+            let usersLocaleRows = [];
+            let updater = this.createUpdater(usersLocaleRows, []);
+            let results = await this.sendLocaleChanges(updater, [{up: 2, changedAt: 5}, {up: 1, changedAt: 5}]);
+            this.assert.strictEqual(results.pop(), false);
+            this.assert.deepStrictEqual(usersLocaleRows, [{id: 1, user_id: 1001, locale_id: 2}]);
+        });
+    }
+
+    async testTwoUsersSaveTheirOwnLocales()
+    {
+        await this.test('two users changing the locale at once keep their own user locale rows', async () => {
+            let usersLocaleRows = [];
+            let updater = this.createUpdater(usersLocaleRows, []);
+            let client = {send: () => true};
+            let localeUpdate = {act: SnippetsConst.ACTIONS.UPDATE, changedAt: 1};
+            await Promise.all([
+                updater.executeMessageActions(client, {...localeUpdate, up: 1}, {}, {userId: '1001'}),
+                updater.executeMessageActions(client, {...localeUpdate, up: 2}, {}, {userId: '1002'})
+            ]);
+            this.assert.deepStrictEqual(usersLocaleRows, [
+                {id: 1, user_id: 1001, locale_id: 1},
+                {id: 2, user_id: 1002, locale_id: 2}
+            ]);
+        });
+    }
+
+    async testTheSavedLocaleChosenAgainKeepsOneRow()
+    {
+        await this.test('the saved locale chosen again keeps one unchanged row and sends no error', async () => {
+            let usersLocaleRows = [{id: 7, locale_id: 2, user_id: 1001}];
+            let clientMessages = [];
+            await this.sendLocaleChanges(this.createUpdater(usersLocaleRows, []), [{up: 2, changedAt: 1}], clientMessages);
+            this.assert.deepStrictEqual(usersLocaleRows, [{id: 7, locale_id: 2, user_id: 1001}]);
+            this.assert.deepStrictEqual(clientMessages, []);
+        });
+    }
+
+    async testALocaleSaveBlockedByTheRoomSendsTheSaveError()
+    {
+        await this.test('a locale save blocked by the room actions sends the save error and other blocked acts do not', async () => {
+            let events = new EventsManager();
+            let snippetsPlugin = new SnippetsPlugin();
+            await snippetsPlugin.setup({events, dataServer: {getEntity: () => ({})}});
+            let clientMessages = [];
+            let client = {send: (messageKey, message) => clientMessages.push(message)};
+            await events.emit('reldens.sceneMessageActionNotAllowed', {
+                client,
+                messageData: {act: SnippetsConst.ACTIONS.UPDATE, up: 2, changedAt: 5}
+            });
+            await events.emit('reldens.sceneMessageActionNotAllowed', {client, messageData: {act: 'aud.Up'}});
+            this.assert.deepStrictEqual(clientMessages, this.createSaveErrors([5]));
+        });
+    }
+
     async testOtherActionsAreIgnored()
     {
         await this.test('the messages with other actions are ignored', async () => {

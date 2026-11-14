@@ -2,8 +2,8 @@
  *
  * Reldens - Test NPC
  *
- * Tests NPC dialogue, trader shop, item purchasing, item selling, the NPCs random movement and the dialogue of a moving
- * NPC away from its spawn tile. The NPC and trader cases stop the object random movement and place the player next to
+ * Tests NPC dialogue, trader shop, item purchasing, item selling, the NPCs random movement, the dialogue of a moving
+ * NPC away from its spawn tile and the town NPCs direction animations created with the frames of their stored rows. The NPC and trader cases stop the object random movement and place the player next to
  * it from the server, and the moved NPC is placed on the closest walkable tile of its spawn tile, so every case starts
  * from known positions instead of chasing a moving object.
  *
@@ -17,6 +17,7 @@ const { Navigation } = require('./helpers/navigation');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
+const { ObjectAnimationFrameRangesReader } = require('./helpers/object-animation-frame-ranges-reader');
 const { sc } = require('@reldens/utils');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -51,6 +52,18 @@ class TestNpc
         expect(movement.notSynced, 'Every moving NPC body must be synced in the room state').toEqual([]);
         expect(movement.wandered.length, 'At least one town NPC must wander').toBeGreaterThan(0);
         expect(movement.outOfArea, 'Every NPC must stay inside its configured movement area').toEqual([]);
+    }
+
+    static async runTownNpcsFramesTest(page, gameConfig, longRun)
+    {
+        await Login.loginRootPlayer(page, gameConfig, longRun, '2');
+        await Navigation.waitForRoom(page, Login.TOWN_ROOM_NAME, TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun));
+        await ObjectAnimationFrameRangesReader.expectRoomFramesCreated(
+            page,
+            gameConfig,
+            Login.TOWN_ROOM_NAME,
+            TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun)
+        );
     }
 
     static async placePlayerNextToNpc(page, gameConfig, objectKey, timeout)
@@ -233,6 +246,9 @@ class TestNpc
             });
             test('moving NPC opens its dialogue after it wandered away from its spawn tile', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestNpc.runWanderedNpcDialogueTest(page, screenshots, gameConfig, longRun);
+            });
+            test('town NPCs direction animations are created with their stored frames', async ({ page, gameConfig, longRun }) => {
+                await TestNpc.runTownNpcsFramesTest(page, gameConfig, longRun);
             });
         });
     }

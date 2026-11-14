@@ -3,11 +3,13 @@
  * Reldens - Gameplay E2E State Api
  *
  * HTTP client for the e2e endpoints registered by GameplayE2eStateProbe: the live player snapshot, the player state
- * (dead, disabled or active), the enemy body life set and read, and the scores period reset check on a given date; and
+ * (dead, disabled or active), the enemy body life set and read, the movement intervals a room keeps for a player, the
+ * movement messages a player sends from the recording start and the scores period reset check on a given date; and
  * by LiveObjectsOverrides: a property of the live enemies of a key changed or removed, a teleport NPC option added with
  * its destination, the next calls of a room method made to reject with the failures done read back, and the restore of
  * every live object change of a group; by FeaturePropertiesOverrides: a property of a live feature object changed by
- * its path in the features list; and by CombatE2eState: the live player and
+ * its path in the features list and a server event cancelled for a group with the count of the events it cancelled;
+ * and by CombatE2eState: the live player and
  * enemy stats, the player skill properties and snapshot, and the recorded damages and end states of the player skills.
  *
  */
@@ -220,9 +222,14 @@ class GameplayE2eStateApi
         );
     }
 
-    static async cancelEvent(gameConfig, group, eventName)
+    static async cancelEvent(gameConfig, group, eventName, flagKey = 'continueEvent')
     {
-        return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/live-objects/cancel-event', {group, eventName});
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/live-objects/cancel-event',
+            {group, eventName, flagKey}
+        );
     }
 
     static async delayRoomMethod(gameConfig, group, roomName, methodKey, delayMs)
@@ -243,6 +250,35 @@ class GameplayE2eStateApi
             '/api/e2e/live-objects/hidden-client',
             {group, roomName, playerName}
         );
+    }
+
+    static async fetchMovementIntervals(gameConfig, roomName, playerId)
+    {
+        return (await SecurityApi.request(
+            gameConfig,
+            'GET',
+            '/api/e2e/gameplay/movement-intervals?roomName='+encodeURIComponent(roomName)
+                +'&playerId='+encodeURIComponent(playerId)
+        )).intervalKeys;
+    }
+
+    static async recordMovementMessages(gameConfig, playerName)
+    {
+        return (await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/gameplay/movement-messages',
+            {playerName}
+        )).recording;
+    }
+
+    static async fetchMovementMessages(gameConfig, playerName)
+    {
+        return (await SecurityApi.request(
+            gameConfig,
+            'GET',
+            '/api/e2e/gameplay/movement-messages?playerName='+encodeURIComponent(playerName)
+        )).messages;
     }
 
     static async fetchRecoveryTicks(gameConfig)

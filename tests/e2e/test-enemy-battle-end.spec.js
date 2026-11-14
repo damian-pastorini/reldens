@@ -8,7 +8,9 @@
  * enemy battle, the enemy walks back to its origin after the chase and hits no more; the player revived next to the
  * enemy that killed it (with its aggression off by a 1 pixel "interactionRadio") sees the default config game over box
  * (the title, the auto revive wait text and the revive in place message, no buttons, the forest group keeps the stored
- * death config), revives where it died with exactly its base life and the enemy waits until the player hits it; a player that disconnects or stands out of the enemy respawn layer (the enemy
+ * death config), revives where it died with exactly its base life and the enemy waits until the player hits it; a
+ * chased player walks toward the enemy by direction messages while the enemy keeps its battle and its chase; a player
+ * that disconnects or stands out of the enemy respawn layer (the enemy
  * chase only walks on that layer) ends the battle; an enemy without actions (every enemy gets the configured default
  * skill, so its actions are emptied by a group override) leaves the battle it was attacked in; and an attack on an
  * enemy already at zero life ends the battle with no damage. The chase cases
@@ -22,11 +24,13 @@ const { EnemyAggressionSteps } = require('./helpers/enemy-aggression-steps');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { DeathReviveSteps } = require('./helpers/death-revive-steps');
 const { Selectors } = require('./selectors');
 const { ActionsConst } = require('../../lib/actions/constants');
+const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -38,6 +42,7 @@ class TestEnemyBattleEnd
     static LAST_LIFE = 1;
     static NO_AGGRESSION_RADIO = 1;
     static GAME_OVER_TIME_OUT_PATH = 'server/players/gameOver/timeOut';
+    static DIRECTIONS = {'x1': GameConst.RIGHT, 'x-1': GameConst.LEFT, 'y1': GameConst.DOWN, 'y-1': GameConst.UP};
     static AFFECTED_PROPERTY_PATH = 'client/actions/skills/affectedProperty';
     static DEATH_BOX_BUTTONS = [
         Selectors.gameOver.reviveButton,
@@ -161,6 +166,31 @@ class TestEnemyBattleEnd
         await EnemyAggressionSteps.expectBackToOrigin(context, 'The enemy leaves the battle of the disconnected player');
     }
 
+    static async runChasedPlayerWalkTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let context = await EnemyAggressionSteps.startChase(page, gameConfig, longRun);
+        let fetchPlayer = async () => RoomMovementApi.fetchPlayer(gameConfig, context.roomName, context.playerName);
+        let start = await fetchPlayer();
+        let enemy = await CombatSkillCasting.fetchEnemySnapshot(context);
+        let axis = Math.abs(enemy.x - start.x) > Math.abs(enemy.y - start.y) ? 'x' : 'y';
+        let sign = Math.sign(enemy[axis] - start[axis]);
+        await RoomMessagesRecorder.sendMessage(page, {dir: TestEnemyBattleEnd.DIRECTIONS[axis+sign]});
+        await expect.poll(
+            async () => Math.sign((await fetchPlayer())[axis] - start[axis]),
+            {message: 'The chased player walks toward the enemy', timeout: context.timeout}
+        ).toBe(sign);
+        await RoomMessagesRecorder.sendMessage(page, {act: GameConst.STOP});
+        await RoomMovementApi.waitForPlayerStill(gameConfig, context.roomName, context.playerName, context.timeout);
+        expect(await CombatSkillCasting.fetchEnemyInBattle(context), 'The enemy keeps its battle').toBe(1);
+        await expect.poll(
+            async () => [await CombatSkillCasting.fetchEnemySnapshot(context)].map(
+                (snapshot) => snapshot.x !== enemy.x || snapshot.y !== enemy.y
+            ).pop(),
+            {message: 'The enemy keeps chasing the player', timeout: context.timeout}
+        ).toBe(true);
+        await screenshots.capture(page, 'chased-player-walk');
+    }
+
     static async runUnreachablePlayerTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
         let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
@@ -230,6 +260,9 @@ class TestEnemyBattleEnd
             });
             test('enemy leaves the battle and walks back to its origin when its player disconnects', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestEnemyBattleEnd.runDisconnectTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('a chased player walks freely and the enemy keeps chasing it', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestEnemyBattleEnd.runChasedPlayerWalkTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('enemy leaves the battle when the player stands out of its respawn layer', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestEnemyBattleEnd.runUnreachablePlayerTest(page, screenshots, gameConfig, e2eGroup, longRun);

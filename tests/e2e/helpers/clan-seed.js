@@ -3,7 +3,8 @@
  * Reldens - Clan Seed
  *
  * Seeds a clan for the running parallel spec group before its players log in: the clan row with the initial clan level
- * (the lowest level key of the stored clan levels) and one membership row per given player id, and a stat modifier of
+ * (the lowest level key of the stored clan levels), with a given id when the case needs one, and one membership row per
+ * given player id, and a stat modifier of
  * that initial level, all created for the group, so the group reset deletes them; and reads a stored player stat.
  *
  */
@@ -19,13 +20,13 @@ class ClanSeed
         return [...clanLevels].sort((levelA, levelB) => Number(levelA.key) - Number(levelB.key)).shift();
     }
 
-    static async seedClanWithMembers(gameConfig, e2eGroup, ownerId, membersIds)
+    static async seedClanWithMembers(gameConfig, e2eGroup, ownerId, membersIds, clanId = false)
     {
-        let clan = await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clan', {
-            name: 'E2eClan'+Date.now(),
-            owner_id: ownerId,
-            level: (await ClanSeed.fetchInitialLevel(gameConfig)).key
-        });
+        let clanRow = {name: 'E2eClan'+Date.now(), owner_id: ownerId, level: (await ClanSeed.fetchInitialLevel(gameConfig)).key};
+        if(false !== clanId){
+            clanRow.id = clanId;
+        }
+        let clan = await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clan', clanRow);
         for(let playerId of membersIds){
             await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'clanMembers', {
                 clan_id: clan.id,

@@ -63,17 +63,6 @@ class TestClansInvites
         return '.clan-invite-'+targetPlayer.playerId+' button';
     }
 
-    static async joinClan(gameConfig, ownerPlayer, memberPlayer, clanId, expectedIds)
-    {
-        await ClanSteps.invite(ownerPlayer, memberPlayer);
-        await expect.poll(async () => (await ClanSteps.fetchClans(gameConfig))[clanId]?.pendingInvites || [], {
-            message: 'The clan invite is pending',
-            timeout: TimeConstants.SERVER_RESPONSE
-        }).toContain(memberPlayer.playerId);
-        await ClanSteps.answer(memberPlayer, clanId, ClanSteps.ACCEPT);
-        await ClanSteps.expectMembers(gameConfig, clanId, expectedIds, 'The member joined');
-    }
-
     static async runAcceptTest(context)
     {
         let entered = await TestClansInvites.enter(context, 3);
@@ -102,6 +91,8 @@ class TestClansInvites
         await expect.poll(async () => await ChatSteps.fetchTexts(players[0].page, ChatConst.TYPES.TEAMS), {timeout: TimeConstants.SERVER_RESPONSE})
             .toContain(TestClansInvites.clanLine(TeamsConst.CHAT.MESSAGE.INVITE_REJECTED, players[1].playerName));
         expect((await ClanSteps.fetchClans(context.gameConfig))[entered.clanId].pendingInvites, 'The invite is consumed').toEqual([]);
+        await expect(players[1].page.locator(Selectors.clans.nameInput), 'The decliner with no clan gets the create form')
+            .toHaveCount(1, {timeout: TimeConstants.SERVER_RESPONSE});
     }
 
     static async runRejectedAnswersTest(context)
@@ -112,7 +103,7 @@ class TestClansInvites
         await ClanSteps.answer(players[1], entered.clanId, ClanSteps.ACCEPT);
         await players[1].page.waitForTimeout(TestClansInvites.SETTLE_MS);
         await ClanSteps.expectMembers(context.gameConfig, entered.clanId, [players[0].playerId], 'No answer without invite');
-        await TestClansInvites.joinClan(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
+        await ClanSteps.join(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
         await ClanSteps.answer(players[1], entered.clanId, ClanSteps.ACCEPT);
         await players[1].page.waitForTimeout(TestClansInvites.SETTLE_MS);
         expect((await ClanSteps.fetchStoredMemberships(context.gameConfig, players[1].playerId)).length, 'One membership').toBe(1);
@@ -135,7 +126,11 @@ class TestClansInvites
         let players = entered.players;
         await TestClansInvites.targetPlayer(players[2], players[0]);
         await expect(players[2].page.locator(TestClansInvites.clanInviteButton(players[0])), 'No button with no clan').toHaveCount(0);
-        await TestClansInvites.joinClan(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
+        await ClanSteps.join(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
+        for(let player of players.slice(0, 2)){
+            await expect(player.page.locator('.clan-member-'+players[1].playerId), 'The clan update reached '+player.playerName)
+                .toHaveCount(1, {timeout: TimeConstants.SERVER_RESPONSE});
+        }
         await TestClansInvites.targetPlayer(players[0], players[1]);
         await expect(players[0].page.locator(TestClansInvites.clanInviteButton(players[1])), 'No button for a member').toHaveCount(0);
         await TestClansInvites.targetPlayer(players[1], players[2]);
@@ -148,10 +143,10 @@ class TestClansInvites
         let entered = await TestClansInvites.enter(context, 3);
         let players = entered.players;
         let secondClan = await ClanSteps.createClan(players[2], 'E2eSecond'+Date.now());
-        await TestClansInvites.joinClan(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
-        await TestClansInvites.joinClan(context.gameConfig, players[2], players[1], secondClan.id, [players[1].playerId, players[2].playerId]);
+        await ClanSteps.join(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
+        await ClanSteps.join(context.gameConfig, players[2], players[1], secondClan.id, [players[1].playerId, players[2].playerId]);
         await ClanSteps.expectMembers(context.gameConfig, entered.clanId, [players[0].playerId], 'The member left its old clan first');
-        await TestClansInvites.joinClan(context.gameConfig, players[2], players[0], secondClan.id, TestClansInvites.sortedIds(players));
+        await ClanSteps.join(context.gameConfig, players[2], players[0], secondClan.id, TestClansInvites.sortedIds(players));
         expect(await ClanSteps.fetchStoredClans(context.gameConfig, {id: entered.clanId}), 'The owner own clan is disbanded').toEqual([]);
     }
 

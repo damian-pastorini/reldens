@@ -2,7 +2,8 @@
  *
  * Reldens - Login Helper
  *
- * Provides page actions for logging in, selecting a character, and waiting for the game to start. Every extra client
+ * Provides the sample town and forest rooms names (the forest levels from the first to the sixth one) and the page
+ * actions for logging in, selecting a character, and waiting for the game to start. Every extra client
  * page opened by openClientPage() keeps its browser context, closed by the page fixture after each test (even a failed
  * one), so no extra player stays connected into the next test reset.
  *
@@ -19,6 +20,14 @@ class Login
 {
     static TOWN_ROOM_NAME = 'reldens-new-age-town';
     static FOREST_ROOM_NAME = 'reldens-forest-level-1';
+    static FOREST_LEVELS = [
+        Login.FOREST_ROOM_NAME,
+        'reldens-forest-level-2',
+        'reldens-forest-level-3',
+        'reldens-forest-level-4',
+        'reldens-forest-level-5',
+        'reldens-forest-level-6'
+    ];
     static FOREST_TRANSITION_X = 608;
     static FOREST_TRANSITION_Y = 16;
     static openedClientContexts = [];
@@ -189,10 +198,12 @@ class Login
         });
     }
 
-    static async openClientPage(page, gameConfig)
+    static async openClientPage(page, gameConfig, contextOptions = {})
     {
         let client = {
-            clientContext: await page.context().browser().newContext({baseURL: SecurityApi.baseUrl(gameConfig)})
+            clientContext: await page.context().browser().newContext(
+                Object.assign({baseURL: SecurityApi.baseUrl(gameConfig)}, contextOptions)
+            )
         };
         client.clientPage = await client.clientContext.newPage();
         Login.openedClientContexts.push(client.clientContext);

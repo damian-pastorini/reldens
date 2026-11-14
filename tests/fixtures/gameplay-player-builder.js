@@ -2,10 +2,12 @@
  *
  * Reldens - GameplayPlayerBuilder
  *
- * Builds the stubs the gameplay features use: a config with the given paths values, a real config manager loaded with
+ * Builds the stubs the gameplay features use: a config with the given paths values (get answers false for a missing
+ * path, as the config processor does), a real config manager loaded with
  * the given paths values, a player schema with its private data (read as the Player schema does, null for an empty
  * value), death and disabled states, an inventory manager over the given items (recording the decreased quantities and
- * the listened events) and a client recording the sent messages.
+ * the listened events), the client player engine props of the ImRoot player in the town with the given config and
+ * mapped avatars, and a client recording the sent messages.
  *
  */
 
@@ -23,6 +25,7 @@ class GameplayPlayerBuilder
     static createConfig(values)
     {
         let config = {values};
+        config.get = (path) => sc.get(config.values, path, false);
         config.getWithoutLogs = (path, defaultValue) => sc.get(config.values, path, defaultValue);
         return config;
     }
@@ -101,6 +104,20 @@ class GameplayPlayerBuilder
         item.getInventoryId = () => itemKey;
         return item;
     }
+
+    static createPlayerEngineProps = (scene, avatarKey, config, mappedAvatars) => ({
+        scene,
+        playerData: {
+            playerName: 'ImRoot',
+            avatarKey,
+            state: {scene: 'reldens-new-age-town', x: 100, y: 100, dir: GameConst.DOWN},
+            player_id: 1,
+            playedTime: 0
+        },
+        gameManager: {config, events: {}, mappedAvatars},
+        room: {sessionId: 'session-a'},
+        roomEvents: {}
+    });
 
     /**
      * @param {string} [sessionId]

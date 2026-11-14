@@ -86,6 +86,16 @@ Items system with equipment and usable items
 - Every new inventory item gets its own Modifier copies targeting its owner (`ItemsFactory.isolateModifiers()` in
   `StorageObserver.saveNewItem()`), the items model data modifiers are shared by every item created from them
 - The equip and use messages are rejected for an item key that is not in the inventory or an item of another type
+- An equipped item that leaves the inventory (trashed or dropped) is unequipped first by the `@reldens/items-system`
+  `Inventory.removeItem()` (its modifiers and equip effects, like a skin, are reverted), with
+  `client/players/inventory/unequipOnRemove` on (default); off removes it as it is. The same client scope value is
+  passed as the `unequipOnRemove` option to the server inventory (`server/subscribers/player-subscriber.js`) and to
+  the client inventory receiver (`client/plugin.js`), so both inventories remove the same way. A locked inventory (a
+  trade) refuses the removal
+- On a player death (`server/subscribers/player-death-subscriber.js`) every droppable item is picked at most once, so
+  the dropped quantity is the configured one capped by the droppable items, and only the picked equipped items are
+  unequipped, the other equipped items stay active; with `server/players/drop/equippedItems` off the equipped items
+  are never droppable
 
 ### Respawn (`lib/respawn/`)
 Player and NPC respawn system
@@ -114,6 +124,16 @@ Leaderboards and ranking system
   `server/scores-reset-claim.js` reads the pending reset claim shared by the reset and the kill score
 - The score updates of a player run one after the other and an existing score row is saved only while it holds the
   read id and counters (`ScoresUpdater.saveScore()`), a changed or deleted row is read again and the update retried
+- The scores panel labels (`client/scores/labels/title`, `content` and `myScore`) can be snippet keys or plain texts,
+  the `%myScore` of a plain own score label is replaced by the score too
+- The top scores (`server/scores-provider.js`) are ordered by the total score and then by the score id, so the full
+  scores pages and the top scores cut never list a player twice or skip one; the storage drivers sort by one column,
+  so the scores with the first and last total of a page are loaded again sorted by id
+- The full scores page (`server/subscriber/create-scores-route.js`) shows the first page for a page parameter that is
+  not an integer from 1 (zero, negative, decimal, not numeric or repeated), and uses the default page size
+  (`ScoresConst.FULL_TABLE_PAGE_SIZE`) for a `server/scores/fullTableView/pageSize` that is not an integer from 1; the
+  page size and the title are read once when the route is created (`loadConfig()`, not translated yet); the player
+  names of the scores table template (`ui-scores-table.html`, used by the page and the panel) are escaped
 
 ### Teams (`lib/teams/`)
 Party/guild system
@@ -134,6 +154,21 @@ Party/guild system
   `Clan.revertModifiersOnSavedStats()` saves the stats of the clan players without the clan modifiers
 - A clan is loaded once when several members log in together (`CreatePlayerClanHandler` shares the load through a
   `KeyedOperationsLock`), and a failed load resolves to false in `ClanFactory.create()` so the next login loads it again
+- The owner joining its team or clan again (a scene change, or a clan a member loaded first) becomes the owner client;
+  the scene change record of a team member (`teamChangingRoomPlayers`) is consumed on its next player creation, and a
+  member arriving to a team that no longer exists gets the team left message
+- Each clan pending invite keeps the player that sent it (`Clan.addInvite()`, dropped by `Clan.declineInvite()` and by
+  the join that uses it), so the accepted and rejected lines reach the inviting player, the owner or a member with the
+  open invites on
+- `ClanLeave.execute()` disbands the clan only when the owner leaves or removes its own id (compared as strings), and
+  only a disband is sent as one to the leave listeners: the members get the disbanded line with the owner name, a
+  member leaving by itself the left line and a member removed by the owner the removed line
+- `ClanCreate` deletes the created clan row when the owner membership is not stored, and the membership and the clan
+  row when the clan cannot be loaded, always answering the client; `ClanJoin` saves the joined player data (which sends
+  the clan update through the stats save) only after the `reldens.beforeClanUpdatePlayers` listeners let it continue
+- Client: a team box removed at runtime removes its preload listeners (`UserInterface.removeEventsListeners()`), the
+  team and clan leave buttons are bound inside their own boxes, and declining a clan request shows again the panel of
+  the own clan, or the create form for a player with no clan
 
 ## Player Systems
 
@@ -210,6 +245,20 @@ Advertisement integration system
   closes the play without reward, a disabled player is activated again after `server/ads/videoMaximumDuration`, and
   the `reldens.beforeGiveAdRewardItem` subscribers can cancel a reward (see "Ads rewards rules" in
   `.claude/gameplay-features.md`)
+- The client ads plugin is preloaded with the page (`FeaturesManager.preloadFeatures()` from
+  `GameManager.clientStart()`), so the SDK scripts of the providers enabled in the initial client config (`config.js`)
+  are appended before the login and loaded before the game starts; a provider enabled only in the login game config gets
+  its script appended on the provider activation (`client/sdk-handler.js`, every SDK URL is appended once)
+- The CrazyGames provider (`client/providers/crazy-games.js`) activates its banners and video ads once its SDK is found
+  (retried every `sdkRetryTime` up to `sdkMaxRetries`) and no adblock is detected, there is no ad queue; no ad is
+  requested while the SDK environment is `disabled`, another ad plays or a non replay ad is in the played ads list
+- `client/ads/general/sdkRequired` (off by default): on, the login forms stay hidden until every enabled provider SDK
+  script loads and when one fails the page shows the `.ads-sdk-error` block (theme `index.html`) and the game can not
+  start (`client/required-sdk-login-guard.js`); on the server start the SDK URLs of the enabled providers are requested
+  (`server/required-sdk-reachability-check.js`, timeout `server/ads/sdkCheckTimeout`, the relative URLs and the
+  absolute ones under `server/publicUrl` or `server/baseUrl` are served by the same server and skipped) and one that
+  fails stops the start (`continueProcess` of the
+  `reldens.serverConfigFeaturesReady` event); off, the game starts without the ads that could not load
 
 ### Sync (`lib/sync/`)
 Colyseus primitives isolation layer
@@ -220,7 +269,11 @@ Colyseus primitives isolation layer
 ### Import (`lib/import/`)
 Data import utilities
 - Maps and objects importers, rooms associations creator
-- Skills, class paths, attributes and experience per level importers
+- Skills, class paths, attributes and experience per level importers; the skills importer stores the attack data
+  of a skill from its attack type data or from the `attack` entry of its `properties` (a physical attack carries its
+  own, see the admin sample), with `override` it deletes the skill row and its relations before creating it again,
+  and with `update` it updates each existent animation by its own row
+  (`tests/test-skills-importer.js`)
 - Tile and map image extruders, published map merger
 
 ### Objects (`lib/objects/`)
@@ -259,11 +312,18 @@ Game objects (NPCs, interactables, respawn areas)
 ### Snippets (`lib/snippets/`)
 Text snippets, locales and translations
 - `snippets`, `locale` and `usersLocale` entities for the UI and message texts
-- `translator.js` plus the client translations mapper and templates handler
+- `translator.js` plus the client translations mapper and templates handler; a text that is not a snippet key is
+  returned as it is with its `%` parameters replaced
 - The settings language selector (`SnippetsUi`) sends the chosen locale with its change time, `UsersLocaleUpdater`
   saves it as the user locale with the repository `upsert()`, queued per user, and ignores the changes older than the
   last one; a failed save sends the error back and `LanguageSaveErrorListener` (registered when the UI is created)
   asks `SnippetsUi.showSaveError()` to show it only for the last change
+- Each language option shows the locale country code, or the locale code when it has none, as text; the saved user
+  locale is applied on the login only while its locale is enabled (`InitialGameDataEnricher.withLocale()`), otherwise
+  the default locale is active
+- A message rejected by the room actions rules (`allActionsDisabled` or `disallowedActions` in the room custom data,
+  `RoomScene.isAllowedAction()`) emits `reldens.sceneMessageActionNotAllowed` (`{room, client, messageData,
+  playerSchema}`); the snippets plugin answers a blocked language change with the save error, so it never fails silently
 
 ### Bundlers (`lib/bundlers/`)
 Asset bundling driver configuration

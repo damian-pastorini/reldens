@@ -3,7 +3,8 @@
  * Reldens - Test Character Room Selection
  *
  * Tests the rooms offered on the players creation and selection forms: the creation room, the scene selectors with the
- * last location, the stored selected room, a single room, the guest rooms, the unavailable rooms, a room removed while
+ * last location (and without it once loginLastLocation is off, none on the login once allowOnLogin is off and no room
+ * selection at all once allowOnRegistration is off too), the stored selected room, a single room, the guest rooms, the unavailable rooms, a room removed while
  * the selectors are open, the feature rooms left after a rejected join and the forged selected scene.
  *
  */
@@ -76,10 +77,24 @@ class TestCharacterRoomSelection
         let lastLocationOption = 'option[value="'+RoomsConst.ROOM_LAST_LOCATION_KEY+'"]';
         await expect(page.locator(TestCharacterRoomSelection.SELECTOR_SCENE_SELECT+' '+lastLocationOption)).toHaveCount(1);
         await expect(page.locator(CharacterCreation.CREATE_SCENE_SELECT+' '+lastLocationOption)).toHaveCount(0);
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/rooms/selection/loginLastLocation', false);
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await expect(page.locator(TestCharacterRoomSelection.SELECTOR_SCENE_SELECT), 'The selector scene').toHaveCount(1);
+        await expect(
+            page.locator(TestCharacterRoomSelection.SELECTOR_SCENE_SELECT+' '+lastLocationOption),
+            'No last location option with loginLastLocation off'
+        ).toHaveCount(0);
         await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/rooms/selection/allowOnLogin', false);
         await CharacterCreation.loginToCreation(page, gameConfig, longRun);
         await expect(page.locator(TestCharacterRoomSelection.SELECTOR_SCENE_SELECT), 'No selector scene').toHaveCount(0);
         await screenshots.capture(page, 'scene-selectors');
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/rooms/selection/allowOnRegistration', false);
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        expect(
+            await page.evaluate(() => window.reldens.initialGameData.roomSelection),
+            'No room selection with the login and registration selection off'
+        ).toBeUndefined();
+        await expect(page.locator(CharacterCreation.CREATE_SCENE_SELECT), 'No creation scene selector').toHaveCount(0);
     }
 
     static async runStoredRoomTest(page, gameConfig, longRun)

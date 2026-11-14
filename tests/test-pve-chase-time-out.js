@@ -6,12 +6,22 @@
 
 const { BaseTest } = require('./base-test');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
+const { RelocationRoomBuilder } = require('./fixtures/relocation-room-builder');
 const { Pve } = require('../lib/actions/server/pve');
+const { PlayerRelocator } = require('../lib/rooms/server/player-relocator');
+const { AnimationObject } = require('../lib/objects/server/object/type/animation-object');
 const { GameConst } = require('../lib/game/constants');
 const timersPromises = require('timers/promises');
 
 class TestPveChaseTimeOut extends BaseTest
 {
+
+    constructor(config)
+    {
+        super(config);
+        this.relocationRoomName = 'reldens-town';
+        this.relocationPosition = {x: 300, y: 200};
+    }
 
     createChaseSetup(chaseTimeOut)
     {
@@ -71,6 +81,22 @@ class TestPveChaseTimeOut extends BaseTest
             this.assert.strictEqual(setup.originMoves, 1);
             this.assert.deepStrictEqual(setup.pve.inBattleWithPlayers, {});
             this.assert.deepStrictEqual(setup.pve.lastHitAt, {});
+        });
+    }
+
+    async testChaseWithoutPathFinderLeavesTheBattle()
+    {
+        await this.test('a chase of an object body without world or world path finder fails and the enemy leaves the battle', async () => {
+            for(let objectWorld of [false, {}]){
+                let setup = this.createChaseSetup(0);
+                setup.pve.targetObject.chaseBody = AnimationObject.prototype.chaseBody;
+                setup.pve.targetObject.objectBody.world = objectWorld;
+                await setup.pve.chasePlayer(setup.playerSchema, {}, {});
+                this.assert.deepStrictEqual(
+                    [setup.delayedStarts, setup.originMoves, setup.pve.inBattleWithPlayers],
+                    [0, 1, {}]
+                );
+            }
         });
     }
 
@@ -199,6 +225,39 @@ class TestPveChaseTimeOut extends BaseTest
             await timersPromises.setTimeout(skillDelay);
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema, setup.playerSchema]);
             this.assert.strictEqual(setup.pve.lastHitAt[setup.playerSchema.player_id], keptHitAt);
+        });
+    }
+
+    async testSameRoomRelocationKeepsTheEnemyChasing()
+    {
+        await this.test('a player relocated inside the same room is still chased by the enemy in battle with it', async () => {
+            let setup = this.createChaseSetup(0);
+            let relocation = new RelocationRoomBuilder().build(this.relocationRoomName);
+            relocation.playerBody.world = {worldKey: this.relocationRoomName};
+            relocation.playerSchema.stats = {hp: 10};
+            setup.playerSchema = relocation.playerSchema;
+            setup.pve.inBattleWithPlayers = {[relocation.playerSchema.player_id]: true};
+            setup.pve.targetObject.actionsKeys = ['bite'];
+            setup.pve.targetObject.actions = {bite: {validate: () => false}};
+            setup.pve.targetObject.objectBody.world = {worldKey: this.relocationRoomName};
+            let relocated = await new PlayerRelocator(relocation.room).relocate(
+                relocation.client,
+                relocation.playerSchema,
+                this.relocationRoomName,
+                this.relocationPosition
+            );
+            this.assert.strictEqual(relocated, true);
+            await setup.pve.continueBattleWith(relocation.playerSchema, {
+                roomWorld: {},
+                state: {},
+                playerBySessionIdFromState: () => true,
+                config: {get: () => 'hp'}
+            });
+            this.expectStillChasing(setup);
+            this.assert.deepStrictEqual(
+                relocation.playerBody.position,
+                [this.relocationPosition.x, this.relocationPosition.y]
+            );
         });
     }
 

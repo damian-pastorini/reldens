@@ -5,10 +5,12 @@
  * Tests which player items drop on its death (DeathDropSteps: the drop config for the group, restored by the group
  * reset, the player killed by the forest enemy on its own tile and its drops broadcasts recorded): with the drop percent
  * at 0 nothing drops and every item row is kept; with a drop quantity above the droppable items (the axe, the potions
- * stack and eight seeded branches) the drops broadcast lists one drop for each removed row and the non droppable ticket
- * is kept (not every droppable item drops, ISSUE #172); an item with its own drop percent at 0 is never dropped and stays equipped with its modifier; with two
- * equipped droppable items (the axe and a robe made droppable) and a drop quantity of 1, one of them drops (the item
- * not dropped is left unequipped, ISSUE #173); a dropped item with no drops_animations row creates the room drop object (DropsProbe) but is never sent to
+ * stack and eight seeded branches) every droppable item drops and the non droppable ticket is kept; with a drop quantity
+ * of 2 and three droppable items (the axe and two seeded branches) exactly two drop; an item with its own drop percent
+ * at 0 is never dropped and stays equipped with its modifier; with two equipped droppable items (the axe and a robe made
+ * droppable) and a drop quantity of 1, one of them drops and the other one stays equipped; the equipped skin robe (not
+ * droppable) is never dropped, stays equipped and keeps the skin avatar after the revive; a dropped item with no
+ * drops_animations row creates the room drop object (DropsProbe) but is never sent to
  * the clients; and a second player picks up the drop of the dead player: the item is stored in its inventory, the drop
  * object leaves the room and both clients receive the drop removal.
  *
@@ -18,6 +20,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { DeathReviveSteps } = require('./helpers/death-revive-steps');
 const { DeathDropSteps } = require('./helpers/death-drop-steps');
 const { ItemsSteps } = require('./helpers/items-steps');
+const { SkinSteps } = require('./helpers/skin-steps');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
@@ -45,6 +48,18 @@ class TestDeathDropsSelection
         return (await DeathDropSteps.fetchDrops(page)).flatMap(drops => Object.keys(drops));
     }
 
+    static async seedBranches(context, count)
+    {
+        let gameConfig = context.gameConfig;
+        await Promise.all(Array.from({length: count}, () => E2eSeedAndRestoreApi.seedInventoryItem(
+            gameConfig,
+            context.e2eGroup,
+            gameConfig.e2ePlayerName,
+            TestDeathDropsSelection.BRANCH,
+            1
+        )));
+    }
+
     static async runNoDropPercentTest(context)
     {
         await DeathDropSteps.prepareDrops(context, {
@@ -66,13 +81,7 @@ class TestDeathDropsSelection
         await E2eSeedAndRestoreApi.preserveRows(gameConfig, context.e2eGroup, 'itemsInventory', {
             owner_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName})
         });
-        await Promise.all(Array.from({length: TestDeathDropsSelection.SEEDED_BRANCHES}, () => E2eSeedAndRestoreApi.seedInventoryItem(
-            gameConfig,
-            context.e2eGroup,
-            gameConfig.e2ePlayerName,
-            TestDeathDropsSelection.BRANCH,
-            1
-        )));
+        await TestDeathDropsSelection.seedBranches(context, TestDeathDropsSelection.SEEDED_BRANCHES);
         await E2eSeedAndRestoreApi.seedInventoryItem(gameConfig, context.e2eGroup, gameConfig.e2ePlayerName, TestDeathDropsSelection.TICKET, 1);
         let droppableKeys = [gameConfig.e2eEquipableItemId, gameConfig.e2eConsumableItemId, TestDeathDropsSelection.BRANCH];
         let droppableRows = await DeathDropSteps.fetchInventoryRows(context, droppableKeys);
@@ -80,10 +89,24 @@ class TestDeathDropsSelection
         let placement = await DeathDropSteps.enterForDrops(context);
         await DeathDropSteps.killOnPlayerTile(context, placement, 'The player dies with more drops allowed than droppable items');
         let dropsIds = await TestDeathDropsSelection.expectDropsReceived(context.page);
-        let keptRows = await DeathDropSteps.fetchInventoryRows(context, droppableKeys);
-        expect(dropsIds, 'One drop for each removed row').toHaveLength(droppableRows.length - keptRows.length);
+        expect(dropsIds, 'Every droppable item drops').toHaveLength(droppableRows.length);
+        expect(await DeathDropSteps.fetchInventoryRows(context, droppableKeys), 'Every droppable row is removed').toEqual([]);
         expect(await DeathDropSteps.fetchInventoryRows(context, [TestDeathDropsSelection.TICKET]), 'The ticket is kept')
             .toHaveLength(1);
+    }
+
+    static async runPartialDropQuantityTest(context)
+    {
+        let gameConfig = context.gameConfig;
+        await DeathDropSteps.prepareDrops(context, {[DeathDropSteps.DROP_QUANTITY_PATH]: 2});
+        await DeathDropSteps.carryOnlyTheEquippedAxe(context);
+        await TestDeathDropsSelection.seedBranches(context, 2);
+        let droppableKeys = [gameConfig.e2eEquipableItemId, TestDeathDropsSelection.BRANCH];
+        expect(await DeathDropSteps.fetchInventoryRows(context, droppableKeys), 'Three droppable rows').toHaveLength(3);
+        let placement = await DeathDropSteps.enterForDrops(context);
+        await DeathDropSteps.killOnPlayerTile(context, placement, 'The player dies with two drops allowed for three items');
+        expect(await TestDeathDropsSelection.expectDropsReceived(context.page), 'Exactly two items drop').toHaveLength(2);
+        expect(await DeathDropSteps.fetchInventoryRows(context, droppableKeys), 'Exactly two rows are removed').toHaveLength(1);
     }
 
     static async runOwnDropPercentTest(context)
@@ -118,6 +141,34 @@ class TestDeathDropsSelection
             async () => (await DeathDropSteps.fetchInventoryRows(context, equipmentKeys)).length,
             {message: 'One of the equipped items drops', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBe(1);
+        expect(
+            (await DeathDropSteps.fetchInventoryRows(context, equipmentKeys)).map(row => Number(row.is_active)),
+            'The equipped item not dropped stays equipped'
+        ).toEqual([1]);
+    }
+
+    static async runEquippedSkinTest(context)
+    {
+        let robeKey = TestDeathDropsSelection.ROBE;
+        let skinData = await SkinSteps.loadSkinData(context.gameConfig);
+        expect(skinData.rewardItemKey, 'The robe is the skin item').toBe(robeKey);
+        await DeathDropSteps.prepareDrops(context, {[DeathDropSteps.DROP_QUANTITY_PATH]: 1});
+        await DeathDropSteps.carryOnlyTheEquippedAxe(context);
+        await DeathDropSteps.seedEquippedItem(context, robeKey);
+        let placement = await DeathDropSteps.enterForDrops(context);
+        expect((await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).avatarKey, 'The skin is the avatar')
+            .toBe(skinData.skinKey);
+        await DeathDropSteps.killOnPlayerTile(context, placement, 'The player dies with the skin robe equipped');
+        await expect.poll(
+            async () => (await DeathDropSteps.fetchInventoryRows(context, [context.gameConfig.e2eEquipableItemId])).length,
+            {message: 'The droppable axe drops', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(0);
+        expect(
+            (await DeathDropSteps.fetchInventoryRows(context, [robeKey])).map(row => Number(row.is_active)),
+            'The skin robe is never dropped and stays equipped'
+        ).toEqual([1]);
+        expect((await DeathReviveSteps.expectAliveInForest(context)).avatarKey, 'The skin stays after the revive')
+            .toBe(skinData.skinKey);
     }
 
     static async runNoAnimationDropTest(context)
@@ -196,11 +247,17 @@ class TestDeathDropsSelection
             test('drop quantity above the droppable items drops them and keeps the non droppable ones', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathDropsSelection.runAboveDroppableQuantityTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
+            test('drop quantity 2 with three droppable items drops exactly two', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestDeathDropsSelection.runPartialDropQuantityTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
             test('item with its own drop percent at 0 is never dropped and stays equipped', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathDropsSelection.runOwnDropPercentTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('equipped droppable item not dropped stays equipped', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathDropsSelection.runNotSelectedEquippedTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('equipped skin robe is never dropped and the skin stays after the revive', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestDeathDropsSelection.runEquippedSkinTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('drop with no drop animation creates the room object and is never sent', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathDropsSelection.runNoAnimationDropTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

@@ -23,6 +23,7 @@ const { expect, test } = require('@playwright/test');
 const { Login } = require('./login');
 const { Navigation } = require('./navigation');
 const { RoomObjectsApi } = require('./room-objects-api');
+const { ChangePointsSteps } = require('./change-points-steps');
 const { TestCombatDeath } = require('./test-combat-death');
 const { ForestEnemyKill } = require('./forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
@@ -297,6 +298,7 @@ class DeathReviveSteps
             ).life,
             {message: 'The player must be alive in the town room'}
         ).toBeGreaterThan(0);
+        await ChangePointsSteps.expectOnDefaultReturnPoint(context, townRoomName);
         await DeathReviveShowcase.showRevivedInTown(context);
         await LongRunShowcase.pause(context.page, context.longRun);
         await context.screenshots.capture(context.page, 'player-revived-in-town');

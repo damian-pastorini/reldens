@@ -38,6 +38,24 @@ class TestServerUrlMatcher extends BaseTest
         });
     }
 
+    async testThePathTrailingSlashIsTheCurrentServer()
+    {
+        await this.test('a server url with a path and a trailing slash matches the same path without it', async () => {
+            this.assert.strictEqual(
+                ServerUrlMatcher.isCurrentServer('https://example.com/game', 'https://example.com/game/'),
+                true
+            );
+            this.assert.strictEqual(
+                ServerUrlMatcher.isCurrentServer('https://example.com/game//', 'wss://example.com/game'),
+                true
+            );
+            this.assert.strictEqual(
+                ServerUrlMatcher.isCurrentServer('https://example.com/game/', 'https://example.com/other/'),
+                false
+            );
+        });
+    }
+
     async testAnotherPortIsAnotherServer()
     {
         await this.test('a server url with another port is another server', async () => {

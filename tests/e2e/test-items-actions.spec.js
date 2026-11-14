@@ -76,6 +76,9 @@ class TestItemsActions
             await TradeSteps.expectQuantity(context, player, potionKey, ownedQuantity - potionUse, 'The potion '+potionUse+' is used');
         }
         await ItemsSteps.expectStat(context, player, 'hp', baseLife, 'The heal is clamped at the max life');
+        await player.page.reload();
+        await Login.loginRootPlayer(player.page, context.gameConfig, context.longRun);
+        await TradeSteps.expectQuantity(context, player, potionKey, ownedQuantity - 3, 'The used potions stay used after a login');
     }
 
     static async runLastUnitTest(context)
@@ -173,10 +176,13 @@ class TestItemsActions
     static async runTrashEquippedTest(context)
     {
         let [player] = await TestItemsActions.enter(context);
+        let atk = await ItemsSteps.fetchAttackBonus(context, player, context.gameConfig.e2eEquipableItemId);
         let axeId = await ItemsSteps.equipAxe(context, player);
+        await ItemsSteps.expectStat(context, player, 'atk', atk.base + atk.bonus, 'The axe modifier is applied');
         await RoomMessagesRecorder.sendMessage(player.page, {act: InventoryConst.ACTIONS.REMOVE, 'idx': axeId});
         await TradeSteps.expectQuantity(context, player, context.gameConfig.e2eEquipableItemId, 0, 'The axe is trashed');
         await TradeSteps.expectStoredQuantity(context, player, context.gameConfig.e2eEquipableItemId, 0, 'The trashed axe row is removed');
+        await ItemsSteps.expectStat(context, player, 'atk', atk.base, 'The trashed axe modifier is reverted');
     }
 
     static async runCoinsTest(context)
@@ -253,7 +259,7 @@ class TestItemsActions
             test('equip adds the stored modifier and unequip reverts it, both stored', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runEquipTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('consumable heals, uses one unit stored and is clamped at the max', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('consumable heals, uses one unit stored and kept after a login, and is clamped at the max', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runConsumableTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('last unit used removes the item', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {

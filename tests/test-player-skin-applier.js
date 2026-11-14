@@ -101,6 +101,24 @@ class TestPlayerSkinApplier extends BaseTest
         });
     }
 
+    async testSecondSkinOfTheGroupReplacesTheFirstOne()
+    {
+        await this.test('a second skin of the same group replaces the first one and its unequip restores the class path', async () => {
+            let setup = this.createSetup(['warlock']);
+            new PlayerSkinApplier().onCreatePlayerInventoryAfter(setup.event);
+            let equipListener = setup.inventoryManager.listenedEvents[ItemsEvents.EQUIP_ITEM];
+            let unequipListener = setup.inventoryManager.listenedEvents[ItemsEvents.UNEQUIP_ITEM];
+            setup.items.warlockRobe.equipped = false;
+            unequipListener(setup.items.warlockRobe);
+            setup.items.mageRobe.equipped = true;
+            equipListener(setup.items.mageRobe);
+            this.assert.strictEqual(setup.playerSchema.avatarKey, 'mage');
+            setup.items.mageRobe.equipped = false;
+            unequipListener(setup.items.mageRobe);
+            this.assert.strictEqual(setup.playerSchema.avatarKey, 'journeyman');
+        });
+    }
+
     async testUnequipOfAnotherSkinOrItemChangesNothing()
     {
         await this.test('unequipping another skin or an item without skin changes nothing', async () => {

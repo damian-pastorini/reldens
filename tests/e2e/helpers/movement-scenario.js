@@ -65,6 +65,52 @@ class MovementScenario
         return context;
     }
 
+    static async enterReadyRoom(context, roomName, pauseObjects = true)
+    {
+        await Login.loginRootPlayer(context.page, context.gameConfig, context.longRun, '', true === context.skipUiSelectors);
+        if(pauseObjects){
+            await MovementScenario.pauseMovingObjects(context.gameConfig, roomName);
+        }
+        await MovementScenario.waitForReadyScene(context.page);
+        return MovementScenario.createWalkContext(
+            context.gameConfig,
+            roomName,
+            context.gameConfig.e2ePlayerName,
+            context.longRun
+        );
+    }
+
+    static async waitForReadyScene(page)
+    {
+        await page.waitForFunction(
+            () => false === window.reldens.getActiveScene().transition && !window.reldens.gameDom.insideInput(),
+            null,
+            {timeout: TimeConstants.SCENE_LOAD}
+        );
+    }
+
+    static async expectStillWithMessages(walkContext, expectedMessages, message)
+    {
+        await RoomMovementApi.waitForPlayerStill(
+            walkContext.gameConfig,
+            walkContext.roomName,
+            walkContext.playerName,
+            TimeConstants.SERVER_RESPONSE
+        );
+        expect(
+            await GameplayE2eStateApi.fetchMovementMessages(walkContext.gameConfig, walkContext.playerName),
+            message
+        ).toEqual(expectedMessages);
+    }
+
+    static async fetchVelocitySigns(walkContext)
+    {
+        return [await walkContext.fetchPlayer()].map((player) => [
+            Math.sign(player.velocityX),
+            Math.sign(player.velocityY)
+        ]).pop();
+    }
+
     static createWalkContext(gameConfig, roomName, playerName, longRun)
     {
         return {

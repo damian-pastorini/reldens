@@ -10,6 +10,7 @@ const { ActionsPlugin } = require('../lib/actions/server/plugin');
 const ActionsClientPluginModule = require('../lib/actions/client/plugin');
 const { AdsPlugin } = require('../lib/ads/server/plugin');
 const { AdsMessageActions } = require('../lib/ads/server/message-actions');
+const { InventoryPlugin } = require('../lib/inventory/server/plugin');
 const { ActionsConst } = require('../lib/actions/constants');
 const { sc } = require('@reldens/utils');
 
@@ -121,6 +122,47 @@ class TestPluginsSetupValidation extends BaseTest
         });
     }
 
+    async testInventoryPluginStopsWithoutItsProperties()
+    {
+        await this.test('the inventory plugin creates and attaches nothing without its config, events or data server', async () => {
+            for(let missingKey of ['config', 'events', 'dataServer']){
+                let props = this.createProps();
+                props[missingKey] = false;
+                let plugin = new InventoryPlugin();
+                this.assert.strictEqual(await plugin.setup(props), false, missingKey);
+                this.assert.deepStrictEqual(props.listenedEvents, {}, missingKey);
+                this.assert.strictEqual(plugin.itemsGrowthApplier, false, missingKey);
+            }
+        });
+    }
+
+    async testInventoryPluginWithEveryProperty()
+    {
+        await this.test('the inventory plugin attaches every listener once with all its properties', async () => {
+            let props = this.createProps();
+            props.dataServer.entityManager = {get: (entityKey) => ({entityKey})};
+            let plugin = new InventoryPlugin();
+            this.assert.strictEqual(await plugin.setup(props), true);
+            this.assertListened(props.listenedEvents, [
+                'reldens.serverReady',
+                'reldens.createPlayerStatsAfter',
+                'reldens.createPlayerInventoryAfter',
+                'reldens.roomsMessageActionsGlobal',
+                'reldens.playerDeath',
+                'reldens.beforeSuperInitialGameData'
+            ], 1);
+            this.assert.deepStrictEqual(
+                [
+                    false === plugin.itemsGrowthApplier,
+                    plugin.modelsManager.dataServer,
+                    plugin.playerDeathSubscriber.modelsManager,
+                    plugin.playerDeathSubscriber.dropEquippedItems
+                ],
+                [false, props.dataServer, plugin.modelsManager, true]
+            );
+        });
+    }
+
     async testActionsClientPluginStopsWithoutItsCoreProperties()
     {
         await this.test('the client actions plugin creates and attaches nothing without its core properties', async () => {
@@ -175,14 +217,14 @@ class TestPluginsSetupValidation extends BaseTest
 
     async testAdsPluginWithoutEventsManager()
     {
-        await this.test('the ads plugin attaches nothing without its events manager', async () => {
+        await this.test('the ads plugin creates and attaches nothing without its events manager', async () => {
             let props = this.createProps();
             props.events = false;
             let plugin = new AdsPlugin();
             plugin.setup(props);
             this.assert.deepStrictEqual(props.listenedEvents, {});
             this.assert.strictEqual(plugin.listenEvents(), false);
-            this.assert.notStrictEqual(plugin.createPlayerAdsHandler, false);
+            this.assert.deepStrictEqual([plugin.adsStartHandler, plugin.createPlayerAdsHandler], [false, false]);
         });
     }
 

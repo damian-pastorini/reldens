@@ -228,11 +228,21 @@ class RoomObjectsApi
         );
     }
 
-    static async placePlayerOnChangePoint(page, gameConfig, roomName, nextRoomName)
+    static async fetchChangePoints(gameConfig, roomName)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'GET',
+            '/api/e2e/room-objects/change-points?roomName='+encodeURIComponent(roomName)
+        );
+    }
+
+    static async placePlayerOnChangePoint(page, gameConfig, roomName, nextRoomName, tileIndex = '')
     {
         return await SecurityApi.request(gameConfig, 'POST', '/api/e2e/room-objects/place-player-on-change-point', {
             roomName,
             nextRoomName,
+            tileIndex,
             sessionId: await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId)
         });
     }

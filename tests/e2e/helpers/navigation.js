@@ -5,7 +5,8 @@
  * Provides page actions for the page load (with the pending requests reported when the network never gets idle), room
  * transitions (the walk can skip its canvas focus click), waiting for room state, and keyboard movement (a walking
  * step stops the player only while it is still in the room it walked in, the step that crosses a change point ends in
- * a new scene that has no walking player, its player is still being created).
+ * a new scene that has no walking player, its player is still being created), and the canvas click on a world point
+ * with a mouse button or a touch tap (the page context needs touch support for the tap).
  *
  */
 
@@ -16,6 +17,7 @@ const { Selectors } = require('../selectors');
 class Navigation
 {
     static TILE_SIZE = 32;
+    static TOUCH_BUTTON = 'touch';
 
     static async openPageAndWaitForNetworkIdle(page, url)
     {
@@ -54,7 +56,7 @@ class Navigation
         await page.locator(Selectors.canvas).click({ position: { x: 10, y: 10 }, force: true });
     }
 
-    static async navigateToWorldPoint(page, worldX, worldY)
+    static async navigateToWorldPoint(page, worldX, worldY, button = 'left')
     {
         let coords = await page.evaluate((args) => {
             if(!window.reldens || !window.reldens.activeRoomEvents) {
@@ -64,9 +66,11 @@ class Navigation
             if(!scene || !scene.cameras || !scene.cameras.main) {
                 return null;
             }
+            let camera = scene.cameras.main;
+            let displayScale = scene.scale.displayScale;
             return {
-                x: scene.cameras.main.x + (args.wx - scene.cameras.main.worldView.x) * scene.cameras.main.zoom,
-                y: scene.cameras.main.y + (args.wy - scene.cameras.main.worldView.y) * scene.cameras.main.zoom
+                x: (camera.x + (args.wx - camera.worldView.x) * camera.zoom) / displayScale.x,
+                y: (camera.y + (args.wy - camera.worldView.y) * camera.zoom) / displayScale.y
             };
         }, { wx: worldX, wy: worldY });
         if(!coords) {
@@ -81,8 +85,23 @@ class Navigation
         if(clickY < canvasBox.y || clickY > canvasBox.y + canvasBox.height) {
             return false;
         }
-        await page.mouse.click(clickX, clickY);
+        if(Navigation.TOUCH_BUTTON === button){
+            await page.touchscreen.tap(clickX, clickY);
+            return true;
+        }
+        await page.mouse.click(clickX, clickY, {button});
         return true;
+    }
+
+    static async waitForCameraSettled(page, timeout, pollMs)
+    {
+        await page.waitForFunction(() => {
+            let camera = window.reldens.getActiveScene().cameras.main;
+            let scroll = Math.round(camera.scrollX)+','+Math.round(camera.scrollY);
+            let isSettled = window.e2eSettledCameraScroll === scroll;
+            window.e2eSettledCameraScroll = scroll;
+            return isSettled;
+        }, null, {timeout, polling: pollMs});
     }
 
     static async moveToWorldPoint(page, worldX, worldY)

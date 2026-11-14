@@ -9,7 +9,9 @@
  * (dead, disabled or active, so a spec reaches the dead or disabled player paths where no enemy can kill it), the life
  * of an active enemy out of battle of a live room (set, then read by its body state key, so the auto recovery spec
  * watches the exact body it changed), the life of an exact enemy body (in battle or not), the live rooms with an auto
- * recovery interval (and the count of every interval kept) and the scores period reset check run on a given date,
+ * recovery interval (and the count of every interval kept), the movement intervals a live room keeps for a player id
+ * (one per direction message), the movement messages (directions, stop and pointer moves) a player sends from the
+ * recording start, and the scores period reset check run on a given date,
  * after the stored last period key was set to the given value (the spec preserves that config row and the scores rows
  * before); the check interval of the scores plugin is stopped and any running check awaited first, so the interval
  * never runs a check of its own in the middle, and it is started again after the check.
@@ -24,6 +26,7 @@ const timersPromises = require('timers/promises');
 class GameplayE2eStateProbe
 {
 
+    static recordedMovementMessages = {};
     static LAST_PERIOD_KEY_PATH = 'scores/reset/lastPeriodKey';
     static LAST_PERIOD_KEY_SCOPE = 'server';
     static IDLE_CHECKS = 50;
@@ -47,6 +50,7 @@ class GameplayE2eStateProbe
             scene: playerSchema.state.scene,
             x: playerSchema.state.x,
             y: playerSchema.state.y,
+            dir: playerSchema.state.dir,
             bodyInWorld: Boolean(playerSchema.physicalBody?.world),
             hasPvpAction: Boolean(playerSchema.actions?.pvp),
             experience: Number(sc.get(classPath, 'currentExp', 0)),
@@ -57,6 +61,23 @@ class GameplayE2eStateProbe
             movementSpeed: Number(sc.get(sc.get(playerSchema, 'physicalBody', {}), 'movementSpeed', 0)),
             worldPlayerSpeed: Number(sc.get(room.roomWorld, 'playerMovementSpeed', 0))
         };
+    }
+
+    static recordMovementMessage(event)
+    {
+        let messageData = sc.get(event, 'messageData', {});
+        let recordedMessages = sc.get(
+            GameplayE2eStateProbe.recordedMovementMessages,
+            sc.get(sc.get(event, 'playerSchema', {}), 'playerName', ''),
+            false
+        );
+        let isMovement = sc.hasOwn(messageData, 'dir')
+            || -1 !== [GameConst.STOP, GameConst.POINTER].indexOf(sc.get(messageData, 'act', ''));
+        if(!recordedMessages || !isMovement){
+            return false;
+        }
+        recordedMessages.push({dir: sc.get(messageData, 'dir', ''), act: sc.get(messageData, 'act', '')});
+        return true;
     }
 
     static fetchRecoveryTicks(serverManager)
@@ -175,6 +196,35 @@ class GameplayE2eStateProbe
         return {checkResult};
     }
 
+    static registerMovementEndpoints(serverManager)
+    {
+        let app = serverManager.app;
+        app.get('/api/e2e/gameplay/movement-intervals', async (request, response) => {
+            await RoomObjectsState.respondForRoom(
+                serverManager,
+                sc.get(request.query, 'roomName', ''),
+                response,
+                async (room) => ({
+                    intervalKeys: Object.keys(room.movementInterval).filter(
+                        (intervalKey) => 0 === intervalKey.indexOf(sc.get(request.query, 'playerId', '')+'_')
+                    )
+                })
+            );
+        });
+        serverManager.events.on('reldens.beforeSceneExecuteMessages', (event) => {
+            GameplayE2eStateProbe.recordMovementMessage(event);
+        });
+        app.post('/api/e2e/gameplay/movement-messages', async (request, response) => {
+            GameplayE2eStateProbe.recordedMovementMessages[sc.get(request.body, 'playerName', '')] = [];
+            response.json({recording: true});
+        });
+        app.get('/api/e2e/gameplay/movement-messages', async (request, response) => {
+            response.json({
+                messages: sc.get(GameplayE2eStateProbe.recordedMovementMessages, sc.get(request.query, 'playerName', ''), [])
+            });
+        });
+    }
+
     static registerEndpoints(serverManager)
     {
         let app = serverManager.app;
@@ -243,6 +293,7 @@ class GameplayE2eStateProbe
                 })
             );
         });
+        GameplayE2eStateProbe.registerMovementEndpoints(serverManager);
         app.get('/api/e2e/gameplay/recovery-ticks', async (request, response) => {
             response.json(GameplayE2eStateProbe.fetchRecoveryTicks(serverManager));
         });

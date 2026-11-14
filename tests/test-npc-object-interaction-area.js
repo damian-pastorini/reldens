@@ -26,7 +26,7 @@ class TestNpcObjectInteractionArea extends RandomMovementBaseTest
         return npc;
     }
 
-    async sendInteractionFromMovedPosition(npc)
+    async sendInteractionFromMovedPosition(npc, playerPosition = this.tileSize * this.originalTile)
     {
         let movedPosition = this.tileSize * this.originalTile;
         let sentMessages = [];
@@ -35,9 +35,24 @@ class TestNpcObjectInteractionArea extends RandomMovementBaseTest
             {send: (messageKey, message) => sentMessages.push(message)},
             {act: ObjectsConst.OBJECT_INTERACTION, id: npc.id},
             {},
-            {state: {x: movedPosition, y: movedPosition}}
+            {state: {x: playerPosition, y: playerPosition}}
         );
         return [...sentMessages].shift();
+    }
+
+    async testMovingNpcRejectsThePlayerNextToItsSpawnTile()
+    {
+        await this.test('a moving npc that wandered away rejects the player standing on its spawn tile', async () => {
+            let npc = this.createInteractiveNpc();
+            npc.randomMovementBehavior = new ObjectRandomMovement({
+                objectBody: this.bodyBuilder.build(),
+                getInBattlePlayers: () => ({})
+            });
+            this.assert.strictEqual(
+                (await this.sendInteractionFromMovedPosition(npc, this.tileSize)).act,
+                GameConst.CLOSE_UI_ACTION
+            );
+        });
     }
 
     async testMovingNpcValidatesTheInteractionAtItsCurrentPosition()

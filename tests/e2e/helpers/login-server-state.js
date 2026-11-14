@@ -23,6 +23,7 @@ class LoginServerState
     static UNKNOWN_STATE_COLUMN = 'e2e_unknown_column';
     static brokenSavePlayerIds = [];
     static guestRoomsDefaults = {};
+    static allowGuestOnRoomsDefault = false;
     static healthDefaults = {};
     static disconnectionDefaults = {};
     static roomsOriginDefaults = {};
@@ -136,6 +137,7 @@ class LoginServerState
     static resetAll(serverManager)
     {
         serverManager.roomsManager.availableRoomsGuest = LoginServerState.guestRoomsDefaults;
+        serverManager.roomsManager.allowGuestOnRooms = LoginServerState.allowGuestOnRoomsDefault;
         LoginServerState.brokenSavePlayerIds = [];
         FirebaseE2eState.resetAll(serverManager);
         CharacterE2eState.resetAll(serverManager);
@@ -165,6 +167,12 @@ class LoginServerState
         app.post('/api/e2e/login-server/guest-rooms-empty', (request, response) => {
             serverManager.roomsManager.availableRoomsGuest = {};
             response.json({ok: true});
+        });
+        app.post('/api/e2e/login-server/guest-rooms-allow-on-rooms', (request, response) => {
+            let roomsManager = serverManager.roomsManager;
+            roomsManager.allowGuestOnRooms = true === sc.get(request.body, 'allowOnRooms', false);
+            roomsManager.availableRoomsGuest = roomsManager.fetchGuestRooms(roomsManager.loadedRoomsByName);
+            response.json({guestRooms: Object.keys(roomsManager.availableRoomsGuest)});
         });
     }
 
@@ -206,6 +214,7 @@ class LoginServerState
     {
         LoginServerState.captureDefaults(serverManager);
         LoginServerState.guestRoomsDefaults = serverManager.roomsManager.availableRoomsGuest;
+        LoginServerState.allowGuestOnRoomsDefault = serverManager.roomsManager.allowGuestOnRooms;
         LoginServerState.registerGuestsEndpoints(serverManager);
         LoginServerState.registerSessionsEndpoints(serverManager);
         FirebaseE2eState.registerEndpoints(serverManager);
