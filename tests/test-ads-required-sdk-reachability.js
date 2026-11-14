@@ -91,6 +91,25 @@ class TestAdsRequiredSdkReachability extends BaseTest
         });
     }
 
+    async testAnSdkServedByThisServerIsSkipped()
+    {
+        await this.test('an absolute SDK URL under this server public or base URL is not requested, another origin is', async () => {
+            let requests = [];
+            let check = new RequiredSdkReachabilityCheck({
+                timeoutMs: 1500,
+                serverUrls: ['https://game.test/play/', 'http://localhost:8080'],
+                fetchRequest: async (url) => requests.push(url) && {ok: true}
+            });
+            this.assert.strictEqual(await check.areProvidersSdkReachable({
+                publicUrlSdk: {enabled: 1, sdkUrl: 'https://game.test/play/assets/sdk.js'},
+                baseUrlSdk: {enabled: 1, sdkUrl: 'http://localhost:8080/assets/sdk.js'},
+                otherPathSdk: {enabled: 1, sdkUrl: 'https://game.test/other/sdk.js'},
+                otherPortSdk: {enabled: 1, sdkUrl: 'http://localhost:8081/assets/sdk.js'}
+            }), true);
+            this.assert.deepStrictEqual(requests, ['https://game.test/other/sdk.js', 'http://localhost:8081/assets/sdk.js']);
+        });
+    }
+
     async testSdkNotRequiredNeverStopsTheStart()
     {
         await this.test('the server start continues without checking the SDK when it is not required', async () => {
