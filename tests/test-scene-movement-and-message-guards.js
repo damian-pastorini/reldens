@@ -15,22 +15,105 @@ class TestSceneMovementAndMessageGuards extends BaseTest
 
     createMovementSetup(timeStep)
     {
-        let movementSetup = {movedDirections: [], room: Object.create(RoomScene.prototype)};
+        let movementSetup = {movedDirections: [], stopsCount: 0, inState: 'active', room: Object.create(RoomScene.prototype)};
         movementSetup.room.movementInterval = {};
         movementSetup.room.config = {get: () => false};
         movementSetup.playerSchema = {
             player_id: 7,
-            isDeath: () => false,
-            isDisabled: () => false,
+            isDeath: () => 'death' === movementSetup.inState,
+            isDisabled: () => 'disabled' === movementSetup.inState,
             physicalBody: {
                 isChangingScene: false,
                 isBlocked: false,
                 world: {timeStep},
                 initMove: (direction) => movementSetup.movedDirections.push(direction),
-                stopMove: () => true
+                stopMove: () => movementSetup.stopsCount++
             }
         };
         return movementSetup;
+    }
+
+    async sendMovementMessages(room, playerSchema, messages)
+    {
+        let results = [];
+        for(let message of messages){
+            results.push(await room.executeMovePlayerActions(playerSchema, message));
+        }
+        return results;
+    }
+
+    async testDeadOrDisabledPlayerMovementIsStopped()
+    {
+        await this.test('a dead or disabled player direction or pointer is stopped and clears its running movement', async () => {
+            for(let inState of ['death', 'disabled']){
+                let movementSetup = this.createMovementSetup(1000);
+                let room = movementSetup.room;
+                await room.executeMovePlayerActions(movementSetup.playerSchema, {dir: GameConst.UP});
+                movementSetup.inState = inState;
+                let results = await this.sendMovementMessages(room, movementSetup.playerSchema, [
+                    {dir: GameConst.DOWN},
+                    {act: GameConst.POINTER, column: 3, row: 4}
+                ]);
+                this.assert.deepStrictEqual(results, [false, false]);
+                this.assert.deepStrictEqual(room.movementInterval, {});
+                this.assert.strictEqual(movementSetup.stopsCount, 2);
+            }
+        });
+    }
+
+    async testChangingSceneOrBlockedBodyIgnoresTheMovement()
+    {
+        await this.test('a body changing scene or blocked ignores the movement input', async () => {
+            for(let bodyFlag of ['isChangingScene', 'isBlocked']){
+                let movementSetup = this.createMovementSetup(1000);
+                movementSetup.playerSchema.physicalBody[bodyFlag] = true;
+                this.assert.strictEqual(
+                    await movementSetup.room.executeMovePlayerActions(movementSetup.playerSchema, {dir: GameConst.UP}),
+                    false
+                );
+                this.assert.deepStrictEqual(movementSetup.room.movementInterval, {});
+                this.assert.deepStrictEqual(movementSetup.movedDirections, []);
+            }
+        });
+    }
+
+    async testStopMessageStopsABlockedBody()
+    {
+        await this.test('the stop message stops a blocked body and clears its running movement', async () => {
+            let movementSetup = this.createMovementSetup(1000);
+            let room = movementSetup.room;
+            await room.executeMovePlayerActions(movementSetup.playerSchema, {dir: GameConst.UP});
+            movementSetup.playerSchema.physicalBody.isBlocked = true;
+            await room.executeMovePlayerActions(movementSetup.playerSchema, {act: GameConst.STOP});
+            this.assert.deepStrictEqual(room.movementInterval, {});
+            this.assert.strictEqual(movementSetup.stopsCount, 1);
+        });
+    }
+
+    async testPointerMoveNeedsTheTapMovement()
+    {
+        await this.test('a pointer move walks the body only with the tap movement on and both tile values', async () => {
+            let pointerMessage = {act: GameConst.POINTER, column: 3, row: 4};
+            let cases = [
+                {tapMovement: false, expectedMoves: [], expectedStops: 0},
+                {tapMovement: true, expectedMoves: [Object.assign({validated: true}, pointerMessage)], expectedStops: 1}
+            ];
+            for(let pointerCase of cases){
+                let movementSetup = this.createMovementSetup(1000);
+                let pointedMoves = [];
+                movementSetup.room.config = {get: () => pointerCase.tapMovement};
+                movementSetup.room.pointsValidator = {
+                    makeValidPoints: (pointData) => Object.assign({validated: true}, pointData)
+                };
+                movementSetup.playerSchema.physicalBody.moveToPoint = (pointData) => pointedMoves.push(pointData);
+                await this.sendMovementMessages(movementSetup.room, movementSetup.playerSchema, [
+                    {act: GameConst.POINTER, column: 3},
+                    pointerMessage
+                ]);
+                this.assert.deepStrictEqual(pointedMoves, pointerCase.expectedMoves);
+                this.assert.strictEqual(movementSetup.stopsCount, pointerCase.expectedStops);
+            }
+        });
     }
 
     createMessagesSetup(playerSchema)

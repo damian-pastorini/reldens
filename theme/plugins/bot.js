@@ -40,6 +40,7 @@ async function main (options)
 
     function createPlayer(gameMessage)
     {
+        userData.username = gameMessage.userName;
         userData.password = gameMessage.guestPassword;
         gameRoom.send('*', {
             act: GameConst.CREATE_PLAYER,

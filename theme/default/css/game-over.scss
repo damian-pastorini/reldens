@@ -34,6 +34,39 @@
             text-align: center;
         }
 
+        .game-over-wait,
+        .game-over-revive-message {
+            margin: 1rem 0 0;
+            font-size: 1.17rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .game-over-resurrection-ad,
+        .game-over-revive {
+            display: block;
+            margin: 1rem auto 0;
+            padding: 0.5rem 1.5rem;
+            border: 1px solid $cLightGrey;
+            box-shadow: 4px 4px 8px 0 #0009;
+            cursor: pointer;
+        }
+
+        .game-over-restoration-item-choice {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0 0;
+
+            button {
+                padding: 0.5rem 1.5rem;
+                border: 1px solid $cLightGrey;
+                box-shadow: 4px 4px 8px 0 #0009;
+                cursor: pointer;
+            }
+
+        }
+
     }
 
 }

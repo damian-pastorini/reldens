@@ -106,6 +106,27 @@ class TestDeletedRoomCloser extends BaseTest
         });
     }
 
+    async testCloseRoomWithoutLiveInstanceOnlyPurgesTheManagerLists()
+    {
+        await this.test('closeRoom of a deleted room without a live instance only purges the manager lists', async () => {
+            let closerSetup = this.createCloserSetup(10, true);
+            delete closerSetup.roomsManager.createdInstances.colyseusId2;
+            let closeResult = await closerSetup.deletedRoomCloser.closeRooms(['5']);
+            this.assert.deepStrictEqual(
+                [
+                    closeResult,
+                    closerSetup.roomsManager.isRoomLoaded(5),
+                    closerSetup.roomsManager.loginAvailableRooms.map(room => room.name),
+                    closerSetup.gameBroadcasts.map(message => message.act),
+                    closerSetup.sceneBroadcasts,
+                    Object.keys(closerSetup.deletedRoomCloser.closeTimers),
+                    closerSetup.closeState.disconnected
+                ],
+                [true, false, ['other-room'], [RoomsConst.ROOM_REMOVED], [], [], false]
+            );
+        });
+    }
+
     async testDisconnectRoomInstanceClosesAndCleansTheRegistry()
     {
         await this.test('disconnectRoomInstance closes the live instance and cleans the registry', async () => {

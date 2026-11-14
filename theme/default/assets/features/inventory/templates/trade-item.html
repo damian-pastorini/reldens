@@ -4,6 +4,9 @@
     </div>
     <div class="item-data-container">
         <span class="item-label">{{label}}</span>
+        {{#level}}
+            <span class="item-level">{{level}}</span>
+        {{/level}}
         <span class="item-description">{{description}}</span>
         <div class="item-modifiers">
             {{#modifiers}}

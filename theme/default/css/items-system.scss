@@ -161,8 +161,14 @@
 }
 
 .item-label,
-.item-description {
+.item-level,
+.item-description,
+.item-modifier {
     display: block;
+}
+
+.item-modifier {
+    color: $cReldens;
 }
 
 .group-item-block {

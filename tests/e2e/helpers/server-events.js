@@ -6,20 +6,16 @@
  *
  */
 
+const { E2eInstance } = require('./e2e-instance');
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger } = require('@reldens/utils');
 
 class ServerEvents
 {
 
-    static eventsFilePath()
-    {
-        return FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'server-events.jsonl');
-    }
-
     static readAllEvents()
     {
-        let filePath = ServerEvents.eventsFilePath();
+        let filePath = E2eInstance.generatedFilePath('server-events.jsonl');
         if(!FileHandler.exists(filePath)) {
             return [];
         }
@@ -45,9 +41,9 @@ class ServerEvents
     {
         let allEvents = ServerEvents.readAllEvents();
         let result = [];
-        for(let e of allEvents) {
-            if(e.ts >= timestamp && e.event === eventName) {
-                result.push(e);
+        for(let serverEvent of allEvents) {
+            if(serverEvent.ts >= timestamp && serverEvent.event === eventName) {
+                result.push(serverEvent);
             }
         }
         return result;
@@ -57,9 +53,9 @@ class ServerEvents
     {
         let allEvents = ServerEvents.readAllEvents();
         let latest = null;
-        for(let e of allEvents) {
-            if(e.event === eventName) {
-                latest = e;
+        for(let serverEvent of allEvents) {
+            if(serverEvent.event === eventName) {
+                latest = serverEvent;
             }
         }
         return latest;

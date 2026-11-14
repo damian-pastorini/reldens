@@ -15,25 +15,17 @@ let expect = BaseE2eTest.expect;
 
 class TestGameLogin
 {
-    static async loginRootPlayer(page, gameConfig, longRun)
-    {
-        let username = gameConfig.e2eUsername || 'root';
-        let password = gameConfig.e2ePassword || 'root';
-        let playerName = gameConfig.e2ePlayerName || 'ImRoot';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
-    }
-
     static run()
     {
         test.describe('Game Login Flow', () => {
             test('player can login and select character to start the game', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestGameLogin.loginRootPlayer(page, gameConfig, longRun);
+                await Login.loginRootPlayer(page, gameConfig, longRun);
                 await page.waitForTimeout(TimeConstants.pauseMs(longRun));
                 await expect(page.locator(Selectors.canvas)).toBeVisible();
                 await screenshots.capture(page, 'game-canvas-visible');
             });
             test('settings panel opens and shows configuration options', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestGameLogin.loginRootPlayer(page, gameConfig, longRun);
+                await Login.loginRootPlayer(page, gameConfig, longRun);
                 let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.settingsOpen);
                 await page.waitForTimeout(pauseMs);
@@ -49,7 +41,7 @@ class TestGameLogin
                 await screenshots.capture(page, 'settings-panel-closed');
             });
             test('instructions panel opens and shows content', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestGameLogin.loginRootPlayer(page, gameConfig, longRun);
+                await Login.loginRootPlayer(page, gameConfig, longRun);
                 let pauseMs = TimeConstants.pauseMs(longRun);
                 await page.click(Selectors.hud.instructionsOpen);
                 await page.waitForTimeout(pauseMs);
@@ -61,7 +53,7 @@ class TestGameLogin
                 await screenshots.capture(page, 'instructions-panel-closed');
             });
             test('logout button returns user to login form', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestGameLogin.loginRootPlayer(page, gameConfig, longRun);
+                await Login.loginRootPlayer(page, gameConfig, longRun);
                 let pauseMs = TimeConstants.pauseMs(longRun);
                 await expect(page.locator(Selectors.canvas)).toBeVisible();
                 await screenshots.capture(page, 'logged-in-before-logout');

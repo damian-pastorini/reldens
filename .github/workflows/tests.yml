@@ -1,0 +1,259 @@
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_NAME: reldens-ci
+  APP_PORT: '7000'
+  TEST_PORT: '5000'
+  DB_HOST: 127.0.0.1
+  DB_PORT: '3306'
+  DB_USER: root
+  DB_PASSWORD: test_root_password
+  DB_NAME: reldens_ci
+  TESTS_DB_NAME: reldens_ci_tests
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest_root_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout the engine
+        uses: actions/checkout@v4
+        with:
+          path: reldens
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Ensure the mysql client is available
+        run: |
+          if ! command -v mysql > /dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y mysql-client
+          fi
+          mysql --version
+
+      - name: Install the engine dependencies
+        working-directory: reldens
+        run: npm ci
+
+      - name: Write the app package.json
+        run: |
+          mkdir -p app
+          node - <<'NODE'
+          const fs = require('fs');
+          const enginePackage = JSON.parse(fs.readFileSync('reldens/package.json', 'utf8'));
+          const engineDependencies = enginePackage.dependencies || {};
+          const scopedPackages = [
+              '@reldens/cms',
+              '@reldens/game-data-generator',
+              '@reldens/items-system',
+              '@reldens/modifiers',
+              '@reldens/server-utils',
+              '@reldens/skills',
+              '@reldens/storage',
+              '@reldens/tile-map-generator',
+              '@reldens/tileset-to-tilemap',
+              '@reldens/utils'
+          ];
+          // @NOTE: the engine is installed from the checkout, so the tests run against the code in the pull request.
+          const appDependencies = {reldens: 'file:../reldens'};
+          for(const name of scopedPackages){
+              if(!engineDependencies[name]){
+                  throw new Error('Missing dependency in reldens/package.json: '+name);
+              }
+              appDependencies[name] = engineDependencies[name];
+          }
+          fs.writeFileSync('app/package.json', JSON.stringify({
+              name: process.env.APP_NAME,
+              version: '1.0.0',
+              main: 'index.js',
+              type: 'commonjs',
+              alias: {process: false},
+              targets: {main: false},
+              scripts: {start: 'node .'},
+              dependencies: appDependencies
+          }, null, 2));
+          NODE
+
+      - name: Install the app dependencies
+        working-directory: app
+        run: npm install --no-audit --no-fund
+
+      - name: Create the app
+        working-directory: app
+        env:
+          RELDENS_INSTALLATION_TYPE: normal
+          RELDENS_LOG_LEVEL: '9'
+        run: npx reldens createApp "$APP_NAME"
+
+      - name: Clone the demo data generator
+        run: git clone --depth 1 https://github.com/damian-pastorini/reldens-demo-generate-data.git app/generate-data
+
+      - name: Write the app environment
+        run: |
+          node - <<'NODE'
+          const crypto = require('crypto');
+          const fs = require('fs');
+          const envPath = 'app/.env';
+          const values = {
+              RELDENS_APP_PORT: process.env.APP_PORT,
+              RELDENS_PUBLIC_URL: 'http://localhost:'+process.env.APP_PORT,
+              RELDENS_ADMIN_SECRET: crypto.randomBytes(32).toString('hex'),
+              RELDENS_SIGNED_TOKENS_SECRET: crypto.randomBytes(32).toString('hex'),
+              RELDENS_DB_NAME: process.env.DB_NAME,
+              RELDENS_DB_URL: 'mysql://'+process.env.DB_USER+':'+process.env.DB_PASSWORD
+                  +'@'+process.env.DB_HOST+':'+process.env.DB_PORT+'/'+process.env.DB_NAME,
+              RELDENS_DB_HOST: process.env.DB_HOST,
+              RELDENS_DB_PORT: process.env.DB_PORT,
+              RELDENS_DB_USER: process.env.DB_USER,
+              RELDENS_DB_PASSWORD: process.env.DB_PASSWORD,
+              RELDENS_STORAGE_DRIVER: 'knex',
+              RELDENS_DB_CLIENT: 'mysql2',
+              RELDENS_FIREBASE_ENABLE: '0'
+          };
+          let content = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+          for(const key of Object.keys(values)){
+              const line = key+'='+values[key];
+              const matcher = new RegExp('^'+key+'=.*$', 'm');
+              content = matcher.test(content)
+                  ? content.replace(matcher, line)
+                  : (content+(content.endsWith('\n') || '' === content ? '' : '\n')+line+'\n');
+          }
+          fs.writeFileSync(envPath, content);
+          NODE
+
+      - name: Create the databases
+        run: |
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" -e "
+            CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            CREATE DATABASE IF NOT EXISTS \`$TESTS_DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          "
+
+      - name: Import the schema, the basic config and the sample data
+        run: |
+          for sqlFile in reldens-install-v4.0.0.sql reldens-basic-config-v4.0.0.sql reldens-sample-data-v4.0.0.sql; do
+            echo "Importing $sqlFile..."
+            mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
+              < "reldens/migrations/production/$sqlFile"
+          done
+
+      - name: Generate the entity files
+        env:
+          RELDENS_LOG_LEVEL: '9'
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const storageBase = path.join(process.cwd(), 'reldens', 'node_modules', '@reldens', 'storage');
+          const { EntitiesGenerator } = require(path.join(storageBase, 'lib', 'entities-generator'));
+          const entitiesGenerator = new EntitiesGenerator({
+              connectionData: {
+                  driver: 'knex',
+                  client: 'mysql2',
+                  user: process.env.DB_USER,
+                  password: process.env.DB_PASSWORD,
+                  host: process.env.DB_HOST,
+                  port: Number(process.env.DB_PORT),
+                  database: process.env.DB_NAME
+              },
+              projectPath: path.join(process.cwd(), 'app'),
+              isOverride: true
+          });
+          entitiesGenerator.generate().then(async (success) => {
+              if(entitiesGenerator.server){
+                  await entitiesGenerator.server.disconnect();
+              }
+              if(!success){
+                  process.stderr.write('Entity generation failed.\n');
+                  process.exit(1);
+              }
+              fs.writeFileSync(path.join(process.cwd(), 'app', 'install.lock'), '');
+          }).catch((error) => {
+              process.stderr.write(String(error && error.message ? error.message : error)+'\n');
+              process.exit(1);
+          });
+          NODE
+
+      - name: Build the client bundle
+        working-directory: app
+        env:
+          RELDENS_LOG_LEVEL: '9'
+          RELDENS_JS_SOURCEMAPS: '1'
+        run: |
+          npm exec -- reldens installSkeleton "$APP_NAME"
+          npm exec -- reldens copyAssetsToDist "$APP_NAME"
+
+      - name: Write the tests config
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const testsDir = path.join(process.cwd(), 'reldens', 'tests');
+          const sourcePath = path.join(testsDir, 'config.json.dist');
+          const testConfig = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+          const testPort = Number(process.env.TEST_PORT);
+          testConfig.baseUrl = 'http://localhost:'+testPort;
+          testConfig.port = testPort;
+          testConfig.serverPath = path.join(process.cwd(), 'app');
+          testConfig.themeName = process.env.APP_NAME;
+          testConfig.dbHost = process.env.DB_HOST;
+          testConfig.dbPort = process.env.DB_PORT;
+          testConfig.dbUser = process.env.DB_USER;
+          testConfig.dbPassword = process.env.DB_PASSWORD;
+          testConfig.dbName = process.env.TESTS_DB_NAME;
+          fs.writeFileSync(path.join(testsDir, 'config.json'), JSON.stringify(testConfig, null, 4));
+          NODE
+
+      - name: Run the default test suite
+        working-directory: reldens
+        env:
+          RELDENS_TESTS_CONFIRMED: '1'
+          RELDENS_LOG_LEVEL: '9'
+        run: npm run test:default
+
+      - name: Install the Playwright browser
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: reldens
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the e2e test suite
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: reldens
+        env:
+          RELDENS_LOG_LEVEL: '9'
+        run: npm run test:e2e -- --db-reset="$TESTS_DB_NAME"
+
+      - name: Upload the e2e results
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: reldens/test-results
+          retention-days: 7
+          if-no-files-found: ignore

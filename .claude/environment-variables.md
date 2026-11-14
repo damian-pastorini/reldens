@@ -6,7 +6,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 
 ## Application Server
 
-- `NODE_ENV` - Environment mode (production/development)
+- `NODE_ENV` - Environment mode (production/development), not read by Reldens: the Express app `env` is set by `@reldens/server-utils` `applicationEnvironment` (default `production`), so the Express error responses never include the stack
 - `RELDENS_DEFAULT_ENCODING` - Default encoding (default: utf8)
 - `RELDENS_APP_HOST` - Application host (default: `http://localhost`)
 - `PORT` - Application port, takes precedence over `RELDENS_APP_PORT` when it is set to a non zero number
@@ -74,7 +74,7 @@ async enableServeStaticsAndHomePage()
 
 ## Security
 
-- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the reset password links and the multi-server disconnection requests, shared by every server of a multi-server setup (default: `RELDENS_ADMIN_SECRET`)
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the reset password links, the multi-server disconnection requests and the names checks between the servers with their own database, shared by every server of a multi-server setup (default: `RELDENS_ADMIN_SECRET`)
 - `RELDENS_ADMIN_CSRF_ENABLED` - Session based CSRF tokens on the administration router, 0 or 1 (default: 1). The token is sent to the admin client JS in the `reldens-admin-csrf-token` cookie, added to every POST form as `_csrf` and to the fetch requests as the `X-CSRF-Token` header (the tileset analyzer admin JS sends it too, its routes are not exempt); only the maps wizard, the objects importer and the skills importer paths are added to the router `csrfProtection.ignoredPaths`, and their upload routes check the token after their uploader with their own `CsrfProtection` middleware. Projects created before this change must refresh their `theme/admin` templates and JS (`reldens fullRebuild`)
 - `RELDENS_ADMIN_LOGIN_WINDOW_MS` - Administration panel login limiter window (default: 900000)
 - `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS` - Failed administration panel logins allowed per IP and email in the window (default: 5)
@@ -98,6 +98,7 @@ async enableServeStaticsAndHomePage()
 - `RELDENS_PASSWORD_MAXIMUM_LENGTH` - Maximum password length for the registration and the password reset (default: 128)
 - `RELDENS_VALIDATE_ROOMS_ORIGIN` - Validate the `Origin` header on every room join, 0 or 1 (default: 0)
 - `RELDENS_ALLOW_REQUESTS_WITHOUT_ORIGIN` - Accept joins without an `Origin` header, needed by the Node clients, 0 or 1 (default: 1)
+- `RELDENS_ROOMS_DATABASES` - The `server/rooms/databases` config: comma separated URLs of the other servers with their own database (or sharing this one), checked before a registration or a player creation is stored so the usernames, emails and player names stay unique between them; this server own `server/publicUrl` is skipped (default: empty, no check)
 - `RELDENS_GUESTS_CLEANUP_ENABLED` - Remove the stale guest accounts on an interval, 0 or 1 (default: 0)
 - `RELDENS_GUESTS_CLEANUP_AFTER_MS` - Time without activity before a guest account is removed (default: 604800000)
 - `RELDENS_GUESTS_CLEANUP_INTERVAL_MS` - Interval between the guests cleanup runs (default: 3600000)
@@ -111,7 +112,7 @@ The basic configuration (`migrations/production/reldens-basic-config-v4.0.0.sql`
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
 - `RELDENS_ADMIN_SECRET` - Admin authentication secret, the administration panel is not activated when it is empty
-- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links and the multi-server disconnect user requests (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links, the multi-server disconnect user requests and the names checks between the servers with their own database (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value. The servers with their own database are listed in the `server/rooms/databases` config (comma separated URLs, the server own `server/publicUrl` is skipped): before a registration or a player creation is stored, the server holds the username and email, or the player name, and asks each listed server through the signed `/reldens-check-user-name` and `/reldens-check-player-name` routes, and stores it only when every server answers the values are free (a server that does not answer in 5 seconds counts as not free); a server sharing the database can be listed too, so two servers on one database never store the same name at the same time
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1, default: 1), read in `ServerManager.initializeConfiguration()` as `1 === Number(process.env.RELDENS_HOT_PLUG || 1)`
 - `RELDENS_BLOCKED_ADMIN` - Demo switch read only by the project `index.js` created from `theme/index.js.dist`: with `1` it listens to `reldens.afterCreateAdminManager` and blacklists the save and delete routes of every admin entity for the roles 1, 2 and 99, and denies the game login to the users with role 4; any other value (or unset) leaves the administration panel writable
 
@@ -126,6 +127,8 @@ The basic configuration (`migrations/production/reldens-basic-config-v4.0.0.sql`
 - `RELDENS_MONITOR_AUTH` - Enable monitor authentication
 - `RELDENS_MONITOR_USER` - Monitor username
 - `RELDENS_MONITOR_PASS` - Monitor password
+
+The monitor is attached with basic authentication only when `RELDENS_MONITOR_AUTH` is `1` and both the user and the password are set (`GameServer.hasAuthentication()`), otherwise it is attached without authentication and `ServerStartupReport.warnInsecureDefaults()` logs the `The Colyseus monitor is enabled WITHOUT authentication` warning on the startup.
 
 ## Storage & Database
 
@@ -195,6 +198,17 @@ if(1 === Number(process.env.RELDENS_CREATE_CONFIG_FILE || 1)){
 - `RELDENS_PING_MAX_RETRIES` - Max ping retries (default: 3)
 - `RELDENS_ENCODER_BUFFER_KB` - Initial size in KB of the room state encoder buffer (`@colyseus/schema` `Encoder.BUFFER_SIZE`, default: 64); a room state larger than the buffer is still sent (the buffer grows) but logs the "buffer overflow" warning once per room instance
 - `RELDENS_GUESTS_EMAIL_DOMAIN` - Email domain of the guest accounts (default: `@guest-reldens.com`), read in `ServerManager.initializeConfiguration()`. A non empty `server/players/guestsUser/emailDomain` config row wins over it; when the row is missing or empty `ServerConfigEnricher.enrichGuestsEmailDomain()` (`lib/game/server/server-config-enricher.js`) stores the environment value in that config path
+
+## Server Health
+
+Read by `EnvironmentVariablesReader.fetchHealthFromEnvironmentVariables()` into the `server/health` configuration and passed to the `ServerHealthMonitor` and the `RemoteServersStatus` (`lib/game/server/health/`). The basic configuration installs a `health/*` row (scope `server`) for each value, and the row overrides the environment variable. The numeric values are read with `Number(process.env.NAME || default)`, so `0` disables a limit and an empty value uses the default. See `.claude/server-health-monitor.md`.
+
+- `RELDENS_HEALTH_BLOCKING_ENABLED` - General switch of the whole blocking process, 0 or 1 (default: 1); with 0 nothing is rejected (no login, arriving player, scene change or room creation is blocked and the other servers status is not requested for the rooms availability) and the health is only a monitor: the usage, the exceeded limits and the other servers are still shown in the administration panel
+- `RELDENS_HEALTH_CHECK_INTERVAL_MS` - Interval between the usage checks, also the cache time of the other servers status (default: 5000)
+- `RELDENS_HEALTH_MAX_MEMORY_PERCENT` - Maximum system memory used percent, from the available memory (default: 90)
+- `RELDENS_HEALTH_MAX_CPU_PERCENT` - Maximum system CPU used percent of all the cores between two checks (default: 90)
+- `RELDENS_HEALTH_MAX_EVENT_LOOP_DELAY_MS` - Maximum mean event loop delay between two checks (default: 1000)
+- `RELDENS_HEALTH_REMOTE_STATUS_TIMEOUT_MS` - Time to wait for the status of another server of the rooms, a server that does not answer in time is not available (default: 3000)
 
 ## Firebase
 

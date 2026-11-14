@@ -1,0 +1,127 @@
+.crazy-games-sdk-mock-ad {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2147483645;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.75);
+    font-family: Arial, sans-serif;
+
+    .mock-ad-box {
+        width: 32rem;
+        padding: 1.5rem;
+        border: 2px solid #ffcc00;
+        border-radius: 0.5rem;
+        background: #1b1b2f;
+        color: #ffffff;
+        text-align: center;
+    }
+
+    .mock-ad-label {
+        font-size: 0.875rem;
+        letter-spacing: 0.2rem;
+        text-transform: uppercase;
+        color: #ffcc00;
+    }
+
+    .mock-ad-title {
+        margin: 0.75rem 0;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .mock-ad-screen {
+        height: 12rem;
+        border-radius: 0.25rem;
+        background: linear-gradient(120deg, #ff5f6d, #ffc371, #47cf73, #3d8bfd, #ff5f6d);
+        background-size: 400% 400%;
+        animation: mock-ad-screen-play 3s linear infinite;
+    }
+
+    .mock-ad-countdown {
+        margin-top: 0.75rem;
+        font-size: 1.125rem;
+    }
+
+    .mock-ad-failed {
+        border-color: #ff4444;
+
+        .mock-ad-label,
+        .mock-ad-title,
+        .mock-ad-countdown {
+            color: #ff5555;
+        }
+
+        .mock-ad-screen {
+            animation: none;
+            background: #7a0000;
+        }
+    }
+}
+
+.e2e-recording-banner {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 2147483646;
+    box-sizing: border-box;
+    height: 7.75rem;
+    padding: 0.375rem 1rem;
+    background: #0b1020;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    pointer-events: none;
+
+    .e2e-recording-title {
+        font-size: 1.125rem;
+        font-weight: bold;
+    }
+
+    .e2e-recording-note {
+        font-size: 0.8125rem;
+    }
+
+    .e2e-recording-step {
+        margin-top: 0.25rem;
+        font-size: 1.75rem;
+        font-weight: bold;
+        color: #ffdd55;
+    }
+
+    .e2e-recording-step:empty {
+        display: none;
+    }
+}
+
+#game-over {
+    top: 30%;
+}
+
+.e2e-frame-page {
+    margin: 0;
+}
+
+.e2e-game-frame {
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+}
+
+.ui-box-scene-data {
+    left: -18rem;
+}
+
+@keyframes mock-ad-screen-play {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}

@@ -4,17 +4,35 @@
  *
  * HTTP client for the e2e security endpoints registered by SecurityState: lowered limits, bans, denied addresses,
  * stored address blocks, the simulated restart, the reset password sent time, the test mailer switch and the emails
- * recorded by the test mailer.
+ * recorded by the test mailer. The requests always go to the IPv4 loopback address, so the tests that deny the IPv6
+ * loopback address never cut the e2e endpoints, and to server-1 unless the game config is the one of a numbered
+ * instance (E2eServerInstances.forServer, its serverBaseUrl).
  *
  */
+
+const { sc } = require('@reldens/utils');
 
 class SecurityApi
 {
 
+    static API_HOST = '127.0.0.1';
+
     static baseUrl(gameConfig)
     {
-        let envPort = process.env.RELDENS_E2E_PORT || null;
-        return envPort ? 'http://localhost:'+envPort : (gameConfig.baseUrl || 'http://localhost:8080');
+        let serverBaseUrl = sc.get(gameConfig, 'serverBaseUrl', '');
+        if('' === serverBaseUrl){
+            serverBaseUrl = process.env.RELDENS_E2E_PORT
+                ? 'http://localhost:'+process.env.RELDENS_E2E_PORT
+                : sc.get(gameConfig, 'baseUrl', 'http://localhost:8080');
+        }
+        return serverBaseUrl;
+    }
+
+    static hostUrl(gameConfig, host)
+    {
+        let hostUrl = new URL(SecurityApi.baseUrl(gameConfig));
+        hostUrl.hostname = host;
+        return hostUrl.origin;
     }
 
     static async request(gameConfig, method, path, body)
@@ -23,7 +41,10 @@ class SecurityApi
         if(body){
             options.body = JSON.stringify(body);
         }
-        return await (await fetch(new URL(path, SecurityApi.baseUrl(gameConfig)).toString(), options)).json();
+        return await (await fetch(
+            new URL(path, SecurityApi.hostUrl(gameConfig, SecurityApi.API_HOST)).toString(),
+            options
+        )).json();
     }
 
     static async updateSettings(gameConfig, settings)
@@ -49,6 +70,20 @@ class SecurityApi
     static async fetchStoredBlocks(gameConfig)
     {
         return (await SecurityApi.request(gameConfig, 'GET', '/api/e2e/security/stored-blocks')).blocks;
+    }
+
+    static async fetchIdentityState(gameConfig, identity)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'GET',
+            '/api/e2e/security/identity-hits?identity='+encodeURIComponent(identity)
+        );
+    }
+
+    static async fetchIdentityHits(gameConfig, identity)
+    {
+        return (await SecurityApi.fetchIdentityState(gameConfig, identity)).hits;
     }
 
     static async restoreBlocks(gameConfig)

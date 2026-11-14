@@ -19,6 +19,7 @@ class TestInstallationProcess extends BaseTest
     constructor(config)
     {
         super(config);
+        this.isIntegration = true;
         this.projectRoot = process.cwd();
         this.installProjectRoot = FileHandler.joinPaths(this.projectRoot, 'test-results', 'installer-project');
         this.startCallbackProps = false;

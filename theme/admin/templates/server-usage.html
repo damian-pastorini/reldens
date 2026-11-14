@@ -1,0 +1,49 @@
+<div class="server-usage" data-usage-path="/server-health/usage" data-refresh-ms="5000">
+    <h3 class="server-usage-title">Servers Usage</h3>
+    <p class="server-usage-unavailable hidden">The servers usage could not be loaded.</p>
+    <div class="servers-list"></div>
+    <template class="server-item-template">
+        <div class="server-item">
+            <h4 class="server-url">-</h4>
+            <p class="server-usage-status">
+                <span class="status-label">Status:</span>
+                <span class="status-value">-</span>
+                <span class="response-time"></span>
+            </p>
+            <div class="usage-tiles">
+                <div class="usage-tile" data-usage-key="memoryPercent" data-limit-key="maxMemoryPercent" data-unit="%">
+                    <span class="usage-label">System memory used</span>
+                    <span class="usage-value">-</span>
+                    <span class="usage-limit">-</span>
+                </div>
+                <div class="usage-tile" data-usage-key="cpuPercent" data-limit-key="maxCpuPercent" data-unit="%">
+                    <span class="usage-label">System CPU used</span>
+                    <span class="usage-value">-</span>
+                    <span class="usage-limit">-</span>
+                </div>
+                <div class="usage-tile" data-usage-key="eventLoopDelayMs" data-limit-key="maxEventLoopDelayMs" data-unit="ms">
+                    <span class="usage-label">Event loop delay</span>
+                    <span class="usage-value">-</span>
+                    <span class="usage-limit">-</span>
+                </div>
+                <div class="usage-tile" data-usage-key="freeMemoryMb" data-unit="MB">
+                    <span class="usage-label">Available system memory</span>
+                    <span class="usage-value">-</span>
+                </div>
+                <div class="usage-tile" data-usage-key="totalMemoryMb" data-unit="MB">
+                    <span class="usage-label">Total system memory</span>
+                    <span class="usage-value">-</span>
+                </div>
+                <div class="usage-tile" data-usage-key="processMemoryMb" data-unit="MB">
+                    <span class="usage-label">Server process memory</span>
+                    <span class="usage-value">-</span>
+                </div>
+                <div class="usage-tile" data-usage-key="heapUsedMb" data-unit="MB">
+                    <span class="usage-label">JavaScript heap used</span>
+                    <span class="usage-value">-</span>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+<script type="text/javascript" src="/js/admin-server-usage-renderer.js"></script>

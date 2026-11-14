@@ -3,7 +3,8 @@
  * Reldens - Default Server Launcher
  *
  * Boots an independent in-process Reldens server from the configured serverPath, the same way the
- * e2e globalSetup does, so the admin integration tests can run against a self-hosted instance.
+ * e2e globalSetup does, so the admin integration tests can run against a self-hosted instance. The mailer is off, so
+ * the app .env mailer service and its optional package never matter (the mailer tests build their own Mailer).
  *
  */
 
@@ -52,6 +53,7 @@ class ServerLauncher
         process.env.RELDENS_ALLOW_RUN_BUNDLER = '0';
         process.env.RELDENS_ALLOW_BUILD_CLIENT = '0';
         process.env.RELDENS_ALLOW_BUILD_CSS = '0';
+        process.env.RELDENS_MAILER_ENABLE = '0';
         process.env.PORT = String(port);
         process.env.RELDENS_APP_PORT = String(port);
         process.env.RELDENS_PUBLIC_URL = 'http://localhost:'+port;
