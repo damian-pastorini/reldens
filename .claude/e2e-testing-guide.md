@@ -158,6 +158,17 @@ other users sets are not created and fewer players are snapshotted. Every multi-
 cross-player chat, teams, trading, double login) then fails waiting for `#player-selection:not(.hidden)`, which reads
 as a chat or trading bug but is really a missing account.
 
+### Disposable rooms
+
+`tests/e2e/test-admin-rooms-live-deletion.spec.js` deletes rooms from the administration panel, so it never deletes a
+sample data room: the setup prepares its disposable rooms on every run (`TestDataSetup`,
+`tests/e2e/helpers/test-data-setup.js`). Before the server loads the maps, `writeDisposableRoomsMaps()` writes
+`e2e-deleted-room-players` and `e2e-deleted-room-unlinked` (the town houses 05 and 04 maps with the tileset image
+renamed) with their images in the app theme and dist maps folders; at `reldens.beforeInitializeManagers`, before the
+rooms are defined, `createDisposableRooms()` creates the missing rooms as copies of those houses with their change and
+return points. A run without `--db-reset` after a run that deleted them gets them again, and an isolated instance
+appends its name (`e2e-deleted-room-players-p1`), since every instance shares the app maps folders.
+
 ## App under test
 
 The suite runs against its OWN app instance, never a shared project (like a demo or a development project): its
