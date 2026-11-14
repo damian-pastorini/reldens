@@ -158,16 +158,13 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
 2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` `InventoryMessageActions.executeEquipAction()`)
 
-   If the item is not equipped, the equipped item of the same group is unequipped first (`unEquipPrevious()`), then the item is equipped. If it is already equipped, it is unequipped:
+   The message action rejects an item key that is not in the inventory or an item without `equip()`, then toggles the
+   item with the `@reldens/items-system` `Inventory.toggleEquip()`: after the item growth still being applied, an
+   equipped item is unequipped, otherwise the equipped item of the same group is unequipped (`unEquipPrevious()`) and
+   the item is equipped:
    ```javascript
    let item = playerSchema.inventory.manager.items[data.idx];
-   if(!item.equipped){
-       this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);
-       await item.equip();
-       return true;
-   }
-   await item.unequip();
-   return true;
+   return await playerSchema.inventory.manager.toggleEquip(item);
    ```
 
 3. **Item Equip Method** (`@reldens/items-system` `lib/item/type/equipment.js` `Equipment.equip()`)
