@@ -86,11 +86,16 @@ Items system with equipment and usable items
 - Every new inventory item gets its own Modifier copies targeting its owner (`ItemsFactory.isolateModifiers()` in
   `StorageObserver.saveNewItem()`), the items model data modifiers are shared by every item created from them
 - The equip and use messages are rejected for an item key that is not in the inventory or an item of another type
-- A trashed equipped item is unequipped first (its modifiers and equip effects, like a skin, are reverted), unless the
-  inventory is locked by a trade, which refuses the removal
+- An equipped item that leaves the inventory (trashed or dropped) is unequipped first by the `@reldens/items-system`
+  `Inventory.removeItem()` (its modifiers and equip effects, like a skin, are reverted), with
+  `client/players/inventory/unequipOnRemove` on (default); off removes it as it is. The same client scope value is
+  passed as the `unequipOnRemove` option to the server inventory (`server/subscribers/player-subscriber.js`) and to
+  the client inventory receiver (`client/plugin.js`), so both inventories remove the same way. A locked inventory (a
+  trade) refuses the removal
 - On a player death (`server/subscribers/player-death-subscriber.js`) every droppable item is picked at most once, so
   the dropped quantity is the configured one capped by the droppable items, and only the picked equipped items are
-  unequipped, the other equipped items stay active
+  unequipped, the other equipped items stay active; with `server/players/drop/equippedItems` off the equipped items
+  are never droppable
 
 ### Respawn (`lib/respawn/`)
 Player and NPC respawn system
@@ -127,7 +132,8 @@ Leaderboards and ranking system
 - The full scores page (`server/subscriber/create-scores-route.js`) shows the first page for a page parameter that is
   not an integer from 1 (zero, negative, decimal, not numeric or repeated), and uses the default page size
   (`ScoresConst.FULL_TABLE_PAGE_SIZE`) for a `server/scores/fullTableView/pageSize` that is not an integer from 1; the
-  player names of the scores table template (`ui-scores-table.html`, used by the page and the panel) are escaped
+  page size and the title are read once when the route is created (`loadConfig()`, not translated yet); the player
+  names of the scores table template (`ui-scores-table.html`, used by the page and the panel) are escaped
 
 ### Teams (`lib/teams/`)
 Party/guild system
@@ -249,8 +255,9 @@ Advertisement integration system
 - `client/ads/general/sdkRequired` (off by default): on, the login forms stay hidden until every enabled provider SDK
   script loads and when one fails the page shows the `.ads-sdk-error` block (theme `index.html`) and the game can not
   start (`client/required-sdk-login-guard.js`); on the server start the SDK URLs of the enabled providers are requested
-  (`server/required-sdk-reachability-check.js`, timeout `server/ads/sdkCheckTimeout`, the relative URLs are served by
-  the same server and skipped) and one that fails stops the start (`continueProcess` of the
+  (`server/required-sdk-reachability-check.js`, timeout `server/ads/sdkCheckTimeout`, the relative URLs and the
+  absolute ones under `server/publicUrl` or `server/baseUrl` are served by the same server and skipped) and one that
+  fails stops the start (`continueProcess` of the
   `reldens.serverConfigFeaturesReady` event); off, the game starts without the ads that could not load
 
 ### Sync (`lib/sync/`)
@@ -262,7 +269,11 @@ Colyseus primitives isolation layer
 ### Import (`lib/import/`)
 Data import utilities
 - Maps and objects importers, rooms associations creator
-- Skills, class paths, attributes and experience per level importers
+- Skills, class paths, attributes and experience per level importers; the skills importer stores the attack data
+  of a skill from its attack type data or from the `attack` entry of its `properties` (a physical attack carries its
+  own, see the admin sample), with `override` it deletes the skill row and its relations before creating it again,
+  and with `update` it updates each existent animation by its own row
+  (`tests/test-skills-importer.js`)
 - Tile and map image extruders, published map merger
 
 ### Objects (`lib/objects/`)
