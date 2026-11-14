@@ -297,6 +297,13 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('client', 'ads/general/sdkRequired', '0', 3),
 	('server', 'ads/sdkCheckTimeout', '10000', 2);
 
+-- Drop the equipped items on the player death, off keeps them equipped; unequip an equipped item before it leaves the
+-- player inventory (trashed or dropped), off removes it as it is (client scope, the server and the client inventories
+-- read the same value).
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('server', 'players/drop/equippedItems', '1', 3),
+	('client', 'players/inventory/unequipOnRemove', '1', 3);
+
 -- Allow the default administration role to send global chat messages (only when the default value was not changed)
 UPDATE `config` SET `value` = '1,99,9000' WHERE `scope` = 'server' AND `path` = 'chat/messages/global_allowed_roles' AND `value` = '1,9000';
 
