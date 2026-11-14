@@ -20,6 +20,17 @@ const { ChatConst } = require('../lib/chat/constants');
 class TestTeamSceneChange extends BaseTest
 {
 
+    createTeamWithMember(memberMessages)
+    {
+        let teamPlayers = {
+            owner: {player_id: 1, playerName: 'player1', currentTeam: 1, state: {room_id: 41}},
+            member: {player_id: 2, playerName: 'player2', currentTeam: 1, state: {room_id: 114}}
+        };
+        teamPlayers.team = new Team({owner: teamPlayers.owner, ownerClient: {send: () => true}});
+        teamPlayers.team.join(teamPlayers.member, {send: (type, message) => memberMessages.push(message)});
+        return teamPlayers;
+    }
+
     async testOwnerRejoinReplacesTheOwnerClient()
     {
         await this.test('the owner joining its team again replaces the owner player and client', async () => {
@@ -83,22 +94,41 @@ class TestTeamSceneChange extends BaseTest
         await this.test('the owner disband line reaches a member in another scene through its team client', async () => {
             let savedMessages = [];
             let memberMessages = [];
-            let owner = {player_id: 1, playerName: 'player1', currentTeam: 1, state: {room_id: 41}};
-            let member = {player_id: 2, playerName: 'player2', currentTeam: 1, state: {room_id: 114}};
-            let team = new Team({owner, ownerClient: {send: () => true}});
-            team.join(member, {send: (type, message) => memberMessages.push(message)});
+            let teamPlayers = this.createTeamWithMember(memberMessages);
             let chatMessageActions = new ChatMessageActions({
                 events: {},
                 chatPlugin: {chatManager: {saveMessage: async (...saved) => savedMessages.push(saved)}}
             });
-            this.assert.strictEqual(await chatMessageActions.ownerDisbandTeam(member, team), true);
-            let disbandedLine = TeamsConst.CHAT.MESSAGE.DISBANDED.replace('%playerName', owner.playerName)
+            this.assert.strictEqual(await chatMessageActions.ownerDisbandTeam(teamPlayers.member, teamPlayers.team), true);
+            let disbandedLine = TeamsConst.CHAT.MESSAGE.DISBANDED.replace('%playerName', teamPlayers.owner.playerName)
                 .replace('%groupName', 'team');
             this.assert.deepStrictEqual(
                 memberMessages.map(message => [message[ChatConst.MESSAGE.KEY], message[ChatConst.TYPES.KEY]]),
                 [[disbandedLine, ChatConst.TYPES.TEAMS]]
             );
             this.assert.deepStrictEqual(savedMessages, [[disbandedLine, 2, 114, false, ChatConst.TYPES.TEAMS]]);
+        });
+    }
+
+    async testALeaveOfAPlayerOutOfTheTeamSendsNothing()
+    {
+        await this.test('a team leave of a player that is not in the team sends no line and a member leave sends it', async () => {
+            let listeners = {};
+            let memberMessages = [];
+            let teamPlayers = this.createTeamWithMember(memberMessages);
+            let chatMessageActions = new ChatMessageActions({
+                events: {on: (eventName, callback) => listeners[eventName] = callback},
+                chatPlugin: {chatManager: {saveMessage: async () => true}}
+            });
+            chatMessageActions.teamMemberLeaveEventListener();
+            let leaveListener = listeners['reldens.teamLeaveBeforeSendUpdate'];
+            let leaveProps = {currentTeam: teamPlayers.team, room: {}, isOwnerDisbanding: true};
+            let outOfTeamResult = await leaveListener(Object.assign({playerId: 99}, leaveProps));
+            let outOfTeamMessages = memberMessages.length;
+            this.assert.deepStrictEqual(
+                [outOfTeamResult, outOfTeamMessages, await leaveListener(Object.assign({playerId: 2}, leaveProps)), memberMessages.length],
+                [false, 0, true, 1]
+            );
         });
     }
 
