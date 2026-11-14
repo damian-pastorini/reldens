@@ -384,9 +384,14 @@ class CollectGameData
             process.env.RELDENS_APP_PORT = portStr;
             process.env.RELDENS_PUBLIC_URL = publicUrl;
         }
+        TestDataSetup.writeDisposableRoomsMaps(
+            serverPath,
+            sc.get(serverConfig, 'projectThemeName', GameConst.STRUCTURE.DEFAULT)
+        );
         let serverManager = new modules.ServerManager(serverConfig);
         serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
+            await TestDataSetup.createDisposableRooms(event.serverManager.dataServer);
             event.serverManager.configManager.server.health.blockingEnabled = false;
         });
         process.stdout.write('Server: creating HTTP server...\n');
