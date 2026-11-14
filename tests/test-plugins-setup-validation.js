@@ -217,14 +217,14 @@ class TestPluginsSetupValidation extends BaseTest
 
     async testAdsPluginWithoutEventsManager()
     {
-        await this.test('the ads plugin attaches nothing without its events manager', async () => {
+        await this.test('the ads plugin creates and attaches nothing without its events manager', async () => {
             let props = this.createProps();
             props.events = false;
             let plugin = new AdsPlugin();
             plugin.setup(props);
             this.assert.deepStrictEqual(props.listenedEvents, {});
             this.assert.strictEqual(plugin.listenEvents(), false);
-            this.assert.notStrictEqual(plugin.createPlayerAdsHandler, false);
+            this.assert.deepStrictEqual([plugin.adsStartHandler, plugin.createPlayerAdsHandler], [false, false]);
         });
     }
 
