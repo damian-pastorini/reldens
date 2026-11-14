@@ -7,7 +7,8 @@
  * without any request sent, a room deleted with two players inside warns them with the closing countdown and shows them
  * only the room closed modal while a player in another room keeps playing and the stored player of the deleted room
  * logs in to the default room, and a room deleted with the relocation disabled unlinks its stored player. The deleted
- * rooms are town houses no other spec uses, a deleted room is defined again only when the server restarts.
+ * rooms are the disposable rooms the global setup creates on every run before the rooms are defined (TestDataSetup), so
+ * no sample data room is deleted and the next run has them again without a database reset.
  *
  */
 
@@ -19,27 +20,20 @@ const { LoginServerApi } = require('./helpers/login-server-api');
 const { Navigation } = require('./helpers/navigation');
 const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
+const { TestDataSetup } = require('./helpers/test-data-setup');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { RoomsConst } = require('../../lib/rooms/constants');
 const { ChatConst } = require('../../lib/chat/constants');
 const GameTranslations = require('../../lib/game/client/snippets/en_US');
-const { ServerPathResolver } = require('../server-path-resolver');
-const { FileHandler } = require('@reldens/server-utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
 class TestAdminRoomsLiveDeletion
 {
 
-    static PLAYERS_ROOM_NAME = 'reldens-new-age-town-house-05';
-    static UNLINKED_ROOM_NAME = 'reldens-new-age-town-house-04';
-    static DELETED_ROOMS_FILES = [
-        TestAdminRoomsLiveDeletion.PLAYERS_ROOM_NAME+'.json',
-        TestAdminRoomsLiveDeletion.PLAYERS_ROOM_NAME+'.png',
-        TestAdminRoomsLiveDeletion.UNLINKED_ROOM_NAME+'.json',
-        TestAdminRoomsLiveDeletion.UNLINKED_ROOM_NAME+'.png'
-    ];
+    static PLAYERS_ROOM_NAME = TestDataSetup.disposableRoomName(TestDataSetup.PLAYERS_ROOM_KEY);
+    static UNLINKED_ROOM_NAME = TestDataSetup.disposableRoomName(TestDataSetup.UNLINKED_ROOM_KEY);
     static OFFLINE_USERS_SET = 1;
     static DEFAULT_CLOSE_SECONDS = 10;
     static CLOSING_COUNTDOWN = [10, 5, 4, 3, 2, 1];
@@ -156,25 +150,6 @@ class TestAdminRoomsLiveDeletion
         return offlineUser;
     }
 
-    static restoreDeletedRoomsFiles(gameConfig)
-    {
-        let defaultMapsPath = FileHandler.joinPaths(process.cwd(), 'theme', 'default', 'assets', 'maps');
-        let testedMapsPath = FileHandler.joinPaths(
-            ServerPathResolver.resolve(gameConfig.serverPath),
-            'theme',
-            gameConfig.themeName,
-            'assets',
-            'maps'
-        );
-        let restoredFiles = [];
-        for(let fileName of TestAdminRoomsLiveDeletion.DELETED_ROOMS_FILES){
-            if(FileHandler.copyFile(FileHandler.joinPaths(defaultMapsPath, fileName), FileHandler.joinPaths(testedMapsPath, fileName))){
-                restoredFiles.push(fileName);
-            }
-        }
-        expect(restoredFiles, 'The deleted rooms map files are restored').toEqual(TestAdminRoomsLiveDeletion.DELETED_ROOMS_FILES);
-    }
-
     static async deleteRoomFromView(page, longRun, expectedWarning)
     {
         await page.click(Selectors.admin.deleteTopButton);
@@ -282,9 +257,6 @@ class TestAdminRoomsLiveDeletion
     static run()
     {
         test.describe('Admin Rooms Live Deletion', () => {
-            test.afterEach(async ({ gameConfig }) => {
-                TestAdminRoomsLiveDeletion.restoreDeletedRoomsFiles(gameConfig);
-            });
             test('the room view banner counts the players that join and leave the room', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminRoomsLiveDeletion.runBannerTest(page, screenshots, gameConfig, longRun);
             });
