@@ -47,6 +47,15 @@ class TestRewardsEventsMessageActions extends BaseTest
         this.assert.deepStrictEqual(setup.sentMessages, []);
     }
 
+    async assertRefusedClaims(claimCases)
+    {
+        for(let [playerState, options] of claimCases){
+            let setup = this.rewardsBuilder.build({[this.playerId]: playerState}, options);
+            this.assert.strictEqual(await this.rewardsBuilder.accept(setup, this.playerId), false);
+            this.assertNothingGiven(setup);
+        }
+    }
+
     async testReadyRewardIsGivenAndStoredAsComplete()
     {
         await this.test('a ready reward gives its items, is stored as complete and is sent as accepted', async () => {
@@ -64,16 +73,11 @@ class TestRewardsEventsMessageActions extends BaseTest
     async testRewardThatIsNotReadyGivesNothing()
     {
         await this.test('a reward that is not ready gives nothing even when its accept message is sent', async () => {
-            let notReadyStates = [
-                {ready: false, date: '2026-10-28', complete: false},
-                {date: '2026-10-28', complete: false},
-                {}
-            ];
-            for(let notReadyState of notReadyStates){
-                let setup = this.rewardsBuilder.build({[this.playerId]: notReadyState});
-                this.assert.strictEqual(await this.rewardsBuilder.accept(setup, this.playerId), false);
-                this.assertNothingGiven(setup);
-            }
+            await this.assertRefusedClaims([
+                [{ready: false, date: '2026-10-28', complete: false}, {}],
+                [{date: '2026-10-28', complete: false}, {}],
+                [{}, {}]
+            ]);
         });
     }
 
@@ -83,6 +87,29 @@ class TestRewardsEventsMessageActions extends BaseTest
             let setup = this.rewardsBuilder.build({[this.playerId]: Object.assign({}, this.readyState, {complete: true})});
             this.assert.strictEqual(await this.rewardsBuilder.accept(setup, this.playerId), false);
             this.assertNothingGiven(setup);
+        });
+    }
+
+    async testReadyRewardOfAnEventOutOfItsDatesGivesNothing()
+    {
+        await this.test('a ready reward of an ended or not started event gives nothing', async () => {
+            await this.assertRefusedClaims([
+                [this.readyState, {eventDates: {active_from: null, active_to: '2000-01-01 00:00:00'}}],
+                [this.readyState, {eventDates: {active_from: '2999-01-01 00:00:00', active_to: null}}]
+            ]);
+        });
+    }
+
+    async testReadyRewardOfAnEventInsideItsDatesIsGiven()
+    {
+        await this.test('a ready reward of an event inside its dates gives its items', async () => {
+            let setup = this.rewardsBuilder.build(
+                {[this.playerId]: this.readyState},
+                {eventDates: {active_from: '2000-01-01 00:00:00', active_to: '2999-01-01 00:00:00'}}
+            );
+            this.assert.strictEqual(await this.rewardsBuilder.accept(setup, this.playerId), true);
+            this.assert.deepStrictEqual(setup.givenItems, [this.expectedGivenItem(this.playerId)]);
+            this.assert.deepStrictEqual(setup.savedStates, this.expectedSavedStates(this.playerId));
         });
     }
 
