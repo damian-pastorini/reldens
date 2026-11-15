@@ -19,6 +19,23 @@ class TestAdsRewardClaims extends BaseTest
         this.adsBuilder = new AdsRewardClaimsBuilder();
     }
 
+    async testEventVideoClientDataCarriesTheRewardItemKey()
+    {
+        await this.test('the event video client data carries its reward item key, an ad with no reward item has none', async () => {
+            let rewardedSetup = this.adsBuilder.createAdsSetup(false);
+            let rewardedData = rewardedSetup.configValues[AdsConst.CONFIG_PATHS.COLLECTION][rewardedSetup.adId].clientData();
+            this.assert.deepStrictEqual(
+                [rewardedData.eventKey, rewardedData.rewardItemKey],
+                ['reldens.testEvent', 'coins']
+            );
+            let midgameSetup = this.adsBuilder.createAdsSetup(false, GameConst.STATUS.ACTIVE, {
+                related_ads_event_video: {event_key: 'reldens.testEvent', event_data: '{}'}
+            });
+            let midgameData = midgameSetup.configValues[AdsConst.CONFIG_PATHS.COLLECTION][midgameSetup.adId].clientData();
+            this.assert.deepStrictEqual([midgameData.eventKey, Boolean(midgameData.rewardItemKey)], ['reldens.testEvent', false]);
+        });
+    }
+
     async testRewardIsGivenOnceForTheSamePlayedAd()
     {
         await this.test('the reward is given once and a repeated ad ended message is rejected', async () => {
