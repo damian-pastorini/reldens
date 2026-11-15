@@ -105,6 +105,39 @@ class TestObjectsAnimationMessages extends BaseTest
         });
     }
 
+    async testSkillDeathAnimationIsPlayedByItsKey()
+    {
+        await this.test('a killing skill with its own death animation plays it by its animation key', async () => {
+            let skillDeathKey = this.attackKey+'_death';
+            let deathScene = this.createDeathScene([true], {[skillDeathKey]: {skillKey: this.attackKey, key: 'death'}});
+            new ObjectBattleAnimation({}).objectBattleEndAnimation(this.deathMessage, deathScene.gameManager);
+            this.assert.deepStrictEqual(
+                deathScene.sprites.map(sprite => [sprite.key, sprite.played]),
+                [[skillDeathKey, true]]
+            );
+        });
+    }
+
+    async testDeathAnimationRetriesAreCountedPerDeath()
+    {
+        await this.test('death animation retries are counted per death, not for the whole session', async () => {
+            let missingScene = this.createDeathScene([false, false, false], {});
+            let laterScene = this.createDeathScene([false, true], {});
+            let battleAnimation = new ObjectBattleAnimation(this.retryProps);
+            let scheduledTimeouts = new ScheduledTimeouts();
+            let scheduledDelays = await scheduledTimeouts.capture(() => {
+                battleAnimation.objectBattleEndAnimation(this.deathMessage, missingScene.gameManager);
+                let missingDelays = scheduledTimeouts.runAll();
+                battleAnimation.objectBattleEndAnimation(this.deathMessage, laterScene.gameManager);
+                return [missingDelays, scheduledTimeouts.runAll()];
+            });
+            this.assert.deepStrictEqual(
+                [missingScene.sprites.length, laterScene.sprites.map(sprite => sprite.key), scheduledDelays],
+                [0, ['default_death'], [[150, 150], [150]]]
+            );
+        });
+    }
+
 }
 
 module.exports.TestObjectsAnimationMessages = TestObjectsAnimationMessages;
