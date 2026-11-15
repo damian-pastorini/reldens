@@ -6,8 +6,9 @@
  * from the scene room and the global chat room, and the stored chat rows of the sender): the sender and the recipient
  * get the message and an unrelated third player does not; a message to an unknown name or with the wrong letter case
  * returns the translated not found error to the sender only; a message to oneself reaches the same client twice; an
- * "@name" with no text is not sent and the input is cleared; a tampered message reaches only the "t" recipient and one
- * with no "t" reaches nobody and stores no row; a third player in the scene never sees the content over the sender; and a recipient that
+ * "@name" with no text is not sent and the input is cleared; a tampered message reaches only the "t" recipient, one
+ * with no "t" or with no space after the name reaches nobody and stores no row; a third player in the scene never sees
+ * the content over the sender; and a recipient that
  * reloaded and logged in again gets one copy.
  *
  */
@@ -127,6 +128,17 @@ class TestChatPrivate
         await context.secondPage.waitForTimeout(TestChatPrivate.SETTLE_MS);
         expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
         expect(await TestChatPrivate.fetchStoredRows(context.gameConfig, noRecipientMessage[ChatConst.MESSAGE.KEY]), 'No row')
+            .toEqual([]);
+        let noSpaceText = '@'+context.gameConfig.e2ePlayerName2+text+'-no-space';
+        await context.page.waitForTimeout(TestChatPrivate.COOLDOWN_MS);
+        await ChatSteps.sendRaw(context.page, {
+            [ChatConst.MESSAGE.KEY]: noSpaceText,
+            [ChatConst.CHAT_TO]: context.gameConfig.e2ePlayerName2
+        }, true);
+        await context.secondPage.waitForTimeout(TestChatPrivate.SETTLE_MS);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'The text with no space is delivered to nobody')
+            .toEqual([]);
+        expect(await TestChatPrivate.fetchStoredRows(context.gameConfig, noSpaceText), 'No row for the text with no space')
             .toEqual([]);
     }
 
