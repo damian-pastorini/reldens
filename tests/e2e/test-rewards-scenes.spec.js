@@ -4,10 +4,10 @@
  *
  * Tests the login rewards across scenes and for guests (exclusive group: the root player walks from the town to the
  * forest, and the guests are new players): the rewards are sent again with the stored states on the scene change; a
- * reward is claimed in another scene than the login one; a guest gets no login reward state with
- * avoidGuestRewardsOnLogin on (its panel shows the cached state of another player, ISSUE #166), and gets the daily
- * reward stored ready with it off (the login state handler value is changed on the live handler since it is read once
- * on start).
+ * reward is claimed in another scene than the login one; a guest entering after the root player rewards were loaded
+ * gets no login reward state with avoidGuestRewardsOnLogin on (its panel shows the daily reward not claimable, never
+ * the state of the root player), and gets the daily reward stored ready and claimable with it off (the login state
+ * handler value is changed on the live handler since it is read once on start).
  *
  */
 
@@ -86,9 +86,9 @@ class TestRewardsScenes
         await TradeSteps.waitForMessages(player, RewardsConst.ACTIONS.ACCEPTED_REWARD, 1);
     }
 
-    static async runGuestRewardsTest(context, avoidGuestRewards, expectedStates, expectedDailyState)
+    static async runGuestRewardsTest(context, avoidGuestRewards, expectedStates, expectedDailyState, expectedDailyClass)
     {
-        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 2, context.longRun));
+        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 3, context.longRun));
         let changed = await GameplayE2eStateApi.changeFeatureProperty(
             context.gameConfig,
             context.e2eGroup,
@@ -98,9 +98,18 @@ class TestRewardsScenes
         );
         expect(changed.error, 'The guests login rewards setting is changed').toBeUndefined();
         let daily = await RewardsSteps.fetchRewardEvent(context.gameConfig, RewardsSteps.DAILY_LOGIN);
+        await Login.loginRootPlayer(context.secondPage, context.gameConfig, context.longRun);
+        await expect(
+            context.secondPage.locator(Selectors.rewards.reward(daily.id)+Selectors.rewards.active),
+            'The rewards of the root player are loaded with its claimable daily state'
+        ).toHaveCount(1);
         let guest = await CharacterCreation.enterGuestInGame(context.page, context.longRun, Login.TOWN_ROOM_NAME);
         let guestPlayerId = await E2eSeedAndRestoreApi.fetchRowId(context.gameConfig, 'players', {name: guest.playerName});
         await expect(context.page.locator(Selectors.rewards.content), 'The guest rewards are listed').toHaveCount(1);
+        await expect(
+            context.page.locator(Selectors.rewards.reward(daily.id)+expectedDailyClass),
+            'The guest daily reward shows its own state, never the state of the root player'
+        ).toHaveCount(1);
         await context.page.waitForTimeout(TradeSteps.SETTLE_MS);
         expect(
             await E2eSeedAndRestoreApi.loadRows(context.gameConfig, 'rewardsEventsState', {player_id: guestPlayerId}),
@@ -123,7 +132,8 @@ class TestRewardsScenes
                     {page, secondPage, screenshots, gameConfig, e2eGroup, longRun},
                     true,
                     0,
-                    {}
+                    {},
+                    Selectors.rewards.inactive
                 );
             });
             test('guest gets the daily reward ready with avoidGuestRewardsOnLogin off', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
@@ -131,7 +141,8 @@ class TestRewardsScenes
                     {page, secondPage, screenshots, gameConfig, e2eGroup, longRun},
                     false,
                     2,
-                    {ready: true, complete: false}
+                    {ready: true, complete: false},
+                    Selectors.rewards.active
                 );
             });
         });
