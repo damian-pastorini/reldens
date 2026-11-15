@@ -6,8 +6,9 @@
  * configured enemy placed next to the first player with one hit point and its droppable reward changed for the group,
  * both clients recording the room messages and DropsProbe reading the drops of the room): the drops are created on
  * separate nodes and every client receives them; a pick up gives the item and removes the drop on every client, and the
- * second pick up of the same drop finds no object and sends the remove again (two players picking the same drop at the
- * same time get one item each and a pick up sent twice in the same tick gives two items, ISSUE #170); a configured disappear time removes the drops on
+ * second pick up of the same drop finds no object and sends the remove again; two players picking the same drop at the
+ * same time get one item between them and a pick up sent twice in the same tick gives one item; a configured disappear
+ * time removes the drops on
  * every client and a disappear time of zero keeps them; the auto pick up on hit gives the item when the player walks
  * over the drop and nothing with it off; a drop out of the configured drops or actions interaction distance is not
  * picked up; and a pick up with no drop id does nothing.
@@ -92,6 +93,44 @@ class TestRewardsDrops
             .toEqual(pickedQuantities);
     }
 
+    static async expectPickedOnce(context, dropsKill, dropId, quantities, message)
+    {
+        let expectedTotal = quantities[0] + quantities[1] + 1;
+        await expect.poll(async () => {
+            let pickedQuantities = await KillRewardsSteps.fetchQuantities(context, dropsKill);
+            return pickedQuantities[0] + pickedQuantities[1];
+        }, {message, timeout: TimeConstants.SERVER_RESPONSE}).toBe(expectedTotal);
+        await context.page.waitForTimeout(KillRewardsSteps.SETTLE_MS);
+        let settledQuantities = await KillRewardsSteps.fetchQuantities(context, dropsKill);
+        expect(settledQuantities[0] + settledQuantities[1], message+', no second item later').toBe(expectedTotal);
+        expect(
+            (await DeathDropSteps.fetchRoomDrops(context.gameConfig)).filter(drop => dropId === drop.id),
+            'The picked drop is removed'
+        ).toHaveLength(0);
+        return settledQuantities;
+    }
+
+    static async runSimultaneousPickUpsTest(context)
+    {
+        let dropsKill = await KillRewardsSteps.enterBothWithDrops(context, 1, KillRewardsSteps.DROPS_IN_RANGE);
+        let dropId = [...dropsKill.drops].shift().id;
+        let quantities = await KillRewardsSteps.fetchQuantities(context, dropsKill);
+        let pickUp = Object.assign({id: dropId}, KillRewardsSteps.PICK_UP);
+        await Promise.all(dropsKill.players.map(player => RoomMessagesRecorder.sendMessage(player.page, pickUp)));
+        await TestRewardsDrops.expectPickedOnce(context, dropsKill, dropId, quantities, 'The two players get one item');
+    }
+
+    static async runDoublePickUpTest(context)
+    {
+        let dropsKill = await KillRewardsSteps.enterBothWithDrops(context, 1, KillRewardsSteps.DROPS_IN_RANGE);
+        let dropId = [...dropsKill.drops].shift().id;
+        let quantities = await KillRewardsSteps.fetchQuantities(context, dropsKill);
+        let pickUp = Object.assign({id: dropId}, KillRewardsSteps.PICK_UP);
+        await RoomMessagesRecorder.sendMessages(context.page, [pickUp, pickUp]);
+        let picked = await TestRewardsDrops.expectPickedOnce(context, dropsKill, dropId, quantities, 'One item for both');
+        expect(picked, 'The picker gets the single item').toEqual([quantities[0] + 1, quantities[1]]);
+    }
+
     static async runDisappearTest(context, disappearTime, keptDrops)
     {
         let dropsKill = await KillRewardsSteps.enterBothWithDrops(context, 1, {
@@ -158,6 +197,12 @@ class TestRewardsDrops
             });
             test('picked drop gives the item and is removed on every client, a second pick up finds no object', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsDrops.runPickUpTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('same drop picked by both players at the same time gives one item', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestRewardsDrops.runSimultaneousPickUpsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('pick up sent twice in the same tick gives one item', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestRewardsDrops.runDoublePickUpTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('configured disappear time removes the drops on every client', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsDrops.runDisappearTest(
