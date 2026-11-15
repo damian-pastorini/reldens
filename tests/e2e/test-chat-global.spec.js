@@ -7,8 +7,8 @@
  * for the group) reaches only the sender; a second global or private message inside the cooldown is dropped; tampered
  * messages with a blank or non string text, with no "#" or "@" (which still uses the cooldown) or a global message
  * ending in "@" and a space are delivered to nobody and store no row; a message over the stored text column (the limit
- * raised for the group) is still broadcast and stores no row; and a send with the chat room connection lost reaches no
- * other client.
+ * raised for the group) is still broadcast and stores no row; and a send with the chat room connection lost shows the
+ * connection lost modal to the sender and reaches no other client.
  *
  */
 
@@ -16,7 +16,9 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { ChatSteps } = require('./helpers/chat-steps');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
+const { Selectors } = require('./selectors');
 const { ChatConst } = require('../../lib/chat/constants');
+const GameTranslations = require('../../lib/game/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -110,6 +112,8 @@ class TestChatGlobal
         await TestChatGlobal.enter(context);
         await context.page.evaluate((globalKey) => window.reldens.joinedRooms[globalKey].connection.close(), ChatConst.CHAT_GLOBAL);
         await ChatSteps.sendText(context.page, '#e2e-connection-lost');
+        await expect(context.page.locator(Selectors.reloadModal.message), 'The sender gets the connection lost modal')
+            .toHaveText(GameTranslations.game.errors.connectionLost, {timeout: TimeConstants.SERVER_RESPONSE});
         await context.secondPage.waitForTimeout(TestChatGlobal.SETTLE_MS);
         expect(
             await ChatSteps.fetchTexts(context.secondPage, ChatConst.TYPES.GLOBAL),
@@ -132,7 +136,7 @@ class TestChatGlobal
             test('message over the stored column is broadcast with no row', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatGlobal.runOverColumnTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('send with the chat room connection lost reaches no other client', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('send with the chat room connection lost shows the connection lost modal and reaches no other client', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatGlobal.runConnectionLostTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
         });
