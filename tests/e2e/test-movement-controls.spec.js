@@ -8,10 +8,13 @@
  * release or touch end): every arrow button pressed walks the player on its axis and sign with one direction message,
  * gets the opacity class while pressed and its release stops the player, the same with a touch held on every button
  * from a page with touch support (the touch start and end sent with the Chromium input domain, Playwright only taps);
- * the mouse leaving a pressed button stops the player while the mouse is still down; a right click on the canvas prevents the browser menu; and on a page narrower than the
+ * the mouse leaving a pressed button stops the player while the mouse is still down; the mouse passing over and out of
+ * a button that was never pressed sends no stop, so a player walking with a held arrow key keeps walking; with both
+ * joystick options off the plain arrow buttons walk and their release stops; a right click
+ * on the canvas prevents the browser menu; and on a page narrower than the
  * joystick media width (resized after the login, the joystick scrolled into view) the joystick replaces the arrow
  * buttons and its thumb drag walks right, adds the down axis on a diagonal, stops inside the threshold, walks up and
- * stops on the release (a drag from one direction straight to another keeps the first one, ISSUE #337).
+ * stops on the release, and a drag from one direction straight to another stops the first one and walks only the new one.
  *
  */
 
@@ -38,10 +41,15 @@ class TestMovementControls
     static STOP_MESSAGE = {dir: '', act: GameConst.STOP};
     static OPACITY_CLASS = /button-opacity-off/;
     static HOLD_MS = 600;
+    static RIGHT_KEY = 'ArrowRight';
     static CANVAS_CLICK_OFFSET = 100;
     static LOW_RESOLUTION = {width: 700, height: 900};
     static JOYSTICK_DRAG = 40;
     static JOYSTICK_INSIDE_THRESHOLD = 5;
+    static JOYSTICK_RIGHT = {offset: {x: TestMovementControls.JOYSTICK_DRAG, y: 0}, signs: [1, 0], message: 'The right drag'};
+    static JOYSTICK_UP = {offset: {x: 0, y: -TestMovementControls.JOYSTICK_DRAG}, signs: [0, -1], message: 'Only up walks'};
+    static JOYSTICK_DIAGONAL = {offset: {x: TestMovementControls.JOYSTICK_DRAG, y: TestMovementControls.JOYSTICK_DRAG}, signs: [1, 1], message: 'The diagonal'};
+    static JOYSTICK_INSIDE = {offset: {x: TestMovementControls.JOYSTICK_INSIDE_THRESHOLD, y: TestMovementControls.JOYSTICK_INSIDE_THRESHOLD}, signs: [0, 0], message: 'Inside stops'};
     static CONTROLS_PATH = 'client/ui/controls';
     static MOUSE_INPUT = (page) => ({
         aim: async (button) => button.hover(),
@@ -118,6 +126,27 @@ class TestMovementControls
         await context.page.mouse.up();
     }
 
+    static async runKeyHeldOverButtonTest(context)
+    {
+        let walkContext = await MovementScenario.enterReadyRoom(context, Login.TOWN_ROOM_NAME);
+        await MovementScenario.placePlayerOnReturnPoint(context.page, walkContext);
+        let start = await walkContext.fetchPlayer();
+        await GameplayE2eStateApi.recordMovementMessages(context.gameConfig, walkContext.playerName);
+        await context.page.keyboard.down(TestMovementControls.RIGHT_KEY);
+        await expect.poll(
+            async () => Math.sign((await walkContext.fetchPlayer()).x - start.x),
+            {message: 'The held right arrow key walks right', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(1);
+        await context.page.locator('#'+GameConst.UP).hover();
+        await context.page.mouse.move(0, 0);
+        await context.page.waitForTimeout(TestMovementControls.HOLD_MS);
+        let messages = await GameplayE2eStateApi.fetchMovementMessages(context.gameConfig, walkContext.playerName);
+        await context.page.keyboard.up(TestMovementControls.RIGHT_KEY);
+        expect(messages, 'The mouse passing over a button that was never pressed sends no stop').toEqual([
+            {dir: GameConst.RIGHT, act: ''}
+        ]);
+    }
+
     static async runContextMenuTest(context)
     {
         await MovementScenario.enterReadyRoom(context, Login.TOWN_ROOM_NAME);
@@ -183,23 +212,15 @@ class TestMovementControls
         await MovementScenario.expectStillWithMessages(walkContext, expectedMessages, message);
     }
 
-    static async runLowResolutionsJoystickOnlyTest(context)
+    static async runArrowsWithOptionsTest(context, controlsOptions, expectedClasses, expectedMessages, message)
     {
-        let walkContext = await TestMovementControls.enterTownWithControls(
-            context,
-            {useJoystick: false, useJoystickOnLowResolutions: true}
-        );
-        let controlsBox = context.page.locator('.ui-box-controls-main-container');
-        await expect(controlsBox, 'The controls box gets the joystick class').toHaveClass(/ui-box-joystick/);
-        await expect(controlsBox, 'The controls box gets the low resolutions class').toHaveClass(
-            /joystick-small-resolutions-only/
-        );
-        await TestMovementControls.pressUpButton(
-            context,
-            walkContext,
-            [{dir: GameConst.UP, act: ''}, TestMovementControls.STOP_MESSAGE, TestMovementControls.STOP_MESSAGE],
-            'The registered up button walks, the button and the joystick release send the stop'
-        );
+        let walkContext = await TestMovementControls.enterTownWithControls(context, controlsOptions);
+        let boxClasses = (await context.page.locator('.ui-box-controls-main-container').getAttribute('class')).split(' ');
+        expect(
+            Object.fromEntries(Object.keys(expectedClasses).map(boxClass => [boxClass, boxClasses.includes(boxClass)])),
+            'The controls box classes'
+        ).toEqual(expectedClasses);
+        await TestMovementControls.pressUpButton(context, walkContext, expectedMessages, message);
     }
 
     static async runControlsOffTest(context)
@@ -228,40 +249,51 @@ class TestMovementControls
         await expect(context.page.locator('.arrows-container'), 'The arrow buttons are hidden').toBeHidden();
     }
 
-    static async runJoystickDragTest(context)
+    static async runJoystickDrags(context, drags, expectedMessages, message)
     {
         let walkContext = await TestMovementControls.enterLowResolution(context);
-        let drag = TestMovementControls.JOYSTICK_DRAG;
-        let inside = TestMovementControls.JOYSTICK_INSIDE_THRESHOLD;
         await GameplayE2eStateApi.recordMovementMessages(context.gameConfig, walkContext.playerName);
         await context.page.mouse.move(walkContext.joystickCenter.x, walkContext.joystickCenter.y);
         await context.page.mouse.down();
-        await TestMovementControls.dragJoystick(context, walkContext, {x: drag, y: 0}, [1, 0], 'The right drag walks');
-        await TestMovementControls.dragJoystick(context, walkContext, {x: drag, y: drag}, [1, 1], 'The diagonal drag');
-        await TestMovementControls.dragJoystick(context, walkContext, {x: inside, y: inside}, [0, 0], 'Inside stops');
-        await TestMovementControls.dragJoystick(context, walkContext, {x: 0, y: -drag}, [0, -1], 'The up drag walks');
+        for(let drag of drags){
+            await TestMovementControls.dragJoystick(context, walkContext, drag.offset, drag.signs, drag.message);
+        }
         await context.page.mouse.up();
-        await MovementScenario.expectStillWithMessages(
-            walkContext,
-            [
-                {dir: GameConst.RIGHT, act: ''},
-                {dir: GameConst.DOWN, act: ''},
-                TestMovementControls.STOP_MESSAGE,
-                {dir: GameConst.UP, act: ''},
-                TestMovementControls.STOP_MESSAGE
-            ],
-            'The joystick sends every new direction once, the threshold stop and the release stop'
-        );
+        await MovementScenario.expectStillWithMessages(walkContext, expectedMessages, message);
     }
 
     static run()
     {
         test.describe('Movement Controls', () => {
+            test('the joystick dragged from one direction straight to another walks only the new one', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementControls.runJoystickDrags(
+                    {page, gameConfig, e2eGroup, longRun},
+                    [TestMovementControls.JOYSTICK_RIGHT, TestMovementControls.JOYSTICK_UP],
+                    [{dir: GameConst.RIGHT, act: ''}, TestMovementControls.STOP_MESSAGE, {dir: GameConst.UP, act: ''}, TestMovementControls.STOP_MESSAGE],
+                    'The joystick stops the right direction before it sends the up one'
+                );
+            });
             test('the low resolution shows the joystick instead of the arrow buttons', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementControls.runLowResolutionTest({page, gameConfig, e2eGroup, longRun});
             });
             test('the joystick drag walks every axis, stops inside the threshold and on the release', async ({ page, gameConfig, e2eGroup, longRun }) => {
-                await TestMovementControls.runJoystickDragTest({page, gameConfig, e2eGroup, longRun});
+                await TestMovementControls.runJoystickDrags(
+                    {page, gameConfig, e2eGroup, longRun},
+                    [
+                        TestMovementControls.JOYSTICK_RIGHT,
+                        TestMovementControls.JOYSTICK_DIAGONAL,
+                        TestMovementControls.JOYSTICK_INSIDE,
+                        TestMovementControls.JOYSTICK_UP
+                    ],
+                    [
+                        {dir: GameConst.RIGHT, act: ''},
+                        {dir: GameConst.DOWN, act: ''},
+                        TestMovementControls.STOP_MESSAGE,
+                        {dir: GameConst.UP, act: ''},
+                        TestMovementControls.STOP_MESSAGE
+                    ],
+                    'The joystick sends every new direction once, the threshold stop and the release stop'
+                );
             });
             test('every on-screen arrow button walks while pressed and its release stops the player', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementControls.runButtonsTest(
@@ -279,11 +311,29 @@ class TestMovementControls
             test('the mouse leaving a pressed arrow button stops the player', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementControls.runMouseOutTest({page, gameConfig, e2eGroup, longRun});
             });
+            test('the mouse passing over an arrow button never pressed keeps the held key walking', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementControls.runKeyHeldOverButtonTest({page, gameConfig, e2eGroup, longRun});
+            });
             test('a right click on the canvas opens no browser menu', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementControls.runContextMenuTest({page, gameConfig, e2eGroup, longRun});
             });
             test('with only the low resolutions joystick on the arrows walk and the box gets the joystick classes', async ({ page, gameConfig, e2eGroup, longRun }) => {
-                await TestMovementControls.runLowResolutionsJoystickOnlyTest({page, gameConfig, e2eGroup, longRun});
+                await TestMovementControls.runArrowsWithOptionsTest(
+                    {page, gameConfig, e2eGroup, longRun},
+                    {useJoystick: false, useJoystickOnLowResolutions: true},
+                    {'ui-box-joystick': true, 'joystick-small-resolutions-only': true},
+                    [{dir: GameConst.UP, act: ''}, TestMovementControls.STOP_MESSAGE, TestMovementControls.STOP_MESSAGE],
+                    'The registered up button walks, the button and the joystick release send the stop'
+                );
+            });
+            test('with both joystick options off the plain arrows walk', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementControls.runArrowsWithOptionsTest(
+                    {page, gameConfig, e2eGroup, longRun},
+                    {useJoystick: false, useJoystickOnLowResolutions: false},
+                    {'ui-box-joystick': false, 'joystick-small-resolutions-only': false},
+                    [{dir: GameConst.UP, act: ''}, TestMovementControls.STOP_MESSAGE],
+                    'The plain up button walks and its release sends the stop'
+                );
             });
             test('the controls off show no controls and the keyboard still walks the player', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementControls.runControlsOffTest({page, gameConfig, e2eGroup, longRun});
