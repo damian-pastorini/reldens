@@ -8,8 +8,11 @@
  * with the chase time out of 0 for the group the enemy never gives up; with a 3 seconds chase time out a player hit on
  * the chasing enemy restarts it while a hit of the
  * second player on that busy enemy does not; and the enemy that left the battle walks back to its origin once it can
- * move again. The player hits use the attack skill with its range check off for the group, so they land from out of
- * range.
+ * move again. The enemy private params seeded on its stored row (the forest room disposed before the login, so it is
+ * created again with them, and disposed again at the end, so the next test gets the restored row) override the config:
+ * its chaseTimeOut makes the enemy leave the battle with the config chase time out at 0, and its chaseMultiple adds the
+ * second player to the battle of the enemy busy with the first one. The player hits use the attack skill with its range
+ * check off for the group, so they land from out of range.
  *
  */
 
@@ -18,9 +21,11 @@ const { EnemyAggressionSteps } = require('./helpers/enemy-aggression-steps');
 const { CombatSkillCasting } = require('./helpers/combat-skill-casting');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ActionsConst } = require('../../lib/actions/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -154,6 +159,81 @@ class TestEnemyChaseTimeOuts
         );
     }
 
+    static async disposeForest(context)
+    {
+        let disposed = await GameplayE2eStateApi.disposeRoom(context.gameConfig, Login.FOREST_ROOM_NAME);
+        expect(
+            [Login.FOREST_ROOM_NAME, 'Room '+Login.FOREST_ROOM_NAME+' not found.'],
+            'The forest room is disposed or not created yet'
+        ).toContain(disposed.disposed || disposed.error);
+    }
+
+    static async seedEnemyPrivateParams(context, privateParams)
+    {
+        let gameConfig = context.gameConfig;
+        let enemyFilters = {client_key: gameConfig.e2eEnemyKey};
+        let enemyRow = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'objects', enemyFilters)].shift();
+        await E2eSeedAndRestoreApi.updateWithPreserve(gameConfig, context.e2eGroup, 'objects', enemyFilters, {
+            private_params: sc.toJsonString(Object.assign(sc.toJson(enemyRow.private_params, {}), privateParams))
+        });
+        await TestEnemyChaseTimeOuts.disposeForest(context);
+    }
+
+    static async leaveAndDisposeForest(context, pages)
+    {
+        for(let page of pages){
+            await page.goto('about:blank');
+        }
+        await TestEnemyChaseTimeOuts.disposeForest(context);
+    }
+
+    static async runPrivateChaseTimeOutTest(context)
+    {
+        await TestEnemyChaseTimeOuts.overrideChaseTimeOut(context, 0);
+        await TestEnemyChaseTimeOuts.seedEnemyPrivateParams(context, {
+            chaseTimeOut: TestEnemyChaseTimeOuts.CHASE_TIME_OUT_MS
+        });
+        let chase = await TestEnemyChaseTimeOuts.startFrozenChase(context);
+        await TestEnemyChaseTimeOuts.expectBattleLeft(
+            chase.combat,
+            TestEnemyChaseTimeOuts.CHASE_TIME_OUT_MS + TimeConstants.SERVER_RESPONSE,
+            'The enemy private chase time out overrides the config 0, so the enemy leaves the battle'
+        );
+        await TestEnemyChaseTimeOuts.leaveAndDisposeForest(context, [context.page]);
+    }
+
+    static async runPrivateChaseMultipleTest(context)
+    {
+        await TestEnemyChaseTimeOuts.overrideChaseTimeOut(context, 0);
+        await TestEnemyChaseTimeOuts.seedEnemyPrivateParams(context, {chaseMultiple: true});
+        let secondConfig = Login.fetchSecondPlayerConfig(context.gameConfig);
+        await Login.loginAndEnterForest(context.secondPage, secondConfig, context.longRun);
+        let chase = await TestEnemyChaseTimeOuts.startFrozenChase(context);
+        test.setTimeout(test.info().timeout + TimeConstants.forLongRun(TimeConstants.GAME_START, context.longRun));
+        let placed = await RoomObjectsApi.placePlayerNextToObject(
+            context.secondPage,
+            secondConfig,
+            Login.FOREST_ROOM_NAME,
+            chase.combat.enemyKey,
+            TimeConstants.SCENE_LOAD
+        );
+        expect(placed.reached, 'The second player is placed next to the frozen enemy').toBe(true);
+        let secondBattle = await RoomObjectsApi.startEnemyBattle(
+            context.gameConfig,
+            chase.combat.roomName,
+            secondConfig.e2ePlayerName,
+            chase.combat.enemyKey
+        );
+        expect(secondBattle.enemyKey, 'The second player battle start must reach the enemy: '+secondBattle.error).toBe(
+            chase.combat.enemyKey
+        );
+        await expect.poll(
+            async () => await CombatSkillCasting.fetchEnemyInBattle(chase.combat),
+            {message: 'With the private chaseMultiple the enemy battle holds both players', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(2);
+        await TestEnemyChaseTimeOuts.leaveAndDisposeForest(context, [context.page, context.secondPage]);
+    }
+
     static async runBackToOriginTest(context)
     {
         await TestEnemyChaseTimeOuts.overrideChaseTimeOut(context, TestEnemyChaseTimeOuts.CHASE_TIME_OUT_MS);
@@ -183,6 +263,14 @@ class TestEnemyChaseTimeOuts
             });
             test('enemy that left the battle walks back to its origin', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestEnemyChaseTimeOuts.runBackToOriginTest({page, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('enemy private param chaseTimeOut overrides the config chase time out', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestEnemyChaseTimeOuts.runPrivateChaseTimeOutTest({page, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('enemy private param chaseMultiple adds the second player to its battle', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestEnemyChaseTimeOuts.runPrivateChaseMultipleTest(
+                    {page, secondPage, screenshots, gameConfig, e2eGroup, longRun}
+                );
             });
         });
     }
