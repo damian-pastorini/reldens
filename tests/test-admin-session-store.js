@@ -12,9 +12,9 @@ const util = require('util');
 class TestAdminSessionStore extends BaseTest
 {
 
-    createSessionStore()
+    createSessionStore(sharedRows)
     {
-        let storeSetup = {rows: {}};
+        let storeSetup = {rows: sharedRows || {}};
         storeSetup.sessionStore = new AdminSessionStore({
             ttlMs: 60000,
             pruneIntervalMs: 3600000,
@@ -53,6 +53,25 @@ class TestAdminSessionStore extends BaseTest
             await storeSetup.setSession('session-a', {cookie: {}, user: {id: 5}});
             await storeSetup.destroySession('session-a');
             this.assert.strictEqual(await storeSetup.getSession('session-a'), null);
+        });
+    }
+
+    async testTheSessionSurvivesARestartUntilItsMaxAge()
+    {
+        await this.test('a session stored before a restart is loaded by the new store until its cookie max age ends', async () => {
+            let maxAgeMs = 86400000;
+            let firstStore = this.createSessionStore();
+            let sessionData = {cookie: {expires: new Date(Date.now()+maxAgeMs)}, user: {id: 7}};
+            await firstStore.setSession('session-r', sessionData);
+            let restartedStore = this.createSessionStore(firstStore.rows);
+            let expires = firstStore.rows['session-r'].expires;
+            this.assert.deepStrictEqual(
+                sc.toJsonString(await restartedStore.getSession('session-r')),
+                sc.toJsonString(sessionData)
+            );
+            this.assert.strictEqual(await restartedStore.sessionStore.loadSession('session-r', expires - 1) !== null, true);
+            this.assert.strictEqual(await restartedStore.sessionStore.loadSession('session-r', expires), null);
+            this.assert.strictEqual(sc.hasOwn(restartedStore.rows, 'session-r'), false);
         });
     }
 
