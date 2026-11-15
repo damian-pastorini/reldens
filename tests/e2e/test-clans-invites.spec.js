@@ -8,7 +8,9 @@
  * accepted line while an unrelated player gets nothing; a decline from the request box consumes the invite and sends
  * the rejected line; answers with no invite, a second accept and an accept after the disband
  * are rejected; an accept while in another clan leaves it first and an owner accepting another clan disbands its own;
- * invites from a player with no clan or to itself are rejected; open invites on shows the button to a member and off hides it, the button is hidden for a member and for a
+ * invites from a player with no clan or to itself (the own id as a string or a number), to a member, or sent by a
+ * member with the open invites off are rejected; open invites on shows the button to a member and off hides it, the
+ * button is hidden for a member and for a
  * player with no clan; and a decline or an accept with the owner gone consume the invite.
  *
  */
@@ -114,10 +116,22 @@ class TestClansInvites
         let entered = await TestClansInvites.enter(context, 3);
         let players = entered.players;
         await ClanSteps.invite(players[1], players[2]);
-        await ClanSteps.invite(players[0], {playerId: String(players[0].playerId)});
+        for(let ownPlayerId of [String(players[0].playerId), Number(players[0].playerId)]){
+            await ClanSteps.invite(players[0], {playerId: ownPlayerId});
+        }
         await players[0].page.waitForTimeout(TestClansInvites.SETTLE_MS);
-        expect((await ClanSteps.fetchClans(context.gameConfig))[entered.clanId].pendingInvites, 'No invite with no clan or to itself')
-            .toEqual([]);
+        expect(
+            (await ClanSteps.fetchClans(context.gameConfig))[entered.clanId].pendingInvites,
+            'No invite with no clan or to itself, with the own id as a string or a number'
+        ).toEqual([]);
+        await ClanSteps.join(context.gameConfig, players[0], players[1], entered.clanId, [players[0].playerId, players[1].playerId]);
+        await ClanSteps.invite(players[0], players[1]);
+        await ClanSteps.invite(players[1], players[2]);
+        await players[0].page.waitForTimeout(TestClansInvites.SETTLE_MS);
+        expect(
+            (await ClanSteps.fetchClans(context.gameConfig))[entered.clanId].pendingInvites,
+            'No invite to a member, nor sent by a member with the open invites off'
+        ).toEqual([]);
     }
 
     static async runInviteButtonTest(context, openInvites, expectedButtons)
