@@ -42,14 +42,12 @@ class TestRouteLimits
         return await fetch(SecurityApi.hostUrl(gameConfig, host)+route, {headers, redirect: 'manual'});
     }
 
-    static async fetchStatusCode(gameConfig, tokenValue, expiresAt)
+    static async fetchStatusCode(gameConfig, token)
     {
         return (await TestRouteLimits.fetchRoute(
             gameConfig,
             GameRoomJoin.IPV4_HOST,
-            GameConst.ROUTE_PATHS.SERVER_STATUS+'?token='+encodeURIComponent(
-                await LoginServerApi.fetchDisconnectToken(gameConfig, tokenValue, expiresAt)
-            )
+            GameConst.ROUTE_PATHS.SERVER_STATUS+'?token='+encodeURIComponent(token)
         )).status;
     }
 
@@ -64,14 +62,18 @@ class TestRouteLimits
             TestRouteLimits.FORBIDDEN_STATUS
         );
         let futureExpiration = Date.now() + TestRouteLimits.TOKEN_LIFETIME_MS;
-        expect(await TestRouteLimits.fetchStatusCode(gameConfig, 'e2e-not-the-status-value', futureExpiration), 'Foreign').toBe(
-            TestRouteLimits.FORBIDDEN_STATUS
-        );
-        let pastExpiration = Date.now() - TestRouteLimits.TOKEN_LIFETIME_MS;
-        expect(await TestRouteLimits.fetchStatusCode(gameConfig, GameConst.HEALTH.STATUS_TOKEN_VALUE, pastExpiration), 'Expired').toBe(
-            TestRouteLimits.FORBIDDEN_STATUS
-        );
-        let statusToken = await LoginServerApi.fetchDisconnectToken(gameConfig, GameConst.HEALTH.STATUS_TOKEN_VALUE, futureExpiration);
+        let statusValue = GameConst.HEALTH.STATUS_TOKEN_VALUE;
+        let rejectedTokens = {
+            foreign: await LoginServerApi.fetchStatusToken(gameConfig, 'e2e-not-the-status-value', futureExpiration),
+            expired: await LoginServerApi.fetchStatusToken(gameConfig, statusValue, Date.now() - TestRouteLimits.TOKEN_LIFETIME_MS),
+            disconnection: await LoginServerApi.fetchDisconnectToken(gameConfig, statusValue, futureExpiration)
+        };
+        for(let rejectedKey of Object.keys(rejectedTokens)){
+            expect(await TestRouteLimits.fetchStatusCode(gameConfig, rejectedTokens[rejectedKey]), rejectedKey).toBe(
+                TestRouteLimits.FORBIDDEN_STATUS
+            );
+        }
+        let statusToken = await LoginServerApi.fetchStatusToken(gameConfig, statusValue, futureExpiration);
         let statusResponse = await TestRouteLimits.fetchRoute(
             gameConfig,
             GameRoomJoin.IPV4_HOST,
