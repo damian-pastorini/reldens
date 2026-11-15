@@ -392,6 +392,11 @@ class CollectGameData
         serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
             await TestDataSetup.createDisposableRooms(event.serverManager.dataServer);
+            await TestDataSetup.separateRoomArrival(
+                event.serverManager.dataServer,
+                TestDataSetup.SEPARATED_ARRIVAL.roomName,
+                TestDataSetup.SEPARATED_ARRIVAL.fromRoomName
+            );
             event.serverManager.configManager.server.health.blockingEnabled = false;
         });
         process.stdout.write('Server: creating HTTP server...\n');
