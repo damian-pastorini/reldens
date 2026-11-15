@@ -9,12 +9,14 @@
  * straight to the inventory; a reldens.beforeGiveRewards listener that cancels the event leaves nothing given (a
  * non droppable reward with a drop quantity above one gives a single non stackable item,
  * ISSUE #150); a reward with a missing item record gives no item while its experience is still given; a unique reward is given and its
- * stored was_given is set (the next kill gives it again, ISSUE #167); and a modifier reward is applied to the killer.
+ * stored was_given is set, and once the killed enemy respawns the next kill of a placed enemy of the same object does
+ * not give it again; and a modifier reward is applied to the killer.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { KillRewardsSteps } = require('./helpers/kill-rewards-steps');
+const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Login } = require('./helpers/login');
@@ -69,7 +71,7 @@ class TestRewardsKills
         await KillRewardsSteps.changeEnemyReward(context, rewardChanges);
         let before = await TestRewardsKills.fetchKillerRewards(context, reward.item.key);
         await KillRewardsSteps.killPlacedEnemy(context, placement);
-        return {reward, before};
+        return {reward, before, placement};
     }
 
     static async runKillRewardTest(context, caseKey)
@@ -105,6 +107,27 @@ class TestRewardsKills
                 .shift().was_given),
             {message: 'The unique reward is stored as given', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBe(1);
+        await expect.poll(
+            async () => (await GameplayE2eStateApi.fetchEnemyLife(
+                context.gameConfig,
+                Login.FOREST_ROOM_NAME,
+                killed.placement.bodyKey
+            )).life,
+            {message: 'The killed enemy respawns', timeout: TimeConstants.GAME_START}
+        ).toBeGreaterThan(ForestEnemyKill.ONE_HIT_LIFE);
+        let nextPlacement = await ForestEnemyKill.placeTargetedEnemy(
+            context.page,
+            context.gameConfig,
+            context.gameConfig.e2eEnemyKey,
+            ForestEnemyKill.ONE_HIT_LIFE,
+            TimeConstants.SCENE_LOAD,
+            false
+        );
+        await KillRewardsSteps.killPlacedEnemy(context, nextPlacement);
+        expect(
+            (await TestRewardsKills.fetchKillerRewards(context, reward.item.key)).quantity,
+            'The next kill of the enemy does not give the unique reward again'
+        ).toBe(givenOnce);
     }
 
     static async runModifierTest(context)
