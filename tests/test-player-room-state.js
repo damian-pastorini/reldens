@@ -8,6 +8,7 @@ const { BaseTest } = require('./base-test');
 const { PlayerRoomState } = require('../lib/game/server/player-room-state');
 const { RoomsConst } = require('../lib/rooms/constants');
 const { GameConst } = require('../lib/game/constants');
+const { sc } = require('@reldens/utils');
 
 class TestPlayerRoomState extends BaseTest
 {
@@ -82,6 +83,42 @@ class TestPlayerRoomState extends BaseTest
                 [...players].shift().state,
                 {room_id: 4, x: 64, y: 64, dir: GameConst.DOWN, scene: 'forest'}
             );
+        });
+    }
+
+    createConfiguredRoomState(configValues, loadedRoom)
+    {
+        return new PlayerRoomState({
+            config: {get: (path, defaultValue) => sc.get(configValues, path, defaultValue)},
+            roomsManager: {loadRoomById: async (roomId) => loadedRoom.roomId === roomId ? loadedRoom : false}
+        });
+    }
+
+    async testAPlayerWithAMissingRoomIsPlacedOnTheDefaultRoom()
+    {
+        await this.test('a player whose stored room is missing is placed on the default room return point', async () => {
+            let returnPointDefault = {
+                [RoomsConst.RETURN_POINT_KEYS.X]: 400,
+                [RoomsConst.RETURN_POINT_KEYS.Y]: 500,
+                [RoomsConst.RETURN_POINT_KEYS.DIRECTION]: GameConst.UP
+            };
+            let defaultRoom = {roomId: 41, roomName: 'town', returnPointDefault};
+            let scenes = [];
+            for(let defaultRoomId of [41, 99]){
+                let player = {id: 7, state: {room_id: null, x: 10, y: 20, dir: GameConst.DOWN}};
+                await this.createConfiguredRoomState(
+                    {
+                        ['server/'+RoomsConst.DEFAULT_ROOM_CONFIG_PATH]: defaultRoomId,
+                        'client/rooms/selection': {allowOnLogin: false}
+                    },
+                    defaultRoom
+                ).setSceneOnPlayers([player], RoomsConst.ROOM_LAST_LOCATION_KEY);
+                scenes.push(player.state);
+            }
+            this.assert.deepStrictEqual(scenes, [
+                {room_id: 41, x: 400, y: 500, dir: GameConst.UP, scene: 'town'},
+                {room_id: null, x: 10, y: 20, dir: GameConst.DOWN, scene: GameConst.ROOM_NAME_MAP}
+            ]);
         });
     }
 
