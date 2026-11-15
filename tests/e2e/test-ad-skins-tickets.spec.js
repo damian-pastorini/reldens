@@ -6,8 +6,9 @@
  * and the tickets seeded by SkinSteps, the inventory and played ads rows of the group players preserved and restored by
  * the group reset): with two tickets every rewarded skin ad consumes one ticket, deletes the consumed ticket row and
  * stores the play as ended, and the second ad is rewarded too; a ticket trashed while the ad plays ends the ad with no
- * skin item; two ticket uses sent at once give one skin item at most; and the ticket use of a player plays its skin ad
- * on its own client only, the other player in the room gets no skin ad request and keeps its ticket.
+ * skin item; two ticket uses sent at once give one skin item at most; the ticket use of a player plays its skin ad
+ * on its own client only, the other player in the room gets no skin ad request and keeps its ticket; and a ticket used in
+ * a room that disallows the ad start and end messages gets no skin ad request and is kept.
  *
  */
 
@@ -17,6 +18,8 @@ const { TradeSteps } = require('./helpers/trade-steps');
 const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
 const { TimeConstants } = require('./helpers/time-constants');
 const { InventoryConst } = require('../../lib/inventory/constants');
 const { UsersConst } = require('../../lib/users/constants');
@@ -107,9 +110,36 @@ class TestAdSkinsTickets
         ).toEqual({tickets: 1, skins: 0});
     }
 
+    static async runDisallowedAdsRoomTest(context)
+    {
+        let skinTickets = await SkinSteps.enterWithTickets(context, [1]);
+        let owner = skinTickets.players[0];
+        await GameplayE2eStateApi.changeRoomCustomData(
+            context.gameConfig,
+            context.e2eGroup,
+            ParallelSpecGroups.fetchGroup(context.e2eGroup).startRoomName,
+            {disallowedActions: [AdsConst.ACTIONS.AD_STARTED, AdsConst.ACTIONS.AD_ENDED]}
+        );
+        await AdMessagesPlayer.waitForProviderReady(owner.page, TimeConstants.UI_OPEN);
+        await TradeSteps.sendItemAction(context, owner, InventoryConst.ACTIONS.USE, skinTickets.skinData.ticketItemKey);
+        await owner.page.waitForTimeout(TestAdSkinsTickets.QUIET_MS);
+        expect(
+            await RoomMessagesRecorder.fetchMessages(owner.page, UsersConst.SKINS.ACTIONS.AD_START),
+            'The room that disallows the ad messages gets no skin ad request'
+        ).toEqual([]);
+        await expect(owner.page.locator(AdMessagesPlayer.AD_OVERLAY_SELECTOR), 'No ad plays for nothing').toHaveCount(0);
+        expect(
+            await SkinSteps.fetchItems(context.gameConfig, owner.playerName, skinTickets.skinData),
+            'The ticket is kept and no skin item is given'
+        ).toEqual({tickets: 1, skins: 0});
+    }
+
     static run()
     {
         test.describe('Ad Skins Tickets', () => {
+            test('ticket used in a room that disallows the ad messages requests no ad and keeps the ticket', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestAdSkinsTickets.runDisallowedAdsRoomTest({page, gameConfig, e2eGroup, longRun});
+            });
             test('two tickets give two rewarded skin ads, each consuming one ticket', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestAdSkinsTickets.runTwoTicketsTest({page, gameConfig, e2eGroup, longRun});
             });
