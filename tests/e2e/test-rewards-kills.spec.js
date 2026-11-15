@@ -8,7 +8,7 @@
  * nothing; a reward with no item, modifier or experience gives nothing; an item reward with no drop animation goes
  * straight to the inventory; a reldens.beforeGiveRewards listener that cancels the event leaves nothing given (a
  * non droppable reward with a drop quantity above one gives a single non stackable item,
- * ISSUE #150); a reward with a missing item record gives no item while its experience is still given; a unique reward is given and its
+ * ISSUE #150); a reward with a missing item record gives no item and no experience; a unique reward is given and its
  * stored was_given is set, and once the killed enemy respawns the next kill of a placed enemy of the same object does
  * not give it again; and a modifier reward is applied to the killer.
  *
@@ -46,7 +46,7 @@ class TestRewardsKills
         missingItem: {
             rewardChanges: {hasDropBody: false, dropQuantity: 1, itemId: TestRewardsKills.UNKNOWN_ITEM_ID, item: null},
             givenItems: 0,
-            experienceShare: 1
+            experienceShare: 0
         }
     };
 
@@ -168,7 +168,7 @@ class TestRewardsKills
             test('rewards cancelled by a beforeGiveRewards listener give nothing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsKills.runKillRewardTest({page, screenshots, gameConfig, e2eGroup, longRun}, 'cancelled');
             });
-            test('reward with a missing item record gives no item and still its experience', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('reward with a missing item record gives no item and no experience', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsKills.runKillRewardTest({page, screenshots, gameConfig, e2eGroup, longRun}, 'missingItem');
             });
             test('unique reward is given and stored as given', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
