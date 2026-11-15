@@ -7,7 +7,9 @@
  * that border with its direction, then stopped. The server body stays inside the map (the border walls stop it) and,
  * once the client settled, with the sample collideWorldBounds on the sprite body stays inside the world bounds and the
  * camera is clamped on that border of the map; with collideWorldBounds off (set before the engine starts) the sprite
- * follows the server body position on every border.
+ * follows the server body position on every border; and a pointer move, from the right and the bottom borders, to the
+ * last map column or row and to a tampered column or row equal to the map size keeps the server body inside the map
+ * and stops it (the path finder grid column and row past the map are not walkable).
  *
  */
 
@@ -29,19 +31,24 @@ class TestMovementWorldBounds
 
     static BORDER_DIRECTIONS = {top: GameConst.UP, bottom: GameConst.DOWN, left: GameConst.LEFT, right: GameConst.RIGHT};
     static PUSH_MS = 600;
+    static POINTER_BORDERS = ['right', 'bottom'];
     static SETTLE_POLL_MS = 200;
     static READ_CLIENT_VIEW = () => {
         let playerEngine = window.reldens.getCurrentPlayer();
-        let sprite = playerEngine.players[window.reldens.activeRoomEvents.room.sessionId];
-        let view = window.reldens.getActiveScene().cameras.main.worldView;
+        let sprite = window.reldens.getCurrentPlayerAnimation();
+        if(!sprite){
+            return false;
+        }
         return {
             position: [Math.round(sprite.x + playerEngine.leftOff), Math.round(sprite.y + playerEngine.topOff)],
             body: [sprite.body.left, sprite.body.top, sprite.body.right, sprite.body.bottom].map(Math.round),
-            camera: [view.x, view.y, view.right, view.bottom].map(Math.round)
+            camera: ['x', 'y', 'right', 'bottom'].map(
+                (viewKey) => Math.round(window.reldens.getActiveScene().cameras.main.worldView[viewKey])
+            )
         };
     };
 
-    static async pushIntoBorder(context, walkContext, borderName)
+    static async placeOnBorder(context, walkContext, borderName)
     {
         let placed = await SecurityApi.request(context.gameConfig, 'POST', '/api/e2e/room-borders/place-player', {
             roomName: Login.TOWN_ROOM_NAME,
@@ -49,15 +56,79 @@ class TestMovementWorldBounds
             border: borderName
         });
         expect(placed.tile, 'The player is placed on the '+borderName+' border: '+placed.error).toBeTruthy();
-        await RoomMessagesRecorder.sendMessage(context.page, {dir: TestMovementWorldBounds.BORDER_DIRECTIONS[borderName]});
-        await context.page.waitForTimeout(TestMovementWorldBounds.PUSH_MS);
-        await RoomMessagesRecorder.sendMessage(context.page, {act: GameConst.STOP});
+        return placed;
+    }
+
+    static async waitForStill(context, walkContext)
+    {
         await RoomMovementApi.waitForPlayerStill(
             context.gameConfig,
             Login.TOWN_ROOM_NAME,
             walkContext.playerName,
             TimeConstants.SERVER_RESPONSE
         );
+    }
+
+    static async pointerMovement(context, walkContext, column, row)
+    {
+        await RoomMessagesRecorder.sendMessage(context.page, {act: GameConst.POINTER, column, row});
+        return await RoomMovementApi.collectTrail(
+            walkContext.fetchPlayer,
+            walkContext.isStill,
+            TimeConstants.forLongRun(TimeConstants.NAVIGATION, context.longRun)
+        );
+    }
+
+    static async pointEdgeTiles(context, walkContext, placed, pointerTiles)
+    {
+        let stopped = [];
+        let outOfMapPositions = 0;
+        for(let pointerTile of pointerTiles){
+            let movement = await TestMovementWorldBounds.pointerMovement(context, walkContext, ...pointerTile);
+            stopped.push(movement.done);
+            outOfMapPositions += movement.trail.filter(
+                (snapshot) => 0 > snapshot.x || snapshot.x > placed.mapSize.width
+                    || 0 > snapshot.y || snapshot.y > placed.mapSize.height
+            ).length;
+        }
+        return {stopped, outOfMapPositions};
+    }
+
+    static async runEdgePointersTest(context)
+    {
+        let walkContext = await MovementScenario.enterReadyRoom(context, Login.TOWN_ROOM_NAME);
+        let results = {};
+        for(let borderName of TestMovementWorldBounds.POINTER_BORDERS){
+            let placed = await TestMovementWorldBounds.placeOnBorder(context, walkContext, borderName);
+            let edge = 'right' === borderName
+                ? placed.mapSize.width / placed.tileSize.width
+                : placed.mapSize.height / placed.tileSize.height;
+            results[borderName] = await TestMovementWorldBounds.pointEdgeTiles(
+                context,
+                walkContext,
+                placed,
+                [edge - 1, edge].map(
+                    (edgeTile) => 'right' === borderName ? [edgeTile, placed.tile[1]] : [placed.tile[0], edgeTile]
+                )
+            );
+        }
+        expect(
+            results,
+            'A pointer to the last map tile or to the map size stops the body and no pointer takes it out of the map: '
+                +sc.toJsonString(results)
+        ).toEqual({
+            right: {stopped: [true, true], outOfMapPositions: 0},
+            bottom: {stopped: [true, true], outOfMapPositions: 0}
+        });
+    }
+
+    static async pushIntoBorder(context, walkContext, borderName)
+    {
+        let placed = await TestMovementWorldBounds.placeOnBorder(context, walkContext, borderName);
+        await RoomMessagesRecorder.sendMessage(context.page, {dir: TestMovementWorldBounds.BORDER_DIRECTIONS[borderName]});
+        await context.page.waitForTimeout(TestMovementWorldBounds.PUSH_MS);
+        await RoomMessagesRecorder.sendMessage(context.page, {act: GameConst.STOP});
+        await TestMovementWorldBounds.waitForStill(context, walkContext);
         let previousView = '';
         await expect.poll(
             async () => {
@@ -133,6 +204,9 @@ class TestMovementWorldBounds
             });
             test('with collideWorldBounds off the server walls stop the body and the sprite follows it', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementWorldBounds.runBoundsOffTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a pointer to the last map column or row, or to the map size, keeps the body inside the map', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementWorldBounds.runEdgePointersTest({page, gameConfig, e2eGroup, longRun});
             });
         });
     }
