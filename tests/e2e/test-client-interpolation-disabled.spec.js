@@ -20,13 +20,10 @@ const { BulletObserverSetup } = require('./helpers/bullet-observer-setup');
 const { ObjectInterpolationSteps } = require('./helpers/object-interpolation-steps');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
-const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { GameConst } = require('../../lib/game/constants');
-const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -127,13 +124,7 @@ class TestClientInterpolationDisabled
             objects: [],
             bullets: false
         });
-        await RoomMessagesRecorder.sendMessage(walker.page, {act: GameConst.POINTER, column: targetTile[0], row: targetTile[1]});
-        let walked = await RoomMovementApi.collectTrail(
-            walkContext.fetchPlayer,
-            (player) => walkContext.isStill(player) && targetTile[0] === player.currentCol && targetTile[1] === player.currentRow,
-            walkContext.navTimeout
-        );
-        expect(walked.done, 'The walker reaches the line end: '+sc.toJsonString(walked.last)).toBe(true);
+        let walked = await WalkObserverSetup.walkPointerTo(walker.page, walkContext, targetTile);
         expect(
             await InterpolationFramesRecorder.waitForPlayerSpriteOnState(
                 players[1].page,
