@@ -9,6 +9,7 @@ const { CrossServerNamesCheck } = require('../lib/game/server/cross-server-names
 const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
 const { LoginManager } = require('../lib/game/server/login-manager');
 const { JsonResponseRecorder } = require('./fixtures/json-response-recorder');
+const { GlobalFetchStub } = require('./fixtures/global-fetch-stub');
 const { GameConst } = require('../lib/game/constants');
 const { sc } = require('@reldens/utils');
 
@@ -61,24 +62,12 @@ class TestCrossServerNamesCheck extends BaseTest
         };
     }
 
-    async withFetch(fakeFetch, testCallback)
-    {
-        let originalFetch = global.fetch;
-        global.fetch = fakeFetch;
-        try {
-            await testCallback();
-        } catch(error) {
-            global.fetch = originalFetch;
-            throw error;
-        }
-        global.fetch = originalFetch;
-    }
-
     async withServersPair(serversPair, testCallback)
     {
         let sentRequests = [];
         let serversByUrl = {[this.serverAUrl]: serversPair.serverA, [this.serverBUrl]: serversPair.serverB};
-        await this.withFetch(this.routedFetch(serversByUrl, sentRequests), async () => await testCallback(sentRequests));
+        let routedFetch = this.routedFetch(serversByUrl, sentRequests);
+        await GlobalFetchStub.withFetch(routedFetch, async () => await testCallback(sentRequests));
     }
 
     async testWithoutOtherServersNothingIsRequestedOrHeld()
@@ -86,7 +75,7 @@ class TestCrossServerNamesCheck extends BaseTest
         await this.test('without other servers the values pass without requests and nothing is held', async () => {
             let singleServer = this.createServer([]);
             let sentRequests = [];
-            await this.withFetch(async (requestUrl) => sentRequests.push(requestUrl), async () => {
+            await GlobalFetchStub.withFetch(async (requestUrl) => sentRequests.push(requestUrl), async () => {
                 this.assert.strictEqual(await singleServer.holdEverywhere(this.playerRoute, ['Hero']), true);
                 this.assert.strictEqual(singleServer.release(this.playerRoute, ['Hero']), false);
             });
@@ -239,7 +228,7 @@ class TestCrossServerNamesCheck extends BaseTest
                 async () => ({ok: true, json: async () => ({})})
             ];
             for(let failedResponse of failedResponses){
-                await this.withFetch(failedResponse, async () => {
+                await GlobalFetchStub.withFetch(failedResponse, async () => {
                     this.assert.strictEqual(await serverA.holdEverywhere(this.playerRoute, ['Hero']), false);
                 });
                 this.assert.deepStrictEqual(serverA.heldValues, {});
@@ -323,7 +312,7 @@ class TestCrossServerNamesCheck extends BaseTest
         await this.test('without the signed tokens secret no check is sent and the values are not free', async () => {
             let serverA = this.createServer([this.serverBUrl], {}, '');
             let sentRequests = [];
-            await this.withFetch(async (requestUrl) => sentRequests.push(requestUrl), async () => {
+            await GlobalFetchStub.withFetch(async (requestUrl) => sentRequests.push(requestUrl), async () => {
                 this.assert.strictEqual(await serverA.holdEverywhere(this.playerRoute, ['Hero']), false);
             });
             this.assert.deepStrictEqual(sentRequests, []);

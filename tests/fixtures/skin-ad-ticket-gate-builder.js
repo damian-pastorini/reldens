@@ -3,7 +3,7 @@
  * Reldens - SkinAdTicketGateBuilder
  *
  * Builds a skin ad ticket gate loaded with a skin ad and another ad, and the events the gate receives: a scene message
- * of a player carrying the given tickets quantity (none when negative), the reward of an ended ad, the ad end with its
+ * of a player carrying the given tickets quantity (none when negative) in a room that disallows the given actions, the reward of an ended ad, the ad end with its
  * claim result and a trade accept between two players with or without a reserved ticket.
  *
  */
@@ -63,9 +63,10 @@ class SkinAdTicketGateBuilder
     /**
      * @param {Object} messageData
      * @param {number} ticketQty
+     * @param {Array<string>} [disallowedActions]
      * @returns {Object}
      */
-    static createEvent(messageData, ticketQty)
+    static createEvent(messageData, ticketQty, disallowedActions = [])
     {
         let items = {potion: GameplayPlayerBuilder.createItem('potion')};
         if(0 <= ticketQty){
@@ -76,7 +77,16 @@ class SkinAdTicketGateBuilder
         }
         let playerSchema = GameplayPlayerBuilder.createPlayerSchema();
         playerSchema.inventory = {manager: GameplayPlayerBuilder.createInventoryManager(items)};
-        return {messageData, playerSchema, client: GameplayPlayerBuilder.createClient(), canContinue: true};
+        return {
+            messageData,
+            playerSchema,
+            client: GameplayPlayerBuilder.createClient(),
+            canContinue: true,
+            room: {
+                isAllowedAction: (client, actionData) => -1 === disallowedActions.indexOf(actionData.act),
+                playerBySessionIdFromState: () => null
+            }
+        };
     }
 
     /**

@@ -3,7 +3,8 @@
  * Reldens - Test Character Creation Flows
  *
  * Tests the players creation flows beyond the name: the invalid or missing initial state, the storage failure, the
- * forged and incomplete create messages, the creation with the game room connection closed, the chosen
+ * forged and incomplete create messages, the forged creation of a user that has a player with the multiple players
+ * off, the creation with the game room connection closed, the chosen, unknown
  * and missing class paths with their avatar, the avatar preview options and the missing classes.
  *
  */
@@ -26,6 +27,7 @@ class TestCharacterCreationFlows
     static UNKNOWN_ID = 999999;
     static MISSING_CLASSES_MESSAGE = 'None configured classes available.';
     static CLASS_OPTION = '#class-path-select option';
+    static MULTIPLE_PLAYERS_OFF_MESSAGE = 'Multiple players are not allowed, you already have a player.';
 
     static async sendNameOnly(page, gameConfig, longRun)
     {
@@ -98,6 +100,39 @@ class TestCharacterCreationFlows
         await CharacterCreation.sendCreateMessage(page, {[CharacterCreation.NAME_FIELD_KEY]: playerName, user_id: otherUserId});
         await CharacterCreation.waitForGameStart(page, longRun);
         expect((await CharacterCreation.loadPlayers(gameConfig, playerName)).shift().user_id).toBe(userId);
+    }
+
+    static async runUnknownClassPathTest(page, screenshots, gameConfig, longRun)
+    {
+        let playerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await CharacterCreation.sendCreateMessage(page, {
+            [CharacterCreation.NAME_FIELD_KEY]: playerName,
+            class_path_select: String(TestCharacterCreationFlows.UNKNOWN_ID)
+        });
+        await CharacterCreation.expectCreateError(page, CharacterCreation.CREATION_ERROR_MESSAGE, longRun);
+        expect(await CharacterCreation.loadPlayers(gameConfig, playerName), 'No player without class path').toEqual([]);
+        await screenshots.capture(page, 'creation-unknown-class-path');
+        let nextPlayerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.sendCreateMessage(page, {[CharacterCreation.NAME_FIELD_KEY]: nextPlayerName});
+        await CharacterCreation.waitForGameStart(page, longRun);
+        expect(await CharacterCreation.loadPlayers(gameConfig, nextPlayerName), 'The next creation').toHaveLength(1);
+    }
+
+    static async runMultiplePlayersOffCreationTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let userId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'users', {username: gameConfig.e2eUsername3});
+        let userPlayers = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'players', {user_id: userId});
+        expect(userPlayers.length, 'The user already has a player').toBeGreaterThan(0);
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/players/multiplePlayers/enabled', false);
+        let playerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun, '3');
+        await CharacterCreation.sendCreateMessage(page, {[CharacterCreation.NAME_FIELD_KEY]: playerName});
+        await CharacterCreation.expectCreateError(page, TestCharacterCreationFlows.MULTIPLE_PLAYERS_OFF_MESSAGE, longRun);
+        expect(await CharacterCreation.loadPlayers(gameConfig, playerName), 'No other player stored').toEqual([]);
+        let storedPlayers = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'players', {user_id: userId});
+        expect(storedPlayers, 'The user players').toHaveLength(userPlayers.length);
+        await screenshots.capture(page, 'multiple-players-off-creation-refused');
     }
 
     static async runChosenClassPathTest(page, screenshots, gameConfig, longRun)
@@ -190,6 +225,12 @@ class TestCharacterCreationFlows
             });
             test('forged user id still creates the player on the authenticated user', async ({ page, gameConfig, longRun }) => {
                 await TestCharacterCreationFlows.runForgedUserTest(page, gameConfig, longRun);
+            });
+            test('forged unknown class path shows the creation error and stores no player', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestCharacterCreationFlows.runUnknownClassPathTest(page, screenshots, gameConfig, longRun);
+            });
+            test('multiple players off refuses a forged creation of a user that has a player', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestCharacterCreationFlows.runMultiplePlayersOffCreationTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('chosen class path is stored with its avatar', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestCharacterCreationFlows.runChosenClassPathTest(page, screenshots, gameConfig, longRun);

@@ -6,7 +6,9 @@
  * change point it walks into): walking into the forest change point with the up key held arrives standing still on the
  * forest return point (its sprite too, with no leftover movement) and walks again once the scene fade ends (the held key repeats its key down, as a real held key
  * does, the keys of the new scene only see the key events sent after they exist); a pointer move onto that change
- * point tile finds no path, the change point tiles are blocked on the path finder grid, so the player stays; and the
+ * point tile finds no path, the change point tiles are blocked on the path finder grid, so the player stays; pointer
+ * moves away and back to the tile below that change point, then the up key, walk into it and arrive standing still on
+ * the forest return point; and the
  * town house door object, stored on the change point tile of the house with no collision response, is walked through
  * from the town return point of the house into the house.
  *
@@ -33,6 +35,7 @@ class TestMovementChangePoints
     static SETTLE_MS = 1500;
     static DOOR_KEY = 'door_house_3';
     static DOOR_HOUSE_ROOM = 'reldens-house-1';
+    static AWAY_TILES = 3;
 
     static async enterBelowForestChangePoint(context)
     {
@@ -131,6 +134,45 @@ class TestMovementChangePoints
         ).toEqual([start.x, start.y, 0, Login.TOWN_ROOM_NAME]);
     }
 
+    static async pointPlayerTo(context, scenario, tile)
+    {
+        await RoomMessagesRecorder.sendMessage(scenario.player.page, {act: GameConst.POINTER, column: tile[0], row: tile[1]});
+        await RoomMovementApi.waitForPlayerStill(
+            context.gameConfig,
+            Login.TOWN_ROOM_NAME,
+            scenario.player.playerName,
+            TimeConstants.forLongRun(TimeConstants.NAVIGATION, context.longRun)
+        );
+        return await RoomMovementApi.fetchPlayer(context.gameConfig, Login.TOWN_ROOM_NAME, scenario.player.playerName);
+    }
+
+    static async runPointerThenKeyChangePointTest(context)
+    {
+        let scenario = await TestMovementChangePoints.enterBelowForestChangePoint(context);
+        let page = scenario.player.page;
+        let belowTile = [scenario.changePointTile[0], scenario.changePointTile[1] + 1];
+        let awayTile = await RoomMovementApi.fetchClearLineTile(
+            context.gameConfig,
+            Login.TOWN_ROOM_NAME,
+            scenario.player.playerName,
+            [TestMovementChangePoints.AWAY_TILES]
+        );
+        expect(awayTile, 'A clear tile away from the change point').toBeTruthy();
+        let away = await TestMovementChangePoints.pointPlayerTo(context, scenario, awayTile);
+        let back = await TestMovementChangePoints.pointPlayerTo(context, scenario, belowTile);
+        expect(
+            [[away.currentCol, away.currentRow], [back.currentCol, back.currentRow, back.pathSteps]],
+            'The pointer moves take the player away and back to the tile below the change point'
+        ).toEqual([awayTile, [...belowTile, 0]]);
+        await page.keyboard.down('ArrowUp');
+        await Navigation.waitForRoom(page, Login.FOREST_ROOM_NAME, TimeConstants.ROOM_TRANSITION);
+        await page.keyboard.up('ArrowUp');
+        await TestMovementChangePoints.expectStillOnArrival(
+            scenario,
+            'The up key after the pointer moves walks into the change point and arrives on the return point'
+        );
+    }
+
     static async runDoorPassTest(context)
     {
         let gameConfig = context.gameConfig;
@@ -164,6 +206,9 @@ class TestMovementChangePoints
             });
             test('a pointer move onto a change point tile finds no path and keeps the player in the room', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementChangePoints.runPointerOnChangePointTest({page, secondPage, gameConfig, e2eGroup, longRun});
+            });
+            test('pointer moves to the tile below a change point then the up key walks into it and changes the room', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementChangePoints.runPointerThenKeyChangePointTest({page, secondPage, gameConfig, e2eGroup, longRun});
             });
             test('a player walks through a house door without collision response into the house', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementChangePoints.runDoorPassTest({page, secondPage, gameConfig, e2eGroup, longRun});

@@ -475,8 +475,8 @@ The client scene interpolation (`SceneDynamic.processPlayersPositionInterpolatio
   no animation, already in place, the interpolation disabled, no player engine), ending with the real state so the
   sprites end where they started, and reads the depth of every map layer
 - `test-scene-interpolation-branches.spec.js` (exclusive) - asserts those branches, that every town map layer gets
-  the `client/map/layersDepth` depth of its name, or its index times the map height in pixels for the over player
-  layers, and that with `client/general/engine/clientInterpolation` overridden to `false` for the group the walking
+  the `client/map/layersDepth` depth of its name, or its index plus one times the map height in pixels for the over
+  player layers (a crafted map checks an over player layer at index 0), and that with `client/general/engine/clientInterpolation` overridden to `false` for the group the walking
   player sprite is placed on its state position on every state change (`PlayerEngine.updatePlayer`), with no frame
   moved by the scene update; the long run steps are in `SceneInterpolationShowcase` and
   `SceneInterpolationBranchesShowcase`, the probe entries run first and the video replays them slowed with one caption

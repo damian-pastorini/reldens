@@ -3,7 +3,7 @@
  * Reldens - RewardsAcceptBuilder
  *
  * Builds the rewards events message actions over stubbed repositories, so the real provider, updater, mapper and data
- * sender run: the daily login reward event row with the given reward items, the players reward state rows (read and
+ * sender run: the daily login reward event row with the given reward items and active dates, the players reward state rows (read and
  * saved in memory, every read waits one timers tick so overlapping accept messages really overlap, the read can reject
  * and the save can fail), the given items (every give or the give of some items can reject, and some items can be not
  * added) and the messages sent to every player client are recorded.
@@ -44,7 +44,7 @@ class RewardsAcceptBuilder
         let setup = {givenItems: [], savedStates: [], sentMessages: [], stateRows: [], options};
         setup.rewardEvent = Object.assign({}, this.rewardEvent, {
             event_data: sc.toJsonString({action: 'dailyLogin', items: sc.get(options, 'rewardItems', this.rewardItems)})
-        });
+        }, sc.get(options, 'eventDates', {}));
         for(let playerId of Object.keys(playersStates)){
             if(false === playersStates[playerId]){
                 continue;

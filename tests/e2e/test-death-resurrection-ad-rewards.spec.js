@@ -7,8 +7,8 @@
  * shows the ad button and the seconds left, the reward shows the item message and the revive button consumes it in the
  * forest; the revive button clicked while the ad still plays keeps the player dead until the reward revives it in the
  * forest; a finished ad stores its played row with both dates; an ad without reward item and an ad ended before the
- * provider minimum duration give no item and the player revives in town; a failed ad is offered again, plays to its end
- * and the player revives in town (the play after a failure is never rewarded, a reported issue); and a
+ * provider minimum duration give no item and the player revives in town (the early ended ad is no longer offered); a
+ * failed ad is no longer offered (it can not be played again in that death) and the player revives in town; and a
  * different ad started by the dead player is not a resurrection ad: the player is not disabled and is revived in town
  * on time.
  *
@@ -150,25 +150,17 @@ class TestDeathResurrectionAdRewards
             {act: AdsConst.ACTIONS.AD_STARTED, ads_id: adId},
             {act: AdsConst.ACTIONS.AD_ENDED, ads_id: adId}
         ]);
-        await TestDeathResurrectionAdRewards.expectTownReviveWithoutItem(context, adDeath, 1);
+        await TestDeathResurrectionAdRewards.expectTownReviveWithoutItem(context, adDeath, 0);
     }
 
-    static async runFailedAdPlayedAgainTest(context)
+    static async runFailedAdNotOfferedAgainTest(context)
     {
         let adDeath = await DeathResurrectionAdSteps.killWithResurrectionAd(context, {}, 0);
         await DeathReviveSteps.expectTownGameOverMessage(context, 1);
         await AdMessagesPlayer.failNextAd(context.page, adDeath.adTimeout);
         await DeathReviveShowcase.clickButton(context, Selectors.gameOver.resurrectionAdButton);
         await AdMessagesPlayer.waitForPlayedAd(context.page, adDeath.resurrectionAd, adDeath.adTimeout);
-        await context.page.waitForTimeout(TestDeathResurrectionAdRewards.QUIET_MS);
-        let adButton = context.page.locator(Selectors.gameOver.resurrectionAdButton);
-        await expect(adButton, 'The failed ad is offered again').toHaveCount(1);
-        await adButton.click();
-        await AdMessagesPlayer.waitForPlayedAd(context.page, adDeath.resurrectionAd, adDeath.adTimeout);
-        await DeathReviveSteps.expectRevivedInTown(
-            context,
-            (await DeathReviveSteps.fetchReviveLabels(context.gameConfig)).townRoom.name
-        );
+        await TestDeathResurrectionAdRewards.expectTownReviveWithoutItem(context, adDeath, 0);
     }
 
     static async runOtherAdTest(context)
@@ -215,8 +207,8 @@ class TestDeathResurrectionAdRewards
             test('ad ended before the provider minimum duration gives no reward', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathResurrectionAdRewards.runEarlyAdEndTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('failed ad offered again plays and the player revives in town', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
-                await TestDeathResurrectionAdRewards.runFailedAdPlayedAgainTest({page, screenshots, gameConfig, e2eGroup, longRun});
+            test('failed ad is not offered again and the player revives in town', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestDeathResurrectionAdRewards.runFailedAdNotOfferedAgainTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('another ad started by the dead player is not a resurrection ad', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathResurrectionAdRewards.runOtherAdTest({page, screenshots, gameConfig, e2eGroup, longRun});

@@ -8,7 +8,8 @@
  * reload (it marks the forced disconnection, so the connection the server drops right after shows no server down modal
  * once the client handled the room leave), a scene change whose reconnect fails after the next room join (a client
  * listener of the joined room event throws, the rejected join is covered by the lifecycle spec) showing the reconnect
- * modal, and the players state handler timer of a player that joined without life (the town
+ * modal, a page closed while walking with a direction held that leaves no movement interval in the room once the room
+ * removed the player, and the players state handler timer of a player that joined without life (the town
  * state handler is on with a short time out): the player joined without life is blocked (its direction moves nothing
  * and leaves no movement interval, checked with a time out longer than the test), the player that stays turns active
  * once the time out ends, and the player
@@ -134,6 +135,22 @@ class TestGameSessionInterruptions
         ).toBe(0);
     }
 
+    static async runLeaveWhileWalkingTest(page, gameConfig, longRun)
+    {
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName});
+        await RoomMessagesRecorder.sendMessage(page, {dir: GameConst.RIGHT});
+        await expect.poll(
+            async () => GameplayE2eStateApi.fetchMovementIntervals(gameConfig, Login.TOWN_ROOM_NAME, playerId),
+            {message: 'The held direction walks with its movement interval', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toHaveLength(1);
+        await TestGameSessionInterruptions.leaveTown(page, gameConfig);
+        expect(
+            await GameplayE2eStateApi.fetchMovementIntervals(gameConfig, Login.TOWN_ROOM_NAME, playerId),
+            'The page closed while walking leaves no movement interval in the town'
+        ).toEqual([]);
+    }
+
     static async runBlockedWhileDeadTest(page, gameConfig, longRun)
     {
         let playerName = gameConfig.e2ePlayerName;
@@ -203,6 +220,9 @@ class TestGameSessionInterruptions
             });
             test('a reconnect failing after the next room join shows the reconnect modal', async ({ page, gameConfig, longRun }) => {
                 await TestGameSessionInterruptions.runFailingReconnectTest(page, gameConfig, longRun);
+            });
+            test('page closed while walking with a direction held leaves no movement interval in the room', async ({ page, gameConfig, longRun }) => {
+                await TestGameSessionInterruptions.runLeaveWhileWalkingTest(page, gameConfig, longRun);
             });
             test('player joined without life is blocked before the state handler time out ends', async ({ page, gameConfig, longRun }) => {
                 await TestGameSessionInterruptions.runBlockedWhileDeadTest(page, gameConfig, longRun);

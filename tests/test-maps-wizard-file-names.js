@@ -4,7 +4,7 @@
  *
  */
 
-const { BaseTest } = require('./base-test');
+const { MapsWizardBaseTest } = require('./fixtures/maps-wizard-base-test');
 const { FeaturesTestData } = require('./fixtures/features-test-data');
 const { MapsWizardFileNamesValidator } = require('../lib/admin/server/maps-wizard-file-names-validator');
 const { SampleFileCopier } = require('../lib/admin/server/sample-file-copier');
@@ -13,21 +13,14 @@ const { MapsWizardSubscriber } = require('../lib/admin/server/subscribers/maps-w
 const { FileHandler } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
-class TestMapsWizardFileNames extends BaseTest
+class TestMapsWizardFileNames extends MapsWizardBaseTest
 {
 
     constructor(config)
     {
-        super(config);
+        super(config, 'maps-wizard-file-names');
         this.validator = new MapsWizardFileNamesValidator();
         this.parentFolder = '..';
-        this.testFolder = FileHandler.joinPaths(process.cwd(), 'test-results', 'maps-wizard-file-names');
-        this.rootFolder = FileHandler.joinPaths(this.testFolder, 'root');
-        this.themeManager = {
-            projectRoot: process.cwd(),
-            projectGenerateDataPath: this.rootFolder,
-            projectGeneratedDataPath: FileHandler.joinPaths(this.rootFolder, 'generated')
-        };
         let examplesPath = new SampleFileCopier(this.themeManager).examplesPath;
         this.objectMapDataPath = FileHandler.joinPaths(examplesPath, 'layer-elements-object', 'map-data.json');
         this.compositeExamplesPath = FileHandler.joinPaths(examplesPath, 'layer-elements-composite');
@@ -37,12 +30,6 @@ class TestMapsWizardFileNames extends BaseTest
             'map-composite-data-with-associations.json'
         );
         this.townCompositePath = FileHandler.joinPaths(this.compositeExamplesPath, 'reldens-town-composite.json');
-    }
-
-    resetTestFolder()
-    {
-        FileHandler.remove(this.testFolder);
-        FileHandler.createFolder(this.rootFolder);
     }
 
     async testIsFileNameAcceptsFileNames()
@@ -236,13 +223,7 @@ class TestMapsWizardFileNames extends BaseTest
     {
         await this.test('the maps wizard rejects the request names with folders before any file', async () => {
             this.resetTestFolder();
-            let adminManager = {
-                events: {on: () => true},
-                dataServer: {getEntity: () => ({})},
-                uploaderFactory: {createUploader: () => () => true},
-                contentsBuilder: {render: async () => '', renderRoute: async () => ''},
-                router: {isAuthenticated: () => true}
-            };
+            let adminManager = this.createAdminManager([]);
             let subscriber = new MapsWizardSubscriber(adminManager, {}, this.themeManager);
             let mapData = FileHandler.fetchFileJson(this.objectMapDataPath);
             mapData.mapFileName = FileHandler.joinPaths(this.parentFolder, 'outside.json');

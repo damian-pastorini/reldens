@@ -4,7 +4,7 @@
  *
  * Loads a theme admin browser script in an isolated VM context with the given browser globals (window, document,
  * fetch, timers) and returns the class it declares, so the admin page scripts run in the unit tests with stubbed
- * browser objects. It also gives a detached copy of the skills import sample data of the admin skills import page.
+ * browser objects. It also gives a detached copy of the sample data of the admin skills import and objects import pages.
  *
  */
 
@@ -20,11 +20,21 @@ class AdminBrowserScriptLoader
         vm.createContext(contextValues)
     );
 
-    static loadSkillsSampleData = () => sc.deepJsonClone(new (AdminBrowserScriptLoader.loadClass(
-        'skills-sample-data-import.js',
-        'SkillsSampleDataImport',
+    static loadSampleData = (fileName, className) => sc.deepJsonClone(new (AdminBrowserScriptLoader.loadClass(
+        fileName,
+        className,
         {document: {querySelector: () => null}}
     ))().sampleData);
+
+    static loadSkillsSampleData = () => AdminBrowserScriptLoader.loadSampleData(
+        'skills-sample-data-import.js',
+        'SkillsSampleDataImport'
+    );
+
+    static loadObjectsSampleData = () => AdminBrowserScriptLoader.loadSampleData(
+        'objects-import-bindings.js',
+        'ObjectsImportBindings'
+    );
 
 }
 

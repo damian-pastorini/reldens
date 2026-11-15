@@ -3,15 +3,18 @@
  * Reldens - PlayerCreationBuilder
  *
  * Builds the player creation setups: a PlayerCreation over a real PlayerRoomState with the users manager, the events
- * and the cross server names check recording what they get (the checked, created, held and released names and the
- * emitted events), a users manager that checks the names against the players created so far and stores them after a
- * loop turn (so the creations sent at the same time interleave), a create before listener renaming the player and the
- * creations sent at the same time by different users.
+ * and the cross server names check recording what they get (the checked, created, deleted, held and released names and
+ * the emitted events, with the multiple players on and the players count of each user taken from the created players),
+ * a users manager that checks the names against the players created so far and stores them after a
+ * loop turn (so the creations sent at the same time interleave), a create before listener renaming the player, a
+ * created player listener storing the class path through the real PlayerClassPathHandler (an unknown class path id is
+ * refused like its foreign key does) and the creations sent at the same time by different users.
  *
  */
 
 const { PlayerCreation } = require('../../lib/game/server/player-creation');
 const { PlayerRoomState } = require('../../lib/game/server/player-room-state');
+const { PlayerClassPathHandler } = require('../../lib/actions/server/player-class-path-handler');
 const timersPromises = require('timers/promises');
 
 class PlayerCreationBuilder
@@ -21,6 +24,8 @@ class PlayerCreationBuilder
     {
         let creationSetup = {
             createdPlayers: [],
+            deletedPlayerIds: [],
+            storedClassPaths: [],
             emittedEvents: [],
             checkedNames: [],
             heldNames: [],
@@ -43,7 +48,9 @@ class PlayerCreationBuilder
                 createPlayer: async (playerData) => {
                     creationSetup.createdPlayers.push(playerData);
                     return {id: 1, name: playerData.name, state: Object.assign({}, playerData.state)};
-                }
+                },
+                deletePlayer: async (playerId) => creationSetup.deletedPlayerIds.push(playerId),
+                playersRepository: this.createPlayersRepository(creationSetup)
             },
             roomsManager,
             events: {emit: async (eventName) => creationSetup.emittedEvents.push(eventName)},
@@ -57,9 +64,19 @@ class PlayerCreationBuilder
             },
             minimumPlayerNameLength: 3,
             maximumPlayerNameLength: 255,
-            roomsSelection: {allowOnRegistration: false}
+            roomsSelection: {allowOnRegistration: false},
+            isMultiplePlayersEnabled: true
         });
         return creationSetup;
+    }
+
+    createPlayersRepository(creationSetup)
+    {
+        return {
+            count: async (filters) => creationSetup.createdPlayers.filter(
+                createdPlayer => createdPlayer.user_id === filters.user_id
+            ).length
+        };
     }
 
     createNamesCheckingSetup()
@@ -76,7 +93,9 @@ class PlayerCreationBuilder
                 await timersPromises.setImmediate();
                 creationSetup.createdPlayers.push(playerData);
                 return {id: creationSetup.createdPlayers.length, name: playerData.name, state: {...playerData.state}};
-            }
+            },
+            deletePlayer: async (playerId) => creationSetup.deletedPlayerIds.push(playerId),
+            playersRepository: this.createPlayersRepository(creationSetup)
         };
         return creationSetup;
     }
@@ -87,6 +106,30 @@ class PlayerCreationBuilder
             creationSetup.emittedEvents.push(eventName);
             if('reldens.createNewPlayerBefore' === eventName){
                 playerData.name = newName;
+            }
+        };
+    }
+
+    createClassPathDataServer(creationSetup, knownClassPathIds)
+    {
+        return {getEntity: () => ({
+            create: async (classPathData) => -1 === knownClassPathIds.indexOf(Number(classPathData.class_path_id))
+                ? Promise.reject({message: 'A foreign key constraint fails on the class_path_id.'})
+                : creationSetup.storedClassPaths.push(classPathData) && classPathData
+        })};
+    }
+
+    storeClassPathOnCreated(creationSetup, knownClassPathIds)
+    {
+        return async (eventName, player, loginData) => {
+            creationSetup.emittedEvents.push(eventName);
+            if('reldens.createdNewPlayer' === eventName){
+                await PlayerClassPathHandler.createFromLoginData({
+                    config: creationSetup.playerCreation.config,
+                    loginData,
+                    player,
+                    dataServer: this.createClassPathDataServer(creationSetup, knownClassPathIds)
+                });
             }
         };
     }

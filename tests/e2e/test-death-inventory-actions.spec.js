@@ -5,7 +5,9 @@
  * Tests the inventory messages sent by a dead player (DeathReviveSteps kills it in the forest with a real enemy hit, with
  * the death teleport and the automatic revive off, so the player stays dead until it asks for the revive): the player
  * that uses a consumable, equips or unequips an item, starts a trade with the other player in the forest or accepts the
- * trade request of that player stays dead; and with the death
+ * trade request of that player stays dead and the action is refused (no life and no consumed item, no stat change and
+ * the item keeps its stored equipped state, no trade request reaches the other player and no trade opens); and with the
+ * death
  * teleport on, a restoration item removed while dead makes the death resolution use the real remaining quantity, so the
  * player revives in the town room instead of consuming the item.
  *
@@ -46,14 +48,23 @@ class TestDeathInventoryActions
     static async runUseConsumableTest(context)
     {
         await DeathReviveSteps.killPlayerCarryingItems(context, TestDeathInventoryActions.MANUAL_IN_PLACE, 0);
+        let fetchPotions = async () => await E2eSeedAndRestoreApi.fetchInventoryQuantity(
+            context.gameConfig,
+            context.gameConfig.e2ePlayerName,
+            context.gameConfig.e2eConsumableItemId
+        );
+        let potionsBefore = await fetchPotions();
+        expect(potionsBefore, 'The dead player carries the consumable').toBeGreaterThan(0);
         await TestDeathInventoryActions.sendAndWait(
             context.page,
             {act: InventoryConst.ACTIONS.USE, idx: context.gameConfig.e2eConsumableItemId}
         );
+        let deadPlayer = await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME);
         expect(
-            (await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).inState,
-            'The player stays dead after using the consumable'
-        ).toBe(GameConst.STATUS.DEATH);
+            [deadPlayer.inState, deadPlayer.life],
+            'The player stays dead with no life after using the consumable'
+        ).toEqual([GameConst.STATUS.DEATH, 0]);
+        expect(await fetchPotions(), 'The consumable is not consumed').toBe(potionsBefore);
     }
 
     static async runEquipActionTest(context, storedAsEquipped)
@@ -71,14 +82,22 @@ class TestDeathInventoryActions
             {is_active: storedAsEquipped ? 1 : 0}
         );
         await DeathReviveSteps.killPlayerCarryingItems(context, TestDeathInventoryActions.MANUAL_IN_PLACE, 0);
+        let attackBefore = (await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).stats.atk;
         await TestDeathInventoryActions.sendAndWait(
             context.page,
             {act: InventoryConst.ACTIONS.EQUIP, idx: equipmentKey}
         );
+        let deadPlayer = await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME);
+        expect(deadPlayer.inState, 'The player stays dead after the equipment action').toBe(GameConst.STATUS.DEATH);
+        expect(deadPlayer.stats.atk, 'The equipment action changes no stat').toBe(attackBefore);
         expect(
-            (await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).inState,
-            'The player stays dead after the equipment action'
-        ).toBe(GameConst.STATUS.DEATH);
+            (await E2eSeedAndRestoreApi.loadInventoryRows(
+                context.gameConfig,
+                context.gameConfig.e2ePlayerName,
+                equipmentKey
+            )).map(row => Number(row.is_active)),
+            'The item keeps its stored equipped state'
+        ).toEqual([storedAsEquipped ? 1 : 0]);
     }
 
     static async runRemoveRestorationItemTest(context)
@@ -133,6 +152,10 @@ class TestDeathInventoryActions
             (await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).inState,
             'The player stays dead after starting the trade'
         ).toBe(GameConst.STATUS.DEATH);
+        expect(
+            await RoomMessagesRecorder.fetchMessages(context.secondPage, InventoryConst.ACTIONS.TRADE_START),
+            'The other player gets no trade request from the dead player'
+        ).toEqual([]);
     }
 
     static async runTradeAcceptTest(context)
@@ -155,6 +178,12 @@ class TestDeathInventoryActions
             (await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).inState,
             'The player stays dead after accepting the trade'
         ).toBe(GameConst.STATUS.DEATH);
+        for(let tradePage of [context.page, context.secondPage]){
+            expect(
+                await RoomMessagesRecorder.fetchMessages(tradePage, InventoryConst.ACTIONS.TRADE_SHOW),
+                'The trade accepted by the dead player does not open'
+            ).toEqual([]);
+        }
     }
 
     static run()

@@ -84,15 +84,17 @@ class TestCreatePlayerAdsHandler extends BaseTest
         });
     }
 
-    async testPlayedAdsAreLoadedOncePerPlayer()
+    async testEveryJoinSendsTheStoredPlayedAds()
     {
-        await this.test('the played ads are loaded once per player and the next joins send the loaded list', async () => {
+        await this.test('every join loads the stored played ads, so an ad played after a join is sent on the next one', async () => {
             let otherPlayerAds = [{id: 5, ads_id: 8, player_id: 2}];
-            let handler = this.createHandler({1: [], 2: otherPlayerAds});
+            let playedAdsByPlayerId = {1: [], 2: otherPlayerAds};
+            let handler = this.createHandler(playedAdsByPlayerId);
             this.assertPlayedAds(await this.enrichPlayer(handler, 1), []);
-            this.assertPlayedAds(await this.enrichPlayer(handler, 1), []);
+            playedAdsByPlayerId[1] = [{id: 6, ads_id: 7, player_id: 1}];
+            this.assertPlayedAds(await this.enrichPlayer(handler, 1), playedAdsByPlayerId[1]);
             this.assertPlayedAds(await this.enrichPlayer(handler, 2), otherPlayerAds);
-            this.assert.deepStrictEqual(handler.loadCalls.map(loadCall => loadCall.playerId), [1, 2]);
+            this.assert.deepStrictEqual(handler.loadCalls.map(loadCall => loadCall.playerId), [1, 1, 2]);
         });
     }
 

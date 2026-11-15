@@ -233,12 +233,12 @@ class Login
         Login.openedClientContexts = [];
     }
 
-    static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '', skipUiSelectors = false)
+    static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '', skipUiSelectors = false, sceneName = null)
     {
         let username = gameConfig['e2eUsername'+userKeySuffix] || 'root'+userKeySuffix;
         let password = gameConfig['e2ePassword'+userKeySuffix] || 'root';
         let playerName = gameConfig['e2ePlayerName'+userKeySuffix] || 'ImRoot'+userKeySuffix;
-        await Login.loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors);
+        await Login.loginAndStartGame(page, username, password, playerName, longRun, skipUiSelectors, sceneName);
     }
 
     static async loginAndEnterForest(page, gameConfig, longRun)

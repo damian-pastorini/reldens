@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { AnimationObject } = require('../lib/objects/server/object/type/animation-object');
 const { NpcObject } = require('../lib/objects/server/object/type/npc-object');
+const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { ObjectsConst } = require('../lib/objects/constants');
 const { GameConst } = require('../lib/game/constants');
 
@@ -37,7 +38,10 @@ class TestAnimationObjectActionVisibility extends BaseTest
             client,
             {act, id: npcObject.id, value: 'open'},
             {broadcast: () => true, getClientById: () => client},
-            {state: {x: 32, y: 32}, physicalBody: {playerId: client.sessionId}}
+            Object.assign(
+                GameplayPlayerBuilder.createPlayerSchema({physicalBody: {playerId: client.sessionId}}),
+                {state: {x: 32, y: 32}}
+            )
         );
         return sentToPlayer.map(message => message.act);
     }

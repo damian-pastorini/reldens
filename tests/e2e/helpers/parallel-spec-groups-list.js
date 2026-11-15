@@ -38,6 +38,7 @@ module.exports.ParallelSpecGroupsList = {
             'test-combat-action-guards.spec.js',
             'test-combat-target-guards.spec.js',
             'test-combat-broadcasts.spec.js',
+            'test-enemy-respawn.spec.js',
             'test-enemy-battle-start.spec.js',
             'test-combat-animations.spec.js',
             'test-combat-pvp.spec.js',

@@ -9,6 +9,7 @@ const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
 const { InventoryMessageActions } = require('../lib/inventory/server/message-actions');
 const { InventoryConst } = require('../lib/inventory/constants');
 const { ObjectsConst } = require('../lib/objects/constants');
+const { GameConst } = require('../lib/game/constants');
 const { TeamJoin } = require('../lib/teams/server/message-actions/team-join');
 const { TeamLeave } = require('../lib/teams/server/message-actions/team-leave');
 const { ClanLeave } = require('../lib/teams/server/message-actions/clan-leave');
@@ -121,10 +122,116 @@ class TestMessageActionsGuards extends BaseTest
     async testUseOfANonUsableItemIsRejected()
     {
         await this.test('the use of an item that is not usable is rejected', async () => {
-            let playerSchema = {player_id: 1, inventory: {manager: {items: {sword: {group_id: 1, equipped: false}}}}};
+            let playerSchema = {
+                player_id: 1,
+                inventory: {manager: {items: {sword: {group_id: 1, equipped: false}}}},
+                isDeath: () => false,
+                isDisabled: () => false
+            };
             let data = {act: InventoryConst.ACTIONS.USE, 'idx': 'sword'};
             let result = await new InventoryMessageActions().executeMessageActions({}, data, {}, playerSchema);
             this.assert.strictEqual(result, false);
+        });
+    }
+
+    createRecordingInventoryManager(calledActions)
+    {
+        return {
+            items: {
+                potion: {use: async () => calledActions.push('use')},
+                axe: {equip: async () => calledActions.push('equip')}
+            },
+            removeItem: async () => calledActions.push('remove'),
+            toggleEquip: async () => calledActions.push('toggleEquip')
+        };
+    }
+
+    createInactivePlayer(isDeath, calledActions)
+    {
+        return {
+            player_id: 1,
+            sessionId: 'session1',
+            inventory: {manager: this.createRecordingInventoryManager(calledActions)},
+            isDeath: () => isDeath,
+            isDisabled: () => !isDeath
+        };
+    }
+
+    async testInactivePlayerInventoryActionsAreRefused()
+    {
+        await this.test('a dead or disabled player can not use, equip, start or accept a trade, it can trash and close a trade', async () => {
+            let calledActions = [];
+            let sentMessages = [];
+            let refusedActions = [
+                {act: InventoryConst.ACTIONS.USE, 'idx': 'potion'},
+                {act: InventoryConst.ACTIONS.EQUIP, 'idx': 'axe'},
+                {act: InventoryConst.ACTIONS.TRADE_START, id: 'session2'},
+                {act: InventoryConst.ACTIONS.TRADE_ACCEPTED, value: '1', id: 'session2'}
+            ];
+            let allowedActions = [
+                {act: InventoryConst.ACTIONS.REMOVE, 'idx': 'potion'},
+                {act: GameConst.CLOSE_UI_ACTION, id: 'trade-session2'}
+            ];
+            let results = [];
+            let allowedResults = [];
+            for(let isDeath of [true, false]){
+                let playerSchema = this.createInactivePlayer(isDeath, calledActions);
+                let room = this.createTradeRoom(this.createPlayer(2, false), sentMessages);
+                let client = this.createClient(sentMessages);
+                results.push(...await this.runInventoryActions(client, refusedActions, room, playerSchema));
+                allowedResults.push(...await this.runInventoryActions(client, allowedActions, room, playerSchema));
+            }
+            this.assert.deepStrictEqual(results, refusedActions.concat(refusedActions).map(() => false));
+            this.assert.deepStrictEqual([calledActions, sentMessages], [['remove', 'remove'], []]);
+            this.assert.deepStrictEqual(allowedResults, [true, true, true, true]);
+        });
+    }
+
+    createActivePlayer(calledActions, isLocked)
+    {
+        let playerSchema = this.createInactivePlayer(false, calledActions);
+        playerSchema.isDisabled = () => false;
+        playerSchema.inventory.manager.locked = isLocked;
+        return playerSchema;
+    }
+
+    async testLockedInventoryRefusesUseAndEquip()
+    {
+        await this.test('a player with its inventory locked by a trade can not use or equip, it can still trash', async () => {
+            let calledActions = [];
+            let results = await this.runInventoryActions({}, [
+                {act: InventoryConst.ACTIONS.USE, 'idx': 'potion'},
+                {act: InventoryConst.ACTIONS.EQUIP, 'idx': 'axe'},
+                {act: InventoryConst.ACTIONS.REMOVE, 'idx': 'potion'}
+            ], {}, this.createActivePlayer(calledActions, true));
+            this.assert.deepStrictEqual([results, calledActions], [[false, false, true], ['remove']]);
+        });
+    }
+
+    async runInventoryActions(client, actionsData, room, playerSchema)
+    {
+        let results = [];
+        for(let data of actionsData){
+            results.push(await new InventoryMessageActions().executeMessageActions(client, data, room, playerSchema));
+        }
+        return results;
+    }
+
+    async testDeclinedInviteIsConsumed()
+    {
+        await this.test('a declined trade invite is consumed and its exchange cancelled, a decline not invited changes nothing', async () => {
+            let cancelledExchanges = [];
+            let starter = {
+                sessionId: 'session2',
+                tradeInvitedSessionId: 'session1',
+                tradeInProgress: {cancelExchange: () => cancelledExchanges.push(true)}
+            };
+            let room = {playerBySessionIdFromState: () => starter};
+            let playerSchema = this.createActivePlayer([], false);
+            let declineData = {act: InventoryConst.ACTIONS.TRADE_ACCEPTED, value: '2', id: 'session2'};
+            await new InventoryMessageActions().executeMessageActions({}, declineData, room, playerSchema);
+            await new InventoryMessageActions().executeMessageActions({}, declineData, room, playerSchema);
+            this.assert.deepStrictEqual([starter.tradeInvitedSessionId, cancelledExchanges], [false, [true]]);
         });
     }
 
@@ -167,6 +274,31 @@ class TestMessageActionsGuards extends BaseTest
             this.assert.strictEqual(Object.keys(teamData.team.players).includes('3'), true);
             this.assert.strictEqual(Object.keys(teamData.team.players).includes('2'), false);
             this.assert.strictEqual(teamData.memberA.currentTeam, false);
+        });
+    }
+
+    async testMemberLeaveWithNoRemoveIdRemovesTheMember()
+    {
+        await this.test('a member leave with no remove ID (disconnect or another team accept) removes only that member', async () => {
+            let sentMessages = [];
+            let teamData = this.createTeamWithThreePlayers(sentMessages);
+            let teamsPlugin = this.createTeamsPlugin({1: teamData.team}, {});
+            await TeamLeave.execute({}, teamData.memberA, teamsPlugin);
+            this.assert.deepStrictEqual(Object.keys(teamData.team.players).sort(), ['1', '3']);
+            this.assert.deepStrictEqual([teamData.memberA.currentTeam, teamData.memberB.currentTeam], [false, 1]);
+            this.assert.strictEqual(Object.keys(teamsPlugin.teams).length, 1);
+        });
+    }
+
+    async testOwnerLeaveWithNoRemoveIdDisbandsTheTeam()
+    {
+        await this.test('the owner leave with no remove ID disbands the team', async () => {
+            let sentMessages = [];
+            let teamData = this.createTeamWithThreePlayers(sentMessages);
+            let teamsPlugin = this.createTeamsPlugin({1: teamData.team}, {});
+            await TeamLeave.execute({}, teamData.owner, teamsPlugin);
+            this.assert.deepStrictEqual(Object.keys(teamData.team.players), []);
+            this.assert.strictEqual(Object.keys(teamsPlugin.teams).length, 0);
         });
     }
 

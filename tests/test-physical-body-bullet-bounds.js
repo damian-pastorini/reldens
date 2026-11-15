@@ -5,7 +5,9 @@
  * Tests the removal of an invalid bullet body: a bullet outside the world bounds on any side is queued for the world
  * removal with its state id, a bullet inside the bounds or on their edges is kept, a bullet without state id is only
  * queued in the world, a body that is not a bullet is never queued, and a stopped bullet or a bullet slower than the
- * threshold of its shot speed is stopped and removed unless the speed threshold on bullets is off.
+ * threshold of its shot speed is stopped and removed unless the speed threshold on bullets is off; every axis threshold
+ * uses the shot speed of that axis whatever the bullet direction, so a low but valid vertical speed is kept and a slowed
+ * bullet shot up and left or straight up is stopped and removed.
  *
  */
 
@@ -104,6 +106,26 @@ class TestPhysicalBodyBulletBounds extends BaseTest
             let flyingBullet = this.createBullet([160, 128], {applySpeedThresholdOnBullets: false}, {});
             flyingBullet.velocity = [20, 3];
             this.assert.deepStrictEqual([this.readRemoval(flyingBullet), flyingBullet.velocity], [[false, []], [20, 3]]);
+        });
+    }
+
+    async testEveryAxisThresholdUsesTheShotSpeedOfThatAxisInEveryDirection()
+    {
+        await this.test('every axis threshold uses the shot speed of that axis, in every direction', async () => {
+            let lowVerticalBullet = this.createBullet([160, 128], {}, {});
+            Object.assign(lowVerticalBullet, {originalSpeed: {x: 300, y: 20}, velocity: [300, 20]});
+            this.assert.deepStrictEqual(
+                [this.readRemoval(lowVerticalBullet), lowVerticalBullet.velocity],
+                [[false, []], [300, 20]]
+            );
+            for(let slowBulletSpeeds of [[{x: -300, y: -40}, [-20, -3]], [{x: 0, y: -400}, [0, -20]]]){
+                let slowBullet = this.createBullet([160, 128], {}, {});
+                Object.assign(slowBullet, {originalSpeed: slowBulletSpeeds[0], velocity: slowBulletSpeeds[1]});
+                this.assert.deepStrictEqual(
+                    [this.readRemoval(slowBullet), slowBullet.velocity],
+                    [[true, [TestPhysicalBodyBulletBounds.STATE_ID]], [0, 0]]
+                );
+            }
         });
     }
 

@@ -4,11 +4,12 @@
  *
  * Tests the clan creation of the group players in their scene (TeamSteps players, ClanSteps with the clan rows of the
  * players preserved, the clan settings changed for the group): a created clan stores its owner, name, first level,
- * starting points and owner membership and the panel shows the title, the owner without remove button and no connected
- * players; a duplicate name answers NAME_EXISTS; an empty name is not sent by the client; a name that cleans to nothing
+ * starting points and owner membership and the panel shows the title (with the leader name only), the owner without
+ * remove button and no connected players; a clan name with HTML is shown as text in the title and creates no element;
+ * a duplicate name answers NAME_EXISTS; an empty name is not sent by the client; a name that cleans to nothing
  * answers CREATE_ERROR and a blank name still creates a clan; a long name is cut at the name limit and a name of exactly
  * the limit is kept; a lowered name limit and a set of starting points are used; a second create by an owner answers
- * CREATE_ERROR with no second clan; two creates of one name at once make one clan; a non string name creates nothing
+ * CREATE_ERROR with no second clan; a create sent by a member of another clan answers CREATE_ERROR and stores no clan; two creates of one name at once make one clan; a non string name creates nothing
  * and the room keeps answering; and a name of a disbanded clan can be used again.
  *
  */
@@ -33,6 +34,7 @@ class TestClansCreate
     static LOWERED_LIMIT = 10;
     static STARTING_POINTS = 7;
     static SETTLE_MS = 1500;
+    static HTML_ELEMENT_ID = 'e2e-clan-html';
 
     static async enter(context, playersCount = 1, configValues = {})
     {
@@ -79,8 +81,23 @@ class TestClansCreate
             TeamsConst.LABELS.CLAN.CLAN_TITLE.replace('%clanName', clanName).replace('%leaderName', '')
         );
         await expect(dialog, 'The leader name').toContainText(players[0].playerName);
+        await expect(dialog.locator('.box-title'), 'The title right after the create shows the leader name only').toHaveText(
+            TeamsConst.LABELS.CLAN.CLAN_TITLE.replace('%clanName', clanName).replace('%leaderName', players[0].playerName)
+        );
         await expect(dialog.locator('.clan-remove-button'), 'No remove button on the owner').toHaveCount(0);
         await expect(dialog, 'No connected players').toContainText(TeamsConst.LABELS.CLAN.NONE_CONNECTED);
+    }
+
+    static async runHtmlNameTest(context)
+    {
+        let players = await TestClansCreate.enter(context);
+        let created = await ClanSteps.createClan(players[0], '<b id="'+TestClansCreate.HTML_ELEMENT_ID+'">E2e</b>');
+        await TestClansCreate.openClanPanel(players[0].page);
+        await expect(
+            players[0].page.locator(Selectors.clans.dialog+' .box-title'),
+            'The clan name with HTML is shown as text in the title'
+        ).toContainText(created.clanName);
+        await expect(players[0].page.locator('#'+TestClansCreate.HTML_ELEMENT_ID), 'No element is created').toHaveCount(0);
     }
 
     static async runNameRulesTest(context)
@@ -143,6 +160,28 @@ class TestClansCreate
         expect((await ClanSteps.fetchStoredClans(context.gameConfig, {owner_id: players[0].playerId})).length, 'No second clan').toBe(1);
     }
 
+    static async runMemberCreateTest(context)
+    {
+        let players = await TestClansCreate.enter(context, 2);
+        let created = await ClanSteps.createClan(players[0], TestClansCreate.uniqueName('E2eOwned'));
+        await ClanSteps.join(
+            context.gameConfig,
+            players[0],
+            players[1],
+            created.id,
+            [players[0].playerId, players[1].playerId]
+        );
+        let memberClanName = TestClansCreate.uniqueName('E2eMember');
+        expect((await ClanSteps.create(players[1], memberClanName)).result, 'The member create').toBe(
+            TeamsConst.VALIDATION.CREATE_ERROR
+        );
+        expect(await ClanSteps.fetchStoredClans(context.gameConfig, {name: memberClanName}), 'No orphan clan').toEqual([]);
+        expect(
+            (await ClanSteps.fetchStoredMemberships(context.gameConfig, players[1].playerId)).map(row => Number(row.clan_id)),
+            'The member keeps its clan'
+        ).toEqual([Number(created.id)]);
+    }
+
     static async runSameNameTest(context)
     {
         let players = await TestClansCreate.enter(context, 2);
@@ -186,6 +225,9 @@ class TestClansCreate
             test('created clan stores its data and the panel shows it', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runCreateTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
+            test('clan name with HTML is shown as text in the panel title', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestClansCreate.runHtmlNameTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
             test('duplicate, cleaned and long names follow the name rules', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runNameRulesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
@@ -203,6 +245,9 @@ class TestClansCreate
             });
             test('second create by an owner leaves no second clan', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runSecondCreateTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('create sent by a member of another clan answers the error and stores no clan', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestClansCreate.runMemberCreateTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('two creates of one name at once make one clan', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runSameNameTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

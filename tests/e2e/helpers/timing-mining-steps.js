@@ -29,6 +29,7 @@ class TimingMiningSteps
     static START = 'timingStart';
     static CANCEL = 'timingCancel';
     static COMPLETE = 'timingComplete';
+    static BUSY = 'timingBusy';
     static SHORT_WALK_MS = 100;
     static OUT_OF_AREA_DISTANCES = [5, 4, 3];
     static SIDE_WALKS = {

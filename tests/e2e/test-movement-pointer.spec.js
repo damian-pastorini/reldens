@@ -8,7 +8,7 @@
  * stop on every mouse release): a click on a free tile sends one pointer move, walks the player to that tile and shows
  * the pointer arrow, and a primary button click moves nothing; with primaryMove switched on in the client config the
  * secondary button moves nothing and the primary one walks; a touch tap from a page with touch support walks the
- * player and its touch end sends the stop; a second click destroys the arrow of the first one
+ * player and its touch end sends the stop, and with allowPrimaryTouch off a tap moves nothing; a second click destroys the arrow of the first one
  * before its animation ends; a click while the chat input has the focus blurs the input and walks the player; a click
  * on an NPC sprite sends no pointer move; a disabled player keys and clicks send only stops and the player walks again
  * once active; and with the client pointer arrow off a click walks with no arrow, with the client tap movement off a
@@ -60,7 +60,7 @@ class TestMovementPointer
         expect(tile, 'A clear line of tiles starts on the player').toBeTruthy();
         await GameplayE2eStateApi.recordMovementMessages(context.gameConfig, walkContext.playerName);
         await SceneSpritesRecorder.start(context.page);
-        return {walkContext, tile, point: WalkableTileLocator.worldPoint(tile)};
+        return {context, walkContext, tile, point: WalkableTileLocator.worldPoint(tile)};
     }
 
     static async clickTile(context, target, button = TestMovementPointer.MOVE_BUTTON)
@@ -123,31 +123,52 @@ class TestMovementPointer
         await TestMovementPointer.clickAndWalk(context, target);
     }
 
+    static async expectNoMoveWithControl(context, target, controlChange, button, message)
+    {
+        let start = await target.walkContext.fetchPlayer();
+        await context.page.evaluate((change) => Object.assign(window.reldens.config.client.ui.controls, change), controlChange);
+        await TestMovementPointer.clickTile(context, target, button);
+        await TestMovementPointer.expectNoPointerMove(context, target.walkContext, start, message);
+    }
+
     static async runPrimaryMoveOnTest(context)
     {
         let target = await TestMovementPointer.enterAndTarget(context);
-        let start = await target.walkContext.fetchPlayer();
-        await context.page.evaluate(() => {
-            window.reldens.config.client.ui.controls.primaryMove = true;
-        });
-        await TestMovementPointer.clickTile(context, target);
-        await TestMovementPointer.expectNoPointerMove(
+        await TestMovementPointer.expectNoMoveWithControl(
             context,
-            target.walkContext,
-            start,
+            target,
+            {primaryMove: true},
+            TestMovementPointer.MOVE_BUTTON,
             'The secondary button sends no pointer move with primaryMove on'
         );
         await TestMovementPointer.clickAndWalk(context, target, TestMovementPointer.PRIMARY_BUTTON);
     }
 
+    static async enterTouchClient(context)
+    {
+        return TestMovementPointer.enterAndTarget(Object.assign({}, context, {
+            page: (await Login.openClientPage(context.page, context.gameConfig, {hasTouch: true})).clientPage
+        }));
+    }
+
+    static async runTouchOffTest(context)
+    {
+        let target = await TestMovementPointer.enterTouchClient(context);
+        await TestMovementPointer.expectNoMoveWithControl(
+            target.context,
+            target,
+            {allowPrimaryTouch: false},
+            Navigation.TOUCH_BUTTON,
+            'A tap sends no pointer move with allowPrimaryTouch off, only the touch end stop'
+        );
+    }
+
     static async runTouchTapTest(context)
     {
-        let touchClient = await Login.openClientPage(context.page, context.gameConfig, {hasTouch: true});
-        let touchContext = Object.assign({}, context, {page: touchClient.clientPage});
-        let target = await TestMovementPointer.enterAndTarget(touchContext);
-        await TestMovementPointer.clickAndWalk(touchContext, target, Navigation.TOUCH_BUTTON);
+        let target = await TestMovementPointer.enterTouchClient(context);
+        await TestMovementPointer.clickAndWalk(target.context, target, Navigation.TOUCH_BUTTON);
         await TestMovementPointer.expectMessages(
-            touchContext,
+            target.context,
             target.walkContext,
             TestMovementPointer.CLICK_MESSAGES,
             'The tap sends one pointer move and its touch end the stop'
@@ -308,6 +329,9 @@ class TestMovementPointer
             });
             test('a touch tap on a free tile walks the player there', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementPointer.runTouchTapTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a touch tap with allowPrimaryTouch off does not move the player', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementPointer.runTouchOffTest({page, gameConfig, e2eGroup, longRun});
             });
             test('a second canvas click destroys the arrow of the first one', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementPointer.runSecondClickTest({page, gameConfig, e2eGroup, longRun});

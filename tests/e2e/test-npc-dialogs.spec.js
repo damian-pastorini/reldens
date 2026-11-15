@@ -9,7 +9,8 @@
  * movement off the close starts no movement timer; an interaction sent once the player walked away closes the open
  * dialog, and walking away without an interaction keeps it open; an interaction with an object id that does not exist,
  * or sent in a room with every action disabled or with the interaction disallowed (the town custom data for the
- * group), opens nothing; a real canvas click on the NPC and on the trader opens their dialog and shows their title in
+ * group), opens nothing; the interaction of a dead or a disabled player opens nothing while the same player active
+ * opens the dialog; a real canvas click on the NPC and on the trader opens their dialog and shows their title in
  * the target box; and a click on the NPC with a page element under the pointer opens nothing.
  *
  */
@@ -21,11 +22,13 @@ const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ObjectsConst } = require('../../lib/objects/constants');
+const { GameConst } = require('../../lib/game/constants');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -117,6 +120,31 @@ class TestNpcDialogs
         await TestNpcDialogs.expectNoDialog(player.page, 'The room actions rules block the NPC interaction');
     }
 
+    static async sendInteractionInState(context, player, npc, inState)
+    {
+        let changed = await GameplayE2eStateApi.setPlayerState(
+            context.gameConfig,
+            Login.TOWN_ROOM_NAME,
+            player.playerName,
+            inState
+        );
+        expect(changed.inState, 'The player state changes: '+changed.error).toBe(inState);
+        await RoomMessagesRecorder.sendObjectMessage(player.page, npc.npcKey, {act: ObjectsConst.OBJECT_INTERACTION});
+    }
+
+    static async runInactivePlayerTest(context)
+    {
+        let player = await TestNpcDialogs.enterPlayer(context);
+        let npc = await NpcDialogSteps.placeNextToNpc(context, player.page, context.gameConfig.e2eNpcKey);
+        for(let inState of [GameConst.STATUS.DEATH, GameConst.STATUS.DISABLED]){
+            await TestNpcDialogs.sendInteractionInState(context, player, npc, inState);
+            await TestNpcDialogs.expectNoDialog(player.page, 'The interaction of a dead or disabled player opens nothing');
+        }
+        await TestNpcDialogs.sendInteractionInState(context, player, npc, GameConst.STATUS.ACTIVE);
+        await expect(npc.dialog, 'The active player interaction opens the dialog')
+            .toBeVisible({timeout: TimeConstants.UI_OPEN});
+    }
+
     static async runRealClickTest(context, npcKey, openedSelector)
     {
         let player = await TestNpcDialogs.enterPlayer(context);
@@ -172,6 +200,9 @@ class TestNpcDialogs
                     {page, gameConfig, e2eGroup, longRun},
                     {disallowedActions: [ObjectsConst.OBJECT_INTERACTION]}
                 );
+            });
+            test('a dead or disabled player interaction opens no NPC dialog and an active one opens it', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestNpcDialogs.runInactivePlayerTest({page, gameConfig, e2eGroup, longRun});
             });
             test('a real canvas click on the NPC opens its dialog and shows its title in the target box', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestNpcDialogs.runRealClickTest(

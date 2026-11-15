@@ -6,6 +6,7 @@
 
 const { Body } = require('p2');
 const { BaseTest } = require('./base-test');
+const { EnemyObjectBuilder } = require('./fixtures/enemy-object-builder');
 const { EnemyObject } = require('../lib/objects/server/object/type/enemy-object');
 const { Pve } = require('../lib/actions/server/pve');
 const { GameConst } = require('../lib/game/constants');
@@ -26,6 +27,22 @@ class TestEnemyObject extends BaseTest
             initialStats: {hp: 10},
             stats: {hp: 0},
             battle
+        });
+    }
+
+    async testPrivateParamsSetTheEnemyBattle()
+    {
+        await this.test('the enemy private params set its battle time off, chase multiple and chase time out over the config', async () => {
+            let defaultEnemy = EnemyObjectBuilder.createEnemy({});
+            let customEnemy = EnemyObjectBuilder.createEnemy({battleTimeOff: 5000, chaseMultiple: true, chaseTimeOut: 3000});
+            this.assert.deepStrictEqual(
+                [defaultEnemy, customEnemy].map(enemy => [
+                    enemy.battle.battleTimeOff,
+                    enemy.battle.chaseMultiple,
+                    enemy.battle.fetchChaseTimeOut()
+                ]),
+                [[20000, false, 0], [5000, true, 3000]]
+            );
         });
     }
 

@@ -97,7 +97,7 @@ class ChangePointsSteps
         return arrival;
     }
 
-    static async expectOnDefaultReturnPoint(context, roomName)
+    static async expectOnDefaultReturnPoint(context, roomName, maximumDistance = 0)
     {
         let gameConfig = context.gameConfig;
         let defaultReturnPoint = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'roomsReturnPoints', {
@@ -106,6 +106,13 @@ class ChangePointsSteps
         })).shift();
         let expectedPosition = [Number(defaultReturnPoint.x), Number(defaultReturnPoint.y)];
         let placed = await GameplayE2eStateApi.fetchPlayer(gameConfig, roomName, gameConfig.e2ePlayerName);
+        if(0 < maximumDistance){
+            expect(
+                Math.hypot(placed.x - expectedPosition[0], placed.y - expectedPosition[1]),
+                'The player stands on the default return point of the room, or next to it pushed by another player there'
+            ).toBeLessThan(maximumDistance);
+            return;
+        }
         expect(
             [placed.x, placed.y, placed.dir],
             'The player stands on the default return point of the room'
@@ -162,7 +169,7 @@ class ChangePointsSteps
         return tileIndex;
     }
 
-    static async changeRoom(context, player, topology, change)
+    static async enterNextRoom(context, player, change)
     {
         let placed = await RoomObjectsApi.placePlayerOnChangePoint(
             player.page,
@@ -174,6 +181,11 @@ class ChangePointsSteps
         expect(placed.position, 'The player is placed on the change point tile '+change.tileIndex+': '+placed.error)
             .toBeTruthy();
         await Navigation.waitForRoom(player.page, change.nextRoomName, TimeConstants.ROOM_TRANSITION);
+    }
+
+    static async changeRoom(context, player, topology, change)
+    {
+        await ChangePointsSteps.enterNextRoom(context, player, change);
         await expect.poll(
             async () => Boolean((await GameplayE2eStateApi.fetchPlayer(
                 context.gameConfig,

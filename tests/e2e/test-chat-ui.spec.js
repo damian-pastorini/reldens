@@ -5,7 +5,8 @@
  * Tests the chat box of the group players (ChatSteps, the chat client config changed for the group before the login,
  * so the start game config carries it): the close button hides the box and shows the open button; ENTER opens and
  * focuses the chat from the game and ESC closes it from the input; the box opens after the login with defaultOpen on;
- * with the tabs off the messages still reach the client; a tab label click switches the active tab content; an error
+ * with the tabs off the messages still reach the client and are shown on the main panel; with closeChatBoxAfterSend on
+ * the box closes after a sent message; a tab label click switches the active tab content; an error
  * goes to the active tab when it is not the general one and stays out of it with appendErrorTypeOnActiveTab off; with
  * the chat closed an incoming message shows the notification balloon, an error adds the critical class and opening the
  * chat hides it, and with the balloon off none is shown; the overhead text over the sender is seen by both clients, cut
@@ -103,6 +104,17 @@ class TestChatUi
             async () => await ChatSteps.fetchTexts(context.page, ChatConst.TYPES.MESSAGE),
             {message: 'The message reaches the client with the tabs off', timeout: TimeConstants.SERVER_RESPONSE}
         ).toEqual([text]);
+        await expect(
+            context.page.locator(ChatConst.SELECTORS.CHAT_MESSAGES),
+            'With the tabs off the message is shown on the main panel'
+        ).toContainText(text);
+    }
+
+    static async runCloseAfterSendTest(context)
+    {
+        await TestChatUi.enter(context, {[TestChatUi.UI_PATH+'overheadChat/closeChatBoxAfterSend']: true}, false);
+        await ChatSteps.sendText(context.page, 'e2e-close-after-send-'+Date.now());
+        await expect(context.page.locator(TestChatUi.CHAT_BOX), 'The box closes after the send').toBeHidden();
     }
 
     static async runTabSwitchTest(context)
@@ -211,6 +223,9 @@ class TestChatUi
             });
             test('tabs off still receive the messages', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatUi.runNoTabsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('close chat box after send on closes the box after a sent message', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestChatUi.runCloseAfterSendTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('tab label click switches the active tab content', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatUi.runTabSwitchTest({page, screenshots, gameConfig, e2eGroup, longRun});

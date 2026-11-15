@@ -9,9 +9,8 @@
  * reward labels are used; the straight days label and description show the required days; a reward event shows its own
  * image and path from its event data or no image when its event data turns it off, and the provider setting turns
  * every image off; the disabled events, the ended events and the events not started are not listed and no balloon is
- * shown; an event that ends later is listed (once ended it stays listed while the server runs, ISSUE #163); closing
- * the panel clears the accepted reward
- * message (the next rewards update shows it again, ISSUE #161).
+ * shown; an event that ends later is listed and is no longer listed once its end passed while the server runs; and closing
+ * the panel clears the accepted reward message, which the next rewards update does not bring back.
  *
  */
 
@@ -181,15 +180,13 @@ class TestRewardsPanel
     static async runEndingEventTest(context)
     {
         let straight = await RewardsSteps.fetchRewardEvent(context.gameConfig, RewardsSteps.STRAIGHT_DAYS_LOGIN);
-        let activeTo = sc.formatDate(new Date(Date.now() + TimeConstants.GAME_START));
-        await RewardsSteps.changeRewardEvent(context, straight.id, {active_to: activeTo});
+        let endsAt = Date.now() + TimeConstants.GAME_START;
+        await RewardsSteps.changeRewardEvent(context, straight.id, {active_to: sc.formatDate(new Date(endsAt))});
         await RewardsSteps.dropCachedEvents(context);
         let player = await TestRewardsPanel.enter(context);
-        await RewardsSteps.runAndWaitForUpdate(
-            player,
-            () => RewardsSteps.claim(player, [RewardsSteps.UNKNOWN_REWARD_ID])
-        );
-        expect(await RewardsSteps.fetchLastUpdateIds(player), 'Listed before it ends').toContain(straight.id);
+        expect(await RewardsSteps.requestUpdateIds(player), 'Listed before it ends').toContain(straight.id);
+        await player.page.waitForTimeout(Math.max(0, endsAt + TradeSteps.SETTLE_MS - Date.now()));
+        expect(await RewardsSteps.requestUpdateIds(player), 'Not listed once it ended').not.toContain(straight.id);
     }
 
     static async runClosePanelTest(context)
@@ -205,6 +202,8 @@ class TestRewardsPanel
         await expect(accepted, 'The accepted reward message').toHaveText(TestRewardsPanel.ACCEPTED_MESSAGE);
         await player.page.click(Selectors.rewards.dialogClose);
         await expect(accepted, 'Closing the panel clears the accepted reward message').toBeEmpty();
+        expect(await RewardsSteps.requestUpdateIds(player), 'The next rewards update lists the claimed reward').toContain(daily.id);
+        await expect(accepted, 'The next rewards update does not bring the closed accepted message back').toHaveCount(0);
     }
 
     static run()

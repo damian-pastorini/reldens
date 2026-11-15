@@ -104,6 +104,19 @@ class Navigation
         }, null, {timeout, polling: pollMs});
     }
 
+    static async pointToWorldPoint(page, worldX, worldY)
+    {
+        await page.evaluate((args) => {
+            let player = window.reldens.getCurrentPlayer();
+            player.moveToPointer({
+                worldColumn: Math.floor(args.x / args.tileSize),
+                worldRow: Math.floor(args.y / args.tileSize),
+                worldX: args.x + player.leftOff,
+                worldY: args.y + player.topOff
+            });
+        }, {x: worldX, y: worldY, tileSize: Navigation.TILE_SIZE});
+    }
+
     static async moveToWorldPoint(page, worldX, worldY)
     {
         await page.evaluate((args) => {

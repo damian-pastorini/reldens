@@ -4,7 +4,8 @@
  *
  * HTTP client for the e2e endpoints registered by LoginServerState: the overloaded server, the created rooms, the
  * unavailable rooms, the rooms origin validation, the other server of a multi-server setup and the signed disconnection
- * tokens, and the usage report answered by the server status route for a signed status token.
+ * (the disconnect route path and the username) and server status tokens, and the server usage report read from the e2e
+ * endpoint (the rate limited server status route is exhausted by the route limits spec on the same address).
  *
  */
 
@@ -35,16 +36,7 @@ class LoginServerApi
 
     static async fetchUsageReport(gameConfig)
     {
-        let statusToken = await LoginServerApi.fetchDisconnectToken(
-            gameConfig,
-            GameConst.HEALTH.STATUS_TOKEN_VALUE,
-            Date.now() + GameConst.SIGNED_TOKENS.SERVER_STATUS_EXPIRATION
-        );
-        return await SecurityApi.request(
-            gameConfig,
-            'GET',
-            GameConst.ROUTE_PATHS.SERVER_STATUS+'?token='+encodeURIComponent(statusToken)
-        );
+        return await SecurityApi.request(gameConfig, 'GET', '/api/e2e/login-server/usage-report');
     }
 
     static async setRoomsOrigin(gameConfig, roomsOrigin)
@@ -91,14 +83,19 @@ class LoginServerApi
         return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/login-server/guests-cleanup', {olderThanTime})).deleted;
     }
 
+    static async fetchSignedToken(gameConfig, values, expiresAt)
+    {
+        return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/login-server/signed-token', {values, expiresAt})).token;
+    }
+
     static async fetchDisconnectToken(gameConfig, username, expiresAt)
     {
-        return (await SecurityApi.request(
-            gameConfig,
-            'POST',
-            '/api/e2e/login-server/disconnect-token',
-            {username, expiresAt}
-        )).token;
+        return await LoginServerApi.fetchSignedToken(gameConfig, [GameConst.ROUTE_PATHS.DISCONNECT_USER, username], expiresAt);
+    }
+
+    static async fetchStatusToken(gameConfig, statusValue, expiresAt)
+    {
+        return await LoginServerApi.fetchSignedToken(gameConfig, [statusValue], expiresAt);
     }
 
 }

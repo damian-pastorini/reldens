@@ -8,7 +8,8 @@
  * last state handler of the forest off and on (on, the handler marks it dead at the login); a reload during the manual
  * revive wait leaves no revive button or stale game over box; a reload while the resurrection ad plays gives no item,
  * leaves its played row open and the next death starts the ad again; and the dead player logged in from a second
- * browser ends the first session, whose death timer does not revive the new session.
+ * browser ends the first session, whose tab shows the session ended modal and whose death timer does not revive the
+ * new session (the revived player logged in again from a second browser gets the same modal on the first tab).
  *
  */
 
@@ -29,6 +30,7 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ActionsConst } = require('../../lib/actions/constants');
 const { GameConst } = require('../../lib/game/constants');
+const GameTranslations = require('../../lib/game/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -80,6 +82,12 @@ class TestDeathLeaveAndReturn
             ),
             {message: 'The first session is removed from the forest', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBe(1);
+        await expect(
+            context.page.locator(Selectors.reloadModal.message),
+            'The first tab tells its session ended after the death'
+        ).toHaveText(GameTranslations.game.errors.sessionEnded, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, context.longRun)
+        });
     }
 
     static async runTimersStopTest(context)

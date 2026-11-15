@@ -12,7 +12,7 @@
  * with a quantity above 1 leave the sender (the receiver gets only one instance, ISSUE #150); both confirmations on an
  * empty trade move nothing; both players confirming at the same time move the offer once (a receiver confirming twice in
  * the same tick moves it twice, ISSUE #151); and when a sender confirms and leaves before the receiver confirms, the
- * receiver live and stored quantities match (the trade still completes and duplicates the item, ISSUE #152).
+ * trade is cancelled and moves nothing, the receiver live and stored and the sender stored quantities stay.
  *
  */
 
@@ -229,13 +229,19 @@ class TestTradingExchanges
     {
         let [receiver, , sender] = await TestTradingExchanges.enter(context, 3);
         let potionKey = context.gameConfig.e2eConsumableItemId;
-        await TestTradingExchanges.openPotionsOffer(context, sender, receiver);
+        let startQuantities = await TestTradingExchanges.openPotionsOffer(context, sender, receiver);
         await sender.page.close();
         await receiver.page.waitForTimeout(TradeSteps.SETTLE_MS);
         await TradeSteps.confirm(receiver, sender);
         await receiver.page.waitForTimeout(TradeSteps.SETTLE_MS);
-        expect(await TradeSteps.fetchQuantity(context, receiver, potionKey), 'The receiver live and stored match')
-            .toBe(await E2eSeedAndRestoreApi.fetchInventoryQuantity(context.gameConfig, receiver.playerName, potionKey));
+        expect(
+            [
+                await TradeSteps.fetchQuantity(context, receiver, potionKey),
+                await E2eSeedAndRestoreApi.fetchInventoryQuantity(context.gameConfig, receiver.playerName, potionKey),
+                await E2eSeedAndRestoreApi.fetchInventoryQuantity(context.gameConfig, sender.playerName, potionKey)
+            ],
+            'The trade of the sender that left moves nothing: receiver live and stored, sender stored'
+        ).toEqual([startQuantities[1], startQuantities[1], startQuantities[0]]);
     }
 
     static run()
@@ -262,7 +268,7 @@ class TestTradingExchanges
             test('simultaneous confirmations move the offer once', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingExchanges.runSimultaneousConfirmTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('sender confirming and leaving keeps the receiver live and stored quantities matched', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('sender confirming and leaving cancels the trade and moves nothing', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingExchanges.runConfirmAndLeaveTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
         });

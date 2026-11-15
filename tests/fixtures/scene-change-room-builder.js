@@ -36,8 +36,17 @@ class SceneChangeRoomBuilder
             roomName: 'reldens-bots',
             returnPoints: [{d: GameConst.UP, x: 1, y: 2, p: this.otherPreviousRoomName}]
         };
+        this.defaultFirstRoom = {
+            roomId: 9,
+            roomName: 'reldens-default-first',
+            returnPoints: [
+                {d: GameConst.DOWN, x: 1520, y: 1424, de: 1},
+                {d: GameConst.LEFT, x: 1344, y: 1440, p: this.currentRoomName}
+            ]
+        };
         this.nextRooms = {};
-        for(let room of [this.townRoom, this.forestRoom, this.noReturnPointsRoom, this.otherPathRoom]){
+        let nextRooms = [this.townRoom, this.forestRoom, this.noReturnPointsRoom, this.otherPathRoom, this.defaultFirstRoom];
+        for(let room of nextRooms){
             this.nextRooms[room.roomName] = room;
         }
     }

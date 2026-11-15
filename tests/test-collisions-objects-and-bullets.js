@@ -3,7 +3,7 @@
  * Reldens - Test Collisions Objects And Bullets
  *
  * Tests the objects, bullets and players collisions: the hit of the bullet over an object or of the first object when
- * none has hit priority, a passive NPC hitting a player without messages nor battle and the player path recalculated,
+ * none has hit priority, the hit of the bullet with the higher hit priority between two bullets, a passive NPC hitting a player without messages nor battle and the player path recalculated,
  * the bullets removed and the moving objects path recalculated on an object hit, the stopped objects fully stopped when
  * the hit ends, the wall retries of a moving object up to its limit and then the walk back to its origin, the wall hit
  * listener keeping a bullet, the objects and players stopped by a bullet in the same broadphase pair only with
@@ -81,6 +81,22 @@ class TestCollisionsObjectsAndBullets extends RandomMovementBaseTest
                 [setup.hits, setup.removedBullets, movingObject.autoMoving.length, movingObject.autoMoving.pop(), otherSetup.hits],
                 [['attackBullet_bullet_7'], ['attackBullet_bullet_7'], 4, pathTile, ['enemy-a']]
             );
+        });
+    }
+
+    async testTheHigherHitPriorityRunsItsHitInAnyOrder()
+    {
+        await this.test('between two bullets the higher hit priority runs its hit, whatever the contact order', async () => {
+            let hits = [];
+            for(let priorities of [[3, 1], [1, 3]]){
+                let setup = this.createCollisionsSetup({});
+                setup.collisionsManager.objectHitObjectBegin(
+                    this.createBullet(setup, 'bullet_a_'+priorities[0], priorities[0]),
+                    this.createBullet(setup, 'bullet_b_'+priorities[1], priorities[1])
+                );
+                hits.push(...setup.hits);
+            }
+            this.assert.deepStrictEqual(hits, ['bullet_a_3', 'bullet_b_3']);
         });
     }
 

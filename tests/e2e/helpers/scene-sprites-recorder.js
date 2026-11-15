@@ -6,7 +6,8 @@
  * the added text objects (the Phaser addedtoscene event, the listener is added once per scene and the start clears the
  * recorded lists), so the specs prove the skill attack, hit, cast and effect sprites and the floating damage texts were created
  * even when their animation ends and destroys them before a read; it also reads the current sprite of a player (its
- * position and the visibility of the sprite and its name) and waits until a player sprite is shown or removed.
+ * position and the visibility of the sprite and its name), the largest axis difference between the distance of two
+ * player sprites and an expected distance, and waits until a player sprite is shown or removed.
  *
  */
 
@@ -67,6 +68,19 @@ class SceneSpritesRecorder
             }
             return {x: sprite.x, y: sprite.y, visible: sprite.visible, nameVisible: Boolean(sprite.nameSprite?.visible)};
         }, sessionId);
+    }
+
+    static async fetchPlayersDeltaOffset(page, sessionIds, expectedDelta)
+    {
+        let firstSprite = await SceneSpritesRecorder.fetchPlayerSprite(page, sessionIds[0]);
+        let secondSprite = await SceneSpritesRecorder.fetchPlayerSprite(page, sessionIds[1]);
+        if(!firstSprite || !secondSprite){
+            return Number.MAX_SAFE_INTEGER;
+        }
+        return Math.max(
+            Math.abs(secondSprite.x - firstSprite.x - expectedDelta[0]),
+            Math.abs(secondSprite.y - firstSprite.y - expectedDelta[1])
+        );
     }
 
     static async waitForRemovedPlayer(page, sessionId, timeout)

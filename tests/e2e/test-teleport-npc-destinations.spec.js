@@ -10,8 +10,8 @@
  * and on another client of the town; a destination room that is not a room name shows the invalid destination message,
  * like a room without allowGuest chosen by a guest (the guest rooms computed with allowOnRooms off, the sample allows
  * the guests on every room);
- * an option value that is not in the dialog options relocates nothing (its message shows the snippet key, ISSUE #350);
- * and an option chosen once the
+ * an option value that is not in the dialog options relocates nothing and shows the translated invalid option message
+ * (the snippet the server sends is translated by the client); and an option chosen once the
  * player is out of the NPC reach closes the dialog and relocates nothing.
  *
  */
@@ -28,6 +28,7 @@ const { SecurityApi } = require('./helpers/security-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
+const ObjectsSnippets = require('../../lib/objects/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -47,8 +48,11 @@ class TestTeleportNpcDestinations
 
     static async fetchTownPosition(context)
     {
-        let player = await GameplayE2eStateApi.fetchPlayer(context.gameConfig, Login.TOWN_ROOM_NAME, context.gameConfig.e2ePlayerName);
-        return [player.scene, player.x, player.y];
+        return (({scene, x, y}) => [scene, x, y])(await GameplayE2eStateApi.fetchPlayer(
+            context.gameConfig,
+            Login.TOWN_ROOM_NAME,
+            context.gameConfig.e2ePlayerName
+        ));
     }
 
     static async expectStayedInTown(context, before, message)
@@ -81,8 +85,11 @@ class TestTeleportNpcDestinations
         );
         await TeleportNpcSteps.chooseOption(npc, optionValue);
         await Navigation.waitForRoom(context.page, Login.FOREST_ROOM_NAME, TimeConstants.ROOM_TRANSITION);
-        let arrived = await GameplayE2eStateApi.fetchPlayer(context.gameConfig, Login.FOREST_ROOM_NAME, context.gameConfig.e2ePlayerName);
-        return [arrived.x, arrived.y, arrived.dir];
+        return (({x, y, dir}) => [x, y, dir])(await GameplayE2eStateApi.fetchPlayer(
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            context.gameConfig.e2ePlayerName
+        ));
     }
 
     static async runPositionDestinationTest(context)
@@ -192,6 +199,8 @@ class TestTeleportNpcDestinations
         let npc = await TestTeleportNpcDestinations.enterWithDialog(context);
         let before = await TestTeleportNpcDestinations.fetchTownPosition(context);
         await TeleportNpcSteps.chooseOption(npc, TestTeleportNpcDestinations.NOT_AN_OPTION_VALUE);
+        await expect(npc.dialog, 'The invalid option shows the translated invalid option message')
+            .toContainText(ObjectsSnippets.objects.npcInvalid, {timeout: TimeConstants.SERVER_RESPONSE});
         await TestTeleportNpcDestinations.expectStayedInTown(context, before, 'The invalid option relocates nothing');
     }
 

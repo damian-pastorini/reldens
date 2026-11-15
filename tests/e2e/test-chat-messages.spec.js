@@ -23,6 +23,7 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ChatConst } = require('../../lib/chat/constants');
 const { GameConst } = require('../../lib/game/constants');
+const ChatTranslations = require('../../lib/chat/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -84,6 +85,13 @@ class TestChatMessages
             ChatConst.TYPES.MESSAGE,
             [htmlText, snippetText],
             'The snippet key text arrives as it was sent'
+        );
+        await expect(
+            context.secondPage.locator(Selectors.chat.tabContentGeneral),
+            'The snippet key text is shown as it was sent, not translated'
+        ).toContainText(snippetText);
+        await expect(context.secondPage.locator(Selectors.chat.tabContentGeneral), 'No translated snippet').not.toContainText(
+            ChatTranslations.chat.joinedRoom
         );
     }
 

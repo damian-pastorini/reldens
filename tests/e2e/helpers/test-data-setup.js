@@ -15,7 +15,9 @@
  * the files from) and in the app dist maps folder (the client loads the maps from it); before the rooms are defined,
  * every missing disposable room is created as a copy of its base sample room with its change and return points. The
  * disposable rooms and files names end with the isolated instance name, so the instances running from the same app
- * never remove the files of another one.
+ * never remove the files of another one. Before the rooms are loaded it also moves the bots forest return point from the
+ * bots house one tile away from the bots forest default return point (both are on the same position in the sample
+ * data), so the arrival from the bots house proves the return point of the previous room wins over the default one.
  *
  */
 
@@ -41,6 +43,8 @@ class TestDataSetup
         [TestDataSetup.PLAYERS_ROOM_KEY]: 'reldens-new-age-town-house-05',
         [TestDataSetup.UNLINKED_ROOM_KEY]: 'reldens-new-age-town-house-04'
     };
+    static ARRIVAL_OFFSET = 32;
+    static SEPARATED_ARRIVAL = {roomName: 'reldens-bots-forest', fromRoomName: 'reldens-bots-forest-house-01-n0'};
     static ROOM_ROWS_ENTITIES = [
         {entityKey: 'roomsChangePoints', ownerField: 'room_id'},
         {entityKey: 'roomsReturnPoints', ownerField: 'room_id'}
@@ -235,6 +239,30 @@ class TestDataSetup
         }
         Logger.info('[test-data-setup] Created '+createdCount+' disposable rooms.');
         return createdCount;
+    }
+
+    static async separateRoomArrival(dataServer, roomName, fromRoomName)
+    {
+        let roomsRepository = dataServer.getEntity('rooms');
+        let room = await roomsRepository.loadOneBy('name', roomName);
+        let fromRoom = await roomsRepository.loadOneBy('name', fromRoomName);
+        if(!room || !fromRoom){
+            Logger.error('[test-data-setup] Arrival rooms not found: '+roomName+', '+fromRoomName);
+            return false;
+        }
+        let returnPointsRepository = dataServer.getEntity('roomsReturnPoints');
+        let defaultPoint = (await returnPointsRepository.load({room_id: room.id, from_room_id: null})).shift();
+        let fromPoint = (await returnPointsRepository.load({room_id: room.id, from_room_id: fromRoom.id})).shift();
+        if(!defaultPoint || !fromPoint){
+            Logger.error('[test-data-setup] Arrival return points not found for '+roomName+' from '+fromRoomName);
+            return false;
+        }
+        await returnPointsRepository.updateById(fromPoint.id, {
+            x: Number(defaultPoint.x) + TestDataSetup.ARRIVAL_OFFSET,
+            y: Number(defaultPoint.y)
+        });
+        Logger.info('[test-data-setup] Separated the '+roomName+' arrival from '+fromRoomName+' from its default one.');
+        return true;
     }
 
     static async createDisposableRoom(dataServer, roomKey)

@@ -79,6 +79,28 @@ class TestRoomChatGlobalMessages extends BaseTest
         });
     }
 
+    async testPrivateMessageWithoutSpaceIsDropped()
+    {
+        await this.test('a private message with no space after the recipient name is dropped, with the space it is sent', async () => {
+            let deliveries = [];
+            let chatRoom = {
+                roomId: 'chat-room',
+                config: {get: () => 0, getWithoutLogs: (path, defaultValue) => defaultValue},
+                activePlayerBySessionId: () => ({playerId: 1, playerName: 'ImRoot'}),
+                chatManager: {isAllowedByCooldown: () => true},
+                sendPrivateMessage: async (client, toPlayer, text) => deliveries.push([toPlayer, text])
+            };
+            for(let text of ['@ImRoot2hello', '@ImRoot2 hello']){
+                await RoomChat.prototype.handleReceivedMessage.call(
+                    chatRoom,
+                    {sessionId: 'session-1'},
+                    {act: ChatConst.CHAT_ACTION, [ChatConst.MESSAGE.KEY]: text, [ChatConst.CHAT_TO]: 'ImRoot2'}
+                );
+            }
+            this.assert.deepStrictEqual(deliveries, [['ImRoot2', '@ImRoot2 hello']]);
+        });
+    }
+
     async testEveryChatSnippetHasAClientTranslation()
     {
         await this.test('every chat snippet key sent by the server has a client translation', async () => {

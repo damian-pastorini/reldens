@@ -6,7 +6,8 @@
 
 const { BaseTest } = require('./base-test');
 const { StorageChangePointsCreator } = require('../lib/world/server/storage-change-points-creator');
-const { sc } = require('@reldens/utils');
+const { LoggerOutputCapture } = require('./fixtures/logger-output-capture');
+const { Logger, sc } = require('@reldens/utils');
 
 class TestStorageChangePointsCreator extends BaseTest
 {
@@ -121,6 +122,22 @@ class TestStorageChangePointsCreator extends BaseTest
             this.assert.deepStrictEqual(
                 [...setup.markedPositions].shift(),
                 {col: 2, row: 1, walkable: false}
+            );
+        });
+    }
+
+    async testTheMissingChangePointWarningIsLogged()
+    {
+        await this.test('a stored change point missing in the map logs that it does not exist in the map', async () => {
+            let creator = new StorageChangePointsCreator();
+            let setup = this.createWorld({12: 'reldens-house-1'});
+            let loggedText = await LoggerOutputCapture.capture(
+                Logger.logLevels.warning,
+                async () => creator.createMissingChangePoints(setup.world)
+            );
+            this.assert.strictEqual(
+                -1 !== loggedText.indexOf('Change point saved in the storage does not exist in the map.'),
+                true
             );
         });
     }

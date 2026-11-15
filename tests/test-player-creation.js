@@ -145,7 +145,6 @@ class TestPlayerCreation extends BaseTest
             creationSetup.playerCreation.usersManager.createPlayer = async () => {
                 throw storeError;
             };
-            // @possible-hallucinated-undefined-method
             let result = await creationSetup.playerCreation.createNewPlayer({'new-player-name': 'player', user_id: 1});
             this.assert.strictEqual(result.message, 'There was an error creating your player, please try again.');
             this.assert.deepStrictEqual(creationSetup.releasedNames, ['player']);
@@ -246,7 +245,6 @@ class TestPlayerCreation extends BaseTest
     {
         await this.test('a name that is too short once cleaned is rejected before the player is stored', async () => {
             let creationSetup = this.builder.createCreationSetup(4, true);
-            // @possible-hallucinated-undefined-method
             let result = await creationSetup.playerCreation.createNewPlayer({'new-player-name': ' a é b ', user_id: 1});
             this.assert.strictEqual(result.message, 'Invalid player name, please choose another name.');
             this.assert.deepStrictEqual(creationSetup.checkedNames, []);

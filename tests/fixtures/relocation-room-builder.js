@@ -7,7 +7,7 @@
  * client that are relocated. The player room state is the real PlayerRoomState over the stubbed rooms manager and the
  * player state replacement is the real RoomScene method. The state position applies the position on the player state
  * as the room state does, the body stops are recorded and every state save records the state it saved and the
- * broadcasts already sent at that moment.
+ * broadcasts already sent at that moment, and every emitted event is recorded with the broadcasts already sent.
  *
  */
 
@@ -108,6 +108,14 @@ class RelocationRoomBuilder
                 setup.savedStateValues.push(Object.assign({}, setup.playerSchema.state));
                 setup.broadcastsOnSave.push(setup.broadcasts.length);
                 return setup.saveResult ? setup.playerSchema : false;
+            },
+            events: {
+                emittedEvents: [],
+                emit: async (eventName, event) => setup.room.events.emittedEvents.push({
+                    eventName,
+                    event,
+                    broadcastsCount: setup.broadcasts.length
+                })
             },
             broadcast: (messageKey, message) => setup.broadcasts.push(message),
             broadcastSceneChange: (client, playerSchema, data) => setup.sceneChanges.push({

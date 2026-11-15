@@ -5,7 +5,8 @@
  * Tests the options of the sample NPCs with their own server classes (exclusive group, NpcDialogSteps, the option
  * buttons clicked on the dialog, the player inventory preserved for the group and the quantities of the used items set
  * on the live inventory): the healer option 1 restores the life and option 3 the MP with their answers, option 2 gives
- * one heal and one magic potion, and the interaction alone changes nothing; the weapons master shows its options as
+ * one heal and one magic potion, the interaction alone changes nothing and a player that died with the dialog open
+ * gets it closed on option 1 and stays dead with its life; the weapons master shows its options as
  * icon buttons with the stored item images, gives the axe or the spear with its answer and gives no second item that
  * the player already owns; and the forest quest NPC closes the dialog with option 2, and with option 1 refuses a
  * player with 10 coins or without a tree branch, or takes one branch and gives one coin.
@@ -19,8 +20,10 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { ItemsSteps } = require('./helpers/items-steps');
+const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
+const { GameConst } = require('../../lib/game/constants');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -124,6 +127,32 @@ class TestNpcRewards
         );
     }
 
+    static async setPlayerState(context, player, inState)
+    {
+        let changed = await GameplayE2eStateApi.setPlayerState(context.gameConfig, player.roomName, player.playerName, inState);
+        expect(changed.inState, 'The player state changes: '+changed.error).toBe(inState);
+    }
+
+    static async runDeadHealerTest(context)
+    {
+        let player = await TestNpcRewards.enterPlayer(context);
+        await TestNpcRewards.lowerLife(context, player);
+        let npc = await NpcDialogSteps.openDialog(context, player.page, TestNpcRewards.HEALER_KEY);
+        await TestNpcRewards.setPlayerState(context, player, GameConst.STATUS.DEATH);
+        await RoomMessagesRecorder.sendObjectMessage(player.page, TestNpcRewards.HEALER_KEY, {
+            act: GameConst.BUTTON_OPTION,
+            value: '1'
+        });
+        await expect(npc.dialog, 'The dead player gets the healer dialog closed')
+            .toHaveCount(0, {timeout: TimeConstants.SERVER_RESPONSE});
+        let deadPlayer = await TestNpcRewards.fetchPlayer(context, player);
+        expect([deadPlayer.inState, deadPlayer.life], 'The dead player is not healed').toEqual([
+            GameConst.STATUS.DEATH,
+            TestNpcRewards.LOW_VALUE
+        ]);
+        await TestNpcRewards.setPlayerState(context, player, GameConst.STATUS.ACTIVE);
+    }
+
     static async runWeaponsIconsTest(context)
     {
         let player = await TestNpcRewards.enterPlayer(context);
@@ -188,6 +217,9 @@ class TestNpcRewards
             });
             test('the healer interaction without an option heals nothing and gives no item', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestNpcRewards.runHealerPotionsTest({page, gameConfig, e2eGroup, longRun}, false);
+            });
+            test('a dead player choosing the healer option 1 gets the dialog closed and is not healed', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestNpcRewards.runDeadHealerTest({page, gameConfig, e2eGroup, longRun});
             });
             test('the weapons master options are icon buttons with the stored item images', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestNpcRewards.runWeaponsIconsTest({page, gameConfig, e2eGroup, longRun});

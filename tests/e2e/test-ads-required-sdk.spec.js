@@ -5,7 +5,9 @@
  * Tests the ads SDK loaded with the page and the required SDK setting (client/ads/general/sdkRequired) through the
  * initial client config of the page, with the CrazyGames provider enabled on the e2e SDK mock: required, the login
  * forms stay hidden while the SDK loads and are shown once it loaded; required and failing (the mock request aborted),
- * the forms stay hidden and the ads SDK error is shown; not required and failing, the login works.
+ * the forms stay hidden and the ads SDK error is shown; not required and failing, the login works. The GameMonetize
+ * SDK mock loaded with the page finds the SDK options set before its script, and the SDK events of those options reach
+ * the provider created after the login.
  *
  */
 
@@ -14,6 +16,7 @@ const { Login } = require('./helpers/login');
 const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { InitialClientConfig } = require('./helpers/initial-client-config');
 const { E2eAssetsEndpoints } = require('./helpers/e2e-assets-endpoints');
+const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -23,6 +26,7 @@ class TestAdsRequiredSdk
 {
 
     static ADS_GENERAL_PATH = 'client/ads/general';
+    static GAME_MONETIZE_PATH = 'client/ads/general/providers/gameMonetize';
     static SDK_ROUTE = '**'+E2eAssetsEndpoints.ASSETS_PATH+E2eAssetsEndpoints.SDK_MOCK_FILE;
 
     static async loadSdkWithPage(page, sdkRequired)
@@ -76,6 +80,42 @@ class TestAdsRequiredSdk
         await screenshots.capture(page, 'required-sdk-failed-blocks-login');
     }
 
+    static async enableGameMonetizeMock(page, gameConfig, e2eGroup)
+    {
+        let sdkUrl = E2eAssetsEndpoints.ASSETS_PATH+E2eAssetsEndpoints.GAME_MONETIZE_SDK_MOCK_FILE;
+        let providerPath = TestAdsRequiredSdk.GAME_MONETIZE_PATH;
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, providerPath+'/enabled', 1);
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, providerPath+'/sdkUrl', sdkUrl);
+        await InitialClientConfig.merge(page, providerPath, {enabled: 1, sdkUrl});
+        return await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, providerPath+'/gameId');
+    }
+
+    static async fireGameMonetizeEvent(page, eventName)
+    {
+        return await page.evaluate(async (sdkEventName) => {
+            await window.sdk.loadedOptions.onEvent({name: sdkEventName});
+            return window.reldens.getFeature('ads').activeProviders.gameMonetize.service.isPlayingAd;
+        }, eventName);
+    }
+
+    static async runGameMonetizeSdkOptionsTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let gameId = await TestAdsRequiredSdk.enableGameMonetizeMock(page, gameConfig, e2eGroup);
+        await page.goto('/');
+        await page.waitForFunction(() => Boolean(window.sdk?.showBanner));
+        let loadedGameId = await page.evaluate(() => window.sdk.loadedOptions?.gameId);
+        expect(loadedGameId, 'The SDK options found on load').toBe(gameId);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        await page.waitForFunction(
+            () => Boolean(window.reldens.getFeature('ads')?.activeProviders?.gameMonetize?.service)
+        );
+        let isPlayingOnStart = await TestAdsRequiredSdk.fireGameMonetizeEvent(page, 'CONTENT_PAUSE_REQUESTED');
+        expect(isPlayingOnStart, 'The ad start reaches the provider').toBe(true);
+        await screenshots.capture(page, 'game-monetize-preloaded-sdk-ad-started');
+        let isPlayingOnEnd = await TestAdsRequiredSdk.fireGameMonetizeEvent(page, 'SDK_GAME_START');
+        expect(isPlayingOnEnd, 'The ad end reaches the provider').toBe(false);
+    }
+
     static async runSdkNotRequiredFailedTest(page, screenshots, gameConfig, longRun)
     {
         await TestAdsRequiredSdk.loadSdkWithPage(page, false);
@@ -99,6 +139,18 @@ class TestAdsRequiredSdk
                 'required ads SDK that fails to load keeps the login hidden and shows the SDK error',
                 async ({ page, screenshots, longRun }) => {
                     await TestAdsRequiredSdk.runRequiredSdkFailedTest(page, screenshots, longRun);
+                }
+            );
+            test(
+                'GameMonetize SDK loaded with the page gets its options and its events reach the provider',
+                async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                    await TestAdsRequiredSdk.runGameMonetizeSdkOptionsTest(
+                        page,
+                        screenshots,
+                        gameConfig,
+                        e2eGroup,
+                        longRun
+                    );
                 }
             );
             test(

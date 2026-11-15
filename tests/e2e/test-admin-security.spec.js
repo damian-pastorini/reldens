@@ -4,16 +4,20 @@
  *
  * Tests the administration panel protections through the browser: the CSRF token sent by the login, the entity forms,
  * the upload forms, the upload routes and the tileset tool requests, the session and token cookies, the logout over
- * POST, the login limiter and the banned administrator before and after the login.
+ * POST, the login limiter, the banned administrator before and after the login, and a stored entity value with markup
+ * (a player name set to the image with handler payload of tests/fixtures/markup-injection-payloads.json) shown as text on
+ * the view page, with no element created and no handler run.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { SecurityApi } = require('./helpers/security-api');
 const { AdminPanelSession } = require('./helpers/admin-panel-session');
+const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
+const MarkupInjectionPayloads = require('../fixtures/markup-injection-payloads.json');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -178,6 +182,31 @@ class TestAdminSecurity
         await screenshots.capture(page, 'admin-logged-out');
     }
 
+    static async runStoredMarkupShownAsTextTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName});
+        await E2eSeedAndRestoreApi.updateWithPreserve(
+            gameConfig,
+            e2eGroup,
+            'players',
+            {id: playerId},
+            {name: MarkupInjectionPayloads.imageWithHandler}
+        );
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
+        await page.goto(AdminPanelSession.adminPath(gameConfig)+'/players/view?id='+playerId);
+        await expect(page.getByText(MarkupInjectionPayloads.imageWithHandler).first(), 'The stored name is text').toBeVisible(
+            { timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun) }
+        );
+        await screenshots.capture(page, 'stored-markup-shown-as-text');
+        expect(
+            [
+                await page.locator('#'+MarkupInjectionPayloads.imageWithHandlerElementId).count(),
+                await page.evaluate((windowFlag) => Boolean(window[windowFlag]), MarkupInjectionPayloads.imageWithHandlerWindowFlag)
+            ],
+            'No element and no handler run from the stored name'
+        ).toEqual([0, false]);
+    }
+
     static async runBannedLoggedAdministratorTest(page, screenshots, gameConfig, longRun)
     {
         await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
@@ -237,6 +266,12 @@ class TestAdminSecurity
                 'logout over GET keeps the session and the sidebar logout ends it',
                 async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestAdminSecurity.runLogoutTest(page, screenshots, gameConfig, longRun);
+                }
+            );
+            test(
+                'a stored entity value with markup is shown as text on the admin view page',
+                async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                    await TestAdminSecurity.runStoredMarkupShownAsTextTest(page, screenshots, gameConfig, e2eGroup, longRun);
                 }
             );
             test(

@@ -6,10 +6,12 @@
  * quantities of the traded items set on the live inventory, the prices read from the stored trader requirements): an
  * item added to the cart without enough coins is refused with its error and changes nothing; a pushed quantity of 0,
  * negative, not an integer or above the owned quantity is refused; an unknown trade action value opens nothing, and an unknown sub action only starts the transaction; a sub
- * action sent with no transaction started starts it first; a confirm sent after the shop was closed changes nothing; a
- * trader action sent out of reach closes the shop and is refused, or with closeInteractionOnOutOfReach off keeps the
- * shop open and is refused. The test of the sub action with no
- * transaction clears the live trader transactions first, the transactions of the players that left are never removed.
+ * action sent with no transaction started starts it first; the transaction of a player that left the room is removed,
+ * so a sub action sent after a new login (the shop opened without coins, the new session with coins) runs on the new
+ * session inventory; a cart confirmed twice in the same tick is bought once; a confirm sent after the shop was closed
+ * changes nothing; a trader action sent out of reach closes
+ * the shop and is refused, or with closeInteractionOnOutOfReach off keeps the shop open and is refused. The test of the
+ * sub action with no transaction clears the live trader transactions first.
  *
  */
 
@@ -19,10 +21,12 @@ const { TraderSteps } = require('./helpers/trader-steps');
 const { NpcDialogSteps } = require('./helpers/npc-dialog-steps');
 const { ItemsSteps } = require('./helpers/items-steps');
 const { MovementScenario } = require('./helpers/movement-scenario');
+const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
+const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -117,6 +121,25 @@ class TestTraderRules
             .toEqual([ObjectsConst.TRADE_ACTIONS_FUNCTION_NAME.ADD, true]);
     }
 
+    static async runLeftSessionTransactionTest(context)
+    {
+        let player = (await TestTraderRules.enterWithItems(context, {coins: 0, axe: 0})).shift();
+        let itemId = await TraderSteps.findShopItemId(await TraderSteps.openShop(context, player, 'buy'), 'axe');
+        await player.page.goto('about:blank');
+        await Login.loginRootPlayer(player.page, context.gameConfig, context.longRun);
+        await RoomMessagesRecorder.start(player.page);
+        await ItemsSteps.setQuantities(context, player, {coins: TestTraderRules.COINS});
+        await NpcDialogSteps.placeNextToNpc(context, player.page, context.gameConfig.e2eTraderKey);
+        let result = await TestTraderRules.sendAndWait(
+            {page: player.page, traderKey: context.gameConfig.e2eTraderKey, action: 'buy'},
+            Object.assign({itemId, itemKey: 'axe', qty: 1}, TestTraderRules.ADD)
+        );
+        expect(
+            [result.subAction, result.subActionResult],
+            'The new session add runs on its own inventory, not the left session one: '+result.lastErrorMessage
+        ).toEqual([ObjectsConst.TRADE_ACTIONS_FUNCTION_NAME.ADD, true]);
+    }
+
     static async openCartsWithAxe(context, playersCount)
     {
         let carts = [];
@@ -158,6 +181,21 @@ class TestTraderRules
         await TestTraderRules.confirmAll([cart]);
         await TestTraderRules.expectBought(context, cart, false, 'A confirm sent after the shop was closed buys nothing');
         await TraderSteps.openShop(context, cart.player, 'buy');
+    }
+
+    static async runDoubleConfirmTest(context)
+    {
+        let cart = (await TestTraderRules.openCartsWithAxe(context, 1)).shift();
+        let traderAnswer = [...await RoomMessagesRecorder.fetchMessages(cart.shop.page, GameConst.UI)].filter(
+            (message) => TraderSteps.LISTENER === message.listener
+        ).pop();
+        let confirmMessage = Object.assign(
+            {act: ObjectsConst.OBJECT_INTERACTION, id: traderAnswer.id, value: cart.shop.action},
+            TestTraderRules.CONFIRM
+        );
+        await RoomMessagesRecorder.sendMessages(cart.shop.page, [confirmMessage, confirmMessage]);
+        await cart.shop.page.waitForTimeout(TimeConstants.ACTION);
+        await TestTraderRules.expectBought(context, cart, true, 'The cart confirmed twice at once is bought once');
     }
 
     static async runSameTimeTradesTest(context)
@@ -232,8 +270,14 @@ class TestTraderRules
             test('a sub action sent with no transaction started starts it first', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
                 await TestTraderRules.runNoTransactionTest({page, secondPage, gameConfig, e2eGroup, longRun});
             });
+            test('a sub action sent after a new login runs on the new session inventory', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestTraderRules.runLeftSessionTransactionTest({page, gameConfig, e2eGroup, longRun});
+            });
             test('a confirm sent after the shop was closed buys nothing', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestTraderRules.runClosedShopConfirmTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a cart confirmed twice at once is bought once', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestTraderRules.runDoubleConfirmTest({page, gameConfig, e2eGroup, longRun});
             });
             test('two players trading with the trader at the same time buy their own carts', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
                 await TestTraderRules.runSameTimeTradesTest({page, secondPage, gameConfig, e2eGroup, longRun});

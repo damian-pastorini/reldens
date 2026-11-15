@@ -88,6 +88,29 @@ class TestDeathReviveNotifier extends BaseTest
         });
     }
 
+    async testFailedOrEndedRequestedAdIsNotOfferedAgain()
+    {
+        await this.test('the resurrection ad requested in the death is offered while it plays, not once it failed or ended', async () => {
+            let privateDataKeys = ActionsConst.DEATH.PRIVATE_DATA;
+            let adCases = [
+                {privateData: {[privateDataKeys.RESURRECTION_AD_REQUESTED]: 1}, eventKey: this.resurrectionAd.eventKey},
+                {privateData: {[privateDataKeys.RESURRECTION_AD_FAILED]: true}, eventKey: ''},
+                {privateData: {[privateDataKeys.RESURRECTION_AD_ENDED]: true}, eventKey: ''}
+            ];
+            for(let adCase of adCases){
+                let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 0});
+                for(let privateDataKey of Object.keys(adCase.privateData)){
+                    setup.playerSchema.setPrivate(privateDataKey, adCase.privateData[privateDataKey]);
+                }
+                this.assert.strictEqual(await setup.notify(), true);
+                this.assert.deepStrictEqual(
+                    setup.client.sentMessages,
+                    [Object.assign({}, this.townMessage, {resurrectionAdEventKey: adCase.eventKey})]
+                );
+            }
+        });
+    }
+
     async testPlayerWithoutInventoryIsToldTheTownRevive()
     {
         await this.test('a player without inventory is told the town revive', async () => {

@@ -41,6 +41,9 @@ class AdminClient
             mapJsonMissingTileset: 'Map could not be imported, the map JSON declares no tileset.',
             mapJsonMissingTilesetImage: 'Map could not be imported, the map JSON tileset declares no image.',
             mapTilesetImageNotFound: 'Map could not be imported, the tileset image file was not found.',
+            mapInvalidFileName: 'Map could not be imported, the map name must be a file name without folders.',
+            mapTilesetImageInvalidFileName: 'Map could not be imported, the tileset image must be a file name without '
+                +'folders.',
             copyMapFilesError: 'Map could not be imported, the map files could not be copied.',
             mergeMapFilesError: 'Map could not be imported, the merged map file could not be written.',
             mapSaveError: 'Map could not be imported, the room record could not be saved.',

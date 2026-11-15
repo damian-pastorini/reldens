@@ -172,6 +172,19 @@ class TestSceneMovementAndMessageGuards extends BaseTest
         });
     }
 
+    async testSceneDropsTheMessagesOfAClientWithoutPlayer()
+    {
+        await this.test('a message from a client whose player was removed runs no action, no move and no stats', async () => {
+            let messagesSetup = this.createMessagesSetup(null);
+            let ranSteps = [];
+            messagesSetup.room.executeMovePlayerActions = async () => ranSteps.push('move');
+            messagesSetup.room.executePlayerStatsAction = () => ranSteps.push('stats');
+            await messagesSetup.room.handleReceivedMessage({sessionId: 'session-removed'}, {dir: GameConst.UP});
+            await messagesSetup.room.handleReceivedMessage({sessionId: 'session-removed'}, {act: GameConst.PLAYER_STATS});
+            this.assert.deepStrictEqual([messagesSetup.executedMessages, ranSteps], [[], []]);
+        });
+    }
+
     async testGameRoomIgnoresCreatePlayerWithoutFormData()
     {
         await this.test('the game room ignores a create player message without valid form data', async () => {

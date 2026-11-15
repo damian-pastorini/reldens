@@ -5,8 +5,8 @@
  * Tests the client interpolation of a player whose state changes in the middle of a walk (exclusive group, two players
  * in the town with the town moving objects paused, the second player placed next to the town NPC so the first one
  * stands alone on the return point): the first player walks a long pointer path on a clear line of tiles and, once its
- * sprite moves on both clients, its page closes (the other client removes its sprite and its interpolation never
- * throws, the entry is kept, ISSUE #347) or the server sets it disabled or dead. On its own client and on the
+ * sprite moves on both clients, its page closes (the other client removes its sprite and its interpolation entry and
+ * never throws) or the server sets it disabled or dead. On its own client and on the
  * other client the interpolation entry of that player is deleted (the update reads the dead or disabled state and ends
  * the entry without moving the sprite) and its sprite stays on the same position for the next frames.
  *
@@ -89,13 +89,21 @@ class TestClientInterpolationStates
         let walking = await TestClientInterpolationStates.startWalkSeenByEveryClient(context);
         let observerPage = walking.players[1].page;
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(observerPage);
+        let readObservedWalker = async () => observerPage.evaluate(
+            TestClientInterpolationStates.READ_WALKER,
+            walking.walker.sessionId
+        );
         await walking.walker.page.goto('about:blank');
         await expect.poll(
-            async () => (await observerPage.evaluate(TestClientInterpolationStates.READ_WALKER, walking.walker.sessionId)).sprite,
-            {message: 'The other client removes the sprite of the player that left', timeout: TimeConstants.SERVER_RESPONSE}
-        ).toBe(false);
+            async () => (({sprite, hasEntry}) => [sprite, hasEntry])(await readObservedWalker()),
+            {
+                message: 'The other client removes the sprite and the interpolation entry of the player that left',
+                timeout: TimeConstants.SERVER_RESPONSE
+            }
+        ).toEqual([false, false]);
         await observerPage.evaluate(TestClientInterpolationStates.WAIT_FRAMES, TestClientInterpolationStates.STILL_FRAMES);
         expect(pageErrors, 'The other client never throws on the interpolation of the removed player').toEqual([]);
+        expect((await readObservedWalker()).hasEntry, 'The other client keeps no entry of the removed player').toBe(false);
     }
 
     static async runStateDuringWalkTest(context, inState)

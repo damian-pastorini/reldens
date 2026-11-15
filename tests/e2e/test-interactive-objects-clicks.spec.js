@@ -5,7 +5,7 @@
  * Tests the real canvas clicks on the first forest mining rock (TimingMiningSteps, the interaction messages the server
  * hands to the rock counted): a click in range starts the timing and clears the client pending action; a double click
  * sends one interaction; a click out of reach starts nothing and a later click in range starts the timing; a second
- * player clicking the rock in use gets no message and its later click, once the rock is free, starts its timing; the
+ * player clicking the rock in use gets the busy answer and its later click, once the rock is free, starts its timing; the
  * same player sending the interaction twice during a timing gets one timing and one reward; a click on a page element
  * placed over the rock sends nothing; and with the tap movement on, a click on the rock next to the player does not
  * walk it, so the timing is not cancelled by its own click.
@@ -21,6 +21,7 @@ const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
+const { GameConst } = require('../../lib/game/constants');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -63,6 +64,18 @@ class TestInteractiveObjectsClicks
         return placed;
     }
 
+    static async emitCanvasClick(page, objectKey)
+    {
+        return await page.evaluate((click) => {
+            let sceneSprite = window.reldens.getActiveScene().objectsAnimations[click.objectKey]?.sceneSprite;
+            if(!sceneSprite){
+                return false;
+            }
+            sceneSprite.emit('pointerdown', {downElement: {nodeName: click.canvasNodeName}});
+            return true;
+        }, {objectKey, canvasNodeName: GameConst.SELECTORS.CANVAS});
+    }
+
     static async runRealClickTest(context)
     {
         let mining = await TestInteractiveObjectsClicks.prepareClicks(context);
@@ -97,7 +110,8 @@ class TestInteractiveObjectsClicks
         expect(await TimingObjectSession.fetchRecordedActions(context.page), 'No timing out of reach').toEqual([]);
         await TestInteractiveObjectsClicks.placeNextToRock(context.page, context.gameConfig, mining);
         await Phaser.clickObjectAwayFromOwnPlayer(context.page, mining.rockKey, TestInteractiveObjectsClicks.CLICK_OFFSET);
-        await context.page.waitForTimeout(TestInteractiveObjectsClicks.CLICK_SETTLE_MS);
+        await TestInteractiveObjectsClicks.expectInteractions(context, mining, 2, 'The later click in range is sent');
+        await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.START, mining.serverTimeout);
     }
 
     static async runSecondPlayerClickTest(context)
@@ -109,10 +123,13 @@ class TestInteractiveObjectsClicks
         await TestInteractiveObjectsClicks.placeNextToRock(context.secondPage, secondGameConfig, mining);
         await TimingObjectSession.recordTimingActions(context.secondPage);
         await TimingObjectSession.startTiming(context.page, mining.rockKey, mining.serverTimeout);
-        expect(await Phaser.triggerObjectInteraction(context.secondPage, mining.rockKey), 'The second player interaction').toBe(true);
-        await TestInteractiveObjectsClicks.expectInteractions(context, mining, 2, 'The second player interaction is received');
-        expect(await TimingObjectSession.fetchRecordedActions(context.secondPage), 'No message for the busy rock')
-            .toEqual([]);
+        expect(await TestInteractiveObjectsClicks.emitCanvasClick(context.secondPage, mining.rockKey), 'The second player clicks')
+            .toBe(true);
+        await TestInteractiveObjectsClicks.expectInteractions(context, mining, 2, 'The second player click is received');
+        expect(await TimingObjectSession.fetchRecordedActions(context.secondPage), 'The busy rock answers busy')
+            .toEqual([TimingMiningSteps.BUSY]);
+        expect(await TimingMiningSteps.fetchPendingAction(context.secondPage, mining.rockKey), 'The busy answer clears the pending action')
+            .toBe(false);
         let life = (await GameplayE2eStateApi.fetchPlayer(
             context.gameConfig,
             Login.FOREST_ROOM_NAME,
@@ -126,7 +143,8 @@ class TestInteractiveObjectsClicks
         );
         expect(lowered.value, 'The first miner life is lowered').toBe(life - TestInteractiveObjectsClicks.LIFE_STEP);
         await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.CANCEL, mining.serverTimeout);
-        expect(await Phaser.triggerObjectInteraction(context.secondPage, mining.rockKey), 'The later interaction').toBe(true);
+        expect(await TestInteractiveObjectsClicks.emitCanvasClick(context.secondPage, mining.rockKey), 'The later click')
+            .toBe(true);
         await TimingObjectSession.waitForTimingAction(context.secondPage, TimingMiningSteps.START, mining.serverTimeout);
     }
 
@@ -176,7 +194,7 @@ class TestInteractiveObjectsClicks
             test('click out of reach starts nothing and a later click in range starts the timing', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsClicks.runOutOfReachTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('second player click on a busy rock gets nothing and its later click starts its timing', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('second player click on a busy rock gets the busy answer and its later click starts its timing', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestInteractiveObjectsClicks.runSecondPlayerClickTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('same interaction sent twice gives one timing and one reward', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {

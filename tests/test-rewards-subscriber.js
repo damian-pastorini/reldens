@@ -132,6 +132,49 @@ class TestRewardsSubscriber extends BaseTest
         });
     }
 
+    createUniqueRewardsSetup(rewardsProps)
+    {
+        let setup = {subscriber: this.createSubscriber({}), storedUpdates: []};
+        setup.dataServer = {getEntity: () => ({updateById: async (id, patch) => setup.storedUpdates.push({id, patch})})};
+        setup.rewards = rewardsProps.map((rewardProps) => new Reward(
+            Object.assign({itemId: 2, dropRate: 100, dropQuantity: 1, item: {id: 2, key: 'branch'}}, rewardProps)
+        ));
+        return setup;
+    }
+
+    async testAGivenUniqueRewardIsStoredOnceAndNotWonAgain()
+    {
+        await this.test('a given unique reward is stored as given once and the same object does not give it again', async () => {
+            let setup = this.createUniqueRewardsSetup([{id: 4, isUnique: 1}, {id: 5}]);
+            this.assert.deepStrictEqual(setup.subscriber.getWinningRewards(setup.rewards).map(reward => reward.id), [4, 5]);
+            await setup.subscriber.updateUniqueRewards(setup.rewards, setup.dataServer);
+            await setup.subscriber.updateUniqueRewards(setup.rewards, setup.dataServer);
+            this.assert.deepStrictEqual(setup.storedUpdates, [{id: 4, patch: {was_given: 1}}]);
+            this.assert.deepStrictEqual(setup.subscriber.getWinningRewards(setup.rewards).map(reward => reward.id), [5]);
+        });
+    }
+
+    async testAUniqueRewardWonByOneInstanceIsNotWonByAnotherInstance()
+    {
+        await this.test('a unique reward won by one object instance is not won by another live instance, even before it is stored', async () => {
+            let firstInstance = this.createUniqueRewardsSetup([{id: 4, isUnique: 1}, {id: 5}]);
+            let otherInstanceRewards = this.createUniqueRewardsSetup([{id: 4, isUnique: 1}, {id: 5}]).rewards;
+            this.assert.deepStrictEqual(firstInstance.subscriber.getWinningRewards(firstInstance.rewards).map(reward => reward.id), [4, 5]);
+            this.assert.deepStrictEqual(firstInstance.subscriber.getWinningRewards(otherInstanceRewards).map(reward => reward.id), [5]);
+            this.assert.strictEqual(otherInstanceRewards[0].wasGiven, false);
+        });
+    }
+
+    async testAUniqueRewardStoredAsGivenIsNotWon()
+    {
+        await this.test('a unique reward loaded as given is never won and is not stored again', async () => {
+            let setup = this.createUniqueRewardsSetup([{id: 4, isUnique: 1, wasGiven: 1}]);
+            this.assert.deepStrictEqual(setup.subscriber.getWinningRewards(setup.rewards), []);
+            await setup.subscriber.updateUniqueRewards(setup.rewards, setup.dataServer);
+            this.assert.deepStrictEqual(setup.storedUpdates, []);
+        });
+    }
+
     async testTheExperienceIsSplitInEqualParts()
     {
         await this.test('the all experience split gives every target the same part', async () => {

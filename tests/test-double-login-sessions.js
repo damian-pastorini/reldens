@@ -128,6 +128,7 @@ class TestDoubleLoginSessions extends BaseTest
         setup.sceneRoom.playerBySessionIdFromState = (sessionId) => 'old-scene' === sessionId ? {sessionId} : null;
         setup.sceneRoom.savePlayedTime = async () => true;
         setup.sceneRoom.savePlayerStats = async () => true;
+        setup.sceneRoom.movementInterval = {};
         setup.sceneRoom.savePlayerState = async () => savedState;
         setup.sceneRoom.removePlayer = async (sessionId) => setup.removedPlayers.push(sessionId);
         return ActiveSessionsBuilder.joinRoom(setup, setup.sceneRoom, 'old-scene', this.userModel);

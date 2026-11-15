@@ -5,7 +5,8 @@
  * Tests two players dead in the forest at the same time with the death teleport on (DeathReviveSteps kills the first
  * player with a real enemy hit, the second player is killed by the other enemy of the same respawn layer while the
  * first one is still dead, TestCombatDeath): each death is resolved on its own, both players get the town message and
- * revive in the town room; and with the resurrection ad offered to both, the first player that watches the ad gets the
+ * revive in the town room, each within a tile of the town default return point (both arrive on that point, so the
+ * second one pushes the first); and with the resurrection ad offered to both, the first player that watches the ad gets the
  * reward and revives where it died, while the second player keeps its own ad button, receives no item and revives in
  * the town room.
  *
@@ -20,6 +21,7 @@ const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { Login } = require('./helpers/login');
+const { Navigation } = require('./helpers/navigation');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ActionsConst } = require('../../lib/actions/constants');
@@ -46,8 +48,8 @@ class TestDeathTwoPlayers
         let townRoomName = await DeathReviveSteps.expectTownGameOverMessage(context, 0);
         await TestDeathTwoPlayers.killSecondPlayer(context, secondContext);
         await DeathReviveSteps.expectTownGameOverMessage(secondContext, 0);
-        await DeathReviveSteps.expectRevivedInTown(context, townRoomName);
-        await DeathReviveSteps.expectRevivedInTown(secondContext, townRoomName);
+        await DeathReviveSteps.expectRevivedInTown(context, townRoomName, Navigation.TILE_SIZE);
+        await DeathReviveSteps.expectRevivedInTown(secondContext, townRoomName, Navigation.TILE_SIZE);
     }
 
     static async runOneAdWatchedTest(context)

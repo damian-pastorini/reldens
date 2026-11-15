@@ -3,7 +3,8 @@
  * Reldens - Test Combat Skill Rules
  *
  * Tests the skills rules on a placed forest enemy with balanced stats (CombatSkillCasting): the owner condition that
- * refuses a cast without spending anything, the owner effects spent once per cast (on the enemy and on a self cast),
+ * refuses a cast without spending anything, the owner effects spent once per cast (on the enemy and on a self cast)
+ * and stopped at their stored minimum value,
  * the uses limit, the full dodge with the dodged state and message, the damage and the critical reduced by the dodge
  * and aim difference, and the critical hit multiplier and fixed value shown and applied. Every expected value is
  * calculated from the stored skill rows and the stats and skill properties the test sets. The enemy fights back and
@@ -13,6 +14,7 @@
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { CombatSkillCasting } = require('./helpers/combat-skill-casting');
+const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { SkillConst } = require('@reldens/skills');
@@ -98,6 +100,22 @@ class TestCombatSkillRules
         await screenshots.capture(page, 'owner-effects-spent-once');
     }
 
+    static async runOwnerEffectMinimumTest(page, screenshots, gameConfig, longRun)
+    {
+        let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
+        let heal = TestCombatSkillRules.HEAL;
+        let effects = TestCombatSkillRules.OWNER_EFFECTS;
+        let healCost = await CombatSkillCasting.loadSkillValue(gameConfig, effects, heal, 'value');
+        let minimumMp = await CombatSkillCasting.loadSkillValue(gameConfig, effects, heal, 'minValue');
+        await CombatSkillCasting.setPlayerStats(context, {mp: minimumMp + healCost - 1});
+        await CombatSkillCasting.targetSelf(page);
+        await CombatSkillCasting.clickWhenReady(page, context, heal);
+        await CombatSkillCasting.waitForEndStates(context, heal, 1);
+        expect(await CombatSkillCasting.fetchPlayerStat(context, 'mp'), 'The cost stops at its minimum').toBe(minimumMp);
+        expect(await CombatSkillCasting.fetchPlayerStat(context, 'hp'), 'The heal is not limited to 0').toBeGreaterThan(0);
+        await screenshots.capture(page, 'owner-effect-cost-stops-at-minimum');
+    }
+
     static async runUsesLimitTest(page, screenshots, gameConfig, e2eGroup, longRun)
     {
         let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
@@ -138,9 +156,13 @@ class TestCombatSkillRules
         expect(endState.lastState, 'Dodged state').toBe(SkillConst.SKILL_STATES.DODGED);
         expect((await CombatSkillCasting.fetchRecorded(context)).damages, 'No damage recorded').toEqual([]);
         expect(await CombatSkillCasting.fetchEnemyLife(context), 'No damage applied').toBe(lifeBefore);
-        await expect(page.locator(Selectors.chat.tabContentGeneral)).toContainText(' dodged ', {
-            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
-        });
+        let skillRow = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'skillsSkill', {key: attackShort})].shift();
+        let chatContent = page.locator(Selectors.chat.tabContentGeneral);
+        await expect(chatContent, 'The dodge line names the skill').toContainText(
+            ' dodged '+(skillRow.label || attackShort),
+            {timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
+        );
+        await expect(chatContent, 'No placeholder left in the dodge line').not.toContainText('%skill');
         await screenshots.capture(page, 'full-dodge');
         await CombatSkillCasting.setEnemyStats(context, {dodge: dodgeLimit});
         expect(
@@ -223,6 +245,9 @@ class TestCombatSkillRules
             });
             test('owner effects are spent once per cast', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestCombatSkillRules.runOwnerEffectsTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('owner effect cost stops at its stored minimum value', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestCombatSkillRules.runOwnerEffectMinimumTest(page, screenshots, gameConfig, longRun);
             });
             test('skill over its uses limit is refused', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestCombatSkillRules.runUsesLimitTest(page, screenshots, gameConfig, e2eGroup, longRun);

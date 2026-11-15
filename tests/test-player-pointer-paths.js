@@ -4,8 +4,10 @@
  *
  * Tests the player pointer paths on a real path finder grid through the scene movement: the pointer tiles clamped to
  * the map limits, the stop message during a pointer path, a second pointer target replacing the running path, a pointer
- * on the own tile, a blocked or unreachable target with onlyWalkable on or off, and tryClosestPath on with a blocked
- * target on the last grid row.
+ * on the own tile, a blocked or unreachable target with onlyWalkable on or off, tryClosestPath on with a blocked
+ * target on the last grid row, walking to the tile next to a blocked target on the player side, or with a blocked
+ * target on the row 0 and every tile around it blocked answering no path without error, a pointer row below the grid with onlyWalkable off clamped to the last map row, and a
+ * pointer to a tile on the column 0 or the row 0 walked onto (the body follows its path step by step).
  *
  */
 
@@ -54,7 +56,7 @@ class TestPlayerPointerPaths extends RandomMovementBaseTest
             let validator = new WorldPointsValidator(30, 20);
             this.assert.deepStrictEqual(
                 [validator.makeValidPoints({column: -3, row: -1}), validator.makeValidPoints({column: 45, row: 99})],
-                [{column: 0, row: 0}, {column: 30, row: 20}]
+                [{column: 0, row: 0}, {column: 29, row: 19}]
             );
         });
     }
@@ -124,6 +126,74 @@ class TestPlayerPointerPaths extends RandomMovementBaseTest
             grid.setWalkableAt(target[0], target[1], false);
             grid.setWalkableAt(setup.body.world.mapJson.width, target[1], false);
             this.assert.strictEqual(Array.isArray(await this.pointTo(setup, target[0], target[1])), true);
+        });
+    }
+
+    async testTryClosestPathEndsNextToTheBlockedTarget()
+    {
+        await this.test('tryClosestPath walks to the tile next to a blocked target, on the player side', async () => {
+            let setup = this.createPointerSetup({onlyWalkable: false, tryClosestPath: true});
+            let target = [this.originalTile + 5, this.originalTile];
+            setup.body.world.pathFinder.grid.setWalkableAt(target[0], target[1], false);
+            let path = await this.pointTo(setup, target[0], target[1]);
+            this.assert.deepStrictEqual(path[path.length - 1], [target[0] - 1, target[1]]);
+        });
+    }
+
+    async testTryClosestPathOnTheFirstRowHasNoError()
+    {
+        await this.test('a blocked row 0 target with blocked neighbors gives no path and no error', async () => {
+            let setup = this.createPointerSetup({onlyWalkable: false, tryClosestPath: true});
+            let column = this.originalTile;
+            this.blockTiles(setup.body.world.pathFinder.grid, [
+                [column, 0],
+                [0, 0],
+                [column + 1, 0],
+                [column - 1, 0],
+                [column, 1],
+                [column + 1, 1],
+                [column - 1, 1]
+            ]);
+            this.assert.deepStrictEqual(await this.pointTo(setup, column, 0), []);
+        });
+    }
+
+    walkThePath(body)
+    {
+        let stepSeconds = 0.04;
+        for(let step = 0; step < 500 && body.autoMoving; step++){
+            body.speedToNext();
+            body.position[0] += body.velocity[0] * stepSeconds;
+            body.position[1] += body.velocity[1] * stepSeconds;
+            body.updateCurrentPoints();
+        }
+        return [body.currentCol, body.currentRow, body.autoMoving];
+    }
+
+    async testAPointerToTheFirstColumnOrRowEndsOnIt()
+    {
+        await this.test('a pointer to a walkable tile on the column 0 or the row 0 walks the player onto it', async () => {
+            let columnSetup = this.createPointerSetup({});
+            await this.pointTo(columnSetup, 0, this.originalTile);
+            let rowSetup = this.createPointerSetup({});
+            await this.pointTo(rowSetup, this.originalTile, 0);
+            this.assert.deepStrictEqual(
+                [this.walkThePath(columnSetup.body), this.walkThePath(rowSetup.body)],
+                [[0, this.originalTile, false], [this.originalTile, 0, false]]
+            );
+        });
+    }
+
+    async testAPointerBelowTheGridWithOnlyWalkableOffWalksToTheLastRow()
+    {
+        await this.test('a pointer row below the grid with onlyWalkable off is clamped and walks to the last map row', async () => {
+            let setup = this.createPointerSetup({onlyWalkable: false, tryClosestPath: false});
+            let lastRow = setup.body.world.mapJson.height - 1;
+            let path = await this.pointTo(setup, this.originalTile, lastRow + 50);
+            this.assert.deepStrictEqual(
+                [path[path.length - 1], path.filter(step => lastRow < step[1])],
+                [[this.originalTile, lastRow], []]
+            );
         });
     }
 

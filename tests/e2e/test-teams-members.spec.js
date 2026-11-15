@@ -8,10 +8,11 @@
  * announced to the others and the owner gets the accepted line; an unrelated player gets no team update; two invites
  * accepted at once make one team of three and two crossed invites one consistent team; the owner disband closes every
  * box with the disbanded line; a member leaving a team of two disbands it with the not enough players line and leaving
- * a team of three keeps the others; a member of a team of three accepting
- * another invite keeps the server running; the owner removing the only member disbands the team; a leave from a
- * player with no team changes nothing; a reload of the member of a team of two ends it and closes the owner box (a
- * member of a team of three leaving by a disconnection crashes, ISSUE #140); a team is not restored after both
+ * a team of three keeps the others, who read who left while the leaving member reads it left; a member of a team of
+ * three disconnecting leaves it and keeps the others; a member of a team of three accepting the invite of another
+ * member makes both leave it and form the new team; the owner removing the only member disbands the team; a leave from
+ * a player with no team changes nothing; a reload of the member of a team of two ends it and closes the owner box; a
+ * team is not restored after both
  * players log in again; and the team chat lines are stored with the teams type, each rejected, accepted, entered,
  * left and disbanded line stored once for the player that received it.
  *
@@ -134,9 +135,20 @@ class TestTeamsMembers
             await expect(player.page.locator('#box-'+TeamsConst.KEY+players[0].playerId), 'Every box is closed').toHaveCount(0, {
                 timeout: TimeConstants.SERVER_RESPONSE
             });
-            await expect.poll(async () => await ChatSteps.fetchTexts(player.page, ChatConst.TYPES.TEAMS), {timeout: TimeConstants.SERVER_RESPONSE})
-                .toContain(TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.DISBANDED, players[0].playerName));
+            await TestTeamsMembers.expectTeamLine(
+                player,
+                TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.DISBANDED, players[0].playerName),
+                player.playerName+' reads the disbanded line'
+            );
         }
+    }
+
+    static async expectTeamLine(player, teamLine, message)
+    {
+        await expect.poll(async () => await ChatSteps.fetchTexts(player.page, ChatConst.TYPES.TEAMS), {
+            message,
+            timeout: TimeConstants.SERVER_RESPONSE
+        }).toContain(teamLine);
     }
 
     static async runMemberLeavesTest(context)
@@ -145,6 +157,27 @@ class TestTeamsMembers
         await TeamSteps.formTeam(context.gameConfig, players[0], [players[1], players[2]]);
         await TestTeamsMembers.leave(players[1]);
         await TeamSteps.expectTeams(context.gameConfig, [[players[0].playerId, TeamSteps.sortedIds([players[0], players[2]])]], 'The others stay');
+        let leaveLine = TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.LEAVE, players[1].playerName);
+        for(let player of [players[0], players[2]]){
+            await TestTeamsMembers.expectTeamLine(player, leaveLine, player.playerName+' reads who left');
+        }
+        await TestTeamsMembers.expectTeamLine(
+            players[1],
+            TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.LEFT, ''),
+            'The leaving member reads it left'
+        );
+    }
+
+    static async runThreeMembersDisconnectTest(context)
+    {
+        let players = await TestTeamsMembers.enter(context);
+        await TeamSteps.formTeam(context.gameConfig, players[0], [players[1], players[2]]);
+        await players[2].page.reload();
+        await TeamSteps.expectTeams(
+            context.gameConfig,
+            [[players[0].playerId, TeamSteps.sortedIds([players[0], players[1]])]],
+            'The disconnected member leaves the team of three and the others stay'
+        );
     }
 
     static async runTwoPlayersLeaveTest(context)
@@ -176,9 +209,11 @@ class TestTeamsMembers
         await TeamSteps.invite(players[2], players[1]);
         await TeamSteps.waitForInvite(context.gameConfig, players[2], players[1]);
         await TeamSteps.answer(players[1], players[2], TeamSteps.ACCEPT);
-        await new Promise(resolve => setTimeout(resolve, TestTeamsMembers.SETTLE_MS));
-        let state = await TeamSteps.fetchState(context.gameConfig);
-        expect(state.error, 'The server keeps answering').toBeUndefined();
+        await TeamSteps.expectTeams(
+            context.gameConfig,
+            [[players[2].playerId, TeamSteps.sortedIds([players[1], players[2]])]],
+            'Both members leave the team of three and form the new team'
+        );
     }
 
     static async runNoTeamLeaveTest(context)
@@ -229,15 +264,16 @@ class TestTeamsMembers
         await TeamSteps.expectTeams(gameConfig, [[players[0].playerId, TeamSteps.sortedIds(players.slice(0, 2))]], 'Left');
         await TestTeamsMembers.leave(players[0]);
         await TeamSteps.expectTeams(gameConfig, [], 'The owner disbands the team');
-        let leftLine = TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.LEFT, '');
+        let leaveLine = TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.LEAVE, players[2].playerName);
         let disbandedLine = TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.DISBANDED, players[0].playerName);
         let expectedRows = [
             [players[0].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.INVITE_REJECTED, players[2].playerName)],
             [players[1].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.INVITE_ACCEPTED, players[1].playerName)],
             [players[2].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.INVITE_ACCEPTED, players[2].playerName)],
             [players[1].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.ENTER, players[2].playerName)],
-            [players[0].playerId, leftLine],
-            [players[1].playerId, leftLine],
+            [players[0].playerId, leaveLine],
+            [players[1].playerId, leaveLine],
+            [players[2].playerId, TestTeamsMembers.teamLine(TeamsConst.CHAT.MESSAGE.LEFT, '')],
             [players[0].playerId, disbandedLine],
             [players[1].playerId, disbandedLine]
         ];
@@ -270,6 +306,9 @@ class TestTeamsMembers
             });
             test('member leaving a team of three keeps the others', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTeamsMembers.runMemberLeavesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('member of a team of three disconnecting leaves it and keeps the others', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTeamsMembers.runThreeMembersDisconnectTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('member leaving a team of two disbands it', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTeamsMembers.runTwoPlayersLeaveTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

@@ -5,12 +5,11 @@
  * Tests the trade invites between the group players and their answers (TradeSteps: the trade messages sent as a client
  * sends them, the trade messages each client received and the live trade state of each player, the trade time out
  * config overridden for the group): a player that walked to the other side of the room still gets the request (there
- * is no range check); a decline from the request box closes it and sends nothing to the inviter, whose invite stays
- * until the time out; an invite past its time out cancels the exchange, a late accept is rejected and the request box of
- * the invited player stays open with no close message; with the time out wait disabled the invite stays open; an
- * accept just before the time out opens a trade the timer never cancels (a second invite sent before the first one
- * times out is cancelled by the first timer, ISSUE #153; a tampered accept after the decline still opens the trade,
- * ISSUE #157).
+ * is no range check); a decline from the request box closes it, sends nothing to the inviter and consumes the invite,
+ * so a tampered accept after it opens nothing; a second invite sent before the first one times out keeps its own time
+ * out; an invite past its time out cancels the exchange, a late accept is rejected and the request box of the invited
+ * player stays open with no close message; with the time out wait disabled the invite stays open; and an accept just
+ * before the time out opens a trade the timer never cancels.
  *
  */
 
@@ -30,6 +29,8 @@ class TestTradingInvites
 
     static SHORT_TIME_OUT_MS = 1000;
     static LONG_TIME_OUT_MS = 3000;
+    static REINVITE_TIME_OUT_MS = 6000;
+    static REINVITE_GAP_MS = 3000;
 
     static async enter(context, configValues = {})
     {
@@ -76,13 +77,31 @@ class TestTradingInvites
             [TradeSteps.TIME_OUT_PATH]: TestTradingInvites.LONG_TIME_OUT_MS
         });
         await TestTradingInvites.startAndDecline(inviter, invited);
-        await TestTradingInvites.expectInvited(context, inviter, invited.sessionId, 'The invite stays after the decline');
+        await TestTradingInvites.expectInvited(context, inviter, false, 'The decline consumes the invite');
         expect(
             await RoomMessagesRecorder.fetchMessages(inviter.page, GameConst.CLOSE_UI_ACTION),
             'The inviter gets no notice'
         ).toEqual([]);
-        await inviter.page.waitForTimeout(TestTradingInvites.LONG_TIME_OUT_MS);
-        await TestTradingInvites.expectInvited(context, inviter, false, 'The invite ends on its time out');
+        await TradeSteps.answer(invited, inviter);
+        await TradeSteps.expectNoTradeShow([inviter, invited], 'The tampered accept after the decline is rejected');
+        await TradeSteps.expectTradeOpen(context, inviter, false, 'No trade is open after the decline');
+    }
+
+    static async runReinviteBeforeTimeOutTest(context)
+    {
+        let [inviter, invited] = await TestTradingInvites.enter(context, {
+            [TradeSteps.TIME_OUT_PATH]: TestTradingInvites.REINVITE_TIME_OUT_MS
+        });
+        await TradeSteps.start(inviter, invited);
+        await TradeSteps.waitForMessages(invited, InventoryConst.ACTIONS.TRADE_START, 1);
+        let firstTimeOutAt = Date.now() + TestTradingInvites.REINVITE_TIME_OUT_MS;
+        await inviter.page.waitForTimeout(TestTradingInvites.REINVITE_GAP_MS);
+        await TradeSteps.start(inviter, invited);
+        await TradeSteps.waitForMessages(invited, InventoryConst.ACTIONS.TRADE_START, 2);
+        await inviter.page.waitForTimeout(Math.max(0, firstTimeOutAt + TradeSteps.SETTLE_MS - Date.now()));
+        await TestTradingInvites.expectInvited(context, inviter, invited.sessionId, 'The first time out keeps the second invite');
+        await TradeSteps.answer(invited, inviter);
+        await TradeSteps.expectTradeOpen(context, inviter, true, 'The second invite opens the trade after the first time out');
     }
 
     static async runTimeOutTest(context)
@@ -134,8 +153,11 @@ class TestTradingInvites
             test('far player in the same room gets the request', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingInvites.runFarPlayerTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('decline closes the request box and the invite waits for its time out', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('decline closes the request box, consumes the invite and a tampered accept opens nothing', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingInvites.runDeclineTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('second invite sent before the first time out keeps its own time out', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingInvites.runReinviteBeforeTimeOutTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('timed out invite rejects a late accept and keeps the request box', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingInvites.runTimeOutTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

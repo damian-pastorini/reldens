@@ -4,8 +4,9 @@
  *
  * Server side e2e endpoints for the login guards that depend on the server state: the overloaded server (blocking or
  * only monitored), the created rooms, the rooms availability seen by the game room, the rooms origin validation, the
- * other servers of a multi-server setup (with a route answering an error that counts its requests) and the signed
- * disconnection tokens. The reset runs with the SecurityState one before every test.
+ * other servers of a multi-server setup (with a route answering an error that counts its requests) and the tokens
+ * signed over the given values (the disconnection and the server status ones). The reset runs with the SecurityState
+ * one before every test.
  *
  */
 
@@ -230,6 +231,9 @@ class LoginServerState
             );
             response.json({ok: true});
         });
+        app.get('/api/e2e/login-server/usage-report', (request, response) => {
+            response.json(serverManager.serverHealthMonitor.usageReport);
+        });
         app.get('/api/e2e/login-server/room-created', (request, response) => {
             response.json({isCreated: serverManager.roomsManager.isRoomCreated(sc.get(request.query, 'roomName', ''))});
         });
@@ -252,10 +256,10 @@ class LoginServerState
         app.get('/api/e2e/login-server/other-server-hits', (request, response) => {
             response.json({hits: LoginServerState.otherServerHits});
         });
-        app.post('/api/e2e/login-server/disconnect-token', (request, response) => {
+        app.post('/api/e2e/login-server/signed-token', (request, response) => {
             response.json({
                 token: serverManager.loginManager.expiringHmacToken.generate(
-                    [sc.get(request.body, 'username', '')],
+                    sc.get(request.body, 'values', []),
                     Number(sc.get(request.body, 'expiresAt', 0))
                 )
             });

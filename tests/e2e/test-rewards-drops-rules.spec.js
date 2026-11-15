@@ -3,10 +3,11 @@
  * Reldens - Test Rewards Drops Rules
  *
  * Tests the rules around the drops of a killed enemy in the forest (exclusive group, KillRewardsSteps): a disabled
- * player (an ad started) can not pick up a drop and the drop stays; a player in an open trade gets no item (the drop is
- * removed anyway and the item lost, ISSUE #171); a
+ * player (an ad started) can not pick up a drop and the drop stays; a player in an open trade gets no item and the drop
+ * stays, and once the trade is closed the player picks it up; a
  * reldens.beforeRemovingDroppedReward listener that cancels the event keeps the drop; a pick up with the client key of
- * another sprite (not a room object) does not remove that sprite on the other clients; a pick up of a room object
+ * another sprite (not a room object, like the fishing spot) is broadcast as a remove but the other clients keep that
+ * sprite, since only the drops sprites are removed; a pick up of a room object
  * with no item id gives nothing; a player that joins the room after the drop was created sees it and picks it up; the
  * room enables its auto dispose again when its last drop is removed; and a drop stays in the room while the player is
  * in another scene and is shown again when it comes back.
@@ -78,8 +79,14 @@ class TestRewardsDropsRules
         let quantities = await KillRewardsSteps.fetchQuantities(context, dropsKill);
         await TradeSteps.open(dropsKill.players[0], dropsKill.players[1]);
         await TestRewardsDropsRules.pickFirstDrop(context.page, dropsKill);
-        await context.page.waitForTimeout(KillRewardsSteps.SETTLE_MS);
-        expect(await KillRewardsSteps.fetchQuantities(context, dropsKill), 'No item added while trading').toEqual(quantities);
+        await KillRewardsSteps.expectDropKept(context, dropsKill, quantities, 'No item added while trading');
+        await TradeSteps.close(dropsKill.players[0], dropsKill.players[1]);
+        await TradeSteps.waitForMessages(dropsKill.players[1], GameConst.CLOSE_UI_ACTION, 1);
+        await TestRewardsDropsRules.pickFirstDrop(context.page, dropsKill);
+        await expect.poll(async () => await KillRewardsSteps.fetchQuantities(context, dropsKill), {
+            message: 'The kept drop is picked up once the trade is closed',
+            timeout: TimeConstants.SERVER_RESPONSE
+        }).toEqual([quantities[0] + 1, quantities[1]]);
     }
 
     static async runCancelledRemovalTest(context)
@@ -109,18 +116,31 @@ class TestRewardsDropsRules
             (bodyKey) => window.reldens.getActiveScene().objectsAnimations[bodyKey].key,
             placement.bodyKey
         );
-        for(let objectKey of [serverId, placement.bodyKey]){
+        let fishSpawnKey = context.gameConfig.e2eFishSpawnKey;
+        expect(
+            await TestRewardsDropsRules.fetchClientAnimation(context.secondPage, fishSpawnKey),
+            'The other client shows the fishing spot sprite'
+        ).toBe(true);
+        for(let objectKey of [serverId, placement.bodyKey, fishSpawnKey]){
             await RoomMessagesRecorder.sendMessage(context.page, Object.assign({id: objectKey}, KillRewardsSteps.PICK_UP));
         }
-        await context.page.waitForTimeout(KillRewardsSteps.SETTLE_MS);
+        await expect.poll(
+            async () => (await RoomMessagesRecorder.fetchMessages(context.secondPage, ObjectsConst.DROPS.REMOVE)).map(
+                remove => remove.id
+            ),
+            {message: 'The unknown fishing spot key is broadcast as a remove', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toContain(fishSpawnKey);
         expect(
             (await RoomMessagesRecorder.fetchMessages(context.secondPage, ObjectsConst.DROPS.REMOVE)).map(remove => remove.id),
             'No remove for the room object with no item'
         ).not.toContain(serverId);
         expect(
-            await TestRewardsDropsRules.fetchClientAnimation(context.secondPage, placement.bodyKey),
-            'The other client keeps the sprite of the client key'
-        ).toBe(true);
+            [
+                await TestRewardsDropsRules.fetchClientAnimation(context.secondPage, placement.bodyKey),
+                await TestRewardsDropsRules.fetchClientAnimation(context.secondPage, fishSpawnKey)
+            ],
+            'The other client keeps the sprites of the client keys, only the drops sprites are removed'
+        ).toEqual([true, true]);
     }
 
     static async runJoinedLaterTest(context)
@@ -186,7 +206,7 @@ class TestRewardsDropsRules
             test('disabled player can not pick up a drop', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsDropsRules.runDisabledPlayerTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('player in an open trade gets no item from a drop', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('player in an open trade gets no item and the drop stays for a pick up after the trade', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsDropsRules.runTradingPlayerTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('drop removal cancelled by a listener keeps the drop', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {

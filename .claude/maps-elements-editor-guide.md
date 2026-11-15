@@ -19,7 +19,7 @@ The required behaviour for elements, duplicates and layer order. This is the spe
 
 - Element layers stay PER-INSTANCE: one layer-set per element AND per duplicate. They are tracked in the exact order of the map JSON `layers` array.
 - Order is by tile row (Y): the element lower on the map (larger row, in front) renders over the one behind it. So a duplicate dropped at the same row as, or above (smaller/equal Y), the source renders BEHIND the source; dropped below (larger Y) it renders in front. This holds for any element against any other element, so every element and every layer must be tracked together to position them.
-- Client depth (`lib/game/client/scene-dynamic.js`): each `over-player` layer is given depth = arrayIndex x mapHeight x tileHeight, and every `below-player` layer gets the single configured depth `client/map/layersDepth/belowPlayer` (so their relative order is resolved by add order); so a layer LATER in the `layers` array renders on top. Element layers are therefore ordered ascending by bottom row (front/larger-row element ends up later = on top).
+- Client depth (`lib/game/client/scene-dynamic.js`): each `over-player` layer is given depth = (arrayIndex + 1) x mapHeight x tileHeight (so an `over-player` layer at index 0 is still drawn over the players), and every `below-player` layer gets the single configured depth `client/map/layersDepth/belowPlayer` (so their relative order is resolved by add order); so a layer LATER in the `layers` array renders on top. Element layers are therefore ordered ascending by bottom row (front/larger-row element ends up later = on top).
 
 ### Merge / un-merge
 

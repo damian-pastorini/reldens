@@ -4,8 +4,9 @@
  *
  * Tests the client target selection with the keyboard: ESC clears the target and closes the target box, TAB selects
  * the closest object (the placed enemy, its random movement stopped) and shows its stored title in the target box, the
- * next TAB moves to another object, and TAB in a room with nothing to target leaves no target and throws nothing. The
- * closest candidates are read from the same client sprites the TAB reads, right before the key press.
+ * next TAB moves to another object, TAB in a room with nothing to target leaves no target and throws nothing, and the
+ * target box close button clears the target, empties the box and closes it. The closest candidates are read from the
+ * same client sprites the TAB reads, right before the key press.
  *
  */
 
@@ -25,6 +26,7 @@ class TestCombatTargeting
 
     static EMPTY_ROOM_NAME = 'reldens-new-age-town-house-03';
     static TARGET_CONTAINER = '#target-container';
+    static CLOSE_TARGET_BUTTON = '#box-target .close-target';
     static NOTHING_CHANGED_WAIT_MS = 500;
 
     static async fetchCandidates(page)
@@ -101,8 +103,25 @@ class TestCombatTargeting
         await Login.startConfigPlayer(page, gameConfig, longRun, TestCombatTargeting.EMPTY_ROOM_NAME);
         expect(await TestCombatTargeting.fetchCandidates(page), 'Nothing to target').toEqual([]);
         expect(await TestCombatTargeting.pressKey(page, 'Tab'), 'No target').toBe(false);
+        await expect(page.locator(Selectors.combat.targetBox), 'No empty target box opened').toBeHidden();
         expect(pageErrors, 'No client error').toEqual([]);
         await screenshots.capture(page, 'tab-nothing-to-target');
+    }
+
+    static async runCloseButtonTest(page, screenshots, gameConfig, longRun)
+    {
+        let entered = await ForestEnemyKill.enterForestWithPlacedEnemy(page, gameConfig, longRun);
+        await TestCombatTargeting.clearTarget(page);
+        let target = await TestCombatTargeting.pressKey(page, 'Tab');
+        expect(target.id, 'TAB selects the placed enemy').toBe(entered.placement.enemyKey);
+        await expect(page.locator(Selectors.combat.targetBox), 'The target box is open').toBeVisible();
+        await page.click(TestCombatTargeting.CLOSE_TARGET_BUTTON);
+        await expect.poll(
+            async () => await page.evaluate(() => window.reldens.getCurrentPlayer().currentTarget),
+            {message: 'The close button clears the target', timeout: TestCombatTargeting.NOTHING_CHANGED_WAIT_MS * 4}
+        ).toBe(false);
+        await expect(page.locator(Selectors.combat.targetBox), 'The close button closes the target box').toBeHidden();
+        await expect(page.locator(TestCombatTargeting.TARGET_CONTAINER), 'The target box is emptied').toHaveText('');
     }
 
     static run()
@@ -113,6 +132,9 @@ class TestCombatTargeting
             });
             test('TAB with nothing to target leaves no target and no error', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestCombatTargeting.runNothingToTargetTest(page, screenshots, gameConfig, longRun);
+            });
+            test('target box close button clears the target and closes the box', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestCombatTargeting.runCloseButtonTest(page, screenshots, gameConfig, longRun);
             });
         });
     }

@@ -52,6 +52,21 @@ class TestCollisionsWallsFromBelow extends BaseTest
         });
     }
 
+    async testEveryPlatformContactIsCheckedAfterOtherContacts()
+    {
+        await this.test('a contact under a platform is disabled even when a players or border contact is listed first', async () => {
+            let bodies = this.createBodies();
+            this.assert.deepStrictEqual(
+                this.resolveContacts(true, [
+                    {bodyA: bodies.playerBelow, bodyB: bodies.playerAbove},
+                    {bodyA: bodies.playerBelow, bodyB: bodies.worldBorder},
+                    {bodyA: bodies.playerBelow, bodyB: bodies.platform}
+                ]),
+                [true, true, false]
+            );
+        });
+    }
+
     async testTheWorldBorderContactIsKept()
     {
         await this.test('a player contact with a world border is kept with the pass walls from below option on', async () => {

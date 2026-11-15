@@ -205,7 +205,7 @@ class SceneInterpolationProbe
             depth = layersData.belowPlayerDepth;
         }
         if(-1 !== layer.name.indexOf('over-player')){
-            depth = layer.layerIndex * layersData.mapHeight * layersData.tileHeight;
+            depth = (layer.layerIndex + 1) * layersData.mapHeight * layersData.tileHeight;
         }
         if(-1 !== layer.name.indexOf('change-points')){
             depth = layersData.changePointsDepth;

@@ -3,8 +3,8 @@
  * Reldens - Test Random Player State
  *
  * Tests the random join place of a room: every place it can pick (Math.random forced on each walkable node index) is
- * the center of a walkable tile of the room grid, the blocked tiles are never picked (the grid extra column and row
- * outside the map are still picked, see ISSUE #343), the room without walkable tiles
+ * the center of a walkable tile of the room grid inside the map, the blocked tiles and the grid extra column and row
+ * outside the map are never picked, the room without walkable tiles
  * keeps the stored place, and the stored place on the room starting point is kept unless the always random options
  * apply to the player or the guest.
  *
@@ -67,11 +67,13 @@ class TestRandomPlayerState extends BaseTest
                 let [, x, y] = this.pickPlace(randomState, (nodeIndex + 0.5) / nodesCount, {x: 500, y: 500}, false);
                 pickedTiles.push([(x - tileSize / 2) / tileSize, (y - tileSize / 2) / tileSize]);
             }
-            this.assert.strictEqual(pickedTiles.length, randomState.grid.nodes.flat().length - 3);
+            let mapSize = TestRandomPlayerState.MAP_SIZE;
+            this.assert.strictEqual(pickedTiles.length, mapSize * mapSize - TestRandomPlayerState.BLOCKED_TILES.length);
             this.assert.deepStrictEqual(
                 pickedTiles.filter(tile => !randomState.grid.isWalkableAt(tile[0], tile[1])),
                 []
             );
+            this.assert.deepStrictEqual(pickedTiles.filter(tile => mapSize <= tile[0] || mapSize <= tile[1]), []);
             this.assert.deepStrictEqual(
                 pickedTiles.filter(tile => TestRandomPlayerState.BLOCKED_TILES.some(
                     blocked => blocked[0] === tile[0] && blocked[1] === tile[1]

@@ -6,7 +6,7 @@
  * the server minimum length, the names already used in any letter case, the same name created by two users at the same
  * time (only one of them gets it), the banned names, the guests names, the names with spaces and HTML cleaned to the
  * allowed characters and shown as text, the exact
- * minimum and the names with HTML shown as text.
+ * minimum and the names with HTML shown as text, also a stored name with HTML in the player box and the target box.
  *
  */
 
@@ -17,6 +17,8 @@ const { DirectFormSubmit } = require('./helpers/direct-form-submit');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
 const { Login } = require('./helpers/login');
+const { KillScoreSteps } = require('./helpers/kill-score-steps');
+const { Phaser } = require('./helpers/phaser');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 let test = BaseE2eTest.test;
@@ -26,6 +28,7 @@ class TestCharacterNames
 {
 
     static SHORT_NAME = 'Q9';
+    static TARGET_CONTAINER = '#target-container';
     static STORED_HTML_PATH = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'stored-html-payload.html');
 
     static async runNotSentTest(page, screenshots, gameConfig, longRun)
@@ -159,6 +162,29 @@ class TestCharacterNames
         await screenshots.capture(page, 'html-name-as-text');
     }
 
+    static async runStoredHtmlNameBoxesTest(page, secondPage, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let htmlName = FileHandler.readFile(TestCharacterNames.STORED_HTML_PATH).trim();
+        let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName3});
+        await E2eSeedAndRestoreApi.updateWithPreserve(gameConfig, e2eGroup, 'players', {id: playerId}, {name: htmlName});
+        let password = gameConfig.e2ePassword;
+        await Login.loginAndStartGame(page, gameConfig.e2eUsername3, password, htmlName, longRun, false, Login.TOWN_ROOM_NAME);
+        await KillScoreSteps.expectNameAsText(page.locator(Selectors.hud.playerBoxName), playerId+' - '+htmlName);
+        let playerName2 = gameConfig.e2ePlayerName2;
+        await Login.loginAndStartGame(secondPage, gameConfig.e2eUsername2, password, playerName2, longRun, false, Login.TOWN_ROOM_NAME);
+        let sessionId = await page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId);
+        await Phaser.waitForPlayerBySessionId(secondPage, sessionId, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
+        await secondPage.evaluate(
+            (targetSessionId) => window.reldens.getCurrentPlayer().setTargetPlayerById(targetSessionId),
+            sessionId
+        );
+        await expect(secondPage.locator(TestCharacterNames.TARGET_CONTAINER), 'The target name as text').toContainText(
+            htmlName
+        );
+        expect(await secondPage.evaluate(TestCharacterNames.HTML_PAYLOAD_EFFECTS), 'Target box').toEqual([true, 0]);
+        await screenshots.capture(secondPage, 'stored-html-name-target-box');
+    }
+
     static run()
     {
         test.describe('Character Names', () => {
@@ -185,6 +211,9 @@ class TestCharacterNames
             });
             test('name with HTML and spaces is cleaned and shown as text', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestCharacterNames.runHtmlNameTest(page, secondPage, screenshots, gameConfig, longRun);
+            });
+            test('stored name with HTML is shown as text in the player box and the target box', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestCharacterNames.runStoredHtmlNameBoxesTest(page, secondPage, screenshots, gameConfig, e2eGroup, longRun);
             });
         });
     }

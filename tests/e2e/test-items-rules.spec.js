@@ -9,8 +9,8 @@
  * after a new login with its modifier applied once; a potion with a use time out stored on the item row is used (a
  * second use inside it is still accepted, ISSUE #154) and a potion with an execution time out is used (with no delay,
  * ISSUE #154); a potion configured to
- * close the inventory on use closes the panel of the player using it (it closes the other players panels too, ISSUE
- * #155; the other clients play the use animation on their own player, ISSUE #156); and an equipment item with no
+ * close the inventory on use closes the panel of the player using it while the other player panel stays open (the
+ * other clients play the use animation on their own player, ISSUE #156); and an equipment item with no
  * group is listed in the equipment panel out of the group slots.
  *
  */
@@ -123,12 +123,16 @@ class TestItemsRules
         await ItemsSteps.changeItemCustomData(context, potionKey, {
             animationData: Object.assign({}, sc.toJson(potionRow.customData, {}).animationData, {closeInventoryOnUse: true})
         });
-        let [actor] = await TestItemsRules.enter(context);
-        await ItemsSteps.openInventory(actor.page);
+        let [actor, observer] = await TestItemsRules.enter(context, 2);
+        for(let player of [actor, observer]){
+            await ItemsSteps.openInventory(player.page);
+        }
         await TradeSteps.sendItemAction(context, actor, InventoryConst.ACTIONS.USE, potionKey);
         await expect(actor.page.locator(Selectors.inventory.ui), 'The own panel closes on the use').toBeHidden({
             timeout: TimeConstants.SERVER_RESPONSE
         });
+        await observer.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        await expect(observer.page.locator(Selectors.inventory.ui), 'The other player panel stays open').toBeVisible();
     }
 
     static async runNoGroupEquipmentTest(context)
@@ -161,7 +165,7 @@ class TestItemsRules
             test('item with an execution time out is used', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsRules.runExecTimeOutTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('close on use closes the panel of the player using the item', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('close on use closes the panel of the player using the item and keeps the other panels open', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsRules.runCloseOnUseTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('equipment item with no group is listed out of the group slots', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {

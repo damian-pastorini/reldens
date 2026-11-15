@@ -42,7 +42,7 @@ class TestClanModifiersStatsPersistence extends BaseTest
             events,
             clans,
             dataServer: sc.get(setupData, 'dataServer', ClanFixturesBuilder.createClanJoinDataServer([])),
-            config: {get: () => ({})},
+            config: {get: () => ({}), getWithoutLogs: (path, defaultValue) => defaultValue},
             featuresManager: {featuresList: {}}
         });
         return {clan: clans[10], savedStats, teamsPlugin, room: this.createRoom(events, savedStats)};

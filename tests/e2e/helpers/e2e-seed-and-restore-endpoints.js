@@ -42,13 +42,14 @@ class E2eSeedAndRestoreEndpoints
 
     static async createRow(serverManager, groupKey, entityKey, row)
     {
-        let createdRow = await serverManager.dataServer.getEntity(entityKey).create(row);
+        let repository = serverManager.dataServer.getEntity(entityKey);
+        let createdRow = await repository.create(row);
         if(!createdRow){
             return false;
         }
         E2eSeedAndRestoreEndpoints.fetchGroupEntries(E2eSeedAndRestoreEndpoints.createdRows, groupKey).push({
             entityKey,
-            id: createdRow.id
+            id: createdRow[repository.idColumn()]
         });
         return createdRow;
     }
@@ -83,21 +84,22 @@ class E2eSeedAndRestoreEndpoints
     static async restorePreservedRows(serverManager, preservedEntry)
     {
         let repository = serverManager.dataServer.getEntity(preservedEntry.entityKey);
-        let preservedIds = preservedEntry.rows.map(row => row.id);
+        let idColumn = repository.idColumn();
+        let preservedIds = preservedEntry.rows.map(row => row[idColumn]);
         let currentIds = [];
         for(let currentRow of await repository.load(preservedEntry.filters)){
-            if(!preservedIds.includes(currentRow.id)){
-                await repository.deleteById(currentRow.id);
+            if(!preservedIds.includes(currentRow[idColumn])){
+                await repository.deleteById(currentRow[idColumn]);
                 continue;
             }
-            currentIds.push(currentRow.id);
+            currentIds.push(currentRow[idColumn]);
         }
         for(let row of preservedEntry.rows){
-            if(!currentIds.includes(row.id)){
-                await repository.create(TestDataSetup.copyRow(row, {id: row.id}));
+            if(!currentIds.includes(row[idColumn])){
+                await repository.create(TestDataSetup.copyRow(row, {[idColumn]: row[idColumn]}));
                 continue;
             }
-            await repository.updateById(row.id, TestDataSetup.copyRow(row, {}));
+            await repository.updateById(row[idColumn], TestDataSetup.copyRow(row, {}));
         }
     }
 

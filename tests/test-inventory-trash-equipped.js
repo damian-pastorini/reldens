@@ -28,7 +28,12 @@ class TestInventoryTrashEquipped extends BaseTest
             trashSteps.push(manager.locked ? 'refused '+itemKey : 'removed '+itemKey);
             return !manager.locked;
         };
-        return {item, trashSteps, playerSchema: {player_id: 1, inventory: {manager}}};
+        return {item, trashSteps, playerSchema: {
+            player_id: 1,
+            inventory: {manager},
+            isDeath: () => false,
+            isDisabled: () => false
+        }};
     }
 
     async trashItem(player)

@@ -4,7 +4,8 @@
  *
  * Tests the rooms offered on the players creation and selection forms: the creation room, the scene selectors with the
  * last location (and without it once loginLastLocation is off, none on the login once allowOnLogin is off and no room
- * selection at all once allowOnRegistration is off too), the stored selected room, a single room, the guest rooms, the unavailable rooms, a room removed while
+ * selection at all once allowOnRegistration is off too), the creation room offered and applied with allowOnLogin off,
+ * the stored selected room, a single room, the guest rooms, the unavailable rooms, a room removed while
  * the selectors are open, the feature rooms left after a rejected join and the forged selected scene.
  *
  */
@@ -95,6 +96,38 @@ class TestCharacterRoomSelection
             'No room selection with the login and registration selection off'
         ).toBeUndefined();
         await expect(page.locator(CharacterCreation.CREATE_SCENE_SELECT), 'No creation scene selector').toHaveCount(0);
+    }
+
+    static async fetchOtherCreationRoom(page, gameConfig)
+    {
+        let creationRoomNames = await page.evaluate(
+            () => window.reldens.initialGameData.roomSelection.map(room => room.name)
+        );
+        expect(creationRoomNames.length, 'More than one creation room').toBeGreaterThan(1);
+        let initialRoomId = Number(
+            await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, 'server/players/initialState/room_id')
+        );
+        let otherRoom = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'rooms', {})).find(
+            room => creationRoomNames.includes(room.name) && initialRoomId !== room.id
+        );
+        expect(otherRoom, 'A creation room that is not the initial room').toBeTruthy();
+        return otherRoom;
+    }
+
+    static async runCreationRoomWithoutLoginSelectionTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/rooms/selection/allowOnLogin', false);
+        let playerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await expect(page.locator(TestCharacterRoomSelection.SELECTOR_SCENE_SELECT), 'No login selector').toHaveCount(0);
+        await expect(page.locator(CharacterCreation.CREATE_SCENE_SELECT), 'The creation selector').toHaveCount(1);
+        let selectedRoom = await TestCharacterRoomSelection.fetchOtherCreationRoom(page, gameConfig);
+        await page.locator(CharacterCreation.CREATE_SCENE_SELECT).selectOption(selectedRoom.name);
+        await screenshots.capture(page, 'creation-room-without-login-selection');
+        await CharacterCreation.submitCreateForm(page, playerName);
+        await CharacterCreation.waitForGameStart(page, longRun);
+        expect(await Navigation.getCurrentRoomName(page), 'The game starts in the selected room').toBe(selectedRoom.name);
+        expect((await CharacterCreation.fetchPlayerState(gameConfig, playerName)).room_id).toBe(selectedRoom.id);
     }
 
     static async runStoredRoomTest(page, gameConfig, longRun)
@@ -203,6 +236,9 @@ class TestCharacterRoomSelection
             });
             test('scene selectors follow the last location and the login selection', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestCharacterRoomSelection.runSceneSelectorsTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('creation room with the login selection off is offered and the player starts there', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestCharacterRoomSelection.runCreationRoomWithoutLoginSelectionTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('selected room stays stored for the last location', async ({ page, gameConfig, longRun }) => {
                 await TestCharacterRoomSelection.runStoredRoomTest(page, gameConfig, longRun);

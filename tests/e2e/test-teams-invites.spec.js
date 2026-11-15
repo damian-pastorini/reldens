@@ -4,7 +4,8 @@
  *
  * Tests the team invites between the group players in their scene (TeamSteps, the team messages sent like a client
  * does and the live teams and pending invites of the server): a declined invite is consumed and the inviter gets the
- * rejected line, also when declined from the request box option; the accept option forms the team; a
+ * rejected line, also when declined from the request box option (which closes the box); the accept option forms the
+ * team and removes the team invite buttons; a
  * decline or an accept with no pending invite, a second accept, a self invite, an accept with the own id, an invite to
  * a player that left and an accept after the inviter left are rejected; two inviters give one request box each; only
  * the invited player gets the box; the invite from the target box hides the button and clears the target, and no
@@ -78,6 +79,7 @@ class TestTeamsInvites
             message: 'The decline option sends the decline',
             timeout: TimeConstants.SERVER_RESPONSE
         }).toEqual([TeamsConst.CHAT.MESSAGE.INVITE_REJECTED.replace('%playerName', players[1].playerName)]);
+        await expect(requestBox, 'The decline closes the request box').toHaveCount(0, {timeout: TimeConstants.SERVER_RESPONSE});
     }
 
     static async runAcceptOptionTest(context)
@@ -94,6 +96,7 @@ class TestTeamsInvites
         await TeamSteps.invite(players[0], players[1]);
         await players[1].page.locator(Selectors.teams.acceptOption).first().click({timeout: TimeConstants.SERVER_RESPONSE});
         await TeamSteps.expectTeams(context.gameConfig, [[players[0].playerId, TeamSteps.sortedIds(players)]], 'The team is formed');
+        await expect(players[1].page.locator('.team-invite'), 'The accept removes the team invite buttons').toHaveCount(0);
     }
 
     static async runRejectedMessagesTest(context)

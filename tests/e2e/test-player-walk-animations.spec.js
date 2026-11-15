@@ -6,9 +6,10 @@
  * walker alone on the town return point, WalkObserverSetup): the walker walks a pointer path on a clear line of tiles
  * and every frame of its sprite is recorded on both clients until the sprite stands on the stopped server position.
  * Every frame that moves the sprite plays the walk animation of the line direction (with the sample basedOnPress on,
- * the animation of the state direction; with basedOnPress off it plays a vertical animation, ISSUE #348; the last move
- * places the sprite on the stopped state and stops it in the same
- * frame), the stopped sprite ends with its animation stopped, the name sprite keeps
+ * the animation of the state direction; with basedOnPress off, set on both clients before their engines start, the
+ * animation picked by the sprite position against the state position less the size offsets; the last move places the
+ * sprite on the stopped state and stops it in the same frame), the stopped sprite ends with its animation stopped, the
+ * name sprite keeps
  * the same position relative to the player sprite on every frame and the sprite depth is its Y plus its body height,
  * and the walker own camera moves in the walk direction.
  * A heal potion used while the own player walks a clear line (its life lowered first) plays its item animation
@@ -26,6 +27,7 @@ const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
 const { InitialClientConfig } = require('./helpers/initial-client-config');
 const { MovementScenario } = require('./helpers/movement-scenario');
+const { Navigation } = require('./helpers/navigation');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { InventoryConst } = require('../../lib/inventory/constants');
@@ -40,6 +42,7 @@ class TestPlayerWalkAnimations
 
     static WALK_DISTANCES = [4, 3, 2];
     static DIAGONAL_WALK_MS = 400;
+    static CAMERA_POLL_MS = 200;
     static RECORD_SPRITE = (sessionId) => {
         let scene = window.reldens.getActiveScene();
         let recorder = {scene, frames: []};
@@ -107,16 +110,11 @@ class TestPlayerWalkAnimations
             TestPlayerWalkAnimations.WALK_DISTANCES
         );
         expect(targetTile, 'A clear line of tiles starts on the walker').toBeTruthy();
+        await Navigation.waitForCameraSettled(walker.page, TimeConstants.SCENE_LOAD, TestPlayerWalkAnimations.CAMERA_POLL_MS);
         for(let player of players){
             await player.page.evaluate(TestPlayerWalkAnimations.RECORD_SPRITE, walker.sessionId);
         }
-        await RoomMessagesRecorder.sendMessage(walker.page, {act: GameConst.POINTER, column: targetTile[0], row: targetTile[1]});
-        let walked = await RoomMovementApi.collectTrail(
-            walkContext.fetchPlayer,
-            (player) => walkContext.isStill(player) && targetTile[0] === player.currentCol && targetTile[1] === player.currentRow,
-            walkContext.navTimeout
-        );
-        expect(walked.done, 'The walker reaches the line end: '+sc.toJsonString(walked.last)).toBe(true);
+        let walked = await WalkObserverSetup.walkPointerTo(walker.page, walkContext, targetTile);
         let recordings = [];
         for(let player of players){
             expect(
@@ -192,7 +190,7 @@ class TestPlayerWalkAnimations
             async () => (await walkContext.fetchPlayer()).pathSteps,
             {message: 'The player walks its path', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBeGreaterThan(0);
-        await RoomMessagesRecorder.sendMessage(context.page, {act: InventoryConst.ACTIONS.USE, idx: gameConfig.e2eConsumableItemId});
+        await RoomMessagesRecorder.sendMessage(context.page, {act: InventoryConst.ACTIONS.USE, 'idx': gameConfig.e2eConsumableItemId});
         let walked = await RoomMovementApi.collectTrail(
             walkContext.fetchPlayer,
             (snapshot) => walkContext.isStill(snapshot) && targetTile[0] === snapshot.currentCol && targetTile[1] === snapshot.currentRow,
@@ -221,12 +219,8 @@ class TestPlayerWalkAnimations
         await context.page.waitForTimeout(TestPlayerWalkAnimations.DIAGONAL_WALK_MS);
         await context.page.keyboard.up('ArrowRight');
         await context.page.keyboard.up('ArrowDown');
-        await RoomMovementApi.waitForPlayerStill(
-            context.gameConfig,
-            Login.TOWN_ROOM_NAME,
-            walkContext.playerName,
-            TimeConstants.SERVER_RESPONSE
-        );
+        let stopped = await RoomMovementApi.collectTrail(walkContext.fetchPlayer, walkContext.isStill, walkContext.navTimeout);
+        expect(stopped.done, 'The player stands still after the keys release: '+sc.toJsonString(stopped.last)).toBe(true);
         let frames = await context.page.evaluate(TestPlayerWalkAnimations.STOP_SPRITE);
         expect(
             frames.filter((frame, index) => 0 < index
@@ -242,6 +236,12 @@ class TestPlayerWalkAnimations
         test.describe('Player Walk Animations', () => {
             test('a walking player plays and stops its direction animation with its name and depth on every client', async ({ page, secondPage, gameConfig, longRun }) => {
                 await TestPlayerWalkAnimations.runWalkAnimationTest({page, secondPage, gameConfig, longRun}, {});
+            });
+            test('with basedOnPress off a walking player plays its walk direction animation on every client', async ({ page, secondPage, gameConfig, longRun }) => {
+                await TestPlayerWalkAnimations.runWalkAnimationTest(
+                    {page, secondPage, gameConfig, longRun},
+                    {basedOnPress: false}
+                );
             });
             test('the own diagonal walk steps the sprite on both axes in the same frame', async ({ page, gameConfig, longRun }) => {
                 await TestPlayerWalkAnimations.runDiagonalWalkTest({page, gameConfig, longRun});

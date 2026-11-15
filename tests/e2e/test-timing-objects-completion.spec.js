@@ -103,8 +103,8 @@ class TestTimingObjectsCompletion
         expect(await Phaser.triggerObjectInteraction(context.secondPage, mining.rockKey), 'The second click is sent')
             .toBeTruthy();
         await TimingMiningSteps.expectCompleted(context.page, mining, 'The miner gets the reward');
-        expect(await TimingObjectSession.fetchRecordedActions(context.secondPage), 'No second timing starts')
-            .toEqual([]);
+        expect(await TimingObjectSession.fetchRecordedActions(context.secondPage), 'No second timing starts, the rock answers busy')
+            .toEqual([TimingMiningSteps.BUSY]);
     }
 
     static run()

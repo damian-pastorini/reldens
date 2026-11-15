@@ -7,10 +7,11 @@
  * player at a passive enemy and a bullet shot by the aggressive forest enemy (the sample Tree with the attackBullet
  * skill, the only enemy left active, its aggression turned off for the group before the first player is placed six to
  * four tiles away, so only the battle the test starts shoots) are shown on the observer client, rendering
- * their texture, and every recorded frame follows the interpolation of its entry (InterpolationFramesRecorder); once
- * the bullet ends its sprite is destroyed on the observer and on the first player client. The sample fireball bullet
- * has its own animation with left and right directions, so its sprite renders the texture of the direction it flies
- * to (the shooter is placed in line with the enemy; its animation is never played, ISSUE #345). The town NPC placed
+ * their texture and playing the animation of that same key (the default bullet one), and every recorded frame follows
+ * the interpolation of its entry (InterpolationFramesRecorder); once the bullet ends its sprite is destroyed on the
+ * observer and on the first player client. The sample fireball bullet has its own animation with left and right
+ * directions, so its sprite renders and plays the texture and animation of the direction it flies to (the shooter is
+ * placed in line with the enemy). The town NPC placed
  * next to its original tile and walking back (ObjectInterpolationSteps, driven while the second player is in the town)
  * is recorded on the first player client. The same NPC, its random movement paused, walked with its area grid to a
  * walkable tile of its area before the second player logs in, is created on the joining client on its current body
@@ -65,6 +66,7 @@ class TestClientInterpolationObservers
         expect(pageErrors, 'The observer client never throws while the bullet flies').toEqual([]);
         expect(summary.partialMoving, 'The observed bullet sprite steps toward its flying body').toBeGreaterThan(0);
         expect(summary.renderedTextures, 'The observed bullet sprite renders its texture').toEqual([expectedTexture]);
+        expect(summary.playedAnimations, 'The observed bullet sprite plays its animation').toEqual([expectedTexture]);
         await expect.poll(
             async () => context.page.evaluate(() => Object.keys(window.reldens.getFeature('objects').bullets).length),
             {message: 'The first player client destroys the ended bullet sprite', timeout: TimeConstants.SERVER_RESPONSE}
