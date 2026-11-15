@@ -2,6 +2,9 @@
  *
  * Reldens - TreasureChestClient
  *
+ * A chest click is sent once until the server answers it: the chest UI answer, or the close UI answer of an out of
+ * reach click, lets the player click the chest again.
+ *
  */
 
 const { AnimationEngine } = require('reldens/lib/objects/client/animation-engine');
@@ -32,6 +35,16 @@ class TreasureChestClient extends AnimationEngine
             this.isOpen = true;
             this.playOpenAnimation();
         }, chestListenerKey);
+        this.gameManager.activeRoomEvents.room.onMessage('*', (message) => this.onCloseUiMessage(message));
+    }
+
+    onCloseUiMessage(message)
+    {
+        if(GameConst.CLOSE_UI_ACTION !== message?.act || Number(message.id) !== Number(this.id)){
+            return false;
+        }
+        this.pendingOpen = false;
+        return true;
     }
 
     enableInteraction()
