@@ -4,7 +4,8 @@
  *
  * Covers the timing start by an interaction or a hit and every refused start: a dead or disabled player, a wrong
  * message, a busy object, a player out of reach or already running the timing of another object, which keeps a second
- * object in reach from starting until that timing ends and is never freed by the end of another timing.
+ * object in reach from starting until that timing ends and is never freed by the end of another timing; the busy object
+ * and the player running another timing get the busy answer, the player running this timing gets none.
  *
  */
 
@@ -57,8 +58,8 @@ class TestTimingObjectStart extends BaseTest
                 {inState: GameConst.STATUS.DISABLED},
                 {message: {act: ObjectsConst.OBJECT_INTERACTION, id: this.timingBuilder.objectId + 1}},
                 {message: {act: GameConst.BUTTON_OPTION, id: this.timingBuilder.objectId}},
-                {isActive: true},
-                {runningTiming: this.secondObjectKey, activeTiming: this.secondObjectKey},
+                {isActive: true, sentActions: ['timingBusy']},
+                {runningTiming: this.secondObjectKey, activeTiming: this.secondObjectKey, sentActions: ['timingBusy']},
                 {position: this.timingBuilder.outOfReachPosition, sentActions: [GameConst.CLOSE_UI_ACTION]}
             ];
             for(let refusedCaseProps of refusedCases){
@@ -101,16 +102,61 @@ class TestTimingObjectStart extends BaseTest
             ];
             await timingSetup.timingObject.executeMessageActions(...interactionArgs);
             this.assert.strictEqual(await secondObject.executeMessageActions(...interactionArgs), false);
-            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart']);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart', 'timingBusy']);
             this.assert.strictEqual(secondObject.isActive, false);
             this.assert.strictEqual(timingSetup.playerSchema.getPrivate(this.activeTimingKey), this.objectKey);
             timingSetup.timingObject.cancelTiming(timingSetup.client);
             await secondObject.executeMessageActions(...interactionArgs);
-            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart', 'timingCancel', 'timingStart']);
+            this.assert.deepStrictEqual(
+                timingSetup.client.sentActions,
+                ['timingStart', 'timingBusy', 'timingCancel', 'timingStart']
+            );
             this.assert.strictEqual(secondObject.isActive, true);
             this.assert.strictEqual(timingSetup.playerSchema.getPrivate(this.activeTimingKey), this.secondObjectKey);
             secondObject.stopTiming();
             this.assert.strictEqual(timingSetup.playerSchema.getPrivate(this.activeTimingKey), null);
+        });
+    }
+
+    async testDisabledObjectStartsNothing()
+    {
+        await this.test('a disabled object answers busy to an interaction and starts nothing on a hit', async () => {
+            let timingSetup = this.timingBuilder.createTimingSetup({runOnHit: true});
+            timingSetup.timingObject.objectBody = {bodyState: {inState: GameConst.STATUS.DISABLED}};
+            let started = await timingSetup.timingObject.executeMessageActions(
+                timingSetup.client,
+                this.timingBuilder.interactionMessage,
+                timingSetup.room,
+                timingSetup.playerSchema
+            );
+            timingSetup.timingObject.onHit({
+                room: timingSetup.room,
+                bodyA: {playerId: this.timingBuilder.sessionId},
+                bodyB: {}
+            });
+            this.assert.deepStrictEqual(
+                [started, timingSetup.client.sentActions, timingSetup.timingObject.isActive],
+                [false, ['timingBusy'], false]
+            );
+            this.assert.strictEqual(timingSetup.playerSchema.getPrivate(this.activeTimingKey), null);
+        });
+    }
+
+    async testOwnRunningTimingClickGetsNoBusyAnswer()
+    {
+        await this.test('the player running the timing clicking its object again gets no busy answer', async () => {
+            let timingSetup = this.timingBuilder.createTimingSetup({});
+            let interactionArgs = [
+                timingSetup.client,
+                this.timingBuilder.interactionMessage,
+                timingSetup.room,
+                timingSetup.playerSchema
+            ];
+            await timingSetup.timingObject.executeMessageActions(...interactionArgs);
+            this.assert.strictEqual(await timingSetup.timingObject.executeMessageActions(...interactionArgs), false);
+            this.assert.deepStrictEqual(timingSetup.client.sentActions, ['timingStart']);
+            this.timingBuilder.assertBusyTiming(this.assert, timingSetup);
+            timingSetup.timingObject.stopTiming();
         });
     }
 
