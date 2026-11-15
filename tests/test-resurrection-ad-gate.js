@@ -8,6 +8,7 @@ const { BaseTest } = require('./base-test');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { ResurrectionAdGate } = require('../lib/actions/server/resurrection-ad-gate');
 const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
+const { RoomScene } = require('../lib/rooms/server/scene');
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
@@ -25,9 +26,12 @@ class TestResurrectionAdGate extends BaseTest
         this.relocator.loadConfig();
     }
 
-    createGate(resurrectionAdEnabled = 1)
+    createGate(resurrectionAdEnabled = 1, notifiedSessions = [])
     {
         return new ResurrectionAdGate({
+            deathReviveNotifier: {
+                notifyClient: (client, playerSchema) => notifiedSessions.push([client.sessionId, playerSchema.sessionId])
+            },
             playerDeathRelocator: {
                 resurrectionAdsKey: 'resurrection-video',
                 adsCollection: {
@@ -46,10 +50,65 @@ class TestResurrectionAdGate extends BaseTest
     createEvent(adsId, inState = GameConst.STATUS.DEATH, act = AdsConst.ACTIONS.AD_STARTED)
     {
         return {
+            room: this.createRoom({}),
             messageData: {act, ads_id: adsId},
             playerSchema: GameplayPlayerBuilder.createPlayerSchema({inState}),
             canContinue: true
         };
+    }
+
+    createRoom(customData)
+    {
+        let room = Object.create(RoomScene.prototype);
+        room.customData = customData;
+        room.getClientById = (sessionId) => ({sessionId});
+        return room;
+    }
+
+    async testClosedRequestedAdTellsTheReviveAgain()
+    {
+        await this.test('a requested ad that failed, was rejected or ended without reward tells the revive again, a rewarded end does not', async () => {
+            let notifiedSessions = [];
+            let gate = this.createGate(1, notifiedSessions);
+            let failedEvent = this.createStartedEvent(gate);
+            failedEvent.messageData.act = AdsConst.ACTIONS.AD_FAILED;
+            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(failedEvent), true);
+            let rejectedEvent = this.createEvent(this.resurrectionAdId);
+            gate.onBeforeSceneExecuteMessages(rejectedEvent);
+            rejectedEvent.startResult = false;
+            this.assert.strictEqual(gate.onAfterAdStarted(rejectedEvent), true);
+            let notRewardedEvent = this.createStartedEvent(gate);
+            notRewardedEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
+            notRewardedEvent.claimResult = false;
+            this.assert.strictEqual(gate.onAfterAdEnded(notRewardedEvent), true);
+            let rewardedEvent = this.createStartedEvent(gate);
+            rewardedEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
+            rewardedEvent.claimResult = {id: 'reward'};
+            this.assert.strictEqual(gate.onAfterAdEnded(rewardedEvent), true);
+            this.assert.strictEqual(rewardedEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_ENDED), true);
+            this.assert.deepStrictEqual(
+                notifiedSessions,
+                [failedEvent, rejectedEvent, notRewardedEvent].map(event => [
+                    event.playerSchema.sessionId,
+                    event.playerSchema.sessionId
+                ])
+            );
+        });
+    }
+
+    async testRoomWithoutTheAdMessageRejectsTheStart()
+    {
+        await this.test('the resurrection ad start in a room that does not allow that message is rejected and not waited', async () => {
+            let gate = this.createGate();
+            for(let customData of [{allActionsDisabled: true}, {disallowedActions: [AdsConst.ACTIONS.AD_STARTED]}]){
+                let blockedEvent = this.createEvent(this.resurrectionAdId);
+                blockedEvent.room = this.createRoom(customData);
+                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(blockedEvent), false);
+                this.assert.strictEqual(blockedEvent.canContinue, false);
+                this.assert.deepStrictEqual(blockedEvent.playerSchema.privateData, {});
+                this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(blockedEvent.playerSchema), false);
+            }
+        });
     }
 
     createStartedEvent(gate)
