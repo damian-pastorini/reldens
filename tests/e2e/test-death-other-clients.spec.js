@@ -8,7 +8,8 @@
  * hidden and gets no revive message; a revive in place plays the revive animation on the revived player sprite of every
  * client (not moved by the player offsets); a town revive plays no animation away from the revived player sprite, the
  * revive only reaches the dead player while the other client in the forest gets the player removed and keeps its scene
- * visible, and a client already in the town sees the revived player arrive; a revive in the room the player died in
+ * visible, and a client already in the town (placed next to the town NPC, so its body leaves the town default return
+ * point free for the revived player) sees the revived player arrive; a revive in the room the player died in
  * (the forest set as the teleport room) shows the player again on the room return point to the other client; after the
  * town revive the dead player sees its box hidden, its full life, its own sprite and can walk; and a client joining the
  * room while a player is dead shows that player once it revives.
@@ -24,6 +25,7 @@ const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { Navigation } = require('./helpers/navigation');
+const { WalkObserverSetup } = require('./helpers/walk-observer-setup');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -60,6 +62,10 @@ class TestDeathOtherClients
             return await TestDeathOtherClients.fetchSessionId(context.page);
         }
         await Login.loginRootPlayer(context.secondPage, context.gameConfig, context.longRun, '2');
+        await WalkObserverSetup.placeObserverNextToNpc(
+            context,
+            {page: context.secondPage, playerName: context.gameConfig.e2ePlayerName2}
+        );
         return await TestDeathOtherClients.fetchSessionId(context.page);
     }
 
@@ -245,6 +251,10 @@ class TestDeathOtherClients
             context.secondPage,
             Login.fetchSecondPlayerConfig(context.gameConfig),
             context.longRun
+        );
+        let deadSprite = await SceneSpritesRecorder.fetchPlayerSprite(context.secondPage, sessionId);
+        expect([deadSprite.visible, deadSprite.nameVisible], 'The joined client hides the dead player').toEqual(
+            [false, false]
         );
         await context.screenshots.capture(context.secondPage, 'joined-while-the-player-is-dead');
         await DeathReviveSteps.requestReviveInForest(context);
