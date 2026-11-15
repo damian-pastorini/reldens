@@ -8,8 +8,10 @@
  * consumable heals by its value, is clamped at the max life, uses exactly one unit stored, and the last unit removes the
  * item, its row and its client box; unknown or wrong item actions change nothing; a stack trashed twice is removed once and stays gone after a new
  * login; two uses in the same tick use two units and heal twice; a second item of the same group replaces the equipped
- * one, items of two groups stay equipped; a trashed equipped item is removed live and stored; coins received while
- * owning coins merge; a used non stackable fish removes only that instance; and the actions of a player never change
+ * one, items of two groups stay equipped; a trashed equipped item is removed live and stored, unequipped first with
+ * its modifier reverted and its client box removed when client/players/inventory/unequipOnRemove is on, and removed as
+ * it is with its modifier kept and its client box removed from the equipment panel when it is off (the value is read on
+ * every inventory creation, so the group sets it before the login); coins received while owning coins merge; a used non stackable fish removes only that instance; and the actions of a player never change
  * the items, stats or client item boxes of another player.
  *
  */
@@ -41,11 +43,12 @@ class TestItemsActions
     static POTION_VALUE = 20;
     static MISSING_INDEX = 'e2e-missing-item';
     static UNKNOWN_ACT = InventoryConst.ACTIONS.PREFIX+'E2e';
+    static UNEQUIP_ON_REMOVE_PATH = 'client/players/inventory/unequipOnRemove';
 
-    static async enter(context, playersCount = 1, seededItems = [])
+    static async enter(context, playersCount = 1, seededItems = [], configValues = {})
     {
         test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * (playersCount + 2), context.longRun));
-        return await TradeSteps.enterPlayers(context, playersCount, seededItems);
+        return await TradeSteps.enterPlayers(context, playersCount, seededItems, configValues);
     }
 
     static async runEquipTest(context)
@@ -173,16 +176,46 @@ class TestItemsActions
         await ItemsSteps.expectStat(context, player, 'atk', atk.base + atk.bonus, 'The axe modifier stays');
     }
 
+    static async trashEquippedAxe(context, unequipOnRemove)
+    {
+        let axeKey = context.gameConfig.e2eEquipableItemId;
+        let [player] = await TestItemsActions.enter(
+            context,
+            1,
+            [],
+            {[TestItemsActions.UNEQUIP_ON_REMOVE_PATH]: unequipOnRemove}
+        );
+        let atk = await ItemsSteps.fetchAttackBonus(context, player, axeKey);
+        let axeId = await ItemsSteps.equipAxe(context, player);
+        await RoomMessagesRecorder.sendMessage(player.page, {act: InventoryConst.ACTIONS.REMOVE, 'idx': axeId});
+        await TradeSteps.expectQuantity(context, player, axeKey, 0, 'The axe is trashed');
+        await TradeSteps.expectStoredQuantity(context, player, axeKey, 0, 'The trashed axe row is removed');
+        await expect(player.page.locator(Selectors.inventory.item(axeKey)), 'The trashed axe box is removed').toHaveCount(0);
+        return {player, atk};
+    }
+
     static async runTrashEquippedTest(context)
     {
-        let [player] = await TestItemsActions.enter(context);
-        let atk = await ItemsSteps.fetchAttackBonus(context, player, context.gameConfig.e2eEquipableItemId);
-        let axeId = await ItemsSteps.equipAxe(context, player);
-        await ItemsSteps.expectStat(context, player, 'atk', atk.base + atk.bonus, 'The axe modifier is applied');
-        await RoomMessagesRecorder.sendMessage(player.page, {act: InventoryConst.ACTIONS.REMOVE, 'idx': axeId});
-        await TradeSteps.expectQuantity(context, player, context.gameConfig.e2eEquipableItemId, 0, 'The axe is trashed');
-        await TradeSteps.expectStoredQuantity(context, player, context.gameConfig.e2eEquipableItemId, 0, 'The trashed axe row is removed');
-        await ItemsSteps.expectStat(context, player, 'atk', atk.base, 'The trashed axe modifier is reverted');
+        let trashed = await TestItemsActions.trashEquippedAxe(context, true);
+        await ItemsSteps.expectStat(
+            context,
+            trashed.player,
+            'atk',
+            trashed.atk.base,
+            'The trashed axe is unequipped first, its modifier reverted'
+        );
+    }
+
+    static async runTrashEquippedAsItIsTest(context)
+    {
+        let trashed = await TestItemsActions.trashEquippedAxe(context, false);
+        await ItemsSteps.expectStat(
+            context,
+            trashed.player,
+            'atk',
+            trashed.atk.base + trashed.atk.bonus,
+            'The trashed axe keeps its modifier'
+        );
     }
 
     static async runCoinsTest(context)
@@ -280,8 +313,11 @@ class TestItemsActions
             test('items of two groups stay equipped', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runTwoGroupsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('trashed equipped item is removed live and stored', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('trashed equipped item with the unequip on remove on is unequipped first and removed live and stored', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runTrashEquippedTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('trashed equipped item with the unequip on remove off is removed as it is, live and stored', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestItemsActions.runTrashEquippedAsItIsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('coins received while owning coins merge', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runCoinsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
