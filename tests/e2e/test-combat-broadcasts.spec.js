@@ -255,7 +255,7 @@ class TestCombatBroadcasts
                 message => context.enemyKey === message[ActionsConst.DATA_OBJECT_KEY_TARGET]
             ).length);
         }
-        expect(Math.min(...battleEndsCounts), 'One battle end broadcast to the player that did not kill').toBe(1);
+        expect(battleEndsCounts, 'One battle end for the killer and one for the other player').toEqual([1, 1]);
         await expect.poll(
             fetchTotalExperience,
             {message: 'One experience reward', timeout: context.timeout}
