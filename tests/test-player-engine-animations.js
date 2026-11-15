@@ -3,8 +3,10 @@
  * Reldens - Test Player Engine Animations
  *
  * Tests the walk animation the player engine plays for a player state update: with basedOnPress on a sprite away from
- * its state plays the animation of the state direction, a sprite on the exact state position (no size offsets) skips
- * it (with the size offsets it is never skipped, ISSUE #348), and a dead or disabled player never plays one. The
+ * its state plays the animation of the state direction, a sprite on the exact state position skips it, the size
+ * offsets are applied to the state position compared with the sprite (with basedOnPress on a sprite placed on its
+ * state skips the animation, with it off a walk right plays the right animation and a sprite on its state plays
+ * nothing), and a dead or disabled player never plays one. The
  * position animation update without sprite, state or player id and the interpolation on with no entries return
  * without moving the sprite, and the update with the interpolation on only stores the entry of a shown player.
  *
@@ -60,6 +62,30 @@ class TestPlayerEngineAnimations extends BaseTest
             this.assert.deepStrictEqual(
                 this.playAnimation(this.createEngine({}), [100, 100], {x: 100, y: 100, dir: GameConst.RIGHT}),
                 []
+            );
+        });
+    }
+
+    async testTheSizeOffsetsAreAppliedToTheStatePosition()
+    {
+        await this.test('the size offsets are applied to the state position compared with the sprite', async () => {
+            let offsets = {'client/players/size/topOffset': 20, 'client/players/size/leftOffset': 0};
+            let pressEngine = this.createEngine(offsets);
+            let positionEngine = this.createEngine(Object.assign({'client/players/animations/basedOnPress': false}, offsets));
+            let rightState = {x: 100, y: 100, dir: GameConst.RIGHT};
+            this.assert.deepStrictEqual(
+                [
+                    this.playAnimation(pressEngine, [100, 80], rightState),
+                    this.playAnimation(positionEngine, [90, 80], rightState),
+                    this.playAnimation(positionEngine, [100, 70], {x: 100, y: 100, dir: GameConst.DOWN}),
+                    this.playAnimation(positionEngine, [100, 80], rightState)
+                ],
+                [
+                    [],
+                    [TestPlayerEngineAnimations.MAPPED_AVATAR+'_'+GameConst.RIGHT],
+                    [TestPlayerEngineAnimations.MAPPED_AVATAR+'_'+GameConst.DOWN],
+                    []
+                ]
             );
         });
     }
