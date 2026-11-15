@@ -3,13 +3,13 @@
  * Reldens - Test Player Stats Panel
  *
  * Tests the player stats panel against the stored stats and the live player stats (a stat change sent with the same
- * stats save and client update a battle hit uses, GameplayE2eStateApi.setPlayerStats): every stat shows its live value,
- * plus " / base" for the stored showBase stats; the open panel follows the lowered and the raised
- * life; the stats message reaches only the player that requested it; the close button hides the panel and shows the
- * open button; a stat changed with the panel closed is shown when it opens again; with the panel disabled for the group
- * there is no panel or button and the stats messages raise no client error; the changed stats are shown again after a
- * new login and after a room change; and a player without stats rows (its rows moved for the group to a player created
- * for the group) enters the game with an empty panel and no client error.
+ * stats save and client update a battle hit uses, GameplayE2eStateApi.setPlayerStats): every stat shows its stored
+ * label and its live value, plus " / base" for the stored showBase stats; the open panel follows the lowered and the
+ * raised life; the stats message reaches only the player that requested it; the close button hides the panel and
+ * shows the open button; a stat changed with the panel closed is shown when it opens again; with the panel disabled for
+ * the group there is no panel or button and the stats messages raise no client error; the changed stats are shown again
+ * after a new login and after a room change; and a player without stats rows (its rows moved for the group to a player
+ * created for the group) enters the game with an empty panel and no client error.
  *
  */
 
@@ -110,6 +110,14 @@ class TestPlayerStatsPanel
         await TestPlayerStatsPanel.enterForest(context);
         await TestPlayerStatsPanel.openPanel(context.page);
         await TestPlayerStatsPanel.expectPanelValues(context, statsRows);
+        expect(
+            await TestPlayerStatsPanel.fetchPanelTexts(
+                context.page,
+                statsRows.map(statRow => statRow.key),
+                Selectors.stats.labelByKey
+            ),
+            'Every stat shows its stored label'
+        ).toEqual(Object.fromEntries(statsRows.map(statRow => [statRow.key, statRow.label || statRow.key])));
     }
 
     static async runLiveUpdateTest(context)
@@ -239,7 +247,7 @@ class TestPlayerStatsPanel
     static run()
     {
         test.describe('Player Stats Panel', () => {
-            test('every stat shows its live value and the showBase base', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('every stat shows its stored label, its live value and the showBase base', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestPlayerStatsPanel.runValuesAndLabelsTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('open panel follows the lowered and raised life', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
