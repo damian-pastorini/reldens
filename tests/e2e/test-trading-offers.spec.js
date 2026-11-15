@@ -8,13 +8,11 @@
  * inventories; an offered item is removed with its remove button; the offers and removes after a confirmation are
  * rejected; zero, negative, decimal, over the owned quantity and missing item offers are rejected; trade actions with
  * no open trade or an unknown sub action send nothing; the equipped items are not listed (a tampered offer of an
- * equipped item is accepted, ISSUE #158; an offered item can be equipped and stays offered, ISSUE #159); the locked
- * inventory rejects a trash and a consumable used during the trade is not consumed (it still heals, ISSUE #160); an item
- * given
- * during the trade is
- * rejected by the lock; an action with the session of a third player sends that player nothing (a partner that leaves
- * keeps the remaining inventory locked, ISSUE #162); and a player that reloads during the trade logs in with an
- * unlocked inventory.
+ * equipped item is accepted, ISSUE #158); an offered item can not be equipped and stays offered; the locked inventory
+ * rejects a trash and a consumable used during the trade (no heal, not consumed); an item given during the trade is
+ * rejected by the lock; an action with the session of a third player sends that player nothing; a partner that leaves
+ * mid trade unlocks the remaining inventory and closes its trade box; and a player that reloads during the trade logs
+ * in with an unlocked inventory.
  *
  */
 
@@ -192,6 +190,35 @@ class TestTradingOffers
         await TradeSteps.sendItemAction(context, starter, InventoryConst.ACTIONS.USE, potionKey);
         await starter.page.waitForTimeout(TradeSteps.SETTLE_MS);
         expect(await TradeSteps.fetchQuantity(context, starter, potionKey), 'The locked potion is not consumed').toBe(ownedQuantity);
+        expect(
+            (await GameplayE2eStateApi.fetchPlayer(context.gameConfig, roomName, starter.playerName)).stats.hp,
+            'The use is refused during the trade, no heal'
+        ).toBe(TestTradingOffers.HURT_LIFE);
+    }
+
+    static async runEquipOfferedItemTest(context)
+    {
+        let [starter, partner] = await TestTradingOffers.enter(context);
+        await TradeSteps.open(starter, partner);
+        let axeId = await TradeSteps.fetchItemId(context, starter, context.gameConfig.e2eEquipableItemId);
+        await TradeSteps.offer(starter, partner, axeId, 1);
+        await TradeSteps.expectOffered(context, starter, {[axeId]: 1}, 'The axe is offered');
+        await TradeSteps.sendItemAction(context, starter, InventoryConst.ACTIONS.EQUIP, context.gameConfig.e2eEquipableItemId);
+        await starter.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        expect((await TradeSteps.fetchState(context, starter)).items[axeId].equipped, 'The offered axe is not equipped')
+            .toBe(false);
+        await TradeSteps.expectOffered(context, starter, {[axeId]: 1}, 'The axe stays offered');
+    }
+
+    static async runPartnerLeavesTest(context)
+    {
+        let [starter, partner] = await TestTradingOffers.enter(context);
+        await TradeSteps.open(starter, partner);
+        await TradeSteps.expectLocked(context, starter, true, 'The starter inventory is locked');
+        await partner.page.goto('about:blank');
+        await TradeSteps.expectLocked(context, starter, false, 'The partner leaving cancels the trade and unlocks the inventory');
+        await expect(starter.page.locator('#box-trade'+partner.sessionId), 'The trade box of the remaining player closes')
+            .toBeHidden({timeout: TimeConstants.SERVER_RESPONSE});
     }
 
     static async runItemGivenDuringTradeTest(context)
@@ -262,6 +289,12 @@ class TestTradingOffers
             });
             test('potion used during the trade is not consumed', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingOffers.runUseDuringTradeTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('offered item can not be equipped and stays offered', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingOffers.runEquipOfferedItemTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('partner leaving mid trade unlocks the remaining inventory and closes its box', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingOffers.runPartnerLeavesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('item given during the trade is rejected by the lock', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingOffers.runItemGivenDuringTradeTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
