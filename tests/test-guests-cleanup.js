@@ -41,7 +41,7 @@ class TestGuestsCleanup extends BaseTest
 
     createClaimUsersManager(claimResult, failingDeletion)
     {
-        let managerSetup = {updates: [], deletedUserIds: []};
+        let managerSetup = {updates: [], deletedUserIds: [], playerDeletions: []};
         let usersManager = Object.create(UsersManager.prototype);
         usersManager.clanRepository = {loadOneBy: async () => false};
         usersManager.usersRepository = {
@@ -56,8 +56,12 @@ class TestGuestsCleanup extends BaseTest
         usersManager.usersLocaleRepository = {
             delete: async () => failingDeletion ? Promise.reject({message: 'Storage.'}) : true
         };
-        usersManager.questsProgressRepository = {delete: async () => true};
-        usersManager.playersRepository = {deleteById: async () => true};
+        usersManager.questsProgressRepository = {
+            delete: async (filters) => managerSetup.playerDeletions.push({questsProgress: filters})
+        };
+        usersManager.playersRepository = {
+            deleteById: async (playerId) => managerSetup.playerDeletions.push({player: playerId})
+        };
         managerSetup.usersManager = usersManager;
         return managerSetup;
     }
@@ -124,6 +128,31 @@ class TestGuestsCleanup extends BaseTest
             let guestUser = {id: 7, role_id: this.guestRoleId, status: '1', related_players: []};
             this.assert.strictEqual(await managerSetup.usersManager.deleteGuestUser(guestUser, Date.now()), true);
             this.assert.deepStrictEqual(managerSetup.deletedUserIds, [7]);
+        });
+    }
+
+    async testTheClaimedGuestPlayersAreDeletedWithTheirQuestsProgress()
+    {
+        await this.test('a claimed stale guest gets every player deleted after its quests progress', async () => {
+            let managerSetup = this.createClaimUsersManager(1, false);
+            let guestUser = {id: 7, role_id: this.guestRoleId, status: '1', related_players: [{id: 3}, {id: 4}]};
+            this.assert.strictEqual(await managerSetup.usersManager.deleteGuestUser(guestUser, Date.now()), true);
+            this.assert.deepStrictEqual(managerSetup.playerDeletions, [
+                {questsProgress: {player_id: 3}},
+                {player: 3},
+                {questsProgress: {player_id: 4}},
+                {player: 4}
+            ]);
+        });
+    }
+
+    async testAFailedQuestsProgressDeletionKeepsThePlayer()
+    {
+        await this.test('a failed quests progress deletion rejects the player deletion and keeps the player', async () => {
+            let managerSetup = this.createClaimUsersManager(1, false);
+            managerSetup.usersManager.questsProgressRepository = {delete: async () => Promise.reject({message: 'Storage.'})};
+            await this.assert.rejects(managerSetup.usersManager.deletePlayer(3), {message: 'Storage.'});
+            this.assert.deepStrictEqual(managerSetup.playerDeletions, []);
         });
     }
 
