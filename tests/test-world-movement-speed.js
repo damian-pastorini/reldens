@@ -15,6 +15,13 @@ class TestWorldMovementSpeed extends BaseTest
 
     walkSpeeds(globalWorldConfig, physicsBody, roomCustomData, playerStatSpeed)
     {
+        let playerInWorld = this.createPlayerInWorld(globalWorldConfig, physicsBody, roomCustomData, playerStatSpeed);
+        playerInWorld.body.initMove(GameConst.RIGHT);
+        return [playerInWorld.worldConfig.movementSpeed, playerInWorld.body.movementSpeed, playerInWorld.body.velocity[0]];
+    }
+
+    createPlayerInWorld(globalWorldConfig, physicsBody, roomCustomData, playerStatSpeed)
+    {
         let config = Object.assign(new ConfigProcessor(), {
             avoidLog: true,
             server: {rooms: {world: globalWorldConfig}, players: {physicsBody}},
@@ -32,15 +39,33 @@ class TestWorldMovementSpeed extends BaseTest
             worldConfig: room.worldConfig
         });
         clearInterval(world.worldDateTimeInterval);
-        let body = world.createPlayerBody({
-            id: 'session-a',
-            width: 32,
-            height: 32,
-            speed: playerStatSpeed,
-            bodyState: {x: 64, y: 64, dir: GameConst.DOWN}
+        return {
+            worldConfig: room.worldConfig,
+            body: world.createPlayerBody({
+                id: 'session-a',
+                width: 32,
+                height: 32,
+                speed: playerStatSpeed,
+                bodyState: {x: 64, y: 64, dir: GameConst.DOWN}
+            })
+        };
+    }
+
+    async testTheRoomJumpValuesReachThePlayerBodies()
+    {
+        await this.test('the room or world jump speed and time reach the player bodies, the body defaults are kept without them', async () => {
+            let speedConfigOff = {usePlayerSpeedConfig: false, speed: 180};
+            let jumpCases = [
+                [{}, {applyGravity: true, jumpSpeed: 300, jumpTimeMs: 400}, [300, 400]],
+                [{jumpSpeed: 350, jumpTimeMs: 250}, {applyGravity: true}, [350, 250]],
+                [{}, {applyGravity: true}, [540, 180]],
+                [{}, {applyGravity: true, jumpSpeed: 0, jumpTimeMs: 0}, [540, 180]]
+            ];
+            for(let [globalWorldConfig, roomCustomData, expectedJump] of jumpCases){
+                let body = this.createPlayerInWorld(globalWorldConfig, speedConfigOff, roomCustomData, 0).body;
+                this.assert.deepStrictEqual([body.jumpSpeed, body.jumpTimeMs], expectedJump);
+            }
         });
-        body.initMove(GameConst.RIGHT);
-        return [room.worldConfig.movementSpeed, body.movementSpeed, body.velocity[0]];
     }
 
     async testTheRoomMovementSpeedIsTheWalkSpeed()
