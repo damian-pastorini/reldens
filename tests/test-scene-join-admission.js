@@ -132,6 +132,7 @@ class TestSceneJoinAdmission extends BaseTest
         roomScene.disposeTimeoutMs = 30;
         roomScene.disposeTimeoutTimer = false;
         roomScene.playersLastStateTimers = {};
+        roomScene.movementInterval = {};
         roomScene.clients = remainingClients;
         roomScene.playerBySessionIdFromState = (sessionId) => ({player_id: 7, sessionId});
         roomScene.savePlayedTime = async () => true;
@@ -157,6 +158,32 @@ class TestSceneJoinAdmission extends BaseTest
                 [disposedBeforeTheTimeout, disposedRooms, occupiedRoom.disposeTimeoutTimer],
                 [[], [0], false]
             );
+        });
+    }
+
+    async testLeaveAfterASceneChangeKeepsTheSavedNextScene()
+    {
+        await this.test('the leave of a room the player left through a change point never saves its state over the next scene', async () => {
+            let savedStates = [];
+            let leftRoom = this.createLeavingSceneRoom([{sessionId: 'session-b'}], []);
+            leftRoom.roomData = {roomId: 4};
+            leftRoom.savePlayerState = async (sessionId) => savedStates.push(sessionId);
+            leftRoom.playerBySessionIdFromState = (sessionId) => ({player_id: 7, sessionId, state: {room_id: 5}});
+            await leftRoom.onLeave({sessionId: 'session-a'}, true);
+            this.assert.deepStrictEqual(savedStates, []);
+            leftRoom.playerBySessionIdFromState = (sessionId) => ({player_id: 7, sessionId, state: {room_id: 4}});
+            await leftRoom.onLeave({sessionId: 'session-a'}, true);
+            this.assert.deepStrictEqual(savedStates, ['session-a']);
+        });
+    }
+
+    async testLeaveClearsOnlyTheLeavingPlayerMovement()
+    {
+        await this.test('a player leaving while walking has its movement intervals cleared, the other players keep walking', async () => {
+            let leftRoom = this.createLeavingSceneRoom([{sessionId: 'session-b'}], []);
+            leftRoom.movementInterval = {'7_right': 'leaving-player-move', '8_left': 'other-player-move'};
+            await leftRoom.onLeave({sessionId: 'session-a'}, true);
+            this.assert.deepStrictEqual(leftRoom.movementInterval, {'8_left': 'other-player-move'});
         });
     }
 
