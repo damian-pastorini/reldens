@@ -72,7 +72,8 @@ class RoomBorderPlacement
         return {
             tile,
             position,
-            mapSize: {width: mapJson.width * mapJson.tilewidth, height: mapJson.height * mapJson.tileheight}
+            mapSize: {width: mapJson.width * mapJson.tilewidth, height: mapJson.height * mapJson.tileheight},
+            tileSize: {width: mapJson.tilewidth, height: mapJson.tileheight}
         };
     }
 
