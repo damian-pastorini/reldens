@@ -153,7 +153,12 @@ class InventoryGrowthProbe
             Number(sc.get(requestBody, 'splitExperience', 0)),
             false
         );
-        return {targetsCount, errors: await rewardsSubscriber.giveReward(new Reward({experience}), playerSchema, [])};
+        return {
+            targetsCount,
+            errors: (await rewardsSubscriber.giveReward(new Reward({experience}), playerSchema, [])).filter(
+                result => !result.isSuccess
+            )
+        };
     }
 
     static fetchBehavior(request)
