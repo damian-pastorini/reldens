@@ -110,8 +110,9 @@ class TestInteractiveObjectsGuards
         await TestInteractiveObjectsGuards.sendInteraction(context.page, rockInRange.bodyKey, {});
         await context.page.waitForTimeout(TestInteractiveObjectsGuards.SETTLE_MS);
         let startedKeys = (await TimingObjectSession.fetchRecordedMessages(context.page)).map(message => message.key);
-        expect(await TimingObjectSession.fetchRecordedActions(context.page), 'One timing starts').toEqual([TimingMiningSteps.START]);
-        expect(startedKeys, 'The first rock runs the timing').toEqual([mining.rockKey]);
+        expect(await TimingObjectSession.fetchRecordedActions(context.page), 'One timing starts, the second rock answers busy')
+            .toEqual([TimingMiningSteps.START, TimingMiningSteps.BUSY]);
+        expect(startedKeys, 'The first rock runs the timing').toEqual([mining.rockKey, rockInRange.bodyKey]);
     }
 
     static async runDisabledPlayerTest(context)
