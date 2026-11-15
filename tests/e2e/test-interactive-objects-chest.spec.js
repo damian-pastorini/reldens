@@ -196,7 +196,11 @@ class TestInteractiveObjectsChest
         expect(await TestInteractiveObjectsChest.fetchChestAnswers(context.page), 'No dialog out of reach').toEqual([]);
         await RoomObjectsApi.placePlayerNextToObject(context.page, context.gameConfig, Login.FOREST_ROOM_NAME, chest.chestKey, TimeConstants.SCENE_LOAD);
         await Phaser.clickObjectAwayFromOwnPlayer(context.page, chest.chestKey, TestInteractiveObjectsChest.CLICK_OFFSET);
-        await context.page.waitForTimeout(TimeConstants.SERVER_RESPONSE);
+        await TestInteractiveObjectsChest.expectAnswer(
+            context.page,
+            TestInteractiveObjectsChest.FOUND,
+            'The later click in range opens the chest'
+        );
     }
 
     static async runStuckTest(context)
