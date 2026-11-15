@@ -5,8 +5,9 @@
  * Tests a dead player in a room with every action disabled (the forest room custom data allActionsDisabled is set for
  * the group after DeathReviveSteps killed the player there with a real enemy hit): the restoration item choice and the
  * revive request are still accepted, so the item chosen with the use button is consumed by the revive in the forest;
- * and with a resurrection ad requested from the game over box (the ads maximum duration shortened for the group) the
- * player revives in the town room once that maximum duration passed.
+ * and with a resurrection ad requested from the game over box the room refuses the ad start (its ads messages never
+ * run), so the player revives in the town room on the game over time, long before the ads maximum duration (set to 60
+ * seconds for the group).
  *
  */
 
@@ -25,7 +26,7 @@ let expect = BaseE2eTest.expect;
 class TestDeathDisabledActions
 {
 
-    static ADS_MAXIMUM_DURATION_MS = 15000;
+    static ADS_MAXIMUM_DURATION_MS = 60000;
 
     static async disableAllActions(context)
     {
@@ -60,10 +61,15 @@ class TestDeathDisabledActions
         await TestDeathDisabledActions.disableAllActions(context);
         let townRoomName = await DeathReviveSteps.expectTownGameOverMessage(context, 1);
         await DeathReviveShowcase.clickButton(context, Selectors.gameOver.resurrectionAdButton);
+        let clickedAt = Date.now();
         await expect(context.page.locator(AdMessagesPlayer.AD_OVERLAY_SELECTOR), 'The ad plays').toBeVisible(
             {timeout: adDeath.adTimeout}
         );
         await DeathReviveSteps.expectRevivedInTown(context, townRoomName);
+        expect(
+            Date.now() - clickedAt,
+            'The revive in town does not wait for the ad the room never processes'
+        ).toBeLessThan(TestDeathDisabledActions.ADS_MAXIMUM_DURATION_MS);
     }
 
     static run()
@@ -74,7 +80,7 @@ class TestDeathDisabledActions
                     {page, screenshots, gameConfig, e2eGroup, longRun}
                 );
             });
-            test('resurrection ad requested in a room with every action disabled revives in town once the ads maximum duration passed', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('resurrection ad requested in a room with every action disabled revives in town on the game over time', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathDisabledActions.runRequestedAdTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
         });
