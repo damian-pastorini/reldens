@@ -54,6 +54,22 @@ class TestAdminMapsWizardFileNames
         });
     }
 
+    static async postImport(page, gameConfig, mapKey)
+    {
+        return await page.request.post(AdminPanelSession.adminPath(gameConfig)+'/maps-wizard', {
+            multipart: {
+                _csrf: await AdminPanelSession.fetchCsrfToken(page),
+                mainAction: 'import',
+                'selectedMaps[]': mapKey,
+                ['map-title-'+mapKey]: 'E2E Import',
+                handlerParams: '{}',
+                verifyTilesetImage: '1',
+                automaticallyExtrudeMaps: '0'
+            },
+            maxRedirects: 0
+        });
+    }
+
     static removeGeneratedMapFiles(generatedPath)
     {
         for(let fileName of FileHandler.readFolder(generatedPath)){
@@ -66,7 +82,10 @@ class TestAdminMapsWizardFileNames
     static async runGeneratedFolderTest(page, screenshots, gameConfig, longRun)
     {
         let adminPath = AdminPanelSession.adminPath(gameConfig);
-        let generateDataPath = FileHandler.joinPaths(ServerPathResolver.resolve(gameConfig.serverPath), 'generate-data');
+        let generateDataPath = FileHandler.joinPaths(
+            ServerPathResolver.resolve(gameConfig.serverPath),
+            'generate-data'
+        );
         let outsideFolder = FileHandler.joinPaths(generateDataPath, TestAdminMapsWizardFileNames.OUTSIDE_FOLDER);
         let mapFile = '/'+TestAdminMapsWizardFileNames.MAP_NAME+'.json';
         FileHandler.remove(outsideFolder);
@@ -144,12 +163,53 @@ class TestAdminMapsWizardFileNames
                 folderNameCase.data
             );
             expect(response.status(), 'Rejected: '+folderNameCase.label).toBe(302);
-            expect(sc.get(response.headers(), 'location', ''), 'Rejected: '+folderNameCase.label).toBe(expectedLocation);
+            expect(sc.get(response.headers(), 'location', ''), 'Rejected: '+folderNameCase.label).toBe(
+                expectedLocation
+            );
         }
         let outsideFileResponse = await page.request.get(adminPath+'/generate-data/e2e-outside-name.json');
         expect(outsideFileResponse.status(), 'Nothing must be written outside the generated folder').toBe(404);
         await page.goto(expectedLocation);
         await screenshots.capture(page, 'maps-wizard-folder-names-rejected');
+    }
+
+    static async runImportFolderNamesTest(page, screenshots, gameConfig, longRun)
+    {
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        let generatedPath = FileHandler.joinPaths(
+            ServerPathResolver.resolve(gameConfig.serverPath),
+            'generate-data',
+            'generated'
+        );
+        let craftedMapPath = FileHandler.joinPaths(
+            generatedPath,
+            TestAdminMapsWizardFileNames.MAP_NAME+'-crafted.json'
+        );
+        let outsideImage = 'e2e-outside-image.png';
+        FileHandler.writeFile(craftedMapPath, sc.toJsonString({
+            tilesets: [{image: FileHandler.joinPaths(TestAdminMapsWizardFileNames.PARENT_FOLDER, outsideImage)}],
+            layers: []
+        }));
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
+        let importCases = [
+            {
+                mapKey: FileHandler.joinPaths(TestAdminMapsWizardFileNames.PARENT_FOLDER, 'e2e-outside-map'),
+                result: 'mapInvalidFileName'
+            },
+            {mapKey: TestAdminMapsWizardFileNames.MAP_NAME+'-crafted', result: 'mapTilesetImageInvalidFileName'}
+        ];
+        for(let importCase of importCases){
+            let response = await TestAdminMapsWizardFileNames.postImport(page, gameConfig, importCase.mapKey);
+            expect(response.status(), 'Import rejected: '+importCase.mapKey).toBe(302);
+            expect(sc.get(response.headers(), 'location', ''), 'Import rejected: '+importCase.mapKey).toBe(
+                adminPath+'/maps-wizard?result='+importCase.result
+            );
+        }
+        let publicImageResponse = await page.request.get('/assets/maps/'+outsideImage);
+        expect(publicImageResponse.status(), 'Nothing must be copied to the public maps folder').toBe(404);
+        FileHandler.remove(craftedMapPath);
+        await page.goto(adminPath+'/maps-wizard?result='+importCases[1].result);
+        await screenshots.capture(page, 'maps-wizard-import-folder-names-rejected');
     }
 
     static run()
@@ -165,6 +225,12 @@ class TestAdminMapsWizardFileNames
                 'maps wizard rejects the names with folders for every strategy',
                 async ({ page, screenshots, gameConfig, longRun }) => {
                     await TestAdminMapsWizardFileNames.runFolderNamesTest(page, screenshots, gameConfig, longRun);
+                }
+            );
+            test(
+                'maps wizard import rejects the map names and tileset images with folders',
+                async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestAdminMapsWizardFileNames.runImportFolderNamesTest(page, screenshots, gameConfig, longRun);
                 }
             );
         });
