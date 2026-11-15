@@ -6,7 +6,7 @@
  * the group (DeathReviveSteps) and its life set to the points one hit removes before the mining starts, so only the
  * killing hit of a passive forest enemy (TestCombatDeath) lowers it during the mining: with the hit rule on the kill
  * cancels the mining with no reward; with the hit rule off and the player kept dead (no auto revive and a long game
- * over) the rock is free after the completion (the dead player gets the reward, ISSUE #178); and with the hit rule off and the death teleport on the
+ * over) the death still cancels the mining with no reward and the rock is free; and with the hit rule off and the death teleport on the
  * player moved to the town gets no reward and the rock is free.
  *
  */
@@ -79,6 +79,12 @@ class TestTimingObjectsDeaths
         ), message).toBe(mining.storedBefore);
     }
 
+    static async expectCancelledWithNoReward(context, mining, message)
+    {
+        await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.CANCEL, mining.serverTimeout);
+        await TestTimingObjectsDeaths.expectNoStoredReward(context, mining, message);
+    }
+
     static async runKillCancelTest(context)
     {
         let mining = await TestTimingObjectsDeaths.killDuringMining(
@@ -86,8 +92,7 @@ class TestTimingObjectsDeaths
             {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false},
             {}
         );
-        await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.CANCEL, mining.serverTimeout);
-        await TestTimingObjectsDeaths.expectNoStoredReward(context, mining, 'The killing hit cancels the mining');
+        await TestTimingObjectsDeaths.expectCancelledWithNoReward(context, mining, 'The killing hit cancels the mining');
     }
 
     static async runDeadMinerTest(context)
@@ -97,7 +102,7 @@ class TestTimingObjectsDeaths
             [ActionsConst.DEATH.CONFIG_PATHS.AUTO_REVIVE]: false,
             [ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT]: TestTimingObjectsDeaths.LONG_GAME_OVER_SECONDS
         }, {cancelOnHit: false});
-        await TestTimingObjectsDeaths.expectRockFree(context, mining);
+        await TestTimingObjectsDeaths.expectCancelledWithNoReward(context, mining, 'The death cancels the mining');
     }
 
     static async runDeathTeleportTest(context)
@@ -116,7 +121,7 @@ class TestTimingObjectsDeaths
             test('killing hit cancels the mining', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTimingObjectsDeaths.runKillCancelTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('hit rule off: the rock of the dead miner is free after the completion', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('hit rule off: the death cancels the mining of the kept dead miner with no reward', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTimingObjectsDeaths.runDeadMinerTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('hit rule off: the miner moved by the death teleport gets no reward', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
