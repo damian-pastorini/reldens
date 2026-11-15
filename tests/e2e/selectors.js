@@ -193,6 +193,7 @@ class Selectors
             container: '.stat-container',
             value: '.stat-value',
             valueByKey: (statKey) => '.stat-container.stat-'+statKey+' .stat-value',
+            labelByKey: (statKey) => '.stat-container.stat-'+statKey+' .stat-label',
             firstValue: '.stat-container .stat-value',
             levelContainer: '.level-container',
             experienceContainer: '.experience-container',
