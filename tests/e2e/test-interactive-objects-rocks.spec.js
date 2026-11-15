@@ -4,7 +4,8 @@
  *
  * Tests the forest mining rocks lifecycle (TimingMiningSteps, the respawn time shortened for the group on the live
  * rock where the case waits for it): the room holds the respawn instances limit of rocks with distinct keys on distinct
- * tiles; a mined rock is hidden for every client, can be walked through, gets no timing while it waits, and respawns
+ * tiles; a mined rock is hidden for every client, can be walked through, gets no timing while it waits (its
+ * interaction is answered busy), and respawns
  * active, shown, colliding and blocking the player again, on a tile where a player standing on the old place is out of
  * reach (the respawn pinned for the group to the closest tile out of reach before the rock is mined), and a second
  * player mines it; a player that joins while the rock waits does not see it; and while a rock of
@@ -18,6 +19,7 @@ const { TimingMiningSteps } = require('./helpers/timing-mining-steps');
 const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { Phaser } = require('./helpers/phaser');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Navigation } = require('./helpers/navigation');
 const { Login } = require('./helpers/login');
@@ -98,6 +100,11 @@ class TestInteractiveObjectsRocks
                 {message: 'The mined rock is hidden for every client', timeout: mining.serverTimeout}
             ).toBe(false);
         }
+        expect(await Phaser.triggerObjectInteraction(context.page, mining.rockKey), 'The mined rock interaction is sent')
+            .toBe(true);
+        await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.BUSY, mining.serverTimeout);
+        expect(await TimingObjectSession.fetchRecordedActions(context.page), 'The mined rock starts no timing while it waits')
+            .toEqual([TimingMiningSteps.START, TimingMiningSteps.COMPLETE, TimingMiningSteps.BUSY]);
         let walked = await TestInteractiveObjectsRocks.walkToTile(context, mining.rock, mining.serverTimeout);
         expect(walked.done, 'The miner walks through the depleted rock tile').toBe(true);
         expect(secondGameConfig.e2ePlayerName, 'The second player is in the forest').toBeTruthy();
