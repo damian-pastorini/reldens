@@ -6,8 +6,8 @@
  * that join and leave the room, the default room delete is blocked on the view, on the list row and on the selection
  * without any request sent, a room deleted with two players inside warns them with the closing countdown and shows them
  * only the room closed modal while a player in another room keeps playing and the stored player of the deleted room
- * logs in to the default room, and a room deleted with the relocation disabled unlinks its stored player. The deleted
- * rooms are the disposable rooms the global setup creates on every run before the rooms are defined (TestDataSetup), so
+ * logs in to the default room, and a room deleted with the relocation disabled unlinks its stored player, that logs in
+ * to the default room. The deleted rooms are the disposable rooms the global setup creates on every run before the rooms are defined (TestDataSetup), so
  * no sample data room is deleted and the next run has them again without a database reset.
  *
  */
@@ -229,6 +229,11 @@ class TestAdminRoomsLiveDeletion
         expect((await E2eSeedAndRestoreApi.fetchPlayerState(gameConfig, offlineUser.playerName)).room_id, 'Stored player moved').toBe(
             Number(await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, 'server/'+RoomsConst.DEFAULT_ROOM_CONFIG_PATH))
         );
+        await TestAdminRoomsLiveDeletion.expectLoginInDefaultRoom(page, gameConfig, longRun, offlineUser);
+    }
+
+    static async expectLoginInDefaultRoom(page, gameConfig, longRun, offlineUser)
+    {
         let offlineClient = await Login.openClientPage(page, gameConfig);
         await Login.loginAndStartGame(offlineClient.clientPage, offlineUser.username, gameConfig.e2ePassword, offlineUser.playerName, longRun);
         expect(await Navigation.getCurrentRoomName(offlineClient.clientPage), 'Stored player logs in the default room').toBe(
@@ -252,6 +257,7 @@ class TestAdminRoomsLiveDeletion
             'Stored player unlinked and no room instance'
         ).toEqual([null, false]);
         await screenshots.capture(page, 'unlinked-room-deleted');
+        await TestAdminRoomsLiveDeletion.expectLoginInDefaultRoom(page, gameConfig, longRun, offlineUser);
     }
 
     static run()
@@ -266,7 +272,7 @@ class TestAdminRoomsLiveDeletion
             test('a room deleted with players inside warns them, closes the room and relocates its stored player', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestAdminRoomsLiveDeletion.runPlayersRoomDeletedTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
-            test('a room deleted with the relocation disabled unlinks its stored player', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('a room deleted with the relocation disabled unlinks its stored player that logs in the default room', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestAdminRoomsLiveDeletion.runUnlinkedRoomDeletedTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
         });
