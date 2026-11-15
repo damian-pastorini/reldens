@@ -3,7 +3,8 @@
  * Reldens - Test Admin Rooms View Actions
  *
  * Tests the actions posted from the admin room view: the room set as default updates the config, enables the room and
- * changes the runtime default room, a failed save or enable answers errorSaveDefault, the rooms link creates the change
+ * changes the runtime default room, a failed save or enable answers errorSaveDefault (a room that can not be enabled
+ * never saves the config default room), the rooms link creates the change
  * point and return point rows, a missing link field answers its own error, the change points layer is written to the
  * map or answers errorWriteMapLayer keeping the link rows, and the default return point is created or its missing
  * position answered.
@@ -86,9 +87,13 @@ class TestAdminRoomsViewActions extends BaseTest
             let results = [];
             for(let saveResults of [{updateResult: false, enableResult: true}, {updateResult: true, enableResult: false}]){
                 let setup = this.createViewSetup(saveResults);
-                results.push([await this.postView(setup, {setAsDefault: '1'}), setup.initialState.room_id]);
+                results.push([
+                    await this.postView(setup, {setAsDefault: '1'}),
+                    setup.initialState.room_id,
+                    setup.updates.length
+                ]);
             }
-            this.assert.deepStrictEqual(results, [['errorSaveDefault', 4], ['errorSaveDefault', 4]]);
+            this.assert.deepStrictEqual(results, [['errorSaveDefault', 4, 1], ['errorSaveDefault', 4, 0]]);
         });
     }
 
