@@ -4,7 +4,8 @@
  *
  * Tests the server audio manager: only the enabled categories are loaded, an audio update for an unknown category or
  * player stores nothing, the repeated toggles of a category are saved one after another with the last value stored,
- * and the hot plug callbacks are not created with the hot plug disabled.
+ * a hot plugged room audio reaches only its room while a global one reaches every created room, and the hot plug
+ * callbacks are not created with the hot plug disabled.
  *
  */
 
@@ -29,7 +30,15 @@ class TestAudioServerManager extends BaseTest
 
     createAudioManager(setup)
     {
-        let repositories = {
+        return new AudioManager({
+            roomsManager: setup.roomsManager,
+            dataServer: {getEntity: (entityName) => this.createRepositories(setup)[entityName]}
+        });
+    }
+
+    createRepositories(setup)
+    {
+        return {
             audio: {},
             audioCategories: {
                 loadBy: async (field, value) => setup.categoriesRows.filter(row => value === row[field]),
@@ -37,10 +46,6 @@ class TestAudioServerManager extends BaseTest
             },
             audioPlayerConfig: {upsert: async (data) => this.storePlayerConfig(setup, data)}
         };
-        return new AudioManager({
-            roomsManager: setup.roomsManager,
-            dataServer: {getEntity: (entityName) => repositories[entityName]}
-        });
     }
 
     async storePlayerConfig(setup, data)
@@ -125,6 +130,25 @@ class TestAudioServerManager extends BaseTest
             this.assert.deepStrictEqual(
                 [setup.saveSteps, setup.storedConfigs.pop()],
                 [['start:1', 'end:1', 'start:0', 'end:0', 'start:1', 'end:1'], {enabled: 1, player_id: 5, category_id: 1}]
+            );
+        });
+    }
+
+    async testTheHotPluggedAudiosReachTheirRooms()
+    {
+        await this.test('a hot plugged room audio reaches only its room and a global audio every created room', async () => {
+            let setup = this.createSetup();
+            let audioManager = this.createAudioManager(setup);
+            audioManager.hotPlugAudio({newAudioModel: {id: 5, room_id: this.townRoomId, audio_key: 'town-night'}});
+            audioManager.hotPlugAudio({newAudioModel: {id: 6, room_id: null, audio_key: 'global-rain'}});
+            this.assert.deepStrictEqual(
+                [
+                    Object.keys(audioManager.roomsAudios),
+                    Object.keys(audioManager.globalAudios),
+                    setup.broadcasts[this.townRoomId].length,
+                    setup.broadcasts[this.forestRoomId].length
+                ],
+                [[String(this.townRoomId)], ['6'], 2, 1]
             );
         });
     }
