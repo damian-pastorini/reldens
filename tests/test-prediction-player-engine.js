@@ -4,8 +4,10 @@
  *
  * Tests the client prediction player engine: a direction moves the prediction body before the server answer and a held
  * direction sends its message once, the stop reconciles the prediction body with the server position after the
- * configured time out (1000 by default), the pointer move goes to the validated points after the reconciliation, and
- * the prediction world creator creates nothing with the prediction config off.
+ * configured time out (1000 by default), the pointer move goes to the validated points after the reconciliation, a key
+ * held on a pointer move (on the player engine and the prediction one) is superseded, so it is not sent again and its
+ * release sends no stop while another key is sent and its release stops, and the prediction world creator creates
+ * nothing with the prediction config off.
  *
  */
 
@@ -13,6 +15,7 @@ const { BaseTest } = require('./base-test');
 const { ScheduledTimeouts } = require('./fixtures/scheduled-timeouts');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { PlayerEnginePrediction } = require('../lib/prediction/client/player-engine-prediction');
+const { PlayerEngine } = require('../lib/users/client/player-engine');
 const { PredictionWorldCreator } = require('../lib/prediction/client/prediction-world-creator');
 const { GameConst } = require('../lib/game/constants');
 
@@ -26,10 +29,10 @@ class TestPredictionPlayerEngine extends BaseTest
         this.serverPosition = {state: {x: 320, y: 480, dir: GameConst.LEFT}};
     }
 
-    createEngine(configValues, withPredictionBody)
+    createEngine(configValues, withPredictionBody, engineClass = PlayerEnginePrediction)
     {
         let setup = {sentMessages: [], bodyCalls: [], updatedPlayers: []};
-        setup.engine = new PlayerEnginePrediction(GameplayPlayerBuilder.createPlayerEngineProps(
+        setup.engine = new engineClass(GameplayPlayerBuilder.createPlayerEngineProps(
             {worldPredictionTimer: {currentTime: this.predictionTime}},
             'journeyman',
             GameplayPlayerBuilder.createConfig(configValues),
@@ -117,6 +120,32 @@ class TestPredictionPlayerEngine extends BaseTest
                 [setup.bodyCalls, setup.sentMessages, scheduledTimeouts.scheduledTimeouts.length],
                 [[['stopFull'], ['moveToPoint', Object.assign({}, pointerData, {column: 5, valid: true})]], [pointerData], 1]
             );
+        });
+    }
+
+    async testAKeyHeldOnAPointerMoveIsNotSentAgainAndItsReleaseKeepsThePath()
+    {
+        await this.test('a key held on a pointer move is not sent again, its release sends no stop, another key does', async () => {
+            let results = [];
+            for(let engineClass of [PlayerEngine, PlayerEnginePrediction]){
+                let setup = this.createEngine({}, false, engineClass);
+                Object.assign(setup.engine, {leftOff: 0, topOff: 0});
+                setup.engine.down();
+                setup.engine.moveToPointer({worldColumn: 9, worldRow: 4, worldX: 160, worldY: 140});
+                let heldKeyState = setup.engine.lastKeyState[GameConst.DOWN];
+                setup.engine.down();
+                setup.engine.up();
+                setup.engine.releaseKey(GameConst.DOWN);
+                setup.engine.releaseKey(GameConst.UP);
+                results.push([heldKeyState, setup.sentMessages]);
+            }
+            let expected = [GameConst.KEY_STATES.SUPERSEDED, [
+                {dir: GameConst.DOWN},
+                {act: GameConst.POINTER, column: 9, row: 4, x: 160, y: 140},
+                {dir: GameConst.UP},
+                {act: GameConst.STOP}
+            ]];
+            this.assert.deepStrictEqual(results, [expected, expected]);
         });
     }
 
