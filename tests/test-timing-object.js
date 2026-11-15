@@ -2,14 +2,15 @@
  *
  * Reldens - Test Timing Object
  *
- * Covers the timing cancel causes and the completion, and checks every timing end frees the object and the player for
- * the next timing.
+ * Covers the timing cancel causes (the player death with every rule off too) and the completion (a player dead at the
+ * end gets no reward), and checks every timing end frees the object and the player for the next timing.
  *
  */
 
 const timersPromises = require('node:timers/promises');
 const { BaseTest } = require('./base-test');
 const { TimingObjectBuilder } = require('./fixtures/timing-object-builder');
+const { GameConst } = require('../lib/game/constants');
 
 class TestTimingObject extends BaseTest
 {
@@ -153,6 +154,27 @@ class TestTimingObject extends BaseTest
                 }
             );
             this.assert.deepStrictEqual(result, this.cancelledResult);
+        });
+    }
+
+    async testDeathCancelsTheTimingWithoutCancelRules()
+    {
+        await this.test('a player death cancels the timing even with every cancel rule off', async () => {
+            let result = await this.timingBuilder.runTimingWithPlayerChange({}, (playerSchema) => {
+                playerSchema.inState = GameConst.STATUS.DEATH;
+            });
+            this.assert.deepStrictEqual(result, this.cancelledResult);
+        });
+    }
+
+    async testDeathBeforeTheCompletionGivesNoReward()
+    {
+        await this.test('a player dead when the timing completes gets no reward and the timing is cancelled', async () => {
+            let timingSetup = this.timingBuilder.startRewardTiming();
+            timingSetup.playerSchema.inState = GameConst.STATUS.DEATH;
+            await timersPromises.setTimeout(this.timingBuilder.checksWaitMs);
+            this.assert.deepStrictEqual(timingSetup.addedItems, []);
+            this.timingBuilder.assertFreedTiming(this.assert, timingSetup, ['timingStart', 'timingCancel']);
         });
     }
 
