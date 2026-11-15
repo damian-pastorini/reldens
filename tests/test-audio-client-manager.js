@@ -4,14 +4,16 @@
  *
  * Tests the client audio manager, messages listener and settings UI with the sample categories: a category checked
  * again plays its music and stores enabled 1, an unchecked multi track category stops every playing audio, a locked
- * mute state refuses a toggle, the ad end restores the muted categories, a missing audio file is skipped, the audio
- * update message, the room change stopping the previous audios, the messages
+ * mute state refuses a toggle, the ad start mutes and locks every category, the ad end restores the muted categories,
+ * a missing audio file is skipped, the audio update message, the audio delete message with the audios keyed by id, the
+ * room change stopping the previous audios, the messages
  * received before the scene is ready queued and applied, and the settings rows and their toggle.
  *
  */
 
 const { BaseTest } = require('./base-test');
 const { AudioClientBuilder } = require('./fixtures/audio-client-builder');
+const { GlobalFetchStub } = require('./fixtures/global-fetch-stub');
 const { MessagesListener } = require('../lib/audio/client/messages-listener');
 const { AudioUi } = require('../lib/audio/client/audio-ui');
 const { AudioConst } = require('../lib/audio/constants');
@@ -24,19 +26,6 @@ class TestAudioClientManager extends BaseTest
         super(config);
         this.builder = new AudioClientBuilder();
         this.townMusicKey = 'reldens-new-age-town';
-    }
-
-    async withFetchStatus(fetchStatus, testCallback)
-    {
-        let originalFetch = global.fetch;
-        global.fetch = async (url) => ({status: fetchStatus(url)});
-        try {
-            await testCallback();
-        } catch(error) {
-            global.fetch = originalFetch;
-            throw error;
-        }
-        global.fetch = originalFetch;
     }
 
     createGameManager(scene)
@@ -106,12 +95,50 @@ class TestAudioClientManager extends BaseTest
         });
     }
 
+    async testTheAdStartMutesAndLocksEveryCategory()
+    {
+        await this.test('the ad start mutes every category, locks the mute and a toggle during the ad is refused', async () => {
+            let audioManager = this.builder.createAudioManager({});
+            let music = this.builder.createAudioInstance(this.townMusicKey);
+            audioManager.playing.music = music;
+            await audioManager.changeMuteState(true, true);
+            this.assert.deepStrictEqual(
+                [
+                    music.stops,
+                    music.mute,
+                    audioManager.lockedMuteState,
+                    Object.keys(audioManager.changedMutedState),
+                    await audioManager.setAudio('music', true)
+                ],
+                [1, true, true, ['music', 'sound'], false]
+            );
+        });
+    }
+
+    async testTheDeleteMessageRemovesTheAudiosKeyedById()
+    {
+        await this.test('an audio delete message with the audios keyed by id removes them from the scene', async () => {
+            let audioManager = this.builder.createAudioManager({});
+            let scene = this.builder.createScene(this.builder.townSceneKey);
+            audioManager.roomsAudios[this.builder.townSceneKey] = {'town-night': {}};
+            await audioManager.processDeleteData(
+                {act: AudioConst.AUDIO_DELETE, audios: {9: {id: 9, audio_key: 'town-night'}}},
+                {name: this.builder.townSceneKey},
+                this.createGameManager(scene)
+            );
+            this.assert.deepStrictEqual(
+                [scene.removedKeys, audioManager.roomsAudios[this.builder.townSceneKey]],
+                [['town-night'], {}]
+            );
+        });
+    }
+
     async testAMissingAudioFileIsSkipped()
     {
         await this.test('an audio file answering not found is skipped and an audio without files is not loaded', async () => {
             let audioManager = this.builder.createAudioManager({});
             let scene = this.builder.createScene(this.builder.townSceneKey);
-            await this.withFetchStatus((url) => -1 === url.indexOf('missing') ? 200 : 404, async () => {
+            await GlobalFetchStub.withFetch(async (url) => ({status: -1 === url.indexOf('missing') ? 200 : 404}), async () => {
                 this.assert.deepStrictEqual(
                     await audioManager.prepareFiles({files_name: 'missing.mp3,reldens-town.mp3'}),
                     [AudioConst.AUDIO_BUCKET+'/reldens-town.mp3']
@@ -132,7 +159,7 @@ class TestAudioClientManager extends BaseTest
                 files_name: 'town-night.mp3',
                 related_audio_markers: [{marker_key: 'TownNight', start: 0, duration: 30}]
             };
-            await this.withFetchStatus(() => 200, async () => {
+            await GlobalFetchStub.withFetch(async () => ({status: 200}), async () => {
                 await audioManager.processUpdateData(
                     {act: AudioConst.AUDIO_UPDATE, audios: [roomAudio]},
                     {name: this.builder.townSceneKey},
