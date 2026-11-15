@@ -12,8 +12,9 @@
  * the layer position, and that with the client interpolation disabled (overridden for the group, restored by the next
  * players reset) every state change places the walking player sprite directly on its state position. The forest map
  * layers get the same depths, and the live registerLayers called on crafted maps registers nothing for a map without
- * layers and skips a layer that fails its creation while the next layers keep registering (an over player layer at
- * index 0 gets the depth 0, ISSUE #349). The long run
+ * layers, skips a layer that fails its creation while the next layers keep registering and gives an over player layer
+ * at index 0 the map height in pixels (every over player layer gets its position plus one times that height, so it is
+ * drawn over the players). The long run
  * videos start in gameplay and explain each check on screen (SceneInterpolationShowcase and
  * SceneInterpolationBranchesShowcase), the normal run keeps its walk and the checks are the same in both runs.
  *
@@ -42,34 +43,42 @@ class TestSceneInterpolationBranches
     static CLIENT_INTERPOLATION_PATH = 'client/general/engine/clientInterpolation';
     static WALK_MS = 1500;
     static CRAFTED_MAP = {height: 10, tileHeight: 32};
-    static REGISTER_CRAFTED_LAYERS = (crafted) => crafted.layersNamesList.map((layersNames) => {
-        let scene = window.reldens.getActiveScene();
-        let craftedScene = {
-            configManager: scene.configManager,
-            generatedTilesets: [],
-            layers: {},
-            key: 'e2e-crafted-map',
-            map: {
-                height: crafted.mapSize.height,
-                tileHeight: crafted.mapSize.tileHeight,
-                layers: layersNames.map((name) => ({name})),
-                createLayer: (name) => 'e2e-failing-layer' === name ? null : {
-                    layer: {name},
-                    depth: 0,
-                    setDepth: function(depth){
-                        this.depth = depth;
-                    }
+    static REGISTER_CRAFTED_LAYERS = (crafted) => crafted.layersNamesList.map((layersNames) => [{
+        configManager: window.reldens.getActiveScene().configManager,
+        generatedTilesets: [],
+        layers: {},
+        key: 'e2e-crafted-map',
+        map: {
+            height: crafted.mapSize.height,
+            tileHeight: crafted.mapSize.tileHeight,
+            layers: layersNames.map((name) => ({name})),
+            createLayer: (name) => 'e2e-failing-layer' === name ? null : {
+                layer: {name},
+                depth: 0,
+                setDepth: function(depth){
+                    this.depth = depth;
                 }
             }
-        };
-        return {
-            registered: scene.registerLayers.call(craftedScene),
-            layers: Object.keys(craftedScene.layers).map((layerIndex) => ({
-                name: craftedScene.layers[layerIndex].layer.name,
-                depth: craftedScene.layers[layerIndex].depth
-            }))
-        };
-    });
+        }
+    }].map((craftedScene) => ({
+        registered: window.reldens.getActiveScene().registerLayers.call(craftedScene),
+        layers: Object.keys(craftedScene.layers).map((layerIndex) => ({
+            name: craftedScene.layers[layerIndex].layer.name,
+            depth: craftedScene.layers[layerIndex].depth
+        }))
+    })).pop());
+
+    static expectLayersDepths(layersData, mapLabel)
+    {
+        expect(layersData.layers.length, 'Every '+mapLabel+' map layer is created').toBe(layersData.mapLayersCount);
+        expect(
+            layersData.layers.map(layer => ({name: layer.name, depth: layer.depth})),
+            'Every '+mapLabel+' layer gets the depth of its name and position'
+        ).toEqual(layersData.layers.map(layer => ({
+            name: layer.name,
+            depth: SceneInterpolationProbe.expectedLayerDepth(layer, layersData)
+        })));
+    }
 
     static expectPlayersBranches(results)
     {
@@ -201,44 +210,31 @@ class TestSceneInterpolationBranches
         await SceneInterpolationShowcase.showWalkUnderCover(page, context, layersData, coverWalk);
         await screenshots.capture(page, 'town-layers');
         expect(layersData, 'The active scene must have a map').toBeTruthy();
-        expect(layersData.layers.length, 'Every map layer must be created').toBe(layersData.mapLayersCount);
         expect(
             layersData.layers.some(layer => 0 < layer.layerIndex && -1 !== layer.name.indexOf('over-player')),
             'The town must have an over player layer after the first one'
         ).toBe(true);
-        expect(
-            layersData.layers.map(layer => ({name: layer.name, depth: layer.depth})),
-            'Every layer must get the depth of its name and position'
-        ).toEqual(layersData.layers.map(layer => ({
-            name: layer.name,
-            depth: SceneInterpolationProbe.expectedLayerDepth(layer, layersData)
-        })));
+        TestSceneInterpolationBranches.expectLayersDepths(layersData, 'town');
     }
 
     static async runOtherMapLayersTest(page, gameConfig, longRun)
     {
         await Login.loginAndEnterForest(page, gameConfig, longRun);
-        let layersData = await SceneInterpolationProbe.readLayersDepths(page);
-        expect(layersData.layers.length, 'Every forest map layer is created').toBe(layersData.mapLayersCount);
-        expect(
-            layersData.layers.map(layer => ({name: layer.name, depth: layer.depth})),
-            'Every forest layer gets the depth of its name and position'
-        ).toEqual(layersData.layers.map(layer => ({
-            name: layer.name,
-            depth: SceneInterpolationProbe.expectedLayerDepth(layer, layersData)
-        })));
+        TestSceneInterpolationBranches.expectLayersDepths(await SceneInterpolationProbe.readLayersDepths(page), 'forest');
+        let craftedMap = TestSceneInterpolationBranches.CRAFTED_MAP;
         let crafted = await page.evaluate(TestSceneInterpolationBranches.REGISTER_CRAFTED_LAYERS, {
-            mapSize: TestSceneInterpolationBranches.CRAFTED_MAP,
-            layersNamesList: [[], ['ground', 'e2e-failing-layer', 'over-player-last']]
+            mapSize: craftedMap,
+            layersNamesList: [[], ['ground', 'e2e-failing-layer', 'over-player-last'], ['over-player-first', 'ground']]
         });
+        let mapPixelsHeight = craftedMap.height * craftedMap.tileHeight;
         expect(crafted[0], 'A map with zero layers registers nothing').toEqual({registered: false, layers: []});
         expect(crafted[1], 'A failed layer is skipped and the next layers keep registering').toEqual({
             registered: true,
-            layers: [
-                {name: 'ground', depth: 0},
-                {name: 'over-player-last', depth: TestSceneInterpolationBranches.CRAFTED_MAP.height
-                    * TestSceneInterpolationBranches.CRAFTED_MAP.tileHeight}
-            ]
+            layers: [{name: 'ground', depth: 0}, {name: 'over-player-last', depth: 2 * mapPixelsHeight}]
+        });
+        expect(crafted[2], 'An over player layer at index 0 gets the map height, over every player').toEqual({
+            registered: true,
+            layers: [{name: 'over-player-first', depth: mapPixelsHeight}, {name: 'ground', depth: 0}]
         });
     }
 
