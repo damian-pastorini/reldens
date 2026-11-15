@@ -3,7 +3,8 @@
  * Reldens - Test Authentication Double Login
  *
  * Tests the same account used from more than one tab: the first session walking with a direction held (ended with the
- * session ended message, its body removed and the second session standing still), the first session in another scene
+ * session ended message, its body removed, no movement interval left and the second session standing still), the first
+ * session in another scene
  * or still on the selection
  * (its lobby closed with the session ended message while only the second tab enters the game),
  * the position and stats handed to the second session, the sprites seen by a third client, the connections and active
@@ -103,6 +104,10 @@ class TestAuthenticationDoubleLogin
             gameConfig.e2ePlayerName,
             TimeConstants.SERVER_RESPONSE
         );
+        expect(
+            await GameplayE2eStateApi.fetchMovementIntervals(gameConfig, Login.TOWN_ROOM_NAME, playerId),
+            'The ended first session leaves no movement interval under the player id'
+        ).toEqual([]);
     }
 
     static async runFirstOnSelectionTest(page, secondPage, screenshots, gameConfig, longRun)
