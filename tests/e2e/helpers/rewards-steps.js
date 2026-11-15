@@ -7,7 +7,8 @@
  * parsed, compared on the expected keys only), the stored claim state of a player set for the group once its login
  * stored it, the event data or the columns of a reward event changed for the group
  * (restored by the group reset), the reward ids of the last rewards update a client received, a player action run
- * until the next rewards update arrives (the claim of an unknown reward id gets only the rewards update), the rewards
+ * until the next rewards update arrives (the claim of an unknown reward id gets only the rewards update, used to
+ * request a rewards update and read its reward ids), the rewards
  * panel opened, a property changed on the three rewards events providers (the plugin, the events handler used by the
  * login state handler, and the claim message actions keep their own provider and cache), and the reward events cached
  * by those providers dropped for the group so the next update loads the stored events again.
@@ -109,6 +110,12 @@ class RewardsSteps
         let updatesCount = (await RoomMessagesRecorder.fetchMessages(player.page, RewardsConst.ACTIONS.UPDATE)).length;
         await playerAction();
         await TradeSteps.waitForMessages(player, RewardsConst.ACTIONS.UPDATE, updatesCount + 1);
+    }
+
+    static async requestUpdateIds(player)
+    {
+        await RewardsSteps.runAndWaitForUpdate(player, () => RewardsSteps.claim(player, [RewardsSteps.UNKNOWN_REWARD_ID]));
+        return await RewardsSteps.fetchLastUpdateIds(player);
     }
 
     static async openPanel(page)
