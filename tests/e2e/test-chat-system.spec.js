@@ -4,7 +4,8 @@
  *
  * Tests the system chat lines and the stored chat rows of the group players (ChatSteps, the join and leave broadcasts
  * changed for the group before the logins): with broadcast_join on the first player sees the second player joined line
- * and with it off sees none; with broadcast_leave on the first player sees the second player left line when it
+ * and with it off sees none, and the client joined messages the second player sends again add no line and no row; with
+ * broadcast_leave on the first player sees the second player left line when it
  * disconnects and with it off sees none; and a room, a global and a private message are stored with their type, the
  * room of the sender and the private recipient.
  *
@@ -16,6 +17,7 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ChatConst } = require('../../lib/chat/constants');
+const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -51,6 +53,26 @@ class TestChatSystem
         await context.page.waitForTimeout(TestChatSystem.SETTLE_MS);
         expect(await TestChatSystem.fetchSystemLines(context.page, ChatConst.SNIPPETS.JOINED_ROOM), 'The joined lines')
             .toEqual(expectedNames);
+    }
+
+    static async runRepeatedJoinedMessagesTest(context)
+    {
+        await TestChatSystem.runJoinLineTest(context, true, [context.gameConfig.e2ePlayerName2]);
+        let playerId = await E2eSeedAndRestoreApi.fetchRowId(context.gameConfig, 'players', {name: context.gameConfig.e2ePlayerName2});
+        let fetchJoinedRows = async () => (await E2eSeedAndRestoreApi.loadRows(context.gameConfig, 'chat', {
+            player_id: playerId,
+            message_type: ChatConst.TYPES.JOINED
+        })).length;
+        let joinedRowsBefore = await fetchJoinedRows();
+        for(let sentCount = 0; sentCount < 3; sentCount++){
+            await ChatSteps.sendRaw(context.secondPage, {act: GameConst.CLIENT_JOINED});
+        }
+        await context.page.waitForTimeout(TestChatSystem.SETTLE_MS);
+        expect(
+            await TestChatSystem.fetchSystemLines(context.page, ChatConst.SNIPPETS.JOINED_ROOM),
+            'The repeated client joined messages add no joined line'
+        ).toEqual([context.gameConfig.e2ePlayerName2]);
+        expect(await fetchJoinedRows(), 'The repeated client joined messages store no row').toBe(joinedRowsBefore);
     }
 
     static async runLeaveLineTest(context, broadcastLeave, expectedNames)
@@ -94,6 +116,9 @@ class TestChatSystem
             });
             test('broadcast join off shows no joined line', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatSystem.runJoinLineTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun}, false, []);
+            });
+            test('tampered repeated client joined messages add no joined line and no row', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestChatSystem.runRepeatedJoinedMessagesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('broadcast leave on shows the left line', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatSystem.runLeaveLineTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun}, true, [gameConfig.e2ePlayerName2]);
