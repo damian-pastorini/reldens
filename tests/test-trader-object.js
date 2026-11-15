@@ -6,10 +6,12 @@
 
 const { BaseTest } = require('./base-test');
 const { TraderObject } = require('../lib/objects/server/object/type/trader-object');
+const { ObjectsManager } = require('../lib/objects/server/manager');
+const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { ObjectsConst } = require('../lib/objects/constants');
 const { GameConst } = require('../lib/game/constants');
 const { ItemsManager, ItemsDataGenerator, ItemsConst } = require('@reldens/items-system');
-const { EventsManager } = require('@reldens/utils');
+const { EventsManager, sc } = require('@reldens/utils');
 
 class TestTraderObject extends BaseTest
 {
@@ -77,12 +79,10 @@ class TestTraderObject extends BaseTest
     {
         let seller = {
             sentMessages: [],
-            playerSchema: {
-                player_id: 7,
+            playerSchema: Object.assign(GameplayPlayerBuilder.createPlayerSchema({physicalBody: {}}), {
                 state: this.playerState,
-                physicalBody: {},
                 inventory: {manager: await this.createInventory(7, {axe: 1}), client: {extractItemsDataForSend: () => ({})}}
-            }
+            })
         };
         seller.client = {sessionId: 'session-7', send: (messageKey, message) => seller.sentMessages.push(message)};
         return seller;
@@ -119,7 +119,10 @@ class TestTraderObject extends BaseTest
             await trader.runAdditionalSetup({objectsManager: {dataServer: {getEntity: () => repository}}});
             let sentMessages = [];
             let client = {sessionId: 'session-7', send: (messageKey, message) => sentMessages.push(message)};
-            let playerSchema = {player_id: 7, state: this.playerState, physicalBody: {}, inventory: {manager: {}}};
+            let playerSchema = Object.assign(
+                GameplayPlayerBuilder.createPlayerSchema({physicalBody: {}}),
+                {state: this.playerState, inventory: {manager: {}}}
+            );
             let result = await trader.executeMessageActions(
                 client,
                 {act: ObjectsConst.OBJECT_INTERACTION, id: this.traderId, value: ObjectsConst.DEFAULTS.TRADER_OBJECT.OPTIONS.BUY},
@@ -147,6 +150,32 @@ class TestTraderObject extends BaseTest
             );
             this.assert.strictEqual(seller.playerSchema.inventory.manager.findItemByKey('axe').qty, 1);
             this.assert.strictEqual(seller.playerSchema.inventory.manager.findItemByKey('coins'), false);
+        });
+    }
+
+    async testLeavingPlayerTradeIsCancelledAndRemoved()
+    {
+        await this.test('the trade of a leaving player is cancelled, unlocking its inventory, and removed', async () => {
+            let trader = await this.createRequiredRewardTrader({axe: 1});
+            let seller = await this.createSeller();
+            await this.sendSellMessage(trader, seller, {});
+            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
+            let sellerInventory = seller.playerSchema.inventory.manager;
+            let playerId = seller.playerSchema.player_id;
+            let lockedWhileTrading = sellerInventory.locked;
+            let cancelledWithoutObjects = objectsManager.cancelPlayerTrades(playerId);
+            objectsManager.roomObjects = {[this.traderId]: trader};
+            this.assert.deepStrictEqual(
+                [
+                    lockedWhileTrading,
+                    cancelledWithoutObjects,
+                    objectsManager.cancelPlayerTrades(playerId),
+                    sellerInventory.locked,
+                    sc.hasOwn(trader.tradesInProgress, playerId),
+                    trader.cancelPlayerTrade(playerId)
+                ],
+                [true, false, true, false, false, false]
+            );
         });
     }
 
