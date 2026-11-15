@@ -6,16 +6,23 @@
  * path finder grid: the one tile paths to every neighbor tile with and without the movement area grid (the path finder
  * retry with a single step path), the paths with the area grid to tiles inside and outside the area, the move back to
  * the original tile, the walk back of a body placed outside its area and the path that runs into the player. Every case
- * asserts the server object body: the tile it ends on, the path it follows, its velocity and every tile it crossed.
+ * asserts the server object body: the tile it ends on, the path it follows, its velocity and every tile it crossed; the
+ * path into the player also asserts that the player client and an observer client (logged in outside the object
+ * movement area before the object starts its path) show the object and the player on their server positions once both
+ * stand still.
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
+const { Login } = require('./helpers/login');
+const { Navigation } = require('./helpers/navigation');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { ObjectMovementCases } = require('./helpers/object-movement-cases');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
 const { TimeConstants } = require('./helpers/time-constants');
+const { InterpolationFramesRecorder } = require('./helpers/interpolation-frames-recorder');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -167,7 +174,57 @@ class TestObjectPathfindingCollisions
         });
     }
 
-    static async runPathIntoPlayerTest(page, screenshots, gameConfig, longRun)
+    static async loginObserver(observerPage, context, setup, longRun)
+    {
+        await Login.loginRootPlayer(observerPage, context.gameConfig, longRun, '', false, context.roomName);
+        await Navigation.waitForRoom(
+            observerPage,
+            context.roomName,
+            TimeConstants.forLongRun(TimeConstants.ROOM_TRANSITION, longRun)
+        );
+        let observer = await RoomMovementApi.waitForPlayerStill(
+            context.gameConfig,
+            context.roomName,
+            context.gameConfig.e2ePlayerName,
+            context.navTimeout
+        );
+        expect(
+            WalkableTileLocator.isInsideArea(setup.npc, [observer.currentCol, observer.currentRow]),
+            'The observer must stand outside the object movement area: '+sc.toJsonString(observer)
+        ).toBe(false);
+    }
+
+    static async expectClientsOnServerPositions(context, clients)
+    {
+        let settled = await RoomMovementApi.collectTrail(
+            async () => ({npc: await context.fetchNpc(), player: await context.fetchPlayer()}),
+            (bodies) => context.isStill(bodies.npc) && context.isStill(bodies.player),
+            context.navTimeout
+        );
+        expect(settled.done, 'The object and the player must stand still: '+sc.toJsonString(settled.last)).toBe(true);
+        for(let clientKey of Object.keys(clients)){
+            expect(
+                await InterpolationFramesRecorder.waitForObjectOnBody(
+                    clients[clientKey],
+                    context.npcKey,
+                    {x: settled.last.npc.x, y: settled.last.npc.y},
+                    context.navTimeout
+                ),
+                'The '+clientKey+' client must show the object on its server position'
+            ).toBe(true);
+            expect(
+                await InterpolationFramesRecorder.waitForPlayerSpriteOnState(
+                    clients[clientKey],
+                    settled.last.player.sessionId,
+                    {x: settled.last.player.x, y: settled.last.player.y},
+                    context.navTimeout
+                ),
+                'The '+clientKey+' client must show the player on its server position'
+            ).toBe(true);
+        }
+    }
+
+    static async runPathIntoPlayerTest(page, secondPage, screenshots, gameConfig, longRun)
     {
         await TestObjectPathfindingCollisions.runWithObject(page, gameConfig, longRun, async (context, setup) => {
             let lineCases = WalkableTileLocator.findDirectionCases(
@@ -181,11 +238,22 @@ class TestObjectPathfindingCollisions
                 lineCases,
                 TestObjectPathfindingCollisions.MAX_CASE_ATTEMPTS,
                 1,
-                async (lineCase) => ObjectMovementCases.runPathIntoPlayerCase(page, context, setup, lineCase)
+                async (lineCase) => ObjectMovementCases.runPathIntoPlayerCase(
+                    page,
+                    context,
+                    setup,
+                    lineCase,
+                    async () => TestObjectPathfindingCollisions.loginObserver(secondPage, context, setup, longRun)
+                )
             );
             await screenshots.capture(page, 'object-path-into-player-done');
             expect(results.checkedCases, 'The player must reach a tile on the object path').toBeGreaterThan(0);
             expect(results.failures, 'An object path into the player must end inside the area').toEqual([]);
+            await TestObjectPathfindingCollisions.expectClientsOnServerPositions(
+                context,
+                {player: page, observer: secondPage}
+            );
+            await screenshots.capture(secondPage, 'object-path-into-player-observer');
         });
     }
 
@@ -204,8 +272,8 @@ class TestObjectPathfindingCollisions
             test('object placed outside its area walks back inside it', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestObjectPathfindingCollisions.runWalkBackTest(page, screenshots, gameConfig, longRun);
             });
-            test('object path into the player ends inside its area without crossing a wall', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestObjectPathfindingCollisions.runPathIntoPlayerTest(page, screenshots, gameConfig, longRun);
+            test('object path into the player ends inside its area without crossing a wall and both clients show the bodies on their server positions', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+                await TestObjectPathfindingCollisions.runPathIntoPlayerTest(page, secondPage, screenshots, gameConfig, longRun);
             });
         });
     }
