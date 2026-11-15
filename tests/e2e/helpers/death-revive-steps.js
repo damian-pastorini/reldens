@@ -284,7 +284,7 @@ class DeathReviveSteps
         ).toBe(expectedQuantity);
     }
 
-    static async expectRevivedInTown(context, townRoomName)
+    static async expectRevivedInTown(context, townRoomName, maximumDistance = 0)
     {
         let gameConfig = context.gameConfig;
         await Navigation.waitForRoom(
@@ -298,7 +298,7 @@ class DeathReviveSteps
             ).life,
             {message: 'The player must be alive in the town room'}
         ).toBeGreaterThan(0);
-        await ChangePointsSteps.expectOnDefaultReturnPoint(context, townRoomName);
+        await ChangePointsSteps.expectOnDefaultReturnPoint(context, townRoomName, maximumDistance);
         await DeathReviveShowcase.showRevivedInTown(context);
         await LongRunShowcase.pause(context.page, context.longRun);
         await context.screenshots.capture(context.page, 'player-revived-in-town');
