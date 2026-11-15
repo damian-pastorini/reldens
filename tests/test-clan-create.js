@@ -2,7 +2,8 @@
  *
  * Reldens - Test Clan Create
  *
- * Tests the clan create answers with the storage stubbed: no stored clan level answers the level issue and stores no
+ * Tests the clan create answers with the storage stubbed: a player that already belongs to a clan gets the create
+ * error and stores nothing; no stored clan level answers the level issue and stores no
  * clan; a clan row storage error answers the create error; an owner membership not stored, returned as false or thrown,
  * answers the owner error and deletes the created clan row, so no orphan clan stays; a clan not loaded after its
  * creation answers the create error, deletes the owner membership and the clan row and leaves the player with no clan;
@@ -66,6 +67,17 @@ class TestClanCreate extends BaseTest
             setup.teamsPlugin
         );
         return setup.sentMessages.map(message => message.result);
+    }
+
+    async testAPlayerInAClanStoresNoClan()
+    {
+        await this.test('a player that already belongs to a clan gets the create error and no row is stored', async () => {
+            let setup = this.createSetup(this.createStorageResults({}));
+            setup.playerSchema.privateData.clan = 3;
+            this.assert.deepStrictEqual(await this.runCreate(setup), [TeamsConst.VALIDATION.CREATE_ERROR]);
+            this.assert.deepStrictEqual(setup.storageCalls, []);
+            this.assert.strictEqual(setup.playerSchema.privateData.clan, 3);
+        });
     }
 
     async testNoClanLevelAnswersTheLevelIssue()
