@@ -23,6 +23,7 @@ const { TeamSteps } = require('./helpers/team-steps');
 const { ChatSteps } = require('./helpers/chat-steps');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -135,6 +136,14 @@ class TestClansMembers
     {
         let gameConfig = context.gameConfig;
         await E2eSeedAndRestoreApi.overrideConfig(gameConfig, context.e2eGroup, 'client/clan/general/openInvites', true);
+        let openInvites = await GameplayE2eStateApi.changeFeatureProperty(
+            gameConfig,
+            context.e2eGroup,
+            'teams/package',
+            'clanOpenInvites',
+            true
+        );
+        expect(openInvites.value, 'The teams plugin open invites is on: '+openInvites.error).toBe(true);
         let entered = await TestClansMembers.enter(context, 1);
         let [owner, member, invited] = entered.players;
         await ClanSteps.invite(member, invited);
