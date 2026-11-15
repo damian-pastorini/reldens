@@ -98,6 +98,23 @@ class TestSceneChangePoint extends BaseTest
         });
     }
 
+    async testReturnPointOfThePreviousRoomWinsOverTheOneWithoutPreviousRoom()
+    {
+        await this.test('the return point of the previous room wins over an earlier one without previous room', async () => {
+            let defaultFirstRoom = this.roomBuilder.defaultFirstRoom;
+            let setup = this.roomBuilder.build();
+            await this.changeScene(setup, defaultFirstRoom.roomName);
+            let returnPoint = [...defaultFirstRoom.returnPoints].pop();
+            this.assert.deepStrictEqual(setup.playerSchema.state, {
+                scene: defaultFirstRoom.roomName,
+                room_id: defaultFirstRoom.roomId,
+                x: returnPoint.x,
+                y: returnPoint.y,
+                dir: returnPoint.d
+            });
+        });
+    }
+
     async testPlayedTimeIsSentOnlyWhenShownToAllPlayers()
     {
         await this.test('the played time is broadcast only when it is shown to all the players', async () => {
