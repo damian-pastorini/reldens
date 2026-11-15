@@ -2,8 +2,8 @@
  *
  * Reldens - Test Authentication Server Guards
  *
- * Tests the login guards that depend on the server state: the signed disconnect route with bad, expired and valid
- * tokens, the other servers of a multi-server setup unavailable, answering an error or switched off, the overloaded
+ * Tests the login guards that depend on the server state: the signed disconnect route with bad, expired, server status,
+ * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error or switched off, the overloaded
  * server on the login and on the scene join, the single player mode with the player room unavailable, the rooms origin
  * validation and the terms and conditions route with an unknown language.
  *
@@ -66,6 +66,16 @@ class TestAuthenticationServerGuards
         for(let token of ['not-a-signed-token', expiredToken]){
             expect(await TestAuthenticationServerGuards.postDisconnect(page, {username, token}), token).toBe(false);
         }
+        let statusValue = GameConst.HEALTH.STATUS_TOKEN_VALUE;
+        let statusToken = await LoginServerApi.fetchStatusToken(
+            gameConfig,
+            statusValue,
+            Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS
+        );
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, {username: statusValue, token: statusToken}),
+            'A server status token is not a disconnection token'
+        ).toBe(false);
         await TestAuthenticationServerGuards.expectSessionKept(page, 'A rejected token disconnects nobody');
         await screenshots.capture(page, 'disconnect-rejected-tokens');
     }
@@ -80,6 +90,10 @@ class TestAuthenticationServerGuards
             username: gameConfig.e2eUsername2,
             token: notLoggedToken
         }), 'A user without a session has nothing to disconnect').toBe(true);
+        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
+            username: gameConfig.e2eUsername2,
+            token: notLoggedToken
+        }), 'A used token is rejected').toBe(false);
         expect(await TestAuthenticationServerGuards.postDisconnect(page, {
             username: gameConfig.e2eUsername,
             token: notLoggedToken
