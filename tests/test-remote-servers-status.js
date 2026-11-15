@@ -96,6 +96,24 @@ class TestRemoteServersStatus extends BaseTest
         });
     }
 
+    async testADisconnectionTokenIsRejectedByTheStatusRoute()
+    {
+        await this.test('a disconnection token for a user named as the status value is rejected by the status route', async () => {
+            let hmacToken = new ExpiringHmacToken({secret: 'shared-secret'});
+            let remoteFetch = this.createRemoteServerFetch('shared-secret', []);
+            let statuses = [];
+            for(let tokenValues of [
+                [GameConst.ROUTE_PATHS.DISCONNECT_USER, GameConst.HEALTH.STATUS_TOKEN_VALUE],
+                [GameConst.HEALTH.STATUS_TOKEN_VALUE]
+            ]){
+                let token = hmacToken.generate(tokenValues, Date.now()+GameConst.SIGNED_TOKENS.DISCONNECT_EXPIRATION);
+                let statusUrl = this.remoteServerUrl+GameConst.ROUTE_PATHS.SERVER_STATUS+'?token='+encodeURIComponent(token);
+                statuses.push((await remoteFetch(statusUrl)).status);
+            }
+            this.assert.deepStrictEqual(statuses, [403, 200]);
+        });
+    }
+
     async testTheRequestErrorMakesTheServerNotReachable()
     {
         await this.test('a status request that fails or times out makes the server not reachable', async () => {
