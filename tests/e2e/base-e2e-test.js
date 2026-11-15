@@ -136,6 +136,7 @@ class BaseE2eTest
                 'pointer-events:none',
                 'z-index:2147483647',
                 'transform:translate(-50%,-50%)',
+                'opacity:0',
                 'transition:background 0.1s,opacity 0.3s,width 0.1s,height 0.1s'
             ].join(';');
             let hideAfterMs = 1500;
