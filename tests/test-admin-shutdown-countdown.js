@@ -3,7 +3,8 @@
  * Reldens - Test Admin Shutdown Countdown
  *
  * Tests the server shutdown from the administration panel: a shutdown time broadcasts the countdown message and the page
- * shows the cancel button with the time left, the countdown warns again at half time and on the last 5 seconds, the
+ * shows the cancel button with the time left, a time of 0, negative, not a number or not an integer is refused, the
+ * countdown warns again at half time and on the last 5 seconds, the
  * time out broadcasts Server Offline and exits the process, a second submit cancels the shutdown, and the server
  * broadcast reaches only the scene rooms.
  *
@@ -78,6 +79,20 @@ class TestAdminShutdownCountdown extends BaseTest
                     [1000],
                     [this.labels.shuttingDown, 30, this.labels.submitCancelLabel, 'warning']
                 ]
+            );
+        });
+    }
+
+    async testAnInvalidShutdownTimeIsRefused()
+    {
+        await this.test('a shutdown time of 0, negative, not a number or not an integer is refused and schedules nothing', async () => {
+            let setup = this.createShutdownSetup();
+            for(let shutdownTime of ['0', '-5', 'soon', '1.5', '']){
+                await this.postShutdownTime(setup, shutdownTime);
+            }
+            this.assert.deepStrictEqual(
+                [setup.redirects, setup.broadcasts, setup.scheduledTimeouts.scheduledTimeouts, setup.subscriber.shuttingDownIn],
+                [Array(5).fill(this.managementRedirect+'shutdownError'), [], [], 0]
             );
         });
     }
