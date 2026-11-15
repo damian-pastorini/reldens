@@ -3,7 +3,8 @@
  * Reldens - Test Character Selection
  *
  * Tests the players selection: the new character listed and seen by others, the selection of another character, the
- * forged player and scene joins, the player without state, the user without players and the single player modes.
+ * forged player and scene joins, the player without state, the user without players, the single player modes and the
+ * multiple players off for a user that already has several players (the selector is shown, the creation is not).
  *
  */
 
@@ -129,6 +130,22 @@ class TestCharacterSelection
         expect(await page.evaluate(() => window.reldens.playerData.name)).toBe(gameConfig.e2ePlayerName3);
     }
 
+    static async runMultiplePlayersOffSelectorTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let userId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'users', {username: gameConfig.e2eUsername});
+        let extraPlayer = {user_id: userId, name: CharacterCreation.createPlayerName()};
+        await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'players', extraPlayer);
+        let userPlayers = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'players', {user_id: userId});
+        expect(userPlayers.length, 'More than one player').toBeGreaterThan(1);
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/players/multiplePlayers/enabled', false);
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await expect(page.locator(TestCharacterSelection.SELECTOR_FORM), 'The players selector').toBeVisible();
+        await expect(page.locator(CharacterCreation.CREATE_FORM), 'No creation with multiple players off').toBeHidden();
+        await screenshots.capture(page, 'multiple-players-off-several-players-selector');
+        await CharacterCreation.startSelectedPlayer(page, gameConfig.e2ePlayerName, longRun);
+        expect(await page.evaluate(() => window.reldens.playerData.name)).toBe(gameConfig.e2ePlayerName);
+    }
+
     static async runSceneMismatchTest(page, gameConfig, longRun)
     {
         await CharacterCreation.loginToCreation(page, gameConfig, longRun);
@@ -159,6 +176,9 @@ class TestCharacterSelection
             });
             test('single player modes show the single form or start the game', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestCharacterSelection.runSinglePlayerModesTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('multiple players off with several players shows the selector and starts the selected one', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestCharacterSelection.runMultiplePlayersOffSelectorTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('scene join for another scene than the state is rejected', async ({ page, gameConfig, longRun }) => {
                 await TestCharacterSelection.runSceneMismatchTest(page, gameConfig, longRun);
