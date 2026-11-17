@@ -4,12 +4,12 @@
 <div class="scores-table">
     {{#scores}}
     <div class="score-container">
-        <span class="score-player-name">{{&playerName}}</span>
+        <span class="score-player-name">{{playerName}}</span>
         <span class="score-value">{{&score}}</span>
     </div>
     {{/scores}}
     {{#pages}}
-    <div class="pager-page">
+    <div class="pager-page{{#isCurrent}} pager-page-current{{/isCurrent}}">
         <a href="{{&pageLink}}">{{&pageLabel}}</a>
     </div>
     {{/pages}}

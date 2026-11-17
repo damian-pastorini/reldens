@@ -44,16 +44,14 @@ class TilesetTooltipPlacement
 
     measureTooltipSize(tooltipText)
     {
-        if(!this.sizeCache){
-            this.sizeCache = new WeakMap();
+        if(!tooltipText.dataset.measuredWidth){
+            tooltipText.dataset.measuredWidth = tooltipText.offsetWidth;
+            tooltipText.dataset.measuredHeight = tooltipText.offsetHeight;
         }
-        let cached = this.sizeCache.get(tooltipText);
-        if(cached){
-            return cached;
-        }
-        let size = { width: tooltipText.offsetWidth, height: tooltipText.offsetHeight };
-        this.sizeCache.set(tooltipText, size);
-        return size;
+        return {
+            width: Number(tooltipText.dataset.measuredWidth),
+            height: Number(tooltipText.dataset.measuredHeight)
+        };
     }
 
     applyPlacement(tooltip, tooltipText)

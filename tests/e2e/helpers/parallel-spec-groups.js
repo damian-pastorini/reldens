@@ -5,79 +5,28 @@
  * The e2e specs groups. Every group is a Playwright project with one worker, so its specs run one after the other, it
  * logs in with its own test users set and its players start in its own room (the players reset places them on the
  * default return point of that room), so the groups never share a player or a room and run at the same time. The specs
- * that change the server wide state (the security limits, the bans and the address lists), create players or use more
- * than one room run in the exclusive group, after every other group ended, and its players reset restores every room.
+ * that change the server wide state (the security limits, the bans, the address lists and any config value, which is
+ * one server config read by every group and sent to every client that logs in), create players or use more than one
+ * room run in the exclusive group, after every other group ended, and its players reset restores every room.
  * The users set 0 is the one configured in tests/config.json (root, root2 and root3), the next sets add the user number
  * to the base names (root4 to root6 and ImRoot4 to ImRoot6 for the set 1), those users are created on the setup as a
- * copy of the users set 0 (TestUsersSetup).
+ * copy of the users set 0 (TestUsersSetup). The specs of every group are listed in ParallelSpecGroupsList.
  *
  */
 
 const { FileHandler } = require('@reldens/server-utils');
 const { Logger, sc } = require('@reldens/utils');
-const { Login } = require('./login');
+const { ParallelSpecGroupsList } = require('./parallel-spec-groups-list');
 
 class ParallelSpecGroups
 {
 
     static EXCLUSIVE_GROUP = 'exclusive';
-    static SOCIAL_ROOM_NAME = 'reldens-new-age-town-house-01';
     static USERS_KEYS_SUFFIXES = ['', '2', '3'];
     static DEFAULT_USERNAME = 'root';
     static DEFAULT_PLAYER_NAME = 'ImRoot';
     static SPECS_EXTENSION = '.spec.js';
-    static GROUPS = {
-        world: {
-            usersSet: 0,
-            startRoomName: Login.TOWN_ROOM_NAME,
-            resetsEveryRoom: false,
-            specs: [
-                'test-npc.spec.js',
-                'test-player-pathfinding-collisions.spec.js',
-                'test-object-pathfinding-collisions.spec.js'
-            ]
-        },
-        forest: {
-            usersSet: 1,
-            startRoomName: Login.FOREST_ROOM_NAME,
-            resetsEveryRoom: false,
-            specs: [
-                'test-combat.spec.js',
-                'test-stats.spec.js',
-                'test-interactive-objects.spec.js',
-                'test-timing-objects-cancel.spec.js',
-                'test-objects-movement.spec.js',
-                'test-object-animation-frame-ranges.spec.js'
-            ]
-        },
-        social: {
-            usersSet: 2,
-            startRoomName: ParallelSpecGroups.SOCIAL_ROOM_NAME,
-            resetsEveryRoom: false,
-            specs: [
-                'test-chat.spec.js',
-                'test-teams.spec.js',
-                'test-clans.spec.js',
-                'test-trading.spec.js',
-                'test-items.spec.js',
-                'test-rewards.spec.js',
-                'test-quests-tracking.spec.js',
-                'test-game-login.spec.js'
-            ]
-        },
-        exclusive: {
-            usersSet: 0,
-            startRoomName: Login.TOWN_ROOM_NAME,
-            resetsEveryRoom: true,
-            specs: [
-                'test-admin-security.spec.js',
-                'test-login-security.spec.js',
-                'test-authentication.spec.js',
-                'test-character-system.spec.js',
-                'test-movement.spec.js'
-            ]
-        }
-    };
+    static GROUPS = ParallelSpecGroupsList;
 
     static fetchGroup(groupKey)
     {
@@ -168,7 +117,7 @@ class ParallelSpecGroups
         if(0 === ungroupedSpecs.length){
             return true;
         }
-        Logger.critical('E2E specs without a group in ParallelSpecGroups.GROUPS never run: '+ungroupedSpecs.join(', '));
+        Logger.critical('E2E specs without a group in ParallelSpecGroupsList never run: '+ungroupedSpecs.join(', '));
         return false;
     }
 

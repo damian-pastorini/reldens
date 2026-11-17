@@ -72,7 +72,9 @@ REPLACE INTO `ads` (`id`, `key`, `provider_id`, `type_id`, `width`, `height`, `p
 	(3, 'fullTimeBanner', 1, 1, 320, 50, NULL, NULL, 0, NULL, 80, NULL, 0),
 	(4, 'ui-banner', 1, 1, 320, 50, NULL, NULL, 80, NULL, 80, NULL, 0),
 	(5, 'crazy-games-sample-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
-	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
+	(6, 'game-monetize-sample-video', 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
+	(7, 'resurrection-video', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0),
+	(8, 'skin-ad-ticket', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0);
 
 REPLACE INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES
 	(1, 3, '{"fullTime": true}'),
@@ -80,7 +82,9 @@ REPLACE INTO `ads_banner` (`id`, `ads_id`, `banner_data`) VALUES
 
 REPLACE INTO `ads_event_video` (`id`, `ads_id`, `event_key`, `event_data`) VALUES
 	(1, 5, 'reldens.activatedRoom_reldens-new-age-town', '{"rewardItemKey":"coins","rewardItemQty":1}'),
-	(2, 6, 'reldens.activatedRoom_reldens-forest-level-1', '{"rewardItemKey":"coins","rewardItemQty":1}');
+	(2, 6, 'reldens.activatedRoom_reldens-forest-level-1', '{"rewardItemKey":"coins","rewardItemQty":1}'),
+	(3, 7, 'reldens.resurrectionAd', '{"rewardItemKey":"restoration_scroll","rewardItemQty":1,"replayCooldown":0}'),
+	(4, 8, 'reldens.skinAdTicket', '{"rewardItemKey":"skin_warlock_robe","rewardItemQty":1,"replayCooldown":0}');
 
 REPLACE INTO `ads_providers` (`id`, `key`, `enabled`) VALUES
 	(1, 'crazyGames', 0),
@@ -96,42 +100,42 @@ REPLACE INTO `audio_categories` (`id`, `category_key`, `category_label`, `enable
 
 REPLACE INTO `audio_markers` (`id`, `audio_id`, `marker_key`, `start`, `duration`, `config`) VALUES
 	(1, 4, 'ReldensTown', 0, 41, NULL),
-	(2, 3, 'journeyman_right', 0, 1, NULL),
-	(3, 3, 'journeyman_left', 0, 1, NULL),
-	(4, 3, 'journeyman_up', 0, 1, NULL),
-	(5, 3, 'journeyman_down', 0, 1, NULL),
+	(2, 3, 'i_journeyman_right', 0, 1, NULL),
+	(3, 3, 'i_journeyman_left', 0, 1, NULL),
+	(4, 3, 'i_journeyman_up', 0, 1, NULL),
+	(5, 3, 'i_journeyman_down', 0, 1, NULL),
 	(6, 3, 'r_journeyman_right', 0, 1, NULL),
 	(7, 3, 'r_journeyman_left', 0, 1, NULL),
 	(8, 3, 'r_journeyman_up', 0, 1, NULL),
 	(9, 3, 'r_journeyman_down', 0, 1, NULL),
-	(10, 3, 'sorcerer_right', 0, 1, NULL),
-	(11, 3, 'sorcerer_left', 0, 1, NULL),
-	(12, 3, 'sorcerer_up', 0, 1, NULL),
-	(13, 3, 'sorcerer_down', 0, 1, NULL),
+	(10, 3, 'i_sorcerer_right', 0, 1, NULL),
+	(11, 3, 'i_sorcerer_left', 0, 1, NULL),
+	(12, 3, 'i_sorcerer_up', 0, 1, NULL),
+	(13, 3, 'i_sorcerer_down', 0, 1, NULL),
 	(14, 3, 'r_sorcerer_right', 0, 1, NULL),
 	(15, 3, 'r_sorcerer_left', 0, 1, NULL),
 	(16, 3, 'r_sorcerer_up', 0, 1, NULL),
 	(17, 3, 'r_sorcerer_down', 0, 1, NULL),
-	(18, 3, 'warlock_right', 0, 1, NULL),
-	(19, 3, 'warlock_left', 0, 1, NULL),
-	(20, 3, 'warlock_up', 0, 1, NULL),
-	(21, 3, 'warlock_down', 0, 1, NULL),
+	(18, 3, 'i_warlock_right', 0, 1, NULL),
+	(19, 3, 'i_warlock_left', 0, 1, NULL),
+	(20, 3, 'i_warlock_up', 0, 1, NULL),
+	(21, 3, 'i_warlock_down', 0, 1, NULL),
 	(22, 3, 'r_warlock_right', 0, 1, NULL),
 	(23, 3, 'r_warlock_left', 0, 1, NULL),
 	(24, 3, 'r_warlock_up', 0, 1, NULL),
 	(25, 3, 'r_warlock_down', 0, 1, NULL),
-	(26, 3, 'swordsman_right', 0, 1, NULL),
-	(27, 3, 'swordsman_left', 0, 1, NULL),
-	(28, 3, 'swordsman_up', 0, 1, NULL),
-	(29, 3, 'swordsman_down', 0, 1, NULL),
+	(26, 3, 'i_swordsman_right', 0, 1, NULL),
+	(27, 3, 'i_swordsman_left', 0, 1, NULL),
+	(28, 3, 'i_swordsman_up', 0, 1, NULL),
+	(29, 3, 'i_swordsman_down', 0, 1, NULL),
 	(30, 3, 'r_swordsman_right', 0, 1, NULL),
 	(31, 3, 'r_swordsman_left', 0, 1, NULL),
 	(32, 3, 'r_swordsman_up', 0, 1, NULL),
 	(33, 3, 'r_swordsman_down', 0, 1, NULL),
-	(34, 3, 'warrior_right', 0, 1, NULL),
-	(35, 3, 'warrior_left', 0, 1, NULL),
-	(36, 3, 'warrior_up', 0, 1, NULL),
-	(37, 3, 'warrior_down', 0, 1, NULL),
+	(34, 3, 'i_warrior_right', 0, 1, NULL),
+	(35, 3, 'i_warrior_left', 0, 1, NULL),
+	(36, 3, 'i_warrior_up', 0, 1, NULL),
+	(37, 3, 'i_warrior_down', 0, 1, NULL),
 	(38, 3, 'r_warrior_right', 0, 1, NULL),
 	(39, 3, 'r_warrior_left', 0, 1, NULL),
 	(40, 3, 'r_warrior_up', 0, 1, NULL),
@@ -143,7 +147,8 @@ REPLACE INTO `items_group` (`id`, `key`, `label`, `description`, `files_name`, `
 	(3, 'armor', 'Armor', '', 'armor.png', 4, 1, 0),
 	(4, 'boots', 'Boots', '', 'boots.png', 6, 1, 0),
 	(5, 'gauntlets', 'Gauntlets', '', 'gauntlets.png', 5, 1, 0),
-	(6, 'helmet', 'Helmet', '', 'helmet.png', 1, 1, 0);
+	(6, 'helmet', 'Helmet', '', 'helmet.png', 1, 1, 0),
+	(7, 'skin', 'Skin', 'Changes the player look.', 'skin.png', 7, 1, 0);
 
 REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `description`, `qty_limit`, `uses_limit`, `useTimeOut`, `execTimeOut`, `customData`) VALUES
 	(1, 'coins', 3, NULL, 'Coins', NULL, 0, 1, NULL, NULL, '{"canBeDropped": true}'),
@@ -153,25 +158,30 @@ REPLACE INTO `items_item` (`id`, `key`, `type`, `group_id`, `label`, `descriptio
 	(5, 'spear', 1, 1, 'Spear', 'A short distance but powerful weapon.', 0, 0, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"destroyOnComplete":true,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true}}'),
 	(6, 'magic_potion_20', 5, NULL, 'Magic Potion', 'A magic potion that will restore 20 MP.', 0, 1, NULL, NULL, '{"canBeDropped":true,"animationData":{"frameWidth":64,"frameHeight":64,"start":6,"end":11,"repeat":0,"usePlayerPosition":true,"followPlayer":true,"startsOnTarget":true},"removeAfterUse":true}'),
 	(7, 'ore', 3, NULL, 'Ore', 'A chunk of raw ore.', 0, 0, NULL, NULL, '{}'),
-	(8, 'fish', 2, NULL, 'Fish', 'A fish.', 0, 0, NULL, NULL, '{"removeAfterUse":true}');
+	(8, 'fish', 2, NULL, 'Fish', 'A fish.', 0, 0, NULL, NULL, '{"removeAfterUse":true}'),
+	(9, 'restoration_scroll', 3, NULL, 'Restoration Scroll', 'Revives you where you died instead of in town.', 0, 1, NULL, NULL, '{"canBeDropped":false}'),
+	(10, 'skin_ad_ticket', 5, NULL, 'Skin Ticket', 'Watch an ad to get a special skin.', 0, 1, NULL, NULL, '{"canBeDropped":false,"removeAfterUse":true}'),
+	(11, 'skin_warlock_robe', 1, 7, 'Warlock Robe', 'Gives you the warlock look while equipped.', 0, 0, NULL, NULL, '{"canBeDropped":false,"skinKey":"warlock"}'),
+	(12, 'growing_sword', 1, 1, 'Growing Sword', 'A sword that grows stronger with the experience you gain.', 0, 0, NULL, NULL, '{"canBeDropped":false,"growth":{"experienceShare":100,"modifiersIncreasePercentPerLevel":50,"requireEquipped":true,"levels":{"2":5,"3":30,"4":90,"5":200}}}');
 
 REPLACE INTO `items_item_modifiers` (`id`, `item_id`, `key`, `property_key`, `operation`, `value`, `maxProperty`) VALUES
 	(1, 4, 'atk', 'stats/atk', 5, '5', NULL),
 	(2, 3, 'heal_potion_20', 'stats/hp', 1, '20', 'statsBase/hp'),
 	(3, 5, 'atk', 'stats/atk', 5, '3', NULL),
 	(4, 6, 'magic_potion_20', 'stats/mp', 1, '20', 'statsBase/mp'),
-	(5, 8, 'fish', 'stats/hp', 1, '10', 'statsBase/hp');
+	(5, 8, 'fish', 'stats/hp', 1, '10', 'statsBase/hp'),
+	(6, 12, 'atk', 'stats/atk', 1, '10', NULL);
 
 REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type`, `object_class_key`, `client_key`, `title`, `private_params`, `client_params`, `enabled`) VALUES
 	(5, 41, 'ground', 3482, 3, 'npc_1', 'people_town_1', 'Alfred', '{"runOnAction":true,"playerVisible":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hello! My name is Alfred. Go to the forest and kill some monsters! Now... leave me alone!","autoStart":true,"animations":{"people_town_1_down":{"start":0,"end":2},"people_town_1_left":{"start":3,"end":5},"people_town_1_right":{"start":6,"end":8},"people_town_1_up":{"start":9,"end":11}}}', 1),
-	(6, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
+	(6, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3},"killScore":8}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
 	(7, 114, 'merge-respawn-area-monsters', NULL, 7, 'enemy_2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
 	(8, 41, 'ground', 3567, 3, 'npc_2', 'healer_1', 'Mamon', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true}', '{"content":"Hello traveler! I can restore your health, would you like me to do it?","options":{"1":{"label":"Heal HP","value":1},"2":{"label":"Nothing...","value":2},"3":{"label":"Need some MP","value":3}},"ui":true,"autoStart":true,"animations":{"healer_1_down":{"start":0,"end":2},"healer_1_left":{"start":0,"end":2},"healer_1_right":{"start":0,"end":2},"healer_1_up":{"start":0,"end":2}}}', 1),
 	(10, 41, 'ground', 3578, 5, 'npc_3', 'merchant_1', 'Gimly', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! What would you like to do?","options":{"buy":{"label":"Buy","value":"buy"},"sell":{"label":"Sell","value":"sell"}},"autoStart":true,"animations":{"merchant_1_down":{"start":0,"end":2},"merchant_1_left":{"start":3,"end":5},"merchant_1_right":{"start":6,"end":8},"merchant_1_up":{"start":9,"end":11}}}', 1),
 	(12, 41, 'ground', 3499, 3, 'npc_4', 'weapons_master_1', 'Barrik', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi, I am the weapons master, choose your weapon and go kill some monsters!","options":{"1":{"key":"axe","label":"Axe","value":1,"icon":"axe"},"2":{"key":"spear","label":"Spear","value":2,"icon":"spear"}},"ui":true,"autoStart":true,"animations":{"weapons_master_1_down":{"start":0,"end":2},"weapons_master_1_left":{"start":3,"end":5},"weapons_master_1_right":{"start":6,"end":8},"weapons_master_1_up":{"start":9,"end":11}}}', 1),
 	(13, 114, 'ground', 6833, 3, 'npc_5', 'quest_npc_1', 'Miles', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"randomMovement":{"maxTiles":5}}', '{"content":"Hi there! Do you want a coin? I can give you one if you give me a tree branch.","options":{"1":{"label":"Sure!","value":1},"2":{"label":"No, thank you.","value":2}},"ui":true,"autoStart":true,"animations":{"quest_npc_1_down":{"start":0,"end":2},"quest_npc_1_left":{"start":3,"end":5},"quest_npc_1_right":{"start":6,"end":8},"quest_npc_1_up":{"start":9,"end":11}}}', 1),
-	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
-	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 1),
+	(14, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b1', 'enemy_forest_1', 'Tree', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":true,"interactionRadio":170,"randomMovement":{"maxTiles":3}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 0),
+	(15, 9, 'ground-respawn-area', NULL, 7, 'enemy_bot_b2', 'enemy_forest_2', 'Tree Punch', '{"shouldRespawn":true,"childObjectType":4,"isAggressive":false,"interactionRadio":70,"randomMovement":{"maxTiles":8}}', '{"autoStart":true,"frameStart":12,"frameEnd":26,"repeat":-1}', 0),
 	(16, 114, 'merge-respawn-area-mining-rocks', NULL, 7, 'rock_forest_1_area', 'rock_forest_1', NULL, '{"shouldRespawn":true,"childObjectClassKey":"rock_forest_1","itemKey":"ore","cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"runOnAction":true,"collisionType":2,"hasState":true,"interactionArea":48}', '{"timingDuration":5000,"isInteractive":true,"frameStart":0,"frameEnd":0,"classKey":"rock_forest_1","ui":false}', 1),
 	(17, 114, 'merge-spot_003_river_grass-collisions', 822, 8, 'fish_spawn_forest_1', 'fish_spawn_forest_1', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(18, 114, 'ground', 6613, 3, 'chest_forest_1', 'chest_forest_1', 'Treasure Chest', '{"runOnAction":true,"playerVisible":true,"collisionType":2}', '{"content":"A dusty old chest...","ui":true,"frameStart":0,"frameEnd":0,"animations":{"chest_forest_1_open":{"asset_key":"chest_forest_1","start":0,"end":1,"frameRate":8,"repeat":0}}}', 1),
@@ -196,7 +206,8 @@ REPLACE INTO `objects` (`id`, `room_id`, `layer_name`, `tile_index`, `class_type
 	(39, 114, 'merge-spot_003_river_grass-collisions', 1965, 8, 'fish_spawn_forest_3', 'fish_spawn_forest_3', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(40, 114, 'merge-spot_003_river_grass-collisions', 1740, 8, 'fish_spawn_forest_4', 'fish_spawn_forest_4', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
 	(41, 114, 'merge-spot_003_river_grass-collisions', 946, 8, 'fish_spawn_forest_5', 'fish_spawn_forest_5', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
-	(42, 114, 'merge-spot_003_river_grass-collisions', 812, 8, 'fish_spawn_forest_6', 'fish_spawn_forest_6', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1);
+	(42, 114, 'merge-spot_003_river_grass-collisions', 812, 8, 'fish_spawn_forest_6', 'fish_spawn_forest_6', NULL, '{"cancelOnMove":true,"cancelOnHit":true,"cancelOnOutOfRange":false,"rewards":[{"key":"fish","rate":100}],"runOnAction":true,"fishCooldown":3000,"collisionType":2}', '{"timingDuration":10000,"isInteractive":true,"frameStart":0,"frameEnd":2,"autoStart":true,"repeat":-1,"classKey":"fish_spawn_forest_1","ui":false}', 1),
+	(43, 41, 'ground', 4640, 9, 'teleport_1', 'teleport_master_1', 'Portia', '{"runOnAction":true,"playerVisible":true,"sendInvalidOptionMessage":true,"collisionType":4,"hasState":true,"destinations":{"1":{"room":"reldens-forest-level-1"},"2":{"room":"reldens-new-age-town-house-01"}}}', '{"content":"Hello traveler! Where would you like to go?","options":{"1":{"label":"Forest","value":1},"2":{"label":"House 1","value":2},"3":{"label":"Nowhere","value":3}},"ui":true,"autoStart":true,"animations":{"teleport_master_1_down":{"start":0,"end":2},"teleport_master_1_left":{"start":3,"end":5},"teleport_master_1_right":{"start":6,"end":8},"teleport_master_1_up":{"start":9,"end":11}}}', 1);
 
 REPLACE INTO `objects_animations` (`id`, `object_id`, `animationKey`, `animationData`) VALUES
 	(5, 6, 'merge-respawn-area-monsters_6_right', '{"start":6,"end":8}'),
@@ -284,7 +295,8 @@ REPLACE INTO `objects_assets` (`object_asset_id`, `object_id`, `asset_type`, `as
 	(29, 39, 'spritesheet', 'fish_spawn_forest_3', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
 	(30, 40, 'spritesheet', 'fish_spawn_forest_4', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
 	(31, 41, 'spritesheet', 'fish_spawn_forest_5', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
-	(32, 42, 'spritesheet', 'fish_spawn_forest_6', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}');
+	(32, 42, 'spritesheet', 'fish_spawn_forest_6', 'fish-spawn.png', '{"frameWidth":32,"frameHeight":32}'),
+	(33, 43, 'spritesheet', 'teleport_master_1', 'people-quest-npc.png', '{"frameWidth":52,"frameHeight":71}');
 
 REPLACE INTO `objects_items_inventory` (`id`, `owner_id`, `item_id`, `qty`, `remaining_uses`, `is_active`) VALUES
 	(2, 10, 4, -1, -1, 0),
@@ -874,12 +886,12 @@ REPLACE INTO `skills_levels_modifiers` (`id`, `level_id`, `key`, `property_key`,
 	(119, 20, 'inc_hp', 'statsBase/hp', 1, '50', NULL, NULL, NULL, NULL),
 	(120, 20, 'inc_mp', 'statsBase/mp', 1, '50', NULL, NULL, NULL, NULL);
 
-REPLACE INTO `skills_levels_set` (`id`, `autoFillRanges`, `autoFillExperienceMultiplier`) VALUES
-	(1, 1, NULL),
-	(2, 1, NULL),
-	(3, 1, NULL),
-	(4, 1, NULL),
-	(5, 1, NULL);
+REPLACE INTO `skills_levels_set` (`id`, `key`, `label`, `autoFillRanges`, `autoFillExperienceMultiplier`) VALUES
+	(1, 'journeyman', 'Journeyman', 1, NULL),
+	(2, 'sorcerer', 'Sorcerer', 1, NULL),
+	(3, 'warlock', 'Warlock', 1, NULL),
+	(4, 'swordsman', 'Swordsman', 1, NULL),
+	(5, 'warrior', 'Warrior', 1, NULL);
 
 REPLACE INTO `skills_owners_class_path` (`id`, `class_path_id`, `owner_id`, `currentLevel`, `currentExp`) VALUES
 	(1, 1, 1, 10, 9080),
@@ -924,6 +936,26 @@ REPLACE INTO `skills_skill_physical_data` (`id`, `skill_id`, `magnitude`, `objec
 
 REPLACE INTO `skills_skill_target_effects` (`id`, `skill_id`, `key`, `property_key`, `operation`, `value`, `minValue`, `maxValue`, `minProperty`, `maxProperty`) VALUES
 	(1, 4, 'heal', 'stats/hp', 1, '10', '0', '0', NULL, 'statsBase/hp');
+
+REPLACE INTO `locale` (`id`, `locale`, `language_code`, `country_code`, `enabled`) VALUES
+	(2, 'es_ES', 'es', 'ES', 1);
+
+REPLACE INTO `snippets` (`id`, `locale_id`, `key`, `value`) VALUES
+	(1, 2, 'actions.death.title', '¡Moriste!'),
+	(2, 2, 'actions.death.wait', 'Sólo espera...'),
+	(3, 2, 'actions.death.reviveInPlace', '¡Serás revivido donde moriste!'),
+	(4, 2, 'actions.death.reviveWithRestorationItem', '¡Como tienes %itemLabel serás revivido donde moriste!'),
+	(5, 2, 'actions.death.reviveInTown', '¡Serás revivido en %townLabel!'),
+	(6, 2, 'actions.death.resurrectionAdButton', 'Mira un anuncio para revivir donde moriste'),
+	(7, 2, 'items.growth.level', 'Nivel %level'),
+	(8, 2, 'items.growth.reachedLevel', '%itemLabel alcanzó el nivel %level.'),
+	(9, 2, 'users.skinAdFailed', 'Algo salió mal con el anuncio de la apariencia, tu ticket no fue canjeado ni quitado de tu inventario. Intenta de nuevo más tarde, si el problema persiste contacta a los administradores para solucionarlo.'),
+	(10, 2, 'actions.death.reviveWait', 'Podrás revivir en %seconds segundos.'),
+	(11, 2, 'actions.death.reviveReady', 'Ya puedes revivir.'),
+	(12, 2, 'actions.death.reviveButton', 'Revivir'),
+	(13, 2, 'actions.death.askRestorationItem', 'Tienes %itemLabel: ¿quieres usarlo para revivir donde moriste en lugar de en %townLabel?'),
+	(14, 2, 'actions.death.restorationItemUseButton', 'Sí, usarlo'),
+	(15, 2, 'actions.death.restorationItemKeepButton', 'No, guardarlo');
 
 REPLACE INTO `stats` (`id`, `key`, `label`, `description`, `base_value`, `customData`) VALUES
 	(1, 'hp', 'HP', 'Player life points', 100, '{"showBase":true}'),

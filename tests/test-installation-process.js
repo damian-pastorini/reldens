@@ -4,96 +4,28 @@
  *
  */
 
-const { BaseTest } = require('./base-test');
-const { Installer } = require('../lib/game/server/installer');
-const { ThemeManager } = require('../lib/game/server/theme-manager');
+const { InstallationBaseTest } = require('./fixtures/installation-base-test');
 const { DataServerConfig } = require('../lib/game/server/data-server-config');
 const { EntitiesLoader } = require('../lib/game/server/entities-loader');
 const { StorageDriversResolver } = require('@reldens/cms/lib/storage-drivers-resolver');
+const { EnvironmentValuesRestorer } = require('./fixtures/environment-values-restorer');
 const { FileHandler } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 
-class TestInstallationProcess extends BaseTest
+class TestInstallationProcess extends InstallationBaseTest
 {
-
-    constructor(config)
-    {
-        super(config);
-        this.projectRoot = process.cwd();
-        this.installProjectRoot = FileHandler.joinPaths(this.projectRoot, 'test-results', 'installer-project');
-        this.startCallbackProps = false;
-    }
-
-    createInstaller()
-    {
-        FileHandler.remove(this.installProjectRoot);
-        FileHandler.createFolder(this.installProjectRoot);
-        return new Installer({
-            themeManager: new ThemeManager({projectRoot: this.installProjectRoot, reldensModulePath: this.projectRoot}),
-            startCallback: async (props) => {
-                this.startCallbackProps = props;
-            }
-        });
-    }
-
-    createInstallRequest(storageDriver)
-    {
-        return {
-            session: {},
-            body: {
-                'app-host': 'http://localhost',
-                'app-port': '8080',
-                'app-public-url': 'http://localhost:8080',
-                'app-trusted-proxy': '',
-                'app-admin-path': '/reldens-admin',
-                'app-admin-secret': 'installer-test-secret',
-                'app-signed-tokens-secret': 'installer-test-signed-tokens-secret',
-                'db-storage-driver': storageDriver,
-                'db-client': 'mysql2',
-                'db-host': this.config.dbHost,
-                'db-port': this.config.dbPort,
-                'db-name': this.config.dbName,
-                'db-username': this.config.dbUser,
-                'db-password': this.config.dbPassword,
-                'mailer-service': 'nodemailer'
-            }
-        };
-    }
-
-    createInstallResponse()
-    {
-        let response = {redirectUrl: ''};
-        response.redirect = (url) => {
-            response.redirectUrl = url;
-            return response;
-        };
-        return response;
-    }
-
-    restoreEnvironment(previousEnvironment)
-    {
-        for(let key of Object.keys(previousEnvironment)){
-            if(false === previousEnvironment[key]){
-                continue;
-            }
-            process.env[key] = previousEnvironment[key];
-        }
-    }
 
     async testInstallerDefaultsToTheKnexStorageDriver()
     {
         await this.test('the installer defaults to the knex storage driver and lists every driver', async () => {
-            let previousEnvironment = {
-                RELDENS_STORAGE_DRIVER: sc.get(process.env, 'RELDENS_STORAGE_DRIVER', false),
-                RELDENS_DB_CLIENT: sc.get(process.env, 'RELDENS_DB_CLIENT', false)
-            };
+            let previousEnvironment = EnvironmentValuesRestorer.capture(['RELDENS_STORAGE_DRIVER', 'RELDENS_DB_CLIENT']);
             delete process.env.RELDENS_STORAGE_DRIVER;
             delete process.env.RELDENS_DB_CLIENT;
             let installer = this.createInstaller();
             let defaults = installer.fetchDefaults();
             let options = installer.storageDriversOptions(defaults['db-storage-driver']);
             let dbConfig = DataServerConfig.prepareDbConfig({user: this.config.dbUser, database: this.config.dbName});
-            this.restoreEnvironment(previousEnvironment);
+            EnvironmentValuesRestorer.restore(previousEnvironment);
             FileHandler.remove(this.installProjectRoot);
             let availableKeys = StorageDriversResolver.available(this.installProjectRoot, installer.prismaAdapter)
                 .map(driver => driver.key);
@@ -176,16 +108,71 @@ class TestInstallationProcess extends BaseTest
         });
     }
 
+    async testTheFirstLaunchServesTheInstallerFormWithTheEnvironmentDefaults()
+    {
+        await this.test('the first launch serves the installer form with the defaults from the environment', async () => {
+            let previousEnvironment = EnvironmentValuesRestorer.capture(['RELDENS_DB_HOST']);
+            process.env.RELDENS_DB_HOST = 'installer-env-db-host';
+            let installer = this.createInstaller();
+            installer.themeManager.installerPathIndex = FileHandler.joinPaths(this.projectRoot, 'install', 'index.html');
+            let sentPages = [];
+            let nextCalls = [];
+            await installer.executeForEveryRequest(
+                () => nextCalls.push('next'),
+                {path: '/', session: {}},
+                {send: (page) => sentPages.push(page)}
+            );
+            EnvironmentValuesRestorer.restore(previousEnvironment);
+            FileHandler.remove(this.installProjectRoot);
+            this.assert.deepStrictEqual(
+                [sentPages.length, nextCalls, sentPages.join('').includes('value="installer-env-db-host"')],
+                [1, [], true],
+                'The not installed project serves the installer form with the environment database host'
+            );
+        });
+    }
+
+    async runFailedPackagesInstall(prepareInstaller, packagesInstallation)
+    {
+        let installer = this.createInstaller();
+        prepareInstaller(installer);
+        let response = this.createInstallResponse();
+        let installRequest = this.createInstallRequest('knex');
+        installRequest.body['app-allow-packages-installation'] = packagesInstallation;
+        await installer.executeInstallProcess(installRequest, response);
+        let lockExists = FileHandler.exists(FileHandler.joinPaths(this.installProjectRoot, 'install.lock'));
+        FileHandler.remove(this.installProjectRoot);
+        return [response.redirectUrl, lockExists];
+    }
+
+    async testTheMissingPackagesAnswerTheirErrorBeforeTheDatabaseWork()
+    {
+        await this.test('a failed packages install or missing driver or mailer packages answer their error', async () => {
+            this.assert.deepStrictEqual(await this.runFailedPackagesInstall((installer) => {
+                installer.packagesInstallation = {unlinkAllPackages: () => true, checkAndInstallPackages: () => false};
+            }, '1'), ['/?error=installation-dependencies-failed', false]);
+            this.assert.deepStrictEqual(await this.runFailedPackagesInstall((installer) => {
+                installer.isStorageDriverAvailable = () => false;
+            }, '0'), ['/?error=driver-packages-missing', false]);
+            this.assert.deepStrictEqual(await this.runFailedPackagesInstall((installer) => {
+                installer.isMailerServiceAvailable = () => false;
+            }, '0'), ['/?error=mailer-packages-missing', false]);
+        });
+    }
+
     async testInstallerRejectsAnUnknownStorageDriver()
     {
-        await this.test('the installer rejects an unknown storage driver before creating any project file', async () => {
-            let installer = this.createInstaller();
-            let response = this.createInstallResponse();
-            await installer.executeInstallProcess(this.createInstallRequest('not-a-driver'), response);
-            let lockExists = FileHandler.exists(FileHandler.joinPaths(this.installProjectRoot, 'install.lock'));
-            FileHandler.remove(this.installProjectRoot);
-            this.assert.strictEqual(response.redirectUrl, '/?error=invalid-driver');
-            this.assert.strictEqual(lockExists, false);
+        await this.test('the installer rejects an unknown or missing storage driver before creating any project file', async () => {
+            let expectedRedirects = {'not-a-driver': '/?error=invalid-driver', '': '/?error=missing-storage-driver'};
+            for(let storageDriver of Object.keys(expectedRedirects)){
+                let installer = this.createInstaller();
+                let response = this.createInstallResponse();
+                await installer.executeInstallProcess(this.createInstallRequest(storageDriver), response);
+                let lockExists = FileHandler.exists(FileHandler.joinPaths(this.installProjectRoot, 'install.lock'));
+                FileHandler.remove(this.installProjectRoot);
+                this.assert.strictEqual(response.redirectUrl, expectedRedirects[storageDriver]);
+                this.assert.strictEqual(lockExists, false);
+            }
         });
     }
 
@@ -215,8 +202,22 @@ class TestInstallationProcess extends BaseTest
         await this.test('the installer completes a knex installation and creates the project files', async () => {
             let installer = this.createInstaller();
             let response = this.createInstallResponse();
+            let servedStatuses = [];
+            let writeInstallStatus = installer.updateInstallStatus.bind(installer);
+            installer.updateInstallStatus = (message) => {
+                writeInstallStatus(message);
+                servedStatuses.push(sc.get(sc.parseJson(FileHandler.readFile(installer.statusFilePath)), 'message', ''));
+            };
             await installer.executeInstallProcess(this.createInstallRequest('knex'), response);
             this.assert.strictEqual(response.redirectUrl, 'http://localhost:8080');
+            this.assert.deepStrictEqual(servedStatuses, [
+                'Starting installation process...',
+                'Configuring database connection...',
+                'Installing database driver: knex...',
+                'Generating entities from database schema...',
+                'Creating project files...',
+                'Installation completed successfully!'
+            ], 'The status file served by /install-status.json holds each installation step');
             let lockExists = FileHandler.exists(FileHandler.joinPaths(this.installProjectRoot, 'install.lock'));
             let gitignoreExists = FileHandler.exists(FileHandler.joinPaths(this.installProjectRoot, '.gitignore'));
             this.assert.strictEqual(lockExists, true);
@@ -246,7 +247,16 @@ class TestInstallationProcess extends BaseTest
             );
             this.assert.strictEqual(sc.hasOwn(generatedModels.entitiesConfig.players.properties, 'user_id'), true);
             this.assert.strictEqual(this.startCallbackProps.dataServer.constructor.name, 'KnexDataServer');
+            let installedResponse = this.createInstallResponse();
+            await installer.executeInstallProcess(this.createInstallRequest('knex'), installedResponse);
+            let nextCalls = [];
+            await installer.executeForEveryRequest(() => nextCalls.push('next'), {path: '/'}, installedResponse);
             FileHandler.remove(this.installProjectRoot);
+            this.assert.deepStrictEqual(
+                [installedResponse.redirectUrl, nextCalls],
+                ['/?redirect=already-installed', ['next']],
+                'The installed project redirects a new install to already-installed and no longer serves the form'
+            );
         });
     }
 

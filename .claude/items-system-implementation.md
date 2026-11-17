@@ -33,8 +33,8 @@ The Reldens Items System manages player inventory, equipment, and item modifiers
   - entities-translations.js - Admin entities labels
   - **entities/** - Admin entities overrides for the items, groups and inventory
   - **exchange/** - Trade processors
-    - processor.js - Exchange operations (init, add, remove, confirm)
-    - player-processor.js - Extends the processor with the player-to-player confirm/disconfirm operations
+    - processor.js - Exchange operations (init, add, remove, confirm of both inventories for the NPC trades and
+      `updatePlayerConfirmation()`, the confirm or disconfirm of the player inventory for the trades between players)
   - **subscribers/** - Event subscribers
     - player-subscriber.js - Creates player inventory on login
     - player-death-subscriber.js - Drops the player items on death
@@ -123,6 +123,20 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
    Each modifier target is `manager.owner`, the player schema (`currentPlayer`).
 
+6. **Groups Data Send** (`lib/inventory/server/subscribers/player-subscriber.js` `PlayerSubscriber.createPlayerInventory()`)
+
+   After the items are loaded the inventory is set on `currentPlayer.inventory` and the groups data is sent to the
+   client between two events that share the same event data:
+   ```javascript
+   let inventoryEventData = {client, playerSchema: currentPlayer, room, inventoryServer, sendData};
+   await events.emit('reldens.createPlayerInventoryBeforeSend', inventoryEventData);
+   client.send('*', inventoryEventData.sendData);
+   await events.emit('reldens.createPlayerInventoryAfter', inventoryEventData);
+   ```
+
+   A `reldens.createPlayerInventoryBeforeSend` listener can change `sendData` before it is sent; the item growth and the
+   skins listen `reldens.createPlayerInventoryAfter` (see `.claude/gameplay-features.md`).
+
 ### Critical Timing
 
 - **BEFORE items load**: `currentPlayer.stats` is set (fresh object from database)
@@ -144,16 +158,13 @@ this.events.on('reldens.createPlayerStatsAfter', async (client, userModel, curre
 
 2. **Execute Equip Action** (`lib/inventory/server/message-actions.js` `InventoryMessageActions.executeEquipAction()`)
 
-   If the item is not equipped, the equipped item of the same group is unequipped first (`unEquipPrevious()`), then the item is equipped. If it is already equipped, it is unequipped:
+   The message action rejects an item key that is not in the inventory or an item without `equip()`, then toggles the
+   item with the `@reldens/items-system` `Inventory.toggleEquip()`: after the item growth still being applied, an
+   equipped item is unequipped, otherwise the equipped item of the same group is unequipped (`unEquipPrevious()`) and
+   the item is equipped:
    ```javascript
    let item = playerSchema.inventory.manager.items[data.idx];
-   if(!item.equipped){
-       this.unEquipPrevious(item.group_id, playerSchema.inventory.manager.items);
-       await item.equip();
-       return true;
-   }
-   await item.unequip();
-   return true;
+   return await playerSchema.inventory.manager.toggleEquip(item);
    ```
 
 3. **Item Equip Method** (`@reldens/items-system` `lib/item/type/equipment.js` `Equipment.equip()`)
@@ -385,6 +396,7 @@ CREATE TABLE `items_inventory` (
     `qty` int NOT NULL DEFAULT '0',
     `remaining_uses` int DEFAULT NULL,
     `is_active` tinyint DEFAULT NULL,
+    `customData` text,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`owner_id`) REFERENCES `players` (`id`),
     FOREIGN KEY (`item_id`) REFERENCES `items_item` (`id`)
@@ -396,6 +408,8 @@ CREATE TABLE `items_inventory` (
 - `qty`: Quantity
 - `remaining_uses`: Uses left (if item has uses limit)
 - `is_active`: 1 if equipped, 0 if not (for equipment items only)
+- `customData`: JSON data of this item instance, not read by `ItemsFactory`; the item growth keeps the instance level
+  and experience there (`{"growth": {"level": 2, "experience": 12}}`, see `.claude/gameplay-features.md`)
 
 ## Event Flow
 
@@ -430,6 +444,25 @@ CREATE TABLE `items_inventory` (
    - **Listener**: `StorageObserver.updateRevertedModifiers()` - Calls `persistData()` to save stats
 
 4-6. Same persistence and client update flow as equip
+
+### Growth Level Up Events Sequence
+
+Fired by the items-system `ItemGrowthLeveler` when a growing item reaches a new level (see
+`.claude/gameplay-features.md`):
+
+1. The unequip sequence above, when the item is equipped
+2. `ItemsEvents.GROWTH_LEVEL_UP` - After the modifiers were scaled to the new level
+   - **Listener**: `ItemsGrowthApplier.applyReachedLevel()` - Calculates the display data again and sends the level
+     reached chat message
+3. `ItemsEvents.UPDATE_ITEM` - The items sender sends `ItemsConst.ACTION_UPDATE` with the item `customData`, the client
+   receiver updates the client item and the inventory plugin renders its box again
+4. The equip sequence above, when the item was equipped
+5. `ItemsEvents.GROWTH_EXPERIENCE_ADDED` - After every experience added, also without a level up
+   - **Listener**: `ItemsGrowthApplier.saveItemGrowth()` - Saves the level and experience in `items_inventory.customData`
+
+The experience added to the same item runs in order. A failed step (the unequip, a listener of steps 2, 3 or 5 or the
+equip again) is logged and stored as the items manager `lastError` (`items.growth.stepFailed`): a failed unequip stops
+the level up (level and modifiers unchanged), a failed listener never stops the next steps.
 
 ## Testing Checklist
 

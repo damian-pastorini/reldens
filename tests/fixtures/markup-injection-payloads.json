@@ -1,0 +1,5 @@
+{
+    "imageWithHandler": "<img id=\"e2e-markup-probe\" src=\"x\" onerror=\"window.e2eMarkupProbe=1\">",
+    "imageWithHandlerElementId": "e2e-markup-probe",
+    "imageWithHandlerWindowFlag": "e2eMarkupProbe"
+}

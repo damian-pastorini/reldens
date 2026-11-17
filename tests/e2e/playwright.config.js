@@ -12,13 +12,13 @@ const { defineConfig } = require('@playwright/test');
 const { FileHandler } = require('@reldens/server-utils');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ParallelSpecGroups } = require('./helpers/parallel-spec-groups');
-let configPath = FileHandler.joinPaths(process.cwd(), 'tests', 'config.json');
-let testConfig = FileHandler.exists(configPath) ? FileHandler.fetchFileJson(configPath) : {};
+const { E2eInstance } = require('./helpers/e2e-instance');
+let testConfig = E2eInstance.loadConfig() || {};
 
 let longRun = '1' === process.env.LONG_RUN;
 let envPort = process.env.RELDENS_E2E_PORT || null;
 let baseUrl = envPort ? 'http://localhost:'+envPort : (testConfig.baseUrl || 'http://localhost:8080');
-let testResultsDir = FileHandler.joinPaths(process.cwd(), 'test-results', 'playwright');
+let testResultsDir = E2eInstance.resultsPath('playwright');
 let launchOptions = { slowMo: longRun ? 400 : 0, headless: true, channel: 'chromium' };
 let maxFailures = Number(process.env.RELDENS_E2E_MAX_FAILURES || '1');
 let browserExecutablePath = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE || '';

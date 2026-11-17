@@ -24,20 +24,25 @@ class TestThemeManagerSubscriber extends BaseTest
         };
     }
 
-    createThemeManager(executedCommands)
+    createThemeManager(executedCommands, commandError)
     {
         return {
             themePath: FileHandler.joinPaths(process.cwd(), 'theme'),
             setupPaths: (props) => executedCommands.push('setupPaths:'+props.projectThemeName),
-            resetDist: async () => executedCommands.push('resetDist')
+            resetDist: async () => {
+                executedCommands.push('resetDist');
+                if(commandError){
+                    throw commandError;
+                }
+            }
         };
     }
 
-    async postThemeCommand(selectedTheme, executedCommands)
+    async postThemeCommand(selectedTheme, executedCommands, commandError = false)
     {
         let capturedRoutes = [];
         let adminManager = this.createAdminManager(capturedRoutes);
-        let subscriber = new ThemeManagerSubscriber(adminManager, {}, this.createThemeManager(executedCommands));
+        let subscriber = new ThemeManagerSubscriber(adminManager, {}, this.createThemeManager(executedCommands, commandError));
         subscriber.setupRoutes(adminManager);
         let redirects = [];
         let routeCallback = [...capturedRoutes].shift();
@@ -55,6 +60,18 @@ class TestThemeManagerSubscriber extends BaseTest
             let redirectPath = await this.postThemeCommand('default', executedCommands);
             this.assert.strictEqual(redirectPath, '/reldens-admin/management?result=success');
             this.assert.deepStrictEqual(executedCommands, ['setupPaths:default', 'resetDist']);
+        });
+    }
+
+    async testAFailedCommandRedirectsWithTheExecutionError()
+    {
+        await this.test('a theme manager command that throws redirects with the execution error', async () => {
+            let executedCommands = [];
+            let redirectPath = await this.postThemeCommand('default', executedCommands, new Error('Dist reset failed.'));
+            this.assert.deepStrictEqual(
+                [redirectPath, executedCommands],
+                ['/reldens-admin/management?result=themeManagerExecutionError', ['setupPaths:default', 'resetDist']]
+            );
         });
     }
 

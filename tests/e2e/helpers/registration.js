@@ -34,19 +34,27 @@ class Registration
         return true;
     }
 
+    static async typeValue(page, selector, value, longRun)
+    {
+        let typeDelay = TimeConstants.typeDelay(longRun);
+        await page.locator(selector).pressSequentially(value, {
+            delay: typeDelay,
+            timeout: TimeConstants.forLongRun(TimeConstants.ACTION, longRun) + value.length * typeDelay
+        });
+    }
+
     static async submitRegistration(page, registrationData, longRun, screenshots)
     {
-        let typeOptions = {delay: TimeConstants.typeDelay(longRun)};
         let pauseMs = TimeConstants.pauseMs(longRun);
         expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
         await screenshots.capture(page, 'register-form-visible');
-        await page.locator(Selectors.register.username).pressSequentially(registrationData.username, typeOptions);
+        await Registration.typeValue(page, Selectors.register.username, registrationData.username, longRun);
         await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.email).pressSequentially(registrationData.email, typeOptions);
+        await Registration.typeValue(page, Selectors.register.email, registrationData.email, longRun);
         await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.password).pressSequentially(registrationData.password, typeOptions);
+        await Registration.typeValue(page, Selectors.register.password, registrationData.password, longRun);
         await page.waitForTimeout(pauseMs);
-        await page.locator(Selectors.register.rePassword).pressSequentially(registrationData.password, typeOptions);
+        await Registration.typeValue(page, Selectors.register.rePassword, registrationData.password, longRun);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'register-form-filled');
         await Registration.acceptTerms(page, longRun, screenshots);

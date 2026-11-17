@@ -5,7 +5,8 @@
  * Tests the forest objects movement and aggression: the aggressive and the passive enemies wander inside their own
  * configured areas, the objects without random movement keep their position and a passive enemy does not attack a
  * player standing near it (the passive enemy is placed from the server next to the player with its random movement
- * stopped).
+ * stopped, and every other enemy is disabled, since a wandering passive enemy that bumps into the player starts a
+ * battle on the hit).
  *
  */
 
@@ -134,6 +135,7 @@ class TestObjectsMovement
         );
         expect(placement.targeted, 'The passive enemy must be placed next to the player: '+sc.toJsonString(placement))
             .toBe(true);
+        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME, false, placement.bodyKey);
         await screenshots.capture(page, 'player-near-passive-enemy');
         expect(
             (await TestObjectsMovement.fetchActiveForestEnemies(gameConfig, true)).map(snapshot => snapshot.key),

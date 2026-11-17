@@ -31,14 +31,6 @@ class TestTeams
         });
     }
 
-    static async loginRoot2Player(page, gameConfig, longRun)
-    {
-        let username = gameConfig.e2eUsername2 || 'root2';
-        let password = gameConfig.e2ePassword2 || 'root';
-        let playerName = gameConfig.e2ePlayerName2 || 'ImRoot2';
-        await Login.loginAndStartGame(page, username, password, playerName, longRun);
-    }
-
     static async loginBothPlayers(page, secondPage, gameConfig, longRun)
     {
         let username = gameConfig.e2eUsername2 || 'root2';

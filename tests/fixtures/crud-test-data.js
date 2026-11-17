@@ -192,7 +192,7 @@ class CrudTestData
                 message_time: '2025-01-01 12:00:00'
             },
             'chat-message-types': {
-                key: uniqueKey+'-message-type'
+                key: 'cmt-'+uniqueSuffix+'-'+timestamp
             },
             config: {
                 scope: 'test',
@@ -257,7 +257,7 @@ class CrudTestData
                 value: 'Test snippet content '+uniqueSuffix+' '+timestamp
             },
             locale: {
-                locale: uniqueKey+'-locale-test',
+                locale: 'te_'+(uniqueSuffix ? uniqueSuffix.slice(0, 2).toUpperCase() : 'XX'),
                 language_code: 'te',
                 country_code: 'TS'
             },
@@ -497,7 +497,7 @@ class CrudTestData
                 key: uniqueSuffix === 'delete' ? 99 : (uniqueSuffix === 'edit' ? 98 : 97)
             },
             'target-options': {
-                target_key: uniqueKey+'-target-option',
+                target_key: 'tgt-'+uniqueSuffix+'-'+timestamp,
                 target_label: 'Test Target Option '+uniqueSuffix
             },
             'drops-animations': {

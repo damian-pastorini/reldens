@@ -6,27 +6,31 @@
  * stopped (until the next players reset restores it) and the player body is placed on the center of the closest
  * walkable tile around the object tile that does not overlap any colliding body of the room (the object itself, the
  * other objects next to it, like a cluster of mining rocks, and the other players; the closest distance first, then the
- * lowest row and column, so the same room always gives the same tile), so the NPC, trader and interactive object specs interact with the object from a
- * known position instead of chasing it across the room. It returns the object key, its body state key and position
- * and the exact player position.
+ * lowest row and column, so the same room always gives the same tile), so the NPC, trader and interactive object specs
+ * interact with the object from a known position instead of chasing it across the room. A minimum tiles distance skips
+ * the closer tiles, so the player body never touches an enemy that starts a battle on the hit. It returns the object
+ * key, its body state key and position and the exact player position.
+ * The clear line cases are built on a straight line of tiles no body of the room crosses (the path finder grid only
+ * knows the walls and the blocked layers, so an object without state, a disabled enemy or another player can stop a
+ * walk or end a bullet on a tile the grid marks walkable): from a start tile, the first line along the right, left,
+ * down and up directions (in that order) at the given distances (in that order) whose tiles are all walkable on the
+ * grid and whose rectangle (from the start bounds to the end tile) overlaps no body except the ignored ones. It gives
+ * the walk target of a player and the lines of RoomLinePlacement, so the same room always gives the same walk and the
+ * same shot. The line of a shot also covers the row above and the column on the left of the object tile:
+ * P2world.shootBullet starts the bullet half a tile and half a bullet away from the shooter on both axes, a body there
+ * removes the bullet before a client can see it.
  *
  */
 
 const { RoomObjectsState } = require('./room-objects-state');
+const { RoomMovementState } = require('./room-movement-state');
 const { Logger, sc } = require('@reldens/utils');
 
 class RoomPlayerPlacement
 {
 
     static MAX_TILES_RADIUS = 3;
-
-    static isTileOverBody(tileRect, bodyBounds)
-    {
-        return tileRect.left < bodyBounds.upperBound[0]
-            && tileRect.right > bodyBounds.lowerBound[0]
-            && tileRect.top < bodyBounds.upperBound[1]
-            && tileRect.bottom > bodyBounds.lowerBound[1];
-    }
+    static LINE_DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
     static mapCandidate(area, column, row)
     {
@@ -36,7 +40,7 @@ class RoomPlayerPlacement
             top: row * area.tileHeight,
             bottom: (row + 1) * area.tileHeight
         };
-        if(area.bodiesBounds.some(bodyBounds => RoomPlayerPlacement.isTileOverBody(tileRect, bodyBounds))){
+        if(RoomObjectsState.isRectOverBodies(tileRect, area.bodiesBounds)){
             return false;
         }
         return {
@@ -64,7 +68,7 @@ class RoomPlayerPlacement
         }
     }
 
-    static findClosestFreePosition(room, objectBody, playerBody)
+    static findClosestFreePosition(room, objectBody, playerBody, minimumTilesDistance)
     {
         let mapJson = room.roomWorld.mapJson;
         let area = {
@@ -82,19 +86,18 @@ class RoomPlayerPlacement
         for(let column = area.column - radius; column <= area.column + radius; column++){
             RoomPlayerPlacement.appendRowCandidates(candidates, area, column);
         }
-        candidates.sort(
+        let closest = [...candidates.filter(candidate => candidate.distance >= minimumTilesDistance).sort(
             (candidateA, candidateB) => candidateA.distance - candidateB.distance
                 || candidateA.row - candidateB.row
                 || candidateA.column - candidateB.column
-        );
-        let closest = [...candidates].shift();
+        )].shift();
         if(!closest){
             return false;
         }
         return closest.position;
     }
 
-    static placePlayerNextToObject(room, playerName, objectKey, sessionId)
+    static fetchPlacementSubjects(room, playerName, objectKey, sessionId)
     {
         let playerSchema = RoomObjectsState.findPlayer(room, playerName, sessionId);
         if(!playerSchema){
@@ -105,14 +108,11 @@ class RoomPlayerPlacement
             return {error: 'Object '+objectKey+' not found in room '+room.roomName+'.'};
         }
         RoomObjectsState.stopRandomMovement(roomObject);
-        let position = RoomPlayerPlacement.findClosestFreePosition(
-            room,
-            roomObject.objectBody,
-            playerSchema.physicalBody
-        );
-        if(!position){
-            return {error: 'No walkable tile next to the object '+objectKey+'.'};
-        }
+        return {playerSchema, roomObject};
+    }
+
+    static placePlayerOnPosition(playerSchema, roomObject, position)
+    {
         playerSchema.physicalBody.resetAuto();
         playerSchema.physicalBody.stopFull();
         RoomObjectsState.placeObjectBody(playerSchema.physicalBody, position);
@@ -122,6 +122,137 @@ class RoomPlayerPlacement
             objectPosition: {x: roomObject.objectBody.position[0], y: roomObject.objectBody.position[1]},
             position
         };
+    }
+
+    static placePlayerNextToObject(room, playerName, objectKey, sessionId, minimumTilesDistance)
+    {
+        let subjects = RoomPlayerPlacement.fetchPlacementSubjects(room, playerName, objectKey, sessionId);
+        if(subjects.error){
+            return subjects;
+        }
+        let position = RoomPlayerPlacement.findClosestFreePosition(
+            room,
+            subjects.roomObject.objectBody,
+            subjects.playerSchema.physicalBody,
+            minimumTilesDistance
+        );
+        if(!position){
+            return {error: 'No walkable tile next to the object '+objectKey+'.'};
+        }
+        return RoomPlayerPlacement.placePlayerOnPosition(subjects.playerSchema, subjects.roomObject, position);
+    }
+
+    static tileBounds(room, tile)
+    {
+        let mapJson = room.roomWorld.mapJson;
+        return {
+            left: tile[0] * mapJson.tilewidth,
+            right: (tile[0] + 1) * mapJson.tilewidth,
+            top: tile[1] * mapJson.tileheight,
+            bottom: (tile[1] + 1) * mapJson.tileheight
+        };
+    }
+
+    static shotStartBounds(room, tile)
+    {
+        let tileBounds = RoomPlayerPlacement.tileBounds(room, tile);
+        return {
+            ...tileBounds,
+            left: tileBounds.left - room.roomWorld.mapJson.tilewidth,
+            top: tileBounds.top - room.roomWorld.mapJson.tileheight
+        };
+    }
+
+    static isLineWalkable(grid, fromTile, direction, distance)
+    {
+        for(let step = 1; step <= distance; step++){
+            let column = fromTile[0] + direction[0] * step;
+            let row = fromTile[1] + direction[1] * step;
+            if(!grid.isInside(column, row) || !grid.isWalkableAt(column, row)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static findLineTile(room, line, direction, distance)
+    {
+        if(!RoomPlayerPlacement.isLineWalkable(room.roomWorld.pathFinder.grid, line.fromTile, direction, distance)){
+            return false;
+        }
+        let tile = [line.fromTile[0] + direction[0] * distance, line.fromTile[1] + direction[1] * distance];
+        let tileBounds = RoomPlayerPlacement.tileBounds(room, tile);
+        let lineBounds = {
+            left: Math.min(line.startBounds.left, tileBounds.left),
+            right: Math.max(line.startBounds.right, tileBounds.right),
+            top: Math.min(line.startBounds.top, tileBounds.top),
+            bottom: Math.max(line.startBounds.bottom, tileBounds.bottom)
+        };
+        if(RoomObjectsState.isRectOverBodies(lineBounds, line.bodiesBounds)){
+            return false;
+        }
+        return tile;
+    }
+
+    static findClearLineTile(
+        room,
+        fromTile,
+        startBounds,
+        distances,
+        ignoredBodies,
+        directions = RoomPlayerPlacement.LINE_DIRECTIONS
+    ){
+        let line = {
+            fromTile,
+            startBounds,
+            directions,
+            bodiesBounds: room.roomWorld.bodies.filter(body => !ignoredBodies.includes(body)).map(body => body.getAABB())
+        };
+        for(let distance of distances){
+            let tile = RoomPlayerPlacement.findDistanceTile(room, line, distance);
+            if(tile){
+                return tile;
+            }
+        }
+        return false;
+    }
+
+    static findDistanceTile(room, line, distance)
+    {
+        for(let direction of line.directions){
+            let tile = RoomPlayerPlacement.findLineTile(room, line, direction, distance);
+            if(tile){
+                return tile;
+            }
+        }
+        return false;
+    }
+
+    static fetchPlayerWalkTile(room, playerName, distances)
+    {
+        let playerSchema = RoomObjectsState.findPlayerByName(room, playerName);
+        if(!playerSchema){
+            return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
+        }
+        let playerBody = playerSchema.physicalBody;
+        let playerTile = playerBody.positionToTiles(playerBody.position[0], playerBody.position[1]);
+        let playerBounds = playerBody.getAABB();
+        let tile = RoomPlayerPlacement.findClearLineTile(
+            room,
+            [playerTile.currentCol, playerTile.currentRow],
+            {
+                left: playerBounds.lowerBound[0],
+                right: playerBounds.upperBound[0],
+                top: playerBounds.lowerBound[1],
+                bottom: playerBounds.upperBound[1]
+            },
+            distances,
+            [playerBody]
+        );
+        if(!tile){
+            return {error: 'No clear line of tiles from the player '+playerName+' in room '+room.roomName+'.'};
+        }
+        return {tile};
     }
 
     static findObjectWithBody(room, objectKey)
@@ -146,8 +277,16 @@ class RoomPlayerPlacement
                     room,
                     sc.get(request.body, 'playerName', ''),
                     sc.get(request.body, 'objectKey', ''),
-                    String(sc.get(request.body, 'sessionId', ''))
+                    String(sc.get(request.body, 'sessionId', '')),
+                    Number(sc.get(request.body, 'minimumTilesDistance', 0))
                 )
+            );
+        });
+        RoomMovementState.registerQueryEndpoint(serverManager, '/api/e2e/movement/clear-line-tile', (room, query) => {
+            return RoomPlayerPlacement.fetchPlayerWalkTile(
+                room,
+                sc.get(query, 'playerName', ''),
+                String(sc.get(query, 'distances', '')).split(',').map(Number)
             );
         });
         Logger.info('[room-player-placement] Player placement endpoints registered.');

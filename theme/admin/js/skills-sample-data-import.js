@@ -46,22 +46,27 @@ class SkillsSampleDataImport
                 'cast': {'img': '_cast','end': 3,'repeat': -1,'destroyTime': 2000,'depthByPlayer': 'above'},
                 'hit': {'img': '_hit','end': 4,'repeat': 0,'depthByPlayer': 'above'}
             },
-            'attack': {
-                'affectedProperty': 'stats/hp',
-                'allowEffectBelowZero': 0,
-                'applyDirectDamage': 0,
-                'attackProperties': 'stats/atk,stats/stamina,stats/speed',
-                'defenseProperties': 'stats/def,stats/stamina,stats/speed',
-                'aimProperties': 'stats/aim',
-                'dodgeProperties': 'stats/dodge',
-                'dodgeFullEnabled': 0,
-                'dodgeOverAimSuccess': 1,
-                'damageAffected': 0,
-                'criticalAffected': 0
-            },
+            'attack': this.buildAttackDefaults(),
             'physicalData': {'magnitude': 0,'objectWidth': 0,'objectHeight': 0,'validateTargetOnHit': 0},
             'targetEffects': {'minValue': 0,'maxValue': 0,'minProperty': null,'maxProperty': null},
             'ownerEffects': {'minValue': 0,'maxValue': 0,'minProperty': null,'maxProperty': null}
+        };
+    }
+
+    buildAttackDefaults()
+    {
+        return {
+            'affectedProperty': 'stats/hp',
+            'allowEffectBelowZero': 0,
+            'applyDirectDamage': 0,
+            'attackProperties': 'stats/atk,stats/stamina,stats/speed',
+            'defenseProperties': 'stats/def,stats/stamina,stats/speed',
+            'aimProperties': 'stats/aim',
+            'dodgeProperties': 'stats/dodge',
+            'dodgeFullEnabled': 0,
+            'dodgeOverAimSuccess': 1,
+            'damageAffected': 0,
+            'criticalAffected': 0
         };
     }
 
@@ -77,8 +82,14 @@ class SkillsSampleDataImport
             'throwRock': {
                 'classPathLevelRelations': {'all': '2'},
                 'objectsRelations': {'enemy_1': 'player','enemy_2': 'player'},
-                'properties': {'skillDelay': 2000,'range': 250,'criticalChance': 10,'criticalMultiplier': 2},
-                'typeData': {'key': 'physical_attack','properties': {'hitDamage': 5}},
+                'properties': {
+                    'skillDelay': 2000,
+                    'range': 250,
+                    'criticalChance': 10,
+                    'criticalMultiplier': 2,
+                    'attack': Object.assign(this.buildAttackDefaults(), {'hitDamage': 5})
+                },
+                'typeData': {'key': 'physical_attack'},
                 'physicalData': {'magnitude': 350,'objectWidth': 5,'objectHeight': 5}
             },
             'heal': {

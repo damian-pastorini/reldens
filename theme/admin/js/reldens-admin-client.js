@@ -41,6 +41,9 @@ class AdminClient
             mapJsonMissingTileset: 'Map could not be imported, the map JSON declares no tileset.',
             mapJsonMissingTilesetImage: 'Map could not be imported, the map JSON tileset declares no image.',
             mapTilesetImageNotFound: 'Map could not be imported, the tileset image file was not found.',
+            mapInvalidFileName: 'Map could not be imported, the map name must be a file name without folders.',
+            mapTilesetImageInvalidFileName: 'Map could not be imported, the tileset image must be a file name without '
+                +'folders.',
             copyMapFilesError: 'Map could not be imported, the map files could not be copied.',
             mergeMapFilesError: 'Map could not be imported, the merged map file could not be written.',
             mapSaveError: 'Map could not be imported, the room record could not be saved.',
@@ -50,6 +53,8 @@ class AdminClient
             mapsWizardMissingElementsFilesError: 'Maps could not be generated, the layer elements files or the '
                 +'tile sheet image were not found in the session folder and no sample could be resolved from '
                 +'the installed packages.',
+            mapsWizardInvalidFileNameError: 'Maps could not be generated, the map, tile sheet, composite and layer '
+                +'elements names must be file names without folders.',
             mapJsonNotFound: 'Map could not be imported, the generated map JSON file was not found.',
             mapJsonEmpty: 'Map could not be imported, the generated map JSON file is empty.',
             mapJsonNotLoaded: 'Map could not be imported, the generated map JSON could not be loaded.',

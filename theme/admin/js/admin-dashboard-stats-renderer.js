@@ -165,9 +165,10 @@ class AdminDashboardStatsRenderer
     {
         context.textAlign = 'right';
         context.textBaseline = 'middle';
-        for(let i = 0; i <= this.yTicksCount; i++){
-            let tickValue = Math.round(maxCount * i / this.yTicksCount);
-            let tickY = area.y + area.height - (area.height * i / this.yTicksCount);
+        let tickValues = this.fetchYTickValues(maxCount);
+        let ticksCount = tickValues.length - 1;
+        for(let i = 0; i <= ticksCount; i++){
+            let tickY = area.y + area.height - (area.height * i / ticksCount);
             context.strokeStyle = gridColor;
             context.lineWidth = 1;
             context.beginPath();
@@ -175,8 +176,18 @@ class AdminDashboardStatsRenderer
             context.lineTo(area.x + area.width, tickY);
             context.stroke();
             context.fillStyle = mutedInkColor;
-            context.fillText(String(tickValue), area.x - 6, tickY);
+            context.fillText(String(tickValues[i]), area.x - 6, tickY);
         }
+    }
+
+    fetchYTickValues(maxCount)
+    {
+        let ticksCount = Math.min(this.yTicksCount, maxCount);
+        let tickValues = [];
+        for(let i = 0; i <= ticksCount; i++){
+            tickValues.push(Math.round(maxCount * i / ticksCount));
+        }
+        return tickValues;
     }
 
     drawBars(context, area, maxCount, barColor)

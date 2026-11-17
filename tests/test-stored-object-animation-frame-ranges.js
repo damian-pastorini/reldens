@@ -13,6 +13,12 @@ const { sc } = require('@reldens/utils');
 class TestStoredObjectAnimationFrameRanges extends BaseTest
 {
 
+    constructor(config)
+    {
+        super(config);
+        this.isIntegration = true;
+    }
+
     async testStoredAnimationsKeepTheirFramesWhenTheObjectFramesStartLater()
     {
         await this.test('the stored object animations keep their frames when the object frames start after them', async () => {

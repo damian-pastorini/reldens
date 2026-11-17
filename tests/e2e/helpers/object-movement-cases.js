@@ -5,7 +5,8 @@
  * Runs one movement case of the e2eNpcKey object (its random movement is paused by the spec) and reports its failure
  * with the server trail: the one tile path to a neighbor tile (the case where the path finder retry receives a single
  * step path), the move to a tile with the movement area grid, the move back to the original tile, the walk back of a
- * body placed outside its area and the path that runs into the player standing on it.
+ * body placed outside its area and the path that runs into the player standing on it (a callback runs once the player
+ * stands on the path tile, before the object starts its path).
  *
  */
 
@@ -136,12 +137,13 @@ class ObjectMovementCases
         return movement.done ? {skipped: false, failure: false} : {skipped: true, last: movement.last};
     }
 
-    static async runPathIntoPlayerCase(page, context, setup, lineCase)
+    static async runPathIntoPlayerCase(page, context, setup, lineCase, beforeObjectPath)
     {
         let toPlayerTile = await MovementScenario.movePlayer(page, context, lineCase.start, context.navTimeout);
         if(!toPlayerTile.done){
             return {skipped: true};
         }
+        await beforeObjectPath();
         await ObjectMovementCases.startPathFromOrigin(context, setup, [lineCase.start, lineCase.target], true);
         await RoomMovementApi.switchRandomMovement(context.gameConfig, context.roomName, context.npcKey, true);
         let movement = await RoomMovementApi.collectTrail(

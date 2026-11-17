@@ -269,7 +269,8 @@ module.exports.entitiesTranslations = {
             'item_id': 'Item ID',
             'qty': 'Qty',
             'remaining_uses': 'Remaining Uses',
-            'is_active': 'Is Active'
+            'is_active': 'Is Active',
+            'customData': 'CustomData'
         },
         'items_item': {
             'id': 'ID',

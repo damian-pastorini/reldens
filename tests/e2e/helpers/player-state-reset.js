@@ -6,9 +6,14 @@
  * e2e tests to ensure isolation. Every reset belongs to one parallel spec group (ParallelSpecGroups) and only touches
  * that group: it first waits until no scene room holds a player of the group (the closed page of the previous test
  * makes its session leave, and the room leave saves the player and then removes it, so its pending save never
- * overwrites the restored state and its body never stays in a room the next test uses), then the group players are
- * reset to full HP, placed on the default return point of the group start room, and have all equipped items
- * unequipped, and the enemies and the random movement are restored only in the group rooms.
+ * overwrites the restored state and its body never stays in a room the next test uses; a session still there after the
+ * wait, left by a room leave that failed, is removed with its team and its active player entry), the teams owned by the
+ * group players (a team left with no players), the team invites they sent and their team records of a scene change are
+ * cleared (the teams plugin keeps them over a new login), then the group players are
+ * reset to full HP, placed on the default return point of the group start room, have all equipped items unequipped
+ * and their scores and score details back to the rows captured on the setup (a kill of an earlier test never leaves a
+ * score row the next test does not expect), the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
+ * enemies and the random movement are restored and the drops left by the tests removed only in the group rooms.
  *
  */
 
@@ -16,14 +21,18 @@ const { setTimeout: waitMs } = require('timers/promises');
 const { Logger, sc } = require('@reldens/utils');
 const { TestDataSetup } = require('./test-data-setup');
 const { RoomEnemiesReset } = require('./room-enemies-reset');
+const { DropsProbe } = require('./drops-probe');
 const { RoomMovementState } = require('./room-movement-state');
+const { LiveObjectsOverrides } = require('./live-objects-overrides');
 const { SecurityState } = require('./security-state');
+const { E2eSeedAndRestoreEndpoints } = require('./e2e-seed-and-restore-endpoints');
 const { ParallelSpecGroups } = require('./parallel-spec-groups');
 
 class PlayerStateReset
 {
     static LEAVE_CHECKS = 100;
     static LEAVE_CHECK_MS = 100;
+    static SCORES_ENTITIES = ['scores', 'scoresDetail'];
 
     static async captureSnapshots(dataServer, config)
     {
@@ -47,6 +56,7 @@ class PlayerStateReset
                 stats,
                 state,
                 inventoryItems: inventoryItems || [],
+                scoresRows: await PlayerStateReset.loadScoresRows(dataServer, playerId),
                 userId: user.id,
                 username: testUser.username,
                 playerName: matched.name
@@ -82,6 +92,39 @@ class PlayerStateReset
         }
     }
 
+    static async loadScoresRows(dataServer, playerId)
+    {
+        let scoresRows = {};
+        for(let entityKey of PlayerStateReset.SCORES_ENTITIES){
+            scoresRows[entityKey] = await dataServer.getEntity(entityKey).loadBy('player_id', playerId) || [];
+        }
+        return scoresRows;
+    }
+
+    static async restorePlayerScores(dataServer, playerId, scoresRows)
+    {
+        for(let entityKey of PlayerStateReset.SCORES_ENTITIES){
+            await PlayerStateReset.restorePlayerRows(
+                dataServer.getEntity(entityKey),
+                playerId,
+                sc.get(scoresRows, entityKey, [])
+            );
+        }
+    }
+
+    static async restorePlayerRows(repository, playerId, snapshotRows)
+    {
+        let snapshotIds = snapshotRows.map(row => String(row.id));
+        for(let currentRow of await repository.loadBy('player_id', playerId) || []){
+            if(!snapshotIds.includes(String(currentRow.id))){
+                await repository.deleteById(currentRow.id);
+            }
+        }
+        for(let snapshotRow of snapshotRows){
+            await repository.updateById(snapshotRow.id, TestDataSetup.copyRow(snapshotRow, {}));
+        }
+    }
+
     static async clearRewardsState(dataServer, playerId)
     {
         try {
@@ -108,7 +151,7 @@ class PlayerStateReset
     {
         try {
             let usersLoginRepo = dataServer.getEntity('usersLogin');
-            await usersLoginRepo.create({ 'user_id': userId, 'login_date': new Date() });
+            await usersLoginRepo.create({ 'user_id': userId, 'login_date': sc.getCurrentDate() });
             Logger.info('[player-state-reset] Added users_login row for user '+userId);
         } catch(error){
             Logger.warning('[player-state-reset] Could not add users_login for user '+userId+': '+error.message);
@@ -162,6 +205,7 @@ class PlayerStateReset
             let snap = snapshots[playerId];
             await PlayerStateReset.restorePlayerStats(dataServer, snap.stats);
             await PlayerStateReset.restorePlayerInventory(dataServer, playerId, snap.inventoryItems || []);
+            await PlayerStateReset.restorePlayerScores(dataServer, playerId, snap.scoresRows);
             await PlayerStateReset.clearRewardsState(dataServer, playerId);
             if(snap.userId){
                 await PlayerStateReset.ensureTodayLogin(dataServer, snap.userId);
@@ -179,7 +223,7 @@ class PlayerStateReset
         let sessions = [];
         for(let instanceId of Object.keys(createdInstances)){
             let room = createdInstances[instanceId];
-            if(!sc.isFunction(room.disconnectBySessionId)){
+            if(!room.state?.players){
                 continue;
             }
             PlayerStateReset.appendRoomTestSessions(sessions, room, playerNames);
@@ -210,6 +254,33 @@ class PlayerStateReset
         return false;
     }
 
+    static removeStaleSessions(serverManager, snapshots)
+    {
+        let playerNames = Object.keys(snapshots).map(playerId => snapshots[playerId].playerName);
+        let teams = sc.get(serverManager.featuresManager.featuresList?.teams?.package, 'teams', {});
+        for(let staleSession of PlayerStateReset.findTestPlayersSessions(serverManager.roomsManager.createdInstances, playerNames)){
+            let room = staleSession.room;
+            let playerSchema = room.state.players.get(staleSession.sessionId);
+            Logger.warning('[player-state-reset] Removing the session of '+playerSchema.playerName+' left by a failed room leave.');
+            delete teams[playerSchema.currentTeam];
+            room.removeAllPlayerReferences(playerSchema, staleSession.sessionId);
+            room.loginManager.activePlayers.removeByRoomAndSessionId(staleSession.sessionId, room.roomId);
+        }
+    }
+
+    static clearTeamsPlayersState(serverManager, snapshots)
+    {
+        let teamsPlugin = sc.get(serverManager.featuresManager.featuresList?.teams, 'package', {});
+        let teams = sc.get(teamsPlugin, 'teams', {});
+        let teamPendingInvites = sc.get(teamsPlugin, 'teamPendingInvites', {});
+        let teamChangingRoomPlayers = sc.get(teamsPlugin, 'teamChangingRoomPlayers', {});
+        for(let playerId of Object.keys(snapshots)){
+            delete teams[playerId];
+            delete teamPendingInvites[playerId];
+            delete teamChangingRoomPlayers[playerId];
+        }
+    }
+
     static async registerResetEndpoint(serverManager, snapshots, config)
     {
         let startPoints = await PlayerStateReset.fetchGroupsStartPoints(serverManager.dataServer);
@@ -224,7 +295,11 @@ class PlayerStateReset
                     serverManager.roomsManager.createdInstances,
                     groupSnapshots
                 );
+                PlayerStateReset.removeStaleSessions(serverManager, groupSnapshots);
+                PlayerStateReset.clearTeamsPlayersState(serverManager, groupSnapshots);
                 await SecurityState.resetAll(serverManager);
+                LiveObjectsOverrides.restoreGroup(groupKey);
+                await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
                 await PlayerStateReset.restoreSnapshots(
                     serverManager.dataServer,
                     groupSnapshots,
@@ -232,6 +307,7 @@ class PlayerStateReset
                 );
                 await TestDataSetup.ensureRequiredItems(serverManager.dataServer, config, groupUsers);
                 await RoomEnemiesReset.restoreAll(serverManager.roomsManager, roomsNames);
+                DropsProbe.clearRoomsDrops(serverManager.roomsManager, roomsNames);
                 RoomMovementState.restoreRandomMovement(serverManager.roomsManager, roomsNames);
                 response.json({ ok: true });
             } catch(error){

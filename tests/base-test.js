@@ -30,6 +30,7 @@ class BaseTest
         this.hostname = parsedUrl.hostname;
         this.port = parsedUrl.port || ('https:' === parsedUrl.protocol ? 443 : 80);
         this.isHttps = 'https:' === parsedUrl.protocol;
+        this.isIntegration = false;
     }
 
     async test(name, fn)

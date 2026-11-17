@@ -5,9 +5,11 @@
  * Tests the player movement on the real town tiles read from the server path finder grid: the pointer moves to
  * walkable tiles in every direction and distance, the pointer moves to walls, change points and the other blocked
  * tiles, the pointer moves across a blocked tile that must go around it, the direction movement against a wall, the
- * direction input that cancels a pointer path, the pointer path that runs into an object body and two players that
+ * direction input of every arrow key that cancels a pointer path, the pointer move with a direction key held that runs
+ * its path to the target (the held key is not sent again), the pointer path that runs into an object body and two players that
  * walk into each other. Every case asserts the server player body: the tile it ends on, the path it follows, its
- * velocity and every tile it crossed.
+ * velocity and every tile it crossed; the players collision also asserts that the acting, the pushed and an unrelated
+ * observer client show both player sprites on their server positions once the bodies stand still.
  *
  */
 
@@ -19,7 +21,12 @@ const { PlayerMovementCases } = require('./helpers/player-movement-cases');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
+const { DeathObserverSteps } = require('./helpers/death-observer-steps');
+const { WalkObserverSetup } = require('./helpers/walk-observer-setup');
+const { SceneSpritesRecorder } = require('./helpers/scene-sprites-recorder');
 const { TimeConstants } = require('./helpers/time-constants');
+const { GameConst } = require('../../lib/game/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -27,10 +34,12 @@ class TestPlayerPathfindingCollisions
 {
 
     static CANCEL_WALK_MS = 300;
+    static OTHER_CANCEL_KEYS = ['ArrowUp', 'ArrowLeft', 'ArrowRight'];
     static MAX_CASE_ATTEMPTS = 6;
     static REQUIRED_CASES = 2;
     static BLOCKED_TARGETS_PER_KIND = 2;
     static MIN_PLAYERS_DISTANCE = 20;
+    static SPRITE_ROUNDING_PIXELS = 1;
     static CANCEL_TARGET_OFFSET = [6, 0];
     static POINTER_CASES = [
         {name: 'three tiles right', offset: [3, 0]},
@@ -130,13 +139,41 @@ class TestPlayerPathfindingCollisions
         expect(results.failures, 'Walking against a wall must stop the player before the wall tile').toEqual([]);
     }
 
-    static async runDirectionCancelsPathTest(page, screenshots, gameConfig, longRun)
+    static findCancelTarget(context)
     {
-        let context = await TestPlayerPathfindingCollisions.startTest(page, gameConfig, longRun);
         let offset = TestPlayerPathfindingCollisions.CANCEL_TARGET_OFFSET;
         let target = WalkableTileLocator.findWalkableNearOffset(context.tiles, context.from, offset)
             || WalkableTileLocator.findWalkableNearOffset(context.tiles, context.from, [-offset[0], -offset[1]]);
         expect(target, 'The town must have a walkable tile six tiles away from the player').toBeTruthy();
+        return target;
+    }
+
+    static async runKeyHeldPointerTest(page, screenshots, gameConfig, longRun)
+    {
+        let context = await TestPlayerPathfindingCollisions.startTest(page, gameConfig, longRun);
+        let target = TestPlayerPathfindingCollisions.findCancelTarget(context);
+        let point = WalkableTileLocator.worldPoint(target);
+        await page.keyboard.down('ArrowDown');
+        await page.waitForFunction(
+            (keyState) => keyState.pressed === window.reldens.getCurrentPlayer().lastKeyState[keyState.direction],
+            {pressed: GameConst.KEY_STATES.PRESSED, direction: GameConst.DOWN},
+            {timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
+        );
+        await Navigation.pointToWorldPoint(page, point.x, point.y);
+        let movement = await RoomMovementApi.collectTrail(
+            context.fetchPlayer,
+            (player) => context.isStill(player) && target[0] === player.currentCol && target[1] === player.currentRow,
+            context.navTimeout
+        );
+        await page.keyboard.up('ArrowDown');
+        await screenshots.capture(page, 'key-held-pointer-path');
+        expect(movement.done, 'The path reaches its target with the key held: '+sc.toJsonString(movement.last)).toBe(true);
+    }
+
+    static async runDirectionCancelsPathTest(page, screenshots, gameConfig, longRun, directionKey)
+    {
+        let context = await TestPlayerPathfindingCollisions.startTest(page, gameConfig, longRun);
+        let target = TestPlayerPathfindingCollisions.findCancelTarget(context);
         let point = WalkableTileLocator.worldPoint(target);
         await Navigation.moveToWorldPoint(page, point.x, point.y);
         let started = await RoomMovementApi.collectTrail(
@@ -145,9 +182,9 @@ class TestPlayerPathfindingCollisions
             MovementScenario.SETTLE_MS
         );
         expect(started.done, 'The pointer move must start a path').toBe(true);
-        await Navigation.walkInDirection(page, 'ArrowDown', TestPlayerPathfindingCollisions.CANCEL_WALK_MS);
+        await Navigation.walkInDirection(page, directionKey, TestPlayerPathfindingCollisions.CANCEL_WALK_MS);
         let stopped = await RoomMovementApi.collectTrail(context.fetchPlayer, context.isStill, context.navTimeout);
-        await screenshots.capture(page, 'direction-cancels-path');
+        await screenshots.capture(page, 'direction-'+directionKey+'-cancels-path');
         expect(stopped.done, 'The player must stand still after the direction input and the stop').toBe(true);
         expect(stopped.last.pathSteps, 'The direction input must drop the pointer path').toBe(0);
         expect(
@@ -222,6 +259,12 @@ class TestPlayerPathfindingCollisions
             first: await context.fetchPlayer(),
             second: await RoomMovementApi.fetchPlayer(gameConfig, context.roomName, secondPlayerName)
         });
+        let observerClient = await Login.openClientPage(page, gameConfig);
+        await Login.loginRootPlayer(observerClient.clientPage, gameConfig, longRun, '', false, context.roomName);
+        await WalkObserverSetup.placeObserverNextToNpc(
+            {gameConfig, longRun},
+            {page: observerClient.clientPage, playerName: gameConfig.e2ePlayerName}
+        );
         let before = await fetchPlayers();
         let deltaX = before.second.x - before.first.x;
         let deltaY = before.second.y - before.first.y;
@@ -245,6 +288,20 @@ class TestPlayerPathfindingCollisions
             Math.sign(deltaAfter),
             'The walking player must not pass through the other player'
         ).toBe(Math.sign(isHorizontal ? deltaX : deltaY));
+        let sessionIds = [
+            await DeathObserverSteps.fetchSessionId(page),
+            await DeathObserverSteps.fetchSessionId(secondPage)
+        ];
+        let clients = {acting: page, pushed: secondPage, observer: observerClient.clientPage};
+        let serverDelta = [after.second.x - after.first.x, after.second.y - after.first.y];
+        for(let clientKey of Object.keys(clients)){
+            await expect.poll(
+                async () => await SceneSpritesRecorder.fetchPlayersDeltaOffset(clients[clientKey], sessionIds, serverDelta),
+                {message: 'The '+clientKey+' client shows both players on their server positions', timeout: context.navTimeout}
+            ).toBeLessThanOrEqual(TestPlayerPathfindingCollisions.SPRITE_ROUNDING_PIXELS);
+        }
+        await screenshots.capture(observerClient.clientPage, 'players-collision-observer');
+        await observerClient.clientContext.close();
     }
 
     static run()
@@ -263,8 +320,16 @@ class TestPlayerPathfindingCollisions
                 await TestPlayerPathfindingCollisions.runWallApproachTest(page, screenshots, gameConfig, longRun);
             });
             test('direction input cancels the pointer path', async ({ page, screenshots, gameConfig, longRun }) => {
-                await TestPlayerPathfindingCollisions.runDirectionCancelsPathTest(page, screenshots, gameConfig, longRun);
+                await TestPlayerPathfindingCollisions.runDirectionCancelsPathTest(page, screenshots, gameConfig, longRun, 'ArrowDown');
             });
+            test('pointer move with a direction key held runs its path to the target', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestPlayerPathfindingCollisions.runKeyHeldPointerTest(page, screenshots, gameConfig, longRun);
+            });
+            for(let directionKey of TestPlayerPathfindingCollisions.OTHER_CANCEL_KEYS){
+                test('direction input '+directionKey+' cancels the pointer path', async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestPlayerPathfindingCollisions.runDirectionCancelsPathTest(page, screenshots, gameConfig, longRun, directionKey);
+                });
+            }
             test('pointer path into an object body never crosses the object or a blocked tile', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestPlayerPathfindingCollisions.runObjectBodyTest(page, screenshots, gameConfig, longRun);
             });

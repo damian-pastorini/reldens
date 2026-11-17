@@ -18,6 +18,7 @@ class TimeConstants
     static PAUSE = 800;
     // Keystroke delay when simulating human typing in longRun (0 when non-longRun)
     static TYPE_DELAY = 150;
+    static SHOWCASE = 2000;
     // UI DOM operations: panel visible after button click (~1s expected + 2s buffer)
     static UI_OPEN = 3000;
     // Server message round-trip: send → process → broadcast → render (~1s + 2s buffer)
@@ -38,7 +39,8 @@ class TimeConstants
     // Enemy kill budget: player HP=81 at 1 HP/sec → 81s + 9s buffer — NOT scaled
     static ENEMY_KILL = 170000;
     static TIMING_OBJECT_COMPLETE = 15000;
-
+    static STEP_READ = 4000;
+    static MAPS_GENERATION = 30000;
 
     static forLongRun(value, longRun)
     {

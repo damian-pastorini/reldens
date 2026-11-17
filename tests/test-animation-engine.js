@@ -48,6 +48,45 @@ class TestAnimationEngine extends BaseTest
         });
     }
 
+    async testAnimationWithOnlyStartOrEndUsesTheObjectFrameForTheOther()
+    {
+        await this.test('an animation with only its start or only its end uses the object frame for the other one', async () => {
+            let createdAnimations = ObjectAnimationsBuilder.build(this.enemyProps, {startOnly: {start: 3}, endOnly: {end: 5}});
+            this.assert.deepStrictEqual(
+                [createdAnimations.startOnly.frames, createdAnimations.endOnly.frames],
+                [{start: 3, end: 26}, {start: 12, end: 5}]
+            );
+        });
+    }
+
+    async testAnimationOwnValuesOrTheObjectValues()
+    {
+        await this.test('an animation uses its own frame rate, repeat and hide on complete or the object ones', async () => {
+            let objectProps = Object.assign({frameRate: 10, repeat: -1}, this.enemyProps);
+            let createdAnimations = ObjectAnimationsBuilder.build(objectProps, {
+                own: {start: 0, end: 2, frameRate: 8, repeat: 0, hideOnComplete: true},
+                inherited: {start: 0, end: 2}
+            });
+            this.assert.deepStrictEqual(
+                ['own', 'inherited'].map(key => [
+                    createdAnimations[key].frameRate,
+                    createdAnimations[key].repeat,
+                    createdAnimations[key].hideOnComplete
+                ]),
+                [[8, 0, true], [10, -1, false]]
+            );
+        });
+    }
+
+    async testNotNumericRepeatRepeatsForever()
+    {
+        await this.test('an object repeat that is not numeric or missing repeats the animations forever', async () => {
+            let textRepeat = ObjectAnimationsBuilder.build(Object.assign({repeat: 'abc'}, this.enemyProps), {walk: {start: 0, end: 2}});
+            let missingRepeat = ObjectAnimationsBuilder.build(this.enemyProps, {walk: {start: 0, end: 2}});
+            this.assert.deepStrictEqual([textRepeat.walk.repeat, missingRepeat.walk.repeat], [-1, -1]);
+        });
+    }
+
 }
 
 module.exports.TestAnimationEngine = TestAnimationEngine;

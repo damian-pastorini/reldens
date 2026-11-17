@@ -185,13 +185,16 @@ class TilesetRowBinder
         }, 100);
     }
 
-    countSelected(items, remaining)
+    countSelected(items, remaining, keptLocked)
     {
         let count = 0;
         for(let item of items){
-            if(item.bulkSelected){
+            if(item.bulkSelected && !item.approved){
                 count++;
                 continue;
+            }
+            if(item.bulkSelected){
+                keptLocked.push(item);
             }
             remaining.push(item);
         }
@@ -203,13 +206,15 @@ class TilesetRowBinder
         let tileset = this.app.state[tilesetIndex];
         let remainingElements = [];
         let remainingSpots = [];
-        let totalCount = this.countSelected(tileset.elements, remainingElements);
-        totalCount += this.countSelected(tileset.spots || [], remainingSpots);
+        let keptLocked = [];
+        let totalCount = this.countSelected(tileset.elements, remainingElements, keptLocked);
+        totalCount += this.countSelected(tileset.spots || [], remainingSpots, keptLocked);
         if(!totalCount){
             return;
         }
         this.app.modals.show(
-            'Delete '+totalCount+' selected item(s)?',
+            'Delete '+totalCount+' selected item(s)?'
+                +(0 < keptLocked.length ? ' '+keptLocked.length+' locked item(s) will be kept.' : ''),
             () => {
                 tileset.elements = remainingElements;
                 tileset.spots = remainingSpots;

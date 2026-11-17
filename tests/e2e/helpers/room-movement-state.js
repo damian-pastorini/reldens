@@ -7,12 +7,15 @@
  * walkable and blocked tiles of the room path finder grid around a tile, and the object body actions the specs need to
  * build each case on the exact tiles they choose: the path set on the body (with or without the random movement area
  * grid), the move to a tile, the move back to the original tile, the placement on a tile that keeps the original tile
- * and the random movement switch, so a scenario is never changed by a random move in the middle of it.
+ * and the random movement switch, so a scenario is never changed by a random move in the middle of it, and the player
+ * placement on the room default return point, so a scenario always starts on the same tile, or on any given position
+ * (like a platform or the air of a gravity room).
  *
  */
 
 const { RoomObjectsState } = require('./room-objects-state');
 const { RoomTileKindsClassifier } = require('./room-tile-kinds-classifier');
+const { RoomsConst } = require('../../../lib/rooms/constants');
 const { Logger, sc } = require('@reldens/utils');
 
 class RoomMovementState
@@ -155,6 +158,31 @@ class RoomMovementState
         });
     }
 
+    static placePlayerAt(room, playerName, sessionId, position)
+    {
+        let playerSchema = RoomObjectsState.findPlayer(room, playerName, sessionId);
+        if(!playerSchema){
+            return {error: 'Player '+playerName+' not found in room '+room.roomName+'.'};
+        }
+        playerSchema.physicalBody.resetAuto();
+        playerSchema.physicalBody.stopFull();
+        RoomObjectsState.placeObjectBody(playerSchema.physicalBody, position);
+        return {position};
+    }
+
+    static placePlayerOnReturnPoint(room, playerName, sessionId)
+    {
+        return RoomMovementState.placePlayerAt(
+            room,
+            playerName,
+            sessionId,
+            [room.roomData.returnPointDefault].map((returnPoint) => ({
+                x: returnPoint[RoomsConst.RETURN_POINT_KEYS.X],
+                y: returnPoint[RoomsConst.RETURN_POINT_KEYS.Y]
+            })).pop()
+        );
+    }
+
     static restoreRandomMovement(roomsManager, roomsNames = false)
     {
         let restoredCount = 0;
@@ -269,6 +297,21 @@ class RoomMovementState
                 true === sc.get(body, 'enabled', false)
             )
         );
+        RoomMovementState.registerActionEndpoint(serverManager, '/api/e2e/movement/player-start', (room, body) => {
+            return RoomMovementState.placePlayerOnReturnPoint(
+                room,
+                sc.get(body, 'playerName', ''),
+                String(sc.get(body, 'sessionId', ''))
+            );
+        });
+        RoomMovementState.registerActionEndpoint(serverManager, '/api/e2e/movement/player-place', (room, body) => {
+            return RoomMovementState.placePlayerAt(
+                room,
+                sc.get(body, 'playerName', ''),
+                String(sc.get(body, 'sessionId', '')),
+                {x: Number(sc.get(body, 'x', 0)), y: Number(sc.get(body, 'y', 0))}
+            );
+        });
         Logger.info('[room-movement-state] Room movement endpoints registered.');
     }
 
