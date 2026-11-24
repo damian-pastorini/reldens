@@ -9,7 +9,12 @@
  * body keep that normalized speed on both axes (the server timers order of the four held directions picks the signs);
  * a pointer move with huge, non numeric or fractional tiles leaves the player on its tile and the
  * room keeps moving it; and a burst of direction messages carrying position and time values moves the body only at
- * the movement speed, never to the sent position.
+ * the movement speed, never to the sent position. A held direction sets its velocity once per world step (ISSUE #456)
+ * and the body damping lowers it during the step, so the velocity read between two steps is the movement speed or up
+ * to one unit under it (the rounded velocity of the snapshot). A player standing still and placed exactly on the
+ * position its sprite is drawn on (the state minus the players size left offset, overridden to 8 for the group, and top
+ * offset) has its sprite moved to the new state minus those offsets (ISSUE #462: the reached check compared the raw
+ * state with the offset sprite and dropped the move).
  *
  */
 
@@ -19,6 +24,8 @@ const { MovementScenario } = require('./helpers/movement-scenario');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
@@ -38,6 +45,8 @@ class TestMovementRules
     static TAMPERED_OFFSET = 5000;
     static QUIET_MS = 1500;
     static WALK_DISTANCES = [4, 3, 2];
+    static LEFT_OFFSET_PATH = 'client/players/size/leftOffset';
+    static LEFT_OFFSET = 8;
 
     static async enterTown(context)
     {
@@ -60,14 +69,6 @@ class TestMovementRules
             walkContext.playerName,
             TimeConstants.SERVER_RESPONSE
         );
-    }
-
-    static async expectVelocity(walkContext, expectedVelocity, message)
-    {
-        await expect.poll(
-            async () => await walkContext.fetchPlayer(),
-            {message, timeout: TimeConstants.SERVER_RESPONSE}
-        ).toEqual(expect.objectContaining({velocityX: expectedVelocity.x, velocityY: expectedVelocity.y}));
     }
 
     static async runDirectionsTest(context)
@@ -94,23 +95,24 @@ class TestMovementRules
         let diagonalSpeed = Math.round(walkContext.movementSpeed * Math.SQRT1_2);
         await MovementScenario.placePlayerOnReturnPoint(context.page, walkContext);
         await RoomMessagesRecorder.sendMessages(context.page, [{dir: GameConst.RIGHT}, {dir: GameConst.DOWN}]);
-        await TestMovementRules.expectVelocity(
-            walkContext,
+        await RoomMovementApi.expectVelocity(
+            walkContext.fetchPlayer,
             {x: diagonalSpeed, y: diagonalSpeed},
-            'Two directions at once move diagonally at the normalized movement speed'
+            'Two directions at once move diagonally at the normalized movement speed',
+            TimeConstants.SERVER_RESPONSE
         );
         await TestMovementRules.stopAndWaitStill(context, walkContext);
         await MovementScenario.placePlayerOnReturnPoint(context.page, walkContext);
         await RoomMessagesRecorder.sendMessages(context.page, TestMovementRules.DIRECTIONS.map((direction) => ({
             dir: direction.dir
         })));
-        await expect.poll(
-            async () => [await walkContext.fetchPlayer()].map((player) => [
-                Math.abs(player.velocityX),
-                Math.abs(player.velocityY)
-            ]).pop(),
-            {message: 'Four directions at once keep the normalized movement speed', timeout: TimeConstants.SERVER_RESPONSE}
-        ).toEqual([diagonalSpeed, diagonalSpeed]);
+        await RoomMovementApi.expectVelocity(
+            walkContext.fetchPlayer,
+            {x: diagonalSpeed, y: diagonalSpeed},
+            'Four directions at once keep the normalized movement speed',
+            TimeConstants.SERVER_RESPONSE,
+            true
+        );
         await TestMovementRules.stopAndWaitStill(context, walkContext);
     }
 
@@ -147,14 +149,39 @@ class TestMovementRules
             {length: TestMovementRules.BURST_MESSAGES},
             () => ({dir: GameConst.RIGHT, x: start.x + offset, y: start.y + offset, time: 0})
         ));
-        await TestMovementRules.expectVelocity(
-            walkContext,
+        await RoomMovementApi.expectVelocity(
+            walkContext.fetchPlayer,
             {x: walkContext.movementSpeed, y: 0},
-            'A burst of direction messages moves the body only at the movement speed'
+            'A burst of direction messages moves the body only at the movement speed',
+            TimeConstants.SERVER_RESPONSE
         );
         let end = await TestMovementRules.stopAndWaitStill(context, walkContext);
         expect(end.y, 'The sent position does not move the body').toBe(start.y);
         expect(end.x, 'The body never jumps to the sent position').toBeLessThan(start.x + offset);
+    }
+
+    static async runSpriteOffsetPlacementTest(context)
+    {
+        await E2eSeedAndRestoreApi.overrideConfig(
+            context.gameConfig,
+            context.e2eGroup,
+            TestMovementRules.LEFT_OFFSET_PATH,
+            TestMovementRules.LEFT_OFFSET
+        );
+        let walkContext = await TestMovementRules.enterTown(context);
+        let start = (await MovementScenario.placePlayerOnReturnPoint(context.page, walkContext)).position;
+        let offsets = await context.page.evaluate(
+            () => (({leftOff, topOff}) => ({x: leftOff, y: topOff}))(window.reldens.getActiveScene().player)
+        );
+        expect(offsets.x, 'The overridden players left offset reaches the client').toBe(TestMovementRules.LEFT_OFFSET);
+        expect(offsets.y, 'The players top offset').toBeGreaterThan(0);
+        let target = {x: start.x - offsets.x, y: start.y - offsets.y};
+        let placement = await RoomMovementApi.placePlayer(context.gameConfig, Login.TOWN_ROOM_NAME, walkContext.playerName, target);
+        expect(placement.position, 'The player is placed where its resting sprite is drawn').toEqual(target);
+        expect(
+            await RoomObjectsApi.waitForPlayerAtPosition(context.page, target, walkContext.navTimeout),
+            'The sprite moves to the new state minus the size offsets'
+        ).toBe(true);
     }
 
     static run()
@@ -171,6 +198,9 @@ class TestMovementRules
             });
             test('a burst of direction messages with position values moves the body only at the movement speed', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestMovementRules.runTamperedDirectionsTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a player placed on the position its resting sprite is drawn on moves its sprite there', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestMovementRules.runSpriteOffsetPlacementTest({page, gameConfig, e2eGroup, longRun});
             });
         });
     }
