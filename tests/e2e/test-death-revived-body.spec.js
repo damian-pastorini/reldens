@@ -6,9 +6,13 @@
  * configured enemy placed next to the player, every other enemy disabled and the player skills recorded, and that enemy
  * kills the player with a real hit): after the revive the player body is back in the room physics world (so it
  * collides again), the player walks with a tap move two tiles away, and its attack skill hits the enemy again (the
- * attack range check is off for the group). Another player placed next to the player before its death walks with a
- * pointer move onto the dead player tile without colliding (the dead body is out of the world) and, once the player
- * revived in place, the same pointer move collides with it before its tile.
+ * attack range check is off for the group). Another player placed next to the player before its death (the death
+ * position is read once the server holds the player dead, since the enemy attack placement can move the player to a
+ * free tile pair and the enemy contact can push it, and the dead body keeps that position; its tile comes from that
+ * position, since a body out of the world has no map to give its tiles) walks with a pointer move
+ * onto the dead player tile, standing still there without colliding (the dead body is out of the world) and, once the
+ * player revived in place, the same pointer move collides with it on its way (the dead body can stand off its tile
+ * center, so the walk waits for the contact or the walker standing still on the tile, never only its tile entry).
  *
  */
 
@@ -25,6 +29,7 @@ const { GameConst } = require('../../lib/game/constants');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ActionsConst } = require('../../lib/actions/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -82,7 +87,8 @@ class TestDeathRevivedBody
         let walk = await RoomMovementApi.collectTrail(
             async () => RoomMovementApi.fetchPlayer(context.gameConfig, Login.FOREST_ROOM_NAME, walker.playerName),
             (snapshot) => snapshot.contacts.includes(targetContact)
-                || (targetTile[0] === snapshot.currentCol && targetTile[1] === snapshot.currentRow),
+                || (targetTile[0] === snapshot.currentCol && targetTile[1] === snapshot.currentRow
+                    && 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY),
             TimeConstants.SERVER_RESPONSE
         );
         await RoomMovementApi.placePlayer(context.gameConfig, Login.FOREST_ROOM_NAME, walker.playerName, startPosition);
@@ -103,13 +109,19 @@ class TestDeathRevivedBody
             combat.playerName
         );
         expect(placed.position, 'The walker is placed next to the player: '+placed.error).toBeTruthy();
-        let alive = await RoomMovementApi.fetchPlayer(context.gameConfig, Login.FOREST_ROOM_NAME, combat.playerName);
+        await RoomMovementApi.waitForPlayerStill(
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            combat.playerName,
+            TimeConstants.SERVER_RESPONSE
+        );
         await TestCombatDeath.killPlayerWithEnemyAttack(context.page, context.gameConfig, combat.enemyKey, TimeConstants.ENEMY_KILL);
+        let died = await TestCombatDeath.waitForServerDeath(context.gameConfig, Login.FOREST_ROOM_NAME, combat.playerName);
         await RoomObjectsApi.disableEnemies(context.gameConfig, Login.FOREST_ROOM_NAME, true);
         let deadContact = 'player:'+(await context.page.evaluate(() => window.reldens.activeRoomEvents.room.sessionId));
         let dead = await RoomMovementApi.fetchPlayer(context.gameConfig, Login.FOREST_ROOM_NAME, combat.playerName);
-        expect([dead.x, dead.y], 'The dead body stays where the player died').toEqual([alive.x, alive.y]);
-        let deadTile = [alive.currentCol, alive.currentRow];
+        expect([dead.x, dead.y], 'The dead body stays where the player died').toEqual([died.x, died.y]);
+        let deadTile = [Math.floor(dead.x / Navigation.TILE_SIZE), Math.floor(dead.y / Navigation.TILE_SIZE)];
         expect((await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME)).bodyInWorld, 'The dead body is removed')
             .toBe(false);
         let throughDead = await TestDeathRevivedBody.walkIntoTarget(context, walker, placed.position, deadTile, deadContact);
@@ -117,12 +129,15 @@ class TestDeathRevivedBody
             [throughDead.currentCol, throughDead.currentRow, throughDead.contacts.includes(deadContact)],
             'The other player walks onto the dead player tile without colliding'
         ).toEqual([deadTile[0], deadTile[1], false]);
-        expect((await DeathReviveSteps.expectAliveInForest(context)).bodyInWorld, 'The revived body is back').toBe(true);
+        let revived = await DeathReviveSteps.expectAliveInForest(context);
+        expect(revived.bodyInWorld, 'The revived body is back').toBe(true);
         let intoRevived = await TestDeathRevivedBody.walkIntoTarget(context, walker, placed.position, deadTile, deadContact);
         expect(
-            [intoRevived.contacts.includes(deadContact), intoRevived.currentCol+','+intoRevived.currentRow === deadTile.join(',')],
-            'The other player collides with the revived player before its tile'
-        ).toEqual([true, false]);
+            intoRevived.contacts.includes(deadContact),
+            'The other player collides with the revived player on its way to the revived player tile (the death, revive,'
+                +' walker start and walker end positions: '
+                +sc.toJsonString([[died.x, died.y], [revived.x, revived.y], placed.position, [intoRevived.x, intoRevived.y]])+')'
+        ).toBe(true);
     }
 
     static run()
