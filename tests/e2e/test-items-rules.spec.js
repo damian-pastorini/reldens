@@ -6,12 +6,13 @@
  * items seeded and the live items read from the server; ItemsSteps: the live stats, the equipped state and the custom
  * data of an item changed for the group): a room with every action disabled blocks the use and the equip, and a room
  * that only disallows the use act blocks the use while the equip works; an equipped axe is still equipped in its slot
- * after a new login with its modifier applied once; a potion with a use time out stored on the item row is used (a
- * second use inside it is still accepted, ISSUE #154) and a potion with an execution time out is used (with no delay,
- * ISSUE #154); a potion configured to
- * close the inventory on use closes the panel of the player using it while the other player panel stays open (the
- * other clients play the use animation on their own player, ISSUE #156); and an equipment item with no
- * group is listed in the equipment panel out of the group slots.
+ * after a new login with its modifier applied once; a potion with a use time out stored on the item row is used and a
+ * second use inside that time out is refused (ISSUE #154), and a potion with an execution time out is used only once
+ * that time out passed (ISSUE #154); two uses of the last magic potion sent in the same tick add its value once (ISSUE
+ * #143); a potion configured to
+ * close the inventory on use closes the panel of the player using it while the other player panel stays open, and the
+ * other client plays the use animation on the player using the item and not on its own player (ISSUE #156); and an
+ * equipment item with no group is listed in the equipment panel out of the group slots.
  *
  */
 
@@ -36,6 +37,8 @@ class TestItemsRules
     static USE_TIME_OUT_MS = 5000;
     static EXEC_TIME_OUT_MS = 4000;
     static SPEAR = 'spear';
+    static MAGIC_POTION = 'magic_potion_20';
+    static MAGIC_POTION_VALUE = 20;
 
     static async enter(context, playersCount = 1, seededItems = [])
     {
@@ -104,6 +107,10 @@ class TestItemsRules
         let quantity = await TradeSteps.fetchQuantity(context, player, potionKey);
         await TradeSteps.sendItemAction(context, player, InventoryConst.ACTIONS.USE, potionKey);
         await TradeSteps.expectQuantity(context, player, potionKey, quantity - 1, 'The first use runs');
+        await TradeSteps.sendItemAction(context, player, InventoryConst.ACTIONS.USE, potionKey);
+        await player.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        expect(await TradeSteps.fetchQuantity(context, player, potionKey), 'A second use inside the use time out is refused')
+            .toBe(quantity - 1);
     }
 
     static async runExecTimeOutTest(context)
@@ -113,7 +120,31 @@ class TestItemsRules
         let [player] = await TestItemsRules.enter(context);
         let quantity = await TradeSteps.fetchQuantity(context, player, potionKey);
         await TradeSteps.sendItemAction(context, player, InventoryConst.ACTIONS.USE, potionKey);
-        await TradeSteps.expectQuantity(context, player, potionKey, quantity - 1, 'The item with an execution time out is used');
+        await player.page.waitForTimeout(TestItemsRules.EXEC_TIME_OUT_MS / 2);
+        expect(await TradeSteps.fetchQuantity(context, player, potionKey), 'The use waits for its execution time out')
+            .toBe(quantity);
+        await expect.poll(
+            async () => await TradeSteps.fetchQuantity(context, player, potionKey),
+            {
+                message: 'The item is used once its execution time out passed',
+                timeout: TestItemsRules.EXEC_TIME_OUT_MS + TimeConstants.SERVER_RESPONSE
+            }
+        ).toBe(quantity - 1);
+    }
+
+    static async runLastUnitConcurrentUsesTest(context)
+    {
+        let magicPotionKey = TestItemsRules.MAGIC_POTION;
+        let [player] = await TestItemsRules.enter(context, 1, [{playerIndex: 0, itemKey: magicPotionKey, qty: 1}]);
+        let baseMagic = await ItemsSteps.lowerStat(context, player, 'mp');
+        let use = {act: InventoryConst.ACTIONS.USE, 'idx': await TradeSteps.fetchItemId(context, player, magicPotionKey)};
+        await RoomMessagesRecorder.sendMessages(player.page, [use, use]);
+        await TradeSteps.expectQuantity(context, player, magicPotionKey, 0, 'The last unit is used');
+        await player.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        expect(
+            (await ItemsSteps.fetchPlayer(context, player)).stats.mp,
+            'Two uses of the last unit in the same tick add its value once'
+        ).toBe(baseMagic - ItemsSteps.LOST_POINTS + TestItemsRules.MAGIC_POTION_VALUE);
     }
 
     static async runCloseOnUseTest(context)
@@ -133,6 +164,19 @@ class TestItemsRules
         });
         await observer.page.waitForTimeout(TradeSteps.SETTLE_MS);
         await expect(observer.page.locator(Selectors.inventory.ui), 'The other player panel stays open').toBeVisible();
+        await expect.poll(
+            async () => await observer.page.evaluate((animation) => {
+                let players = window.reldens.getActiveScene().player.players;
+                return [animation.actorSessionId, animation.observerSessionId].map(
+                    sessionId => Boolean(players[sessionId]?.moveSprites?.[animation.key])
+                );
+            }, {
+                key: InventoryConst.ANIMATION_KEY_PREFIX+potionKey,
+                actorSessionId: actor.sessionId,
+                observerSessionId: observer.sessionId
+            }),
+            {message: 'The other client plays the use animation on the player using the item', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toEqual([true, false]);
     }
 
     static async runNoGroupEquipmentTest(context)
@@ -164,6 +208,9 @@ class TestItemsRules
             });
             test('item with an execution time out is used', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsRules.runExecTimeOutTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('two uses of the last unit in one tick add its value once', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestItemsRules.runLastUnitConcurrentUsesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('close on use closes the panel of the player using the item and keeps the other panels open', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsRules.runCloseOnUseTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
