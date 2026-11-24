@@ -8,7 +8,8 @@
  * join position before another client logs in is shown by that client on its current server position, added from the
  * players queue the client fills while its engine has not started; a client that logs in while another player walks a
  * long clear line of tiles (no room body crosses it; slowed down for the group until the client sees it moving, so the
- * walk outlasts the login) sees
+ * walk outlasts the login, and that client logs in only once the player walked two tiles away from the town return
+ * point where the other client joins, so the joined body never touches it and stops its path) sees
  * that player moving and stopping on its final server position; a client with an NPC dialog
  * open keeps it open when another player of its room changes scene (only the own scene change closes the dialogs); and a
  * client keeps the sprite of a player crossing a change point still while that player state already holds the next
@@ -26,6 +27,7 @@ const { SceneSpritesRecorder } = require('./helpers/scene-sprites-recorder');
 const { Phaser } = require('./helpers/phaser');
 const { Selectors } = require('./selectors');
 const { Login } = require('./helpers/login');
+const { Navigation } = require('./helpers/navigation');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
 const { sc } = require('@reldens/utils');
@@ -40,6 +42,7 @@ class TestMovementOtherClients
     static LONG_WALK_DISTANCES = [12, 10, 8, 6];
     static NPC_MINIMUM_TILES = 2;
     static SLOW_SPEED = 30;
+    static CLEAR_SPAWN_TILES = 2;
     static READ_SPRITE_POSITION = (sessionId) => [window.reldens.getCurrentPlayer()].map((playerEngine) => ({
         x: Math.round(playerEngine.players[sessionId].x + playerEngine.leftOff),
         y: Math.round(playerEngine.players[sessionId].y + playerEngine.topOff)
@@ -125,11 +128,22 @@ class TestMovementOtherClients
             scenario.mover.playerName
         )).movementSpeed;
         await TestMovementOtherClients.changeMoverSpeed(context, scenario, TestMovementOtherClients.SLOW_SPEED);
+        let start = await scenario.walkContext.fetchPlayer();
         await RoomMessagesRecorder.sendMessage(scenario.mover.page, {
             act: GameConst.POINTER,
             column: targetTile[0],
             row: targetTile[1]
         });
+        let clearSpawnDistance = TestMovementOtherClients.CLEAR_SPAWN_TILES * Navigation.TILE_SIZE;
+        await expect.poll(
+            async () => [await scenario.walkContext.fetchPlayer()].map(
+                (walking) => 0 < walking.pathSteps && clearSpawnDistance <= Math.hypot(walking.x - start.x, walking.y - start.y)
+            ).pop(),
+            {
+                message: 'The player walks away from the return point the other client joins on',
+                timeout: clearSpawnDistance / TestMovementOtherClients.SLOW_SPEED * 1000 + TimeConstants.SERVER_RESPONSE
+            }
+        ).toBe(true);
         await TestMovementOtherClients.loginObserver(context, scenario.mover.sessionId);
         let firstSeen = await context.secondPage.evaluate(
             TestMovementOtherClients.READ_SPRITE_POSITION,
