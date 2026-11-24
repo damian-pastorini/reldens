@@ -3,8 +3,10 @@
  * Reldens - Test Authentication Forms
  *
  * Tests the client behaviour of the login, registration and guest forms: a wrong password followed by the correct one
- * on the same page, the double submit, the empty required fields, the registration errors shown before anything is
- * sent, the terms and conditions box and the loading spinner and body classes of a failed login. The join requests are
+ * on the same page, the double submit of the login, registration and guest forms (one join and one guest account,
+ * ISSUE #13), the empty required fields, the registration errors shown before anything is sent, the terms and
+ * conditions box, the terms link kept hidden when the terms answer has no texts (ISSUE #14) and the loading spinner and
+ * body classes of a failed login. The join requests are
  * counted from the browser matchmake requests, so a form that must send nothing is proved to send nothing.
  *
  */
@@ -15,6 +17,7 @@ const { Navigation } = require('./helpers/navigation');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
+const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -111,6 +114,49 @@ class TestAuthenticationForms
         await screenshots.capture(page, 'double-registration-submit');
     }
 
+    static async runDoubleGuestSubmitTest(page, screenshots, gameConfig, longRun)
+    {
+        let guestFilter = {
+            role_id: Number(await E2eSeedAndRestoreApi.fetchConfigValue(gameConfig, 'server/players/guestUser/roleId'))
+        };
+        let storedGuestIds = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', guestFilter)).map(user => user.id);
+        let joinRequests = TestAuthenticationForms.trackJoinRequests(page);
+        expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
+        await page.locator(Selectors.login.guestForm).evaluate((form) => {
+            form.requestSubmit();
+            form.requestSubmit();
+        });
+        await expect(page.locator(Selectors.characterSelect.newPlayerName)).toBeVisible({
+            timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun)
+        });
+        expect(
+            [
+                joinRequests.length,
+                (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', guestFilter)).filter(
+                    user => !storedGuestIds.includes(user.id)
+                ).length
+            ],
+            'A double submit of the guest form sends one join and creates one guest account'
+        ).toEqual([1, 1]);
+        await screenshots.capture(page, 'double-guest-submit');
+    }
+
+    static async runTermsNotConfiguredTest(page, screenshots)
+    {
+        let routedTermsUrls = [];
+        await page.route('**'+GameConst.ROUTE_PATHS.TERMS_AND_CONDITIONS+'**', async (route) => {
+            routedTermsUrls.push(route.request().url());
+            await route.fulfill({json: {}});
+        });
+        expect(await Navigation.openPageAndWaitForNetworkIdle(page, '/'), 'Page requests must finish').toEqual([]);
+        expect(routedTermsUrls.length, 'The terms request is answered with no texts').toBe(1);
+        await expect(
+            page.locator(GameConst.SELECTORS.TERMS.LINK_CONTAINER),
+            'Without configured terms the link stays hidden'
+        ).toBeHidden();
+        await screenshots.capture(page, 'terms-not-configured-link-hidden');
+    }
+
     static async runEmptyFieldsTest(page, screenshots)
     {
         let joinRequests = TestAuthenticationForms.trackJoinRequests(page);
@@ -204,6 +250,12 @@ class TestAuthenticationForms
             });
             test('double submit of the registration form creates one account', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationForms.runDoubleRegistrationSubmitTest(page, screenshots, gameConfig, longRun);
+            });
+            test('double submit of the guest form sends one join and creates one guest account', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationForms.runDoubleGuestSubmitTest(page, screenshots, gameConfig, longRun);
+            });
+            test('terms link stays hidden when the terms are not configured', async ({ page, screenshots }) => {
+                await TestAuthenticationForms.runTermsNotConfiguredTest(page, screenshots);
             });
             test('empty required fields block the submit', async ({ page, screenshots }) => {
                 await TestAuthenticationForms.runEmptyFieldsTest(page, screenshots);
