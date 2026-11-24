@@ -5,7 +5,9 @@
  * Tests the address allow and deny lists on every entry point: the matchmake request and the socket upgrade of a denied
  * address, the admin panel and the other routes, the allow list over the deny list, the CIDR ranges, the configuration
  * lists and the permanent rows, the malformed entries, the IPv4 mapped clients, the disabled lists, the spoofed
- * forwarding headers, a session denied while playing and a login from an open page once the lists are lifted.
+ * forwarding headers, a session denied while playing, a login from another host of the same server ([::1], ISSUE #457:
+ * the page keeps its game room session, joins its scene through its own host and walks, with no session ended modal)
+ * and a login from an open page once the lists are lifted.
  *
  */
 
@@ -176,6 +178,7 @@ class TestIpListsGuards
 
     static async runDeniedWhilePlayingTest(page, screenshots, gameConfig, longRun)
     {
+        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 2 + TimeConstants.MAP_CROSSING, longRun));
         await TestIpListsGuards.openIpv6Page(page, gameConfig, longRun);
         await Login.loginOnOpenPage(page, gameConfig.e2eUsername, gameConfig.e2ePassword, gameConfig.e2ePlayerName, longRun);
         await MovementScenario.walkBelowTheForestFromReturnPoint(page, gameConfig, gameConfig.e2ePlayerName, longRun);
@@ -186,6 +189,27 @@ class TestIpListsGuards
             timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
         });
         await screenshots.capture(page, 'denied-while-playing');
+    }
+
+    static async runAliasHostSessionTest(page, gameConfig, longRun)
+    {
+        test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 2 + TimeConstants.MAP_CROSSING, longRun));
+        await TestIpListsGuards.openIpv6Page(page, gameConfig, longRun);
+        await Login.loginOnOpenPage(page, gameConfig.e2eUsername, gameConfig.e2ePassword, gameConfig.e2ePlayerName, longRun);
+        await MovementScenario.walkBelowTheForestFromReturnPoint(page, gameConfig, gameConfig.e2ePlayerName, longRun);
+        expect(
+            await page.evaluate(() => ({
+                isGameOver: Boolean(window.reldens.gameOver),
+                isGameRoomOpen: Boolean(window.reldens.gameRoom?.connection?.isOpen),
+                sceneHost: new URL(window.reldens.activeRoomEvents.room.connection.transport.ws.url).host
+            })),
+            'The [::1] page keeps its game room session and joins its scene through its own host'
+        ).toEqual({
+            isGameOver: false,
+            isGameRoomOpen: true,
+            sceneHost: new URL(SecurityApi.hostUrl(gameConfig, GameRoomJoin.IPV6_HOST)).host
+        });
+        await expect(page.locator(Selectors.reloadModal.container), 'No session ended modal is shown').toHaveCount(0);
     }
 
     static async runLoginAfterLiftTest(page, gameConfig, longRun)
@@ -237,6 +261,9 @@ class TestIpListsGuards
             });
             test('address denied while playing keeps the socket and rejects the next scene change', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestIpListsGuards.runDeniedWhilePlayingTest(page, screenshots, gameConfig, longRun);
+            });
+            test('login from another host of the same server keeps one game session and walks in the town', async ({ page, gameConfig, longRun }) => {
+                await TestIpListsGuards.runAliasHostSessionTest(page, gameConfig, longRun);
             });
             test('login from the open page works once the lists are lifted', async ({ page, gameConfig, longRun }) => {
                 await TestIpListsGuards.runLoginAfterLiftTest(page, gameConfig, longRun);
