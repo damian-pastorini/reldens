@@ -6,14 +6,17 @@
  * the enemies line moves the player to the closest free walkable tile (closest distance first, then the lowest row and
  * column, so the same room always gives the same tile, the player tile when it already fits) with a clear straight line
  * to the given direction (RoomPlayerPlacement.findClearLineTile with the bullet start bounds, no other body crosses
- * it), and places the given enemies (their random movement stopped) on that line, one every given tiles step, the
- * first one the closest to the player, and returns the player and the enemies positions; the player placement on the
+ * it), and places the given room objects with a body (enemies or any other object, like a mining rock without stats;
+ * their random movement stopped) on that line, one every given tiles step, the first one the closest to the player,
+ * and returns the player and the objects positions; the player placement on the
  * line of an object moves the object (its random movement stopped) the same way to the closest free tile with a clear
  * line along the right, left, down and up directions at the given distances, and the player on that line; the line
  * start moves the player itself the same way to the closest free tile with a clear line and returns the tile at the end
  * of that line, so a walk from a spot closed by bodies or walls (like a death position) always has room; the wall
- * line places the player and a target player on the two free walkable tiles at both sides of a wall tile
- * (RoomTileKindsClassifier wall tiles), the closest to the player, so a bullet shot at the target ends on that wall.
+ * line places the player 3 tiles before a wall tile (RoomTileKindsClassifier wall tiles, the tiles between free) and a
+ * target player on the free walkable tile behind it, the closest to the player, so a bullet shot at the target flies
+ * before it ends on that wall (a shooter next to the wall spawns the bullet already touching it, removed before any
+ * client update).
  *
  */
 
@@ -22,7 +25,6 @@ const { RoomPlayerPlacement } = require('./room-player-placement');
 const { RoomMovementState } = require('./room-movement-state');
 const { RoomAggressionPlacement } = require('./room-aggression-placement');
 const { RoomTileKindsClassifier } = require('./room-tile-kinds-classifier');
-const { CombatE2eState } = require('./combat-e2e-state');
 const { Logger, sc } = require('@reldens/utils');
 
 class RoomLinePlacement
@@ -30,6 +32,7 @@ class RoomLinePlacement
 
     static LINE_DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     static MAX_START_TILES_RADIUS = 8;
+    static WALL_SHOOTER_TILES = 3;
 
     static fetchTile(body)
     {
@@ -134,9 +137,12 @@ class RoomLinePlacement
     static placeEnemiesOnLine(room, sessionId, bodyKeys, tilesStep, direction)
     {
         let playerSchema = RoomObjectsState.findPlayer(room, '', sessionId);
-        let enemies = bodyKeys.map(bodyKey => CombatE2eState.findEnemy(room, bodyKey).enemyObject);
+        let objectsWithState = RoomObjectsState.fetchObjectsWithState(room);
+        let enemies = bodyKeys.map(
+            bodyKey => objectsWithState.find(roomObject => bodyKey === roomObject.objectBody.bodyState.key)
+        );
         if(!playerSchema || enemies.some(enemyObject => !enemyObject)){
-            return {error: 'Player session '+sessionId+' or one of the enemies not found in '+room.roomName+'.'};
+            return {error: 'Player session '+sessionId+' or one of the objects not found in '+room.roomName+'.'};
         }
         let lineStart = RoomLinePlacement.findLineStart(
             room,
@@ -164,19 +170,24 @@ class RoomLinePlacement
         })};
     }
 
+    static createWallLine(wallTile, direction)
+    {
+        let freeTiles = [[wallTile[0] + direction[0], wallTile[1] + direction[1]]];
+        for(let tilesBefore = 1; tilesBefore <= RoomLinePlacement.WALL_SHOOTER_TILES; tilesBefore++){
+            freeTiles.unshift([wallTile[0] - direction[0] * tilesBefore, wallTile[1] - direction[1] * tilesBefore]);
+        }
+        return {fromTile: freeTiles[0], toTile: freeTiles[freeTiles.length - 1], freeTiles};
+    }
+
     static findWallLine(room, playerTile, bodiesBounds)
     {
         return [...[...RoomTileKindsClassifier.fetchWallTileIndexes(room.roomWorld)].map(tileIndex => [
             tileIndex % room.roomWorld.mapJson.width,
             Math.floor(tileIndex / room.roomWorld.mapJson.width)
         ]).flatMap(
-            wallTile => RoomLinePlacement.LINE_DIRECTIONS.map(direction => ({
-                fromTile: [wallTile[0] - direction[0], wallTile[1] - direction[1]],
-                toTile: [wallTile[0] + direction[0], wallTile[1] + direction[1]]
-            }))
+            wallTile => RoomLinePlacement.LINE_DIRECTIONS.map(direction => RoomLinePlacement.createWallLine(wallTile, direction))
         ).filter(
-            wallLine => RoomAggressionPlacement.isFreeTile(room, ...wallLine.fromTile, bodiesBounds)
-                && RoomAggressionPlacement.isFreeTile(room, ...wallLine.toTile, bodiesBounds)
+            wallLine => wallLine.freeTiles.every(tile => RoomAggressionPlacement.isFreeTile(room, ...tile, bodiesBounds))
         ).sort(
             (lineA, lineB) => Math.hypot(lineA.fromTile[0] - playerTile[0], lineA.fromTile[1] - playerTile[1])
                 - Math.hypot(lineB.fromTile[0] - playerTile[0], lineB.fromTile[1] - playerTile[1])
