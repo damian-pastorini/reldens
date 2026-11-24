@@ -70,7 +70,7 @@ class TestDeathReviveRequests extends BaseTest
                 {
                     use: false,
                     choice: ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.KEEP,
-                    message: Object.assign({}, this.deathBuilder.townMessage, {resurrectionAdEventKey: ''})
+                    message: this.deathBuilder.townMessageWithoutAd
                 }
             ];
             for(let choiceCase of choiceCases){
