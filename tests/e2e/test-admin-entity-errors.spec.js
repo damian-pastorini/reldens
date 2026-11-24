@@ -119,6 +119,8 @@ class TestAdminEntityErrors
         let adminPath = AdminPanelSession.adminPath(gameConfig);
         let viewResponse = await page.request.get(adminPath+'/features/view?id='+TestAdminEntityErrors.UNKNOWN_ID, {maxRedirects: 0});
         TestAdminEntityErrors.expectRedirect(viewResponse, gameConfig, '/features?result=errorView', 'View of an unknown id');
+        let editResponse = await page.request.get(adminPath+'/features/edit?id='+TestAdminEntityErrors.UNKNOWN_ID, {maxRedirects: 0});
+        TestAdminEntityErrors.expectRedirect(editResponse, gameConfig, '/features?result=errorEdit', 'Edit of an unknown id');
         await screenshots.capture(page, 'unknown-id-errors');
     }
 
@@ -201,7 +203,7 @@ class TestAdminEntityErrors
             test('entity delete errors keep the rows', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminEntityErrors.runDeleteErrorsTest(page, screenshots, gameConfig, longRun);
             });
-            test('view of an unknown id redirects with the error', async ({ page, screenshots, gameConfig, longRun }) => {
+            test('view and edit of an unknown id redirect with their errors', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminEntityErrors.runUnknownIdTest(page, screenshots, gameConfig, longRun);
             });
             test('stored HTML never runs on the entity view page', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
