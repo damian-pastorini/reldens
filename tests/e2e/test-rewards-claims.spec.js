@@ -11,7 +11,7 @@
  * id give nothing; a double claim in the same tick gives the reward once; two players claim their own rewards, each
  * claim stored apart, and a claim sends nothing to the other player; a reward with an unknown item key stays claimable
  * with no accepted reward; a reward with no items is completed with nothing given; a reward with a non stackable item
- * quantity above 1 is completed (it gives one unit, ISSUE #150); a claim that fails on one item keeps the given items and a retry does not give
+ * quantity above 1 is completed and gives every unit (ISSUE #150); a claim that fails on one item keeps the given items and a retry does not give
  * them again; and a claim sent right before the page reloads is stored and shown claimed on the next login.
  *
  */
@@ -161,8 +161,16 @@ class TestRewardsClaims
             items: {[TestRewardsClaims.BRANCH]: TestRewardsClaims.BRANCHES_QUANTITY}
         });
         let {players: [player]} = await TestRewardsClaims.enter(context);
+        let branches = await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.BRANCH);
         await RewardsSteps.claim(player, [dailyReward.id]);
         await RewardsSteps.expectStoredState(context.gameConfig, player.playerId, dailyReward.id, {complete: true}, 'Completed');
+        await TradeSteps.expectQuantity(
+            context,
+            player,
+            TestRewardsClaims.BRANCH,
+            branches + TestRewardsClaims.BRANCHES_QUANTITY,
+            'The claim gives every non stackable item of the reward quantity'
+        );
     }
 
     static async runPartialGiveTest(context)
