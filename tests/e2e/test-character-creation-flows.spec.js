@@ -4,8 +4,10 @@
  *
  * Tests the players creation flows beyond the name: the invalid or missing initial state, the storage failure, the
  * forged and incomplete create messages, the forged creation of a user that has a player with the multiple players
- * off, the creation with the game room connection closed, the chosen, unknown
- * and missing class paths with their avatar, the avatar preview options and the missing classes.
+ * off, a player state insert that fails after the player was stored (the player is deleted and the guest without
+ * players creates its next player with the multiple players off, ISSUE #418), the creation with the game room connection closed, the chosen, unknown
+ * (refused before the player is stored, with the class path not available message) and missing class paths with their
+ * avatar, the avatar preview options and the missing classes.
  *
  */
 
@@ -14,6 +16,7 @@ const { CharacterCreation } = require('./helpers/character-creation');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
+const { DirectFormSubmit } = require('./helpers/direct-form-submit');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
@@ -28,6 +31,7 @@ class TestCharacterCreationFlows
     static MISSING_CLASSES_MESSAGE = 'None configured classes available.';
     static CLASS_OPTION = '#class-path-select option';
     static MULTIPLE_PLAYERS_OFF_MESSAGE = 'Multiple players are not allowed, you already have a player.';
+    static UNKNOWN_CLASS_PATH_MESSAGE = 'The selected class path is not available, please choose another one.';
 
     static async sendNameOnly(page, gameConfig, longRun)
     {
@@ -110,13 +114,37 @@ class TestCharacterCreationFlows
             [CharacterCreation.NAME_FIELD_KEY]: playerName,
             class_path_select: String(TestCharacterCreationFlows.UNKNOWN_ID)
         });
-        await CharacterCreation.expectCreateError(page, CharacterCreation.CREATION_ERROR_MESSAGE, longRun);
-        expect(await CharacterCreation.loadPlayers(gameConfig, playerName), 'No player without class path').toEqual([]);
+        await CharacterCreation.expectCreateError(page, TestCharacterCreationFlows.UNKNOWN_CLASS_PATH_MESSAGE, longRun);
+        expect(
+            await CharacterCreation.loadPlayers(gameConfig, playerName),
+            'The unknown class path is refused before the player is stored'
+        ).toEqual([]);
         await screenshots.capture(page, 'creation-unknown-class-path');
-        let nextPlayerName = CharacterCreation.createPlayerName();
-        await CharacterCreation.sendCreateMessage(page, {[CharacterCreation.NAME_FIELD_KEY]: nextPlayerName});
+        await CharacterCreation.sendCreateMessage(page, {[CharacterCreation.NAME_FIELD_KEY]: playerName});
         await CharacterCreation.waitForGameStart(page, longRun);
-        expect(await CharacterCreation.loadPlayers(gameConfig, nextPlayerName), 'The next creation').toHaveLength(1);
+        expect(await CharacterCreation.loadPlayers(gameConfig, playerName), 'The same name created right after').toHaveLength(1);
+    }
+
+    static async runFailedStateRollbackTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'client/players/multiplePlayers/enabled', false);
+        await SecurityApi.request(gameConfig, 'POST', '/api/e2e/characters/fail-state-creation', {});
+        await DirectFormSubmit.enterGuestToCreation(page, longRun);
+        let failedPlayerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.submitCreateForm(page, failedPlayerName);
+        await CharacterCreation.expectCreateError(page, CharacterCreation.CREATION_ERROR_MESSAGE, longRun);
+        expect(
+            await CharacterCreation.loadPlayers(gameConfig, failedPlayerName),
+            'The player stored before its state insert failed is deleted'
+        ).toEqual([]);
+        await screenshots.capture(page, 'creation-failed-state-rolled-back');
+        let nextPlayerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.submitCreateForm(page, nextPlayerName);
+        await CharacterCreation.waitForGameStart(page, longRun);
+        expect(
+            await CharacterCreation.loadPlayers(gameConfig, nextPlayerName),
+            'The user without players creates its player after the failed one'
+        ).toHaveLength(1);
     }
 
     static async runMultiplePlayersOffCreationTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -226,8 +254,11 @@ class TestCharacterCreationFlows
             test('forged user id still creates the player on the authenticated user', async ({ page, gameConfig, longRun }) => {
                 await TestCharacterCreationFlows.runForgedUserTest(page, gameConfig, longRun);
             });
-            test('forged unknown class path shows the creation error and stores no player', async ({ page, screenshots, gameConfig, longRun }) => {
+            test('forged unknown class path shows the class path not available error and stores no player', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestCharacterCreationFlows.runUnknownClassPathTest(page, screenshots, gameConfig, longRun);
+            });
+            test('failed player state insert deletes the stored player and the next creation works with multiple players off', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestCharacterCreationFlows.runFailedStateRollbackTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('multiple players off refuses a forged creation of a user that has a player', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestCharacterCreationFlows.runMultiplePlayersOffCreationTest(page, screenshots, gameConfig, e2eGroup, longRun);
