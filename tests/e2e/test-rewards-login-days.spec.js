@@ -3,7 +3,9 @@
  * Reldens - Test Rewards Login Days
  *
  * Tests the login rewards state of a group player on a new login (after a first login the stored state of the reward
- * is set and the past login days are stored for its user, then the page is reloaded and the player logs in again): a
+ * is set, the logins the user already has are moved to the current day (restored by the group reset, so the logins of
+ * the earlier tests before a midnight never count as another day) and the past login days of the case are stored for
+ * its user, then the page is reloaded and the player logs in again): a
  * daily reward completed or partially given on the previous day is claimable again with its given items cleared; a
  * straight days reward is ready with logins on consecutive days, not ready with too few login days or with a broken
  * streak, and not ready again on the day after its claim; a reward event with no action in its live event data changes
@@ -102,6 +104,9 @@ class TestRewardsLoginDays
         let player = (await TradeSteps.enterPlayers(context, 1)).shift();
         await RewardsSteps.presetStoredState(context, player.playerId, rewardEvent.id, loginCase.storedState);
         let userId = [...await E2eSeedAndRestoreApi.loadRows(gameConfig, 'players', {id: player.playerId})].shift().user_id;
+        await E2eSeedAndRestoreApi.updateWithPreserve(gameConfig, context.e2eGroup, 'usersLogin', {user_id: userId}, {
+            login_date: sc.getCurrentDate()
+        });
         for(let daysAgo of loginCase.loginsDaysAgo){
             await E2eSeedAndRestoreApi.createRow(gameConfig, context.e2eGroup, 'usersLogin', {
                 user_id: userId,
