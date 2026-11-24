@@ -7,11 +7,17 @@
  * configured time out (1000 by default), the pointer move goes to the validated points after the reconciliation, a key
  * held on a pointer move (on the player engine and the prediction one) is superseded, so it is not sent again and its
  * release sends no stop while another key is sent and its release stops, and the prediction world creator creates
- * nothing with the prediction config off.
+ * nothing with the prediction config off; on the WallsWorldBaseTest map the prediction body walking into the column wall
+ * by the prediction world timer steps stops beside it and its contact emits the wall begin and the wall end stop events
+ * on the scene events manager, while the received player state keeps its server position (the body has its own copy); the prediction world holds the walls of the scene map read from the tilemap cache by the
+ * scene roomMap param (or its roomName); and the creator clearSceneWorld (run by the prediction plugin on
+ * reldens.changeSceneDestroyPrevious, the plugin loads Phaser and can not run here) clears the prediction world date
+ * time and world timer intervals of the scene the player leaves once (only the date time one when the world has no
+ * current player, nothing on a scene without the prediction world).
  *
  */
 
-const { BaseTest } = require('./base-test');
+const { WallsWorldBaseTest } = require('./fixtures/walls-world-base-test');
 const { ScheduledTimeouts } = require('./fixtures/scheduled-timeouts');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { PlayerEnginePrediction } = require('../lib/prediction/client/player-engine-prediction');
@@ -19,7 +25,7 @@ const { PlayerEngine } = require('../lib/users/client/player-engine');
 const { PredictionWorldCreator } = require('../lib/prediction/client/prediction-world-creator');
 const { GameConst } = require('../lib/game/constants');
 
-class TestPredictionPlayerEngine extends BaseTest
+class TestPredictionPlayerEngine extends WallsWorldBaseTest
 {
 
     constructor(config)
@@ -27,6 +33,7 @@ class TestPredictionPlayerEngine extends BaseTest
         super(config);
         this.predictionTime = 4200;
         this.serverPosition = {state: {x: 320, y: 480, dir: GameConst.LEFT}};
+        this.horizontalGroupedWallsTiles = [[8], [14], [20], [33, 34]];
     }
 
     createEngine(configValues, withPredictionBody, engineClass = PlayerEnginePrediction)
@@ -155,6 +162,117 @@ class TestPredictionPlayerEngine extends BaseTest
             let scene = {experimentalClientPrediction: 0, worldPrediction: false};
             await new PredictionWorldCreator().createSceneWorld(scene);
             this.assert.strictEqual(scene.worldPrediction, false);
+        });
+    }
+
+    createPredictionScene(emittedEvents, currentPlayer, mapKeyParam = 'roomMap')
+    {
+        let worldOptions = this.createWorldOptions({groupWallsVertically: false, groupWallsHorizontally: true});
+        worldOptions.config.client.players.physicalBody = {width: this.walkerSize, height: this.walkerSize};
+        return {
+            experimentalClientPrediction: 1,
+            worldPrediction: false,
+            key: worldOptions.sceneName,
+            params: {roomId: worldOptions.roomId, [mapKeyParam]: worldOptions.roomMap},
+            configManager: worldOptions.config,
+            eventsManager: {emit: async (eventName) => emittedEvents.push(eventName)},
+            cache: {tilemap: {entries: {entries: {[worldOptions.roomMap]: {data: worldOptions.mapJson}}}}},
+            gameManager: {
+                activeRoomEvents: {roomData: {worldConfig: worldOptions.worldConfig}},
+                getCurrentPlayer: () => currentPlayer
+            }
+        };
+    }
+
+    createPredictedPlayer()
+    {
+        return {
+            playerId: 'predicted',
+            state: {x: 16, y: this.walkerRow, dir: GameConst.RIGHT},
+            updatePlayer: () => true
+        };
+    }
+
+    async testThePredictionBodyStopsOnAWallAndEmitsTheWallContact()
+    {
+        await this.test('the prediction body walking into a wall stops beside it and its contact emits the wall events', async () => {
+            let emittedEvents = [];
+            let currentPlayer = this.createPredictedPlayer();
+            let scene = this.createPredictionScene(emittedEvents, currentPlayer);
+            let scheduledTimeouts = new ScheduledTimeouts();
+            await scheduledTimeouts.capture(() => new PredictionWorldCreator().createSceneWorld(scene));
+            let worldStep = scheduledTimeouts.scheduledIntervals.find(
+                interval => scene.worldPredictionTimer.stepTime === interval.delayMs
+            );
+            currentPlayer.predictionBody.initMove(GameConst.RIGHT, true);
+            for(let stepIndex = 0; stepIndex < 50; stepIndex++){
+                worldStep.intervalCallback();
+            }
+            this.assert.deepStrictEqual(
+                [
+                    Math.round(currentPlayer.predictionBody.position[0]),
+                    Math.round(currentPlayer.predictionBody.position[1]),
+                    emittedEvents.filter(eventName => -1 !== eventName.indexOf('HitWall')),
+                    currentPlayer.state,
+                    currentPlayer.predictionBody.bodyState === currentPlayer.state
+                ],
+                [
+                    this.columnWallEdges[0] - this.walkerSize / 2,
+                    this.walkerRow,
+                    ['reldens.playerHitWallBegin', 'reldens.startPlayerHitWallEnd', 'reldens.endPlayerHitWallEnd'],
+                    this.createPredictedPlayer().state,
+                    false
+                ]
+            );
+        });
+    }
+
+    async testTheSceneChangeClearsThePredictionWorldIntervals()
+    {
+        await this.test('the scene change clears the prediction world intervals of the scene the player leaves', async () => {
+            let creator = new PredictionWorldCreator();
+            let results = [];
+            let sceneCases = [
+                {currentPlayer: this.createPredictedPlayer(), mapKeyParam: 'roomMap'},
+                {currentPlayer: this.createPredictedPlayer(), mapKeyParam: 'roomName'},
+                {currentPlayer: false, mapKeyParam: 'roomMap'}
+            ];
+            for(let sceneCase of sceneCases){
+                let scene = this.createPredictionScene([], sceneCase.currentPlayer, sceneCase.mapKeyParam);
+                let scheduledTimeouts = new ScheduledTimeouts();
+                await scheduledTimeouts.capture(() => creator.createSceneWorld(scene));
+                let sceneIntervals = [scene.worldPrediction.worldDateTimeInterval, scene.worldPredictionTimer?.worldTimer];
+                let wallsTiles = scene.worldPrediction.bodies.filter(body => body.isWall && !body.isWorldWall).map(
+                    body => body.tileIndexes
+                );
+                let cleared = await scheduledTimeouts.capture(
+                    () => [creator.clearSceneWorld(scene), creator.clearSceneWorld(scene)]
+                );
+                results.push([
+                    wallsTiles,
+                    scheduledTimeouts.scheduledIntervals.map((interval, intervalIndex) => intervalIndex + 1),
+                    sceneIntervals,
+                    scheduledTimeouts.clearedIntervals,
+                    cleared,
+                    scene.worldPrediction
+                ]);
+            }
+            let noPredictionTimeouts = new ScheduledTimeouts();
+            let noPredictionCleared = await noPredictionTimeouts.capture(
+                () => creator.clearSceneWorld({worldPrediction: false})
+            );
+            this.assert.deepStrictEqual(
+                [results, noPredictionTimeouts.clearedIntervals, noPredictionCleared],
+                [
+                    [
+                        [this.horizontalGroupedWallsTiles, [1, 2], [1, 2], [1, 2], [true, false], false],
+                        [this.horizontalGroupedWallsTiles, [1, 2], [1, 2], [1, 2], [true, false], false],
+                        [this.horizontalGroupedWallsTiles, [1], [1, undefined], [1, undefined], [true, false], false]
+                    ],
+                    [],
+                    false
+                ]
+            );
         });
     }
 
