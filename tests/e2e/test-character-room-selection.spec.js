@@ -6,7 +6,9 @@
  * last location (and without it once loginLastLocation is off, none on the login once allowOnLogin is off and no room
  * selection at all once allowOnRegistration is off too), the creation room offered and applied with allowOnLogin off,
  * the stored selected room, a single room, the guest rooms, the unavailable rooms, a room removed while
- * the selectors are open, the feature rooms left after a rejected join and the forged selected scene.
+ * the selectors are open, the feature rooms left after a rejected join, a created player whose scene join is rejected
+ * back on the selection with the creation form sending the next create (ISSUE #21, the stored player enters the forest
+ * first so the room instance whose joins are rejected exists) and the forged selected scene.
  *
  */
 
@@ -194,7 +196,9 @@ class TestCharacterRoomSelection
         });
         await CharacterCreation.loginToCreation(page, gameConfig, longRun);
         expect(await Login.selectPlayer(page, forestPlayerName), forestPlayerName).toBe(true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await TestCharacterRoomSelection.expectSelectionJoinError(page, Login.FOREST_ROOM_NAME, longRun);
         await page.evaluate(() => {
             window.e2eRejectedPlayerChatRoom = window.reldens.joinedRooms.chat;
@@ -208,6 +212,30 @@ class TestCharacterRoomSelection
         }))).toEqual({isPreviousChatOpen: false, isChatReplaced: true, isFeaturesPlayerSelected: true});
     }
 
+    static async runRejectedCreationJoinTest(page, screenshots, gameConfig, longRun)
+    {
+        let createMessages = CharacterCreation.trackCreateMessages(page);
+        await Login.startConfigPlayer(page, gameConfig, longRun, Login.FOREST_ROOM_NAME, true);
+        await SecurityApi.request(gameConfig, 'POST', '/api/e2e/game-session/reject-room-origin', {
+            roomName: Login.FOREST_ROOM_NAME
+        });
+        let rejectedPlayerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await page.locator(CharacterCreation.CREATE_SCENE_SELECT).selectOption(Login.FOREST_ROOM_NAME);
+        await CharacterCreation.submitCreateForm(page, rejectedPlayerName);
+        await TestCharacterRoomSelection.expectSelectionJoinError(page, Login.FOREST_ROOM_NAME, longRun);
+        expect(await CharacterCreation.loadPlayers(gameConfig, rejectedPlayerName), 'The player is created').toHaveLength(1);
+        await screenshots.capture(page, 'rejected-creation-join-back-to-selection');
+        let createdPlayerName = CharacterCreation.createPlayerName();
+        await page.locator(CharacterCreation.CREATE_SCENE_SELECT).selectOption(Login.TOWN_ROOM_NAME);
+        await CharacterCreation.submitCreateForm(page, createdPlayerName);
+        await CharacterCreation.waitForGameStart(page, longRun);
+        expect(
+            [createMessages.count, await Navigation.getCurrentRoomName(page), (await CharacterCreation.loadPlayers(gameConfig, createdPlayerName)).length],
+            'The creation form submits again and the second player starts in its room'
+        ).toEqual([2, Login.TOWN_ROOM_NAME, 1]);
+    }
+
     static async runForgedSelectedSceneTest(page, gameConfig, longRun)
     {
         let loginRooms = (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/characters/single-login-room', {})).rooms;
@@ -219,7 +247,9 @@ class TestCharacterRoomSelection
             select.append(new Option(forgedRoom, forgedRoom));
             select.value = forgedRoom;
         }, Login.FOREST_ROOM_NAME);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await TestCharacterRoomSelection.expectSelectionJoinError(page, Login.FOREST_ROOM_NAME, longRun);
         await expect(page.locator(Selectors.body.gameEngineStarted), 'The game must not start').toHaveCount(0);
         expect((await CharacterCreation.fetchPlayerState(gameConfig, gameConfig.e2ePlayerName)).room_id).toBe(storedRoomId);
@@ -257,6 +287,9 @@ class TestCharacterRoomSelection
             });
             test('another player after a rejected join leaves the previous feature rooms', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestCharacterRoomSelection.runRejectedJoinFeatureRoomsTest(page, screenshots, gameConfig, longRun);
+            });
+            test('created player with a rejected scene join is back on the selection and the creation form submits again', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestCharacterRoomSelection.runRejectedCreationJoinTest(page, screenshots, gameConfig, longRun);
             });
             test('forged selected scene outside the login rooms is not applied', async ({ page, gameConfig, longRun }) => {
                 await TestCharacterRoomSelection.runForgedSelectedSceneTest(page, gameConfig, longRun);
