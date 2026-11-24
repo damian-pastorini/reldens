@@ -23,7 +23,7 @@ class TestClanMessageListener extends BaseTest
     {
         await this.test('the clan removed message removes and initializes the clan UI', async () => {
             let calledMethods = [];
-            new ClanMessageListener().handleClanMessage(
+            new ClanMessageListener({clanTitleLabel: TeamsConst.LABELS.CLAN.CLAN_TITLE}).handleClanMessage(
                 {act: TeamsConst.ACTIONS.CLAN_REMOVED},
                 this.createClanMessageHandler(calledMethods)
             );
@@ -35,7 +35,7 @@ class TestClanMessageListener extends BaseTest
     {
         await this.test('an unhandled clan message keeps the clan UI', async () => {
             let calledMethods = [];
-            let result = new ClanMessageListener().handleClanMessage(
+            let result = new ClanMessageListener({clanTitleLabel: TeamsConst.LABELS.CLAN.CLAN_TITLE}).handleClanMessage(
                 {act: TeamsConst.ACTIONS.CLAN_NAME},
                 this.createClanMessageHandler(calledMethods)
             );
