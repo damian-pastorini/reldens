@@ -119,6 +119,23 @@ Each scene room extends `RoomScene extends RoomLogin` (`lib/rooms/server/scene.j
 - `onLeave` - removes player body from world, persists state
 - `onDispose` - cleans up the physics world and all object instances
 
+## Multiple Servers Flow
+
+A game can run on several servers, sharing one database or each with its own. A room belongs to the server of its
+`server_url`, and the other servers are the distinct addresses of those values (`client/rooms/servers`). Every server
+needs the same `RELDENS_SIGNED_TOKENS_SECRET` and its own reachable `RELDENS_PUBLIC_URL`, since the servers talk
+through signed one-use requests:
+
+- A login disconnects the user on the other servers; a scene join to another server is sent as a server change, so the
+  old server closes the user rooms with the close code 4100 the moving client ignores
+  (`server/players/disconnectUsersOnServerChange` set to `0` keeps the user on the login server instead).
+- Teams, clans, private chat messages and deleted rooms are synced through their own signed routes; usernames, emails
+  and player names are checked on the servers with their own database (`server/rooms/databases`).
+- The status reports feed the rooms availability and the admin counts, which count a user present on several servers
+  once.
+
+See `.claude/multi-server/overview.md` and the documents it links.
+
 ## Admin Flow
 
 The admin panel is mounted by `lib/admin/server/plugin.js` during server startup. It uses `@reldens/cms` to expose entity editors over HTTP at `/reldens-admin`.
@@ -223,6 +240,7 @@ See `.claude/commands-reference.md` for the full command reference.
 - `.claude/installer-guide.md` - Web-based installation wizard
 - `.claude/ip-lists-and-login-blocks.md` - Address allow and deny lists, the stored login blocks and the login limiters
 - `.claude/server-health-monitor.md` - Server usage limits, rooms availability between servers, every overload case, admin usage block
+- `.claude/multi-server/overview.md` - Multiple servers: how the servers find each other, the required settings, the routes between servers and the links to the signed requests, login and server change, names check, teams and clans sync, chat and rooms sync, counts and periods docs
 - `.claude/player-animations-configuration.md` - Sprite size, frame ranges, class-path overrides
 - `.claude/tileset-to-map-generator-technical.md` - Data contract between the tileset and map generator packages
 - `.claude/tile-ids-and-annotations-pipeline.md` - Tile id spaces, the tileset-ref parking invariant, adding a tile option
