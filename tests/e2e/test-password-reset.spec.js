@@ -4,7 +4,9 @@
  *
  * Tests the reset password link: the link sent by email opens the form and changes the password once, the invalid,
  * expired, forged and incomplete links show the error, the password rules and their exact limits, two submits of one
- * link, a link made invalid by another password change, and the reset ending a game session and an admin session.
+ * link, a link made invalid by another password change, the HTML of a stored email escaped on the reset pages (the
+ * user is stored directly with that email, since the registration refuses an email outside the strict pattern), and the
+ * reset ending a game session and an admin session.
  *
  */
 
@@ -170,12 +172,14 @@ class TestPasswordReset
         await expect(page.locator(TestPasswordReset.FORM_TITLE)).toHaveText(TestPasswordReset.RESET_ERROR_TITLE);
     }
 
-    static async runHtmlEmailTest(page, gameConfig)
+    static async runHtmlEmailTest(page, gameConfig, e2eGroup)
     {
         let payloadEmail = FileHandler.readFile(TestPasswordReset.HTML_EMAIL_PAYLOAD_PATH).trim()+'@yourgame.com';
-        expect(await GameRoomJoin.register(gameConfig, GameRoomJoin.createAccount('g', payloadEmail)), payloadEmail).toEqual(
-            GameRoomJoin.ACCEPTED
-        );
+        let seededUser = await AdminPanelSession.seedUser(gameConfig, e2eGroup);
+        expect(
+            await E2eSeedAndRestoreApi.updateCreatedRow(gameConfig, e2eGroup, 'users', seededUser.id, {email: payloadEmail}),
+            'The user is stored with the HTML email (the registration refuses it)'
+        ).toBeTruthy();
         let token = await TestPasswordReset.createToken(gameConfig, payloadEmail, Date.now() + TestPasswordReset.TOKEN_LIFETIME_MS);
         await page.goto(TestPasswordReset.createResetUrl(gameConfig, payloadEmail, token));
         await expect(page.locator(TestPasswordReset.RESET_FORM+' [name="email"]'), 'Escaped value').toHaveValue(payloadEmail);
@@ -238,8 +242,8 @@ class TestPasswordReset
             test('link is rejected after the password changed another way', async ({ page, gameConfig, e2eGroup }) => {
                 await TestPasswordReset.runChangedAnotherWayTest(page, gameConfig, e2eGroup);
             });
-            test('HTML in the email is escaped on the reset pages', async ({ page, gameConfig }) => {
-                await TestPasswordReset.runHtmlEmailTest(page, gameConfig);
+            test('HTML in the email is escaped on the reset pages', async ({ page, gameConfig, e2eGroup }) => {
+                await TestPasswordReset.runHtmlEmailTest(page, gameConfig, e2eGroup);
             });
             test('reset during a game session rejects its next scene change', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestPasswordReset.runResetDuringGameTest(page, screenshots, gameConfig, e2eGroup, longRun);
