@@ -7,7 +7,9 @@
  * the trade messages a client sends (the start, the answer, the add, remove, confirm and disconfirm actions and the
  * close of the trade box), a trade opened and an offer confirmed by both players; an item action (use, equip or trash)
  * sent for the item of a key; the trade messages a client received; and the live trade state and items of a player
- * (TradesProbe) with the total quantity of an item key, live and stored.
+ * (TradesProbe) with the total quantity of an item key, live and stored; no trade request received by a player, and
+ * the live server/players/exchanges/newCancelsActive mode turned on (a new exchange cancels the active ones, restored
+ * by the group reset).
  *
  */
 
@@ -15,6 +17,7 @@ const { expect } = require('@playwright/test');
 const { TeamSteps } = require('./team-steps');
 const { RoomMessagesRecorder } = require('./room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
+const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { ParallelSpecGroups } = require('./parallel-spec-groups');
 const { SecurityApi } = require('./security-api');
 const { TimeConstants } = require('./time-constants');
@@ -77,12 +80,13 @@ class TradeSteps
         await TradeSteps.waitForMessages(partnerPlayer, InventoryConst.ACTIONS.TRADE_SHOW, 1);
     }
 
-    static async sendAction(player, partnerPlayer, sub, actionData = {})
+    static async sendAction(player, partnerPlayer, sub, actionData = {}, sentTimes = 1)
     {
-        await RoomMessagesRecorder.sendMessage(player.page, Object.assign(
+        let actionMessage = Object.assign(
             {act: InventoryConst.ACTIONS.TRADE_ACTION, id: partnerPlayer.sessionId, [ObjectsConst.TRADE_ACTIONS.SUB_ACTION]: sub},
             actionData
-        ));
+        );
+        await RoomMessagesRecorder.sendMessages(player.page, new Array(sentTimes).fill(actionMessage));
     }
 
     static async offer(player, partnerPlayer, itemId, qty)
@@ -90,9 +94,9 @@ class TradeSteps
         await TradeSteps.sendAction(player, partnerPlayer, ObjectsConst.TRADE_ACTIONS.ADD, {itemId, qty});
     }
 
-    static async confirm(player, partnerPlayer)
+    static async confirm(player, partnerPlayer, sentTimes = 1)
     {
-        await TradeSteps.sendAction(player, partnerPlayer, ObjectsConst.TRADE_ACTIONS.CONFIRM);
+        await TradeSteps.sendAction(player, partnerPlayer, ObjectsConst.TRADE_ACTIONS.CONFIRM, {}, sentTimes);
     }
 
     static async close(player, partnerPlayer)
@@ -205,6 +209,27 @@ class TradeSteps
                 message+': '+player.playerName
             ).toEqual([]);
         }
+    }
+
+    static async expectNoTradeStart(player, message)
+    {
+        await player.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        expect(
+            await RoomMessagesRecorder.fetchMessages(player.page, InventoryConst.ACTIONS.TRADE_START),
+            message+': '+player.playerName
+        ).toEqual([]);
+    }
+
+    static async enableNewExchangeCancelsActive(context)
+    {
+        let changed = await GameplayE2eStateApi.changeFeatureProperty(
+            context.gameConfig,
+            context.e2eGroup,
+            'inventory/package/inventoryMessageActions',
+            'newExchangeCancelsActive',
+            true
+        );
+        expect(changed.value, 'A new player trade cancels the active exchanges: '+changed.error).toBe(true);
     }
 
     static async expectLocked(context, player, isLocked, message)
