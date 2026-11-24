@@ -6,9 +6,13 @@
  * start clears the recorded list), reads the recorded messages of an action, waits for one, and sends raw messages to
  * the room: any message, several messages in the same page tick (so they overlap on the server, optionally reading the
  * given answers recorded after a wait), and an object message with the id the client uses for that object, so the
- * specs send the exact payloads a modified client could send.
+ * specs send the exact payloads a modified client could send. The scene change recording keeps its own list (the
+ * changing scene, changed scene and reconnect acts the active room receives, each with whether it is about the page
+ * player and its scene), so a change point walk can tell which scene change message never arrived.
  *
  */
+
+const { GameConst } = require('../../../lib/game/constants');
 
 class RoomMessagesRecorder
 {
@@ -28,6 +32,19 @@ class RoomMessagesRecorder
                 }
             });
         });
+    }
+
+    static async startSceneChangeRecording(page)
+    {
+        await page.evaluate((acts) => {
+            let room = window.reldens.activeRoomEvents.room;
+            window.e2eSceneChangeMessages = [];
+            room.onMessage('*', (message) => {
+                if(message && acts.includes(message.act)){
+                    window.e2eSceneChangeMessages.push([message.act, room.sessionId === message.id, message.scene || '']);
+                }
+            });
+        }, [GameConst.CHANGING_SCENE, GameConst.CHANGED_SCENE, GameConst.RECONNECT]);
     }
 
     static async fetchMessages(page, act)
