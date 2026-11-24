@@ -219,7 +219,7 @@ class TestAuthenticationAccess
         let guestValues = await TestAuthenticationAccess.enterGuestToSelection(page, longRun);
         await TestAuthenticationAccess.endGuestSession(page);
         await Login.submitLoginExpectingError(secondPage, guestValues.username, guestValues.password, longRun);
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, guestValues.username), 'A counted failure').toBe(1);
+        expect((await SecurityApi.fetchIdentityState(gameConfig, guestValues.username)).hits, 'A counted failure').toBe(1);
         await screenshots.capture(secondPage, 'guest-ended-credentials-rejected');
     }
 
@@ -259,7 +259,7 @@ class TestAuthenticationAccess
         });
         expect(joinResult.joined, 'The forged flag must be rejected').toBe(false);
         expect(joinResult.error).toBe(GameConst.INVALID_LOGIN_MESSAGE);
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, gameConfig.e2eUsername), 'A counted failure').toBe(1);
+        expect((await SecurityApi.fetchIdentityState(gameConfig, gameConfig.e2eUsername)).hits, 'A counted failure').toBe(1);
         await screenshots.capture(page, 'forged-guest-flag-rejected');
     }
 
