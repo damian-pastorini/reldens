@@ -2,6 +2,10 @@
  *
  * Reldens - Test Forgot Password
  *
+ * Tests the forgot password requests: the per user interval reservation, a single email for concurrent requests, a
+ * failed send restoring the sent time, an email typed in a letter case or accent variant of the stored one getting the
+ * same answer while the reservation and the reset go to the stored email (ISSUE #36), and the password replace guards.
+ *
  */
 
 const { BaseTest } = require('./base-test');
@@ -89,6 +93,35 @@ class TestForgotPassword extends BaseTest
             this.assert.strictEqual([...forgotSetup.reservations].shift().email, this.userEmail);
             this.assert.strictEqual(requestTime <= [...forgotSetup.reservations].shift().sentTime, true);
             this.assert.strictEqual(forgotSetup.userUpdates.length, 0);
+        });
+    }
+
+    async testAVariantEmailSendsTheResetToTheStoredEmail()
+    {
+        await this.test('a letter case or accent variant of the email gets the same answer and the reset goes to the stored email', async () => {
+            let exactSetup = this.createForgotPasswordSetup(Date.now()-this.forgotIntervalMs-1000, true);
+            let exactAnswer = await exactSetup.forgotPassword.processForgotPassword(
+                {forgot: true, email: this.userEmail},
+                '10.0.0.1'
+            );
+            for(let typedEmail of ['USER@Reldens.com', 'usér@reldens.com']){
+                let forgotSetup = this.createForgotPasswordSetup(Date.now()-this.forgotIntervalMs-1000, true);
+                forgotSetup.forgotPassword.usersManager.loadUserByEmail = async () => ({
+                    id: 1,
+                    email: this.userEmail,
+                    password: 'stored-password-hash',
+                    password_reset_sent_at: null
+                });
+                let answer = await forgotSetup.forgotPassword.processForgotPassword(
+                    {forgot: true, email: typedEmail},
+                    '10.0.0.1'
+                );
+                this.assert.deepStrictEqual(
+                    [answer, forgotSetup.sentEmails, forgotSetup.reservations.map(reservation => reservation.email)],
+                    [exactAnswer, [this.userEmail], [this.userEmail]],
+                    'Typed email '+typedEmail
+                );
+            }
         });
     }
 
