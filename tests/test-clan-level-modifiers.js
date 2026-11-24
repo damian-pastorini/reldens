@@ -6,7 +6,6 @@
 
 const { BaseTest } = require('./base-test');
 const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
-const { Clan } = require('../lib/teams/server/clan');
 const { ClanFactory } = require('../lib/teams/server/clan-factory');
 const { ClanLeave } = require('../lib/teams/server/message-actions/clan-leave');
 const { ClanJoin } = require('../lib/teams/server/message-actions/clan-join');
@@ -20,7 +19,7 @@ class TestClanLevelModifiers extends BaseTest
 
     createOwnedClanWithOfflineMember(ownerSchema)
     {
-        let clan = new Clan({
+        let clan = ClanFixturesBuilder.createSyncedClan({
             id: 10,
             owner: {player_id: '1', playerName: 'ImRoot'},
             members: {1: {player_id: 1}, 2: {player_id: 2}}
@@ -133,7 +132,7 @@ class TestClanLevelModifiers extends BaseTest
             events,
             chatPlugin: {chatManager: {saveMessage: async () => true}}
         }).clanMemberLeavingEventListener();
-        let clan = new Clan({id: 10, owner: {player_id: '1', playerName: 'ImRoot'}});
+        let clan = ClanFixturesBuilder.createSyncedClan({id: 10, owner: {player_id: '1', playerName: 'ImRoot'}});
         let schemas = {};
         for(let playerId of ['1', '2', '3']){
             schemas[playerId] = ClanFixturesBuilder.createOwnerSchema(playerId, 'ImRoot'+('1' === playerId ? '' : playerId));
@@ -209,7 +208,7 @@ class TestClanLevelModifiers extends BaseTest
             events.on('reldens.beforeClanUpdatePlayers', (event) => {
                 event.continueBeforeJoinUpdate = false;
             });
-            let clan = new Clan({id: 20, owner: {player_id: '3', playerName: 'ImRoot3'}, pendingInvites: {2: true}});
+            let clan = ClanFixturesBuilder.createSyncedClan({id: 20, owner: {player_id: '3', playerName: 'ImRoot3'}, pendingInvites: {2: true}});
             let teamsPlugin = ClanFixturesBuilder.createTeamsPlugin({
                 events,
                 clans: {20: clan},
@@ -225,7 +224,7 @@ class TestClanLevelModifiers extends BaseTest
     {
         await this.test('the owner joining the clan becomes the owner client and a member join keeps it', async () => {
             let loaderClient = {send: () => true};
-            let clan = new Clan({id: 10, owner: {player_id: 1, playerName: 'ImRoot'}, ownerClient: loaderClient});
+            let clan = ClanFixturesBuilder.createSyncedClan({id: 10, owner: {player_id: 1, playerName: 'ImRoot'}, ownerClient: loaderClient});
             clan.join(ClanFixturesBuilder.createPlayerSchema('2'), loaderClient, {player_id: 2});
             this.assert.strictEqual(clan.ownerClient, loaderClient);
             let ownerClient = {send: () => true};
@@ -240,7 +239,7 @@ class TestClanLevelModifiers extends BaseTest
         await this.test('the owner accepting another clan invite disbands the owned clan and joins the new one', async () => {
             let recordedCalls = [];
             let ownerSchema = ClanFixturesBuilder.createOwnerSchema();
-            let newClan = new Clan({id: 20, owner: {player_id: '3', playerName: 'ImRoot3'}, pendingInvites: {1: true}});
+            let newClan = ClanFixturesBuilder.createSyncedClan({id: 20, owner: {player_id: '3', playerName: 'ImRoot3'}, pendingInvites: {1: true}});
             let teamsPlugin = ClanFixturesBuilder.createTeamsPlugin({
                 events: new EventsManager(),
                 clans: {10: this.createOwnedClanWithOfflineMember(ownerSchema), 20: newClan},
