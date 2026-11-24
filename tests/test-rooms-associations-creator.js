@@ -4,8 +4,8 @@
  *
  * Tests the RoomsAssociationsCreator with the real sample maps and recording repositories: the return point properties
  * of reldens-forest-level-1 create its return point on the tile of their x and y properties with their position as
- * direction (the default marker of its return-point-for-default property is lost, ISSUE #405, so is_default and
- * from_room_id are not checked); and the change-point-for properties of reldens-new-age-town-house-01 create one change
+ * direction, as the default return point with no previous room (its return-point-for-default property); and the
+ * change-point-for properties of reldens-new-age-town-house-01 create one change
  * point per property to the room found by name.
  *
  */
@@ -52,12 +52,16 @@ class TestRoomsAssociationsCreator extends BaseTest
             let creator = this.createCreator(mapName, mapJson, recorded, {[mapName]: {id: 5, name: mapName}});
             await creator.createRoomsReturnPoints({id: 5, name: mapName});
             this.assert.deepStrictEqual(
-                recorded.returnPoints.map(point => [point.room_id, point.direction, point.x, point.y]),
+                recorded.returnPoints.map(
+                    point => [point.room_id, point.direction, point.x, point.y, point.is_default, point.from_room_id]
+                ),
                 [[
                     5,
                     propertyValue('return-point-position-'+mapName),
                     propertyValue('return-point-x-'+mapName) * mapJson.tilewidth + mapJson.tilewidth / 2,
-                    propertyValue('return-point-y-'+mapName) * mapJson.tileheight + mapJson.tileheight
+                    propertyValue('return-point-y-'+mapName) * mapJson.tileheight + mapJson.tileheight,
+                    true,
+                    null
                 ]]
             );
         });
