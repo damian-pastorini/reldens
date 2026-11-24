@@ -3,12 +3,15 @@
  * Reldens - PlayerCreationBuilder
  *
  * Builds the player creation setups: a PlayerCreation over a real PlayerRoomState with the users manager, the events
- * and the cross server names check recording what they get (the checked, created, deleted, held and released names and
+ * and the cross server names check recording what they get (the checked, created, deleted, held and released names, a
+ * release counted only with the hold id its hold gave, and
  * the emitted events, with the multiple players on and the players count of each user taken from the created players),
  * a users manager that checks the names against the players created so far and stores them after a
- * loop turn (so the creations sent at the same time interleave), a create before listener renaming the player, a
- * created player listener storing the class path through the real PlayerClassPathHandler (an unknown class path id is
- * refused like its foreign key does) and the creations sent at the same time by different users.
+ * loop turn (so the creations sent at the same time interleave), a create before listener renaming the player, the
+ * class path listeners of the actions plugin over the real PlayerClassPathHandler (the create before validation against
+ * the offered class paths, the known ones by default, and the created player storage of the selected or initial class
+ * path, where a class path id the storage does not know is refused like its foreign key does) and the creations sent
+ * at the same time by different users.
  *
  */
 
@@ -35,7 +38,8 @@ class PlayerCreationBuilder
         let config = {
             get: (path, defaultValue) => defaultValue,
             getWithoutLogs: (path, defaultValue) => defaultValue,
-            server: {players: {initialState: {room_id: initialStateRoomId, x: 400, y: 345, dir: 'down'}}}
+            server: {players: {initialState: {room_id: initialStateRoomId, x: 400, y: 345, dir: 'down'}}},
+            skills: {classPaths: {classPathsById: {1: {}, 2: {}}}}
         };
         let roomsManager = {
             loadRoomById: async (roomId) => 4 === roomId ? {roomId: 4, roomName: 'town'} : false,
@@ -58,9 +62,10 @@ class PlayerCreationBuilder
             crossServerNamesCheck: {
                 holdEverywhere: async (routePath, values) => {
                     creationSetup.heldNames.push(...values);
-                    return creationSetup.isFreeOnOtherServers;
+                    return creationSetup.isFreeOnOtherServers ? 'hold-'+values.join('-') : false;
                 },
-                release: (routePath, values) => creationSetup.releasedNames.push(...values)
+                release: (routePath, values, holdId) => 'hold-'+values.join('-') === holdId
+                    && creationSetup.releasedNames.push(...values)
             },
             minimumPlayerNameLength: 3,
             maximumPlayerNameLength: 255,
@@ -119,15 +124,28 @@ class PlayerCreationBuilder
         })};
     }
 
-    storeClassPathOnCreated(creationSetup, knownClassPathIds)
+    storeClassPathOnCreated(creationSetup, knownClassPathIds, offeredClassPathIds = knownClassPathIds)
     {
-        return async (eventName, player, loginData) => {
+        let classPathsById = {};
+        for(let classPathId of offeredClassPathIds){
+            classPathsById[classPathId] = {id: classPathId};
+        }
+        return async (eventName, ...eventArgs) => {
             creationSetup.emittedEvents.push(eventName);
+            let initialClassPathId = creationSetup.playerCreation.config.get('server/players/actions/initialClassPathId');
+            if('reldens.createNewPlayerBefore' === eventName){
+                PlayerClassPathHandler.validateSelection({
+                    loginData: eventArgs[0],
+                    initialClassPathId,
+                    classPathsById,
+                    creationResult: eventArgs[3]
+                });
+            }
             if('reldens.createdNewPlayer' === eventName){
                 await PlayerClassPathHandler.createFromLoginData({
-                    config: creationSetup.playerCreation.config,
-                    loginData,
-                    player,
+                    loginData: eventArgs[1],
+                    initialClassPathId,
+                    player: eventArgs[0],
                     dataServer: this.createClassPathDataServer(creationSetup, knownClassPathIds)
                 });
             }
