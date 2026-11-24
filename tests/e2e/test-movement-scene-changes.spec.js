@@ -7,7 +7,8 @@
  * by the e2e probe) gets the translated busy chat line, keeps the player in the town able to walk, and its retry once
  * the block ends changes the room; the other client in the town gets the scene change broadcast, keeps its own scene
  * visible, removes the sprite of the player that left and clears its target on it; the client already in the forest
- * shows the arriving player with its name, avatar and direction; the room and position stored by the change point
+ * shows the arriving player with its name, avatar and direction, drawn on its body (the sprite on the state minus the
+ * players size offsets, ISSUE #463: the changed scene path subtracted the top offset twice); the room and position stored by the change point
  * are loaded on the next login; and a player logging out with a direction held leaves no movement interval in the room
  * (a closed page keeps it running, ISSUE #333).
  *
@@ -29,7 +30,6 @@ const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
-const { ChatConst } = require('../../lib/chat/constants');
 const GameTranslations = require('../../lib/game/client/snippets/en_US');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -66,13 +66,7 @@ class TestMovementSceneChanges
             Login.FOREST_ROOM_NAME
         );
         expect(placed.position, 'The player is placed on the change point to the forest: '+placed.error).toBeTruthy();
-        await expect.poll(
-            async () => (await ChatSteps.fetchChat(player.page)).filter(
-                message => GameConst.ROOM_UNAVAILABLE.SERVER_BUSY === message[ChatConst.MESSAGE.KEY]
-                    && ChatConst.TYPES.ERROR === message[ChatConst.TYPES.KEY]
-            ).length,
-            {message: 'The player gets the busy room line', timeout: TimeConstants.SERVER_RESPONSE}
-        ).toBe(1);
+        await ChatSteps.expectBusyRoomLine(player.page);
         await ChatSteps.openChat(player.page);
         await expect(player.page.locator(Selectors.chat.tabContentGeneral), 'The translated busy line is shown')
             .toContainText(GameTranslations.game.errors.roomServerBusy);
@@ -154,6 +148,18 @@ class TestMovementSceneChanges
             await observer.page.evaluate(TestMovementSceneChanges.READ_SPRITE, moverSessionId),
             'The other client shows the arriving player with its name, avatar and direction'
         ).toEqual(Object.assign({}, ownSprite, {playerName: mover.playerName, visible: true, nameVisible: true}));
+        await expect.poll(
+            async () => await observer.page.evaluate((sessionId) => (({players, leftOff, topOff}, room) => [
+                {x: players[sessionId].x + leftOff, y: players[sessionId].y + topOff},
+                (({x, y}) => ({x, y}))(room.state.players.get(sessionId).state)
+            ])(window.reldens.getActiveScene().player, window.reldens.activeRoomEvents.room), moverSessionId).then(
+                ([sprite, state]) => sprite.x === state.x && sprite.y === state.y ? true : {sprite, state}
+            ),
+            {
+                message: 'The other client draws the arriving player on its body (its state minus the size offsets)',
+                timeout: TimeConstants.SERVER_RESPONSE
+            }
+        ).toBe(true);
     }
 
     static async runChangePointReloginTest(context)
