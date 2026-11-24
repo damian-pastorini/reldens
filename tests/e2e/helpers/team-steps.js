@@ -21,9 +21,7 @@ const { ChatSteps } = require('./chat-steps');
 const { RoomMessagesRecorder } = require('./room-messages-recorder');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { SecurityApi } = require('./security-api');
-const { RoomObjectsApi } = require('./room-objects-api');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
-const { Navigation } = require('./navigation');
 const { TimeConstants } = require('./time-constants');
 const { TeamsConst } = require('../../../lib/teams/constants');
 const { GameConst } = require('../../../lib/game/constants');
@@ -68,10 +66,7 @@ class TeamSteps
 
     static async changeScene(context, player, roomName = Login.TOWN_ROOM_NAME, nextRoomName = Login.FOREST_ROOM_NAME)
     {
-        let placed = await RoomObjectsApi.placePlayerOnChangePoint(player.page, context.gameConfig, roomName, nextRoomName);
-        expect(placed.position, player.playerName+' is placed on the change point to '+nextRoomName+': '+placed.error)
-            .toBeTruthy();
-        await Navigation.waitForRoom(player.page, nextRoomName, TimeConstants.ROOM_TRANSITION);
+        await Login.moveThroughChangePoint(player.page, context.gameConfig, roomName, nextRoomName, player.playerName);
         await TeamSteps.waitForScenePreloader(player.page, nextRoomName);
         await RoomMessagesRecorder.start(player.page);
         await ChatSteps.recordChat(player.page);
