@@ -87,10 +87,10 @@ class ChangePointsSteps
         await player.page.keyboard.up('ArrowUp');
     }
 
-    static async storeRoomArrival(context, topology, roomName)
+    static async storeRoomArrival(context, topology, roomName, previousRoomName = '')
     {
         let gameConfig = context.gameConfig;
-        let arrival = ChangePointsSteps.fetchArrival(topology, roomName, '');
+        let arrival = ChangePointsSteps.fetchArrival(topology, roomName, previousRoomName);
         await E2eSeedAndRestoreApi.updateWithPreserve(gameConfig, context.e2eGroup, 'playersState', {
             player_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName})
         }, {room_id: arrival.roomId, x: arrival.x, y: arrival.y, dir: arrival.dir});
