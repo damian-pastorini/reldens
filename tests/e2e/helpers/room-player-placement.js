@@ -8,13 +8,16 @@
  * other objects next to it, like a cluster of mining rocks, and the other players; the closest distance first, then the
  * lowest row and column, so the same room always gives the same tile), so the NPC, trader and interactive object specs
  * interact with the object from a known position instead of chasing it across the room. A minimum tiles distance skips
- * the closer tiles, so the player body never touches an enemy that starts a battle on the hit. It returns the object
+ * the closer tiles, so the player body never touches an enemy that starts a battle on the hit, and the given line
+ * distances keep only the tiles with a clear line of tiles at one of them (the walk out of a cluster). It returns the object
  * key, its body state key and position and the exact player position.
  * The clear line cases are built on a straight line of tiles no body of the room crosses (the path finder grid only
  * knows the walls and the blocked layers, so an object without state, a disabled enemy or another player can stop a
  * walk or end a bullet on a tile the grid marks walkable): from a start tile, the first line along the right, left,
  * down and up directions (in that order) at the given distances (in that order) whose tiles are all walkable on the
- * grid and whose rectangle (from the start bounds to the end tile) overlaps no body except the ignored ones. It gives
+ * grid and whose rectangle (from the start bounds to the end tile) overlaps no body except the ignored ones (the walk
+ * target of a player also ignores the bodies with no collision response, like a disabled enemy, which a walk crosses
+ * while a bullet still ends on it; with no clear line the error lists the bodies near the player). It gives
  * the walk target of a player and the lines of RoomLinePlacement, so the same room always gives the same walk and the
  * same shot. The line of a shot also covers the row above and the column on the left of the object tile:
  * P2world.shootBullet starts the bullet half a tile and half a bullet away from the shooter on both axes, a body there
@@ -68,7 +71,7 @@ class RoomPlayerPlacement
         }
     }
 
-    static findClosestFreePosition(room, objectBody, playerBody, minimumTilesDistance)
+    static findClosestFreePosition(room, objectBody, playerBody, minimumTilesDistance, lineDistances = [])
     {
         let mapJson = room.roomWorld.mapJson;
         let area = {
@@ -86,7 +89,15 @@ class RoomPlayerPlacement
         for(let column = area.column - radius; column <= area.column + radius; column++){
             RoomPlayerPlacement.appendRowCandidates(candidates, area, column);
         }
-        let closest = [...candidates.filter(candidate => candidate.distance >= minimumTilesDistance).sort(
+        let closest = [...candidates.filter(candidate => candidate.distance >= minimumTilesDistance
+            && (0 === lineDistances.length || false !== RoomPlayerPlacement.findClearLineTile(
+                room,
+                [candidate.column, candidate.row],
+                RoomPlayerPlacement.tileBounds(room, [candidate.column, candidate.row]),
+                lineDistances,
+                [playerBody, ...room.roomWorld.bodies.filter(body => false === body.collisionResponse)]
+            ))
+        ).sort(
             (candidateA, candidateB) => candidateA.distance - candidateB.distance
                 || candidateA.row - candidateB.row
                 || candidateA.column - candidateB.column
@@ -124,7 +135,7 @@ class RoomPlayerPlacement
         };
     }
 
-    static placePlayerNextToObject(room, playerName, objectKey, sessionId, minimumTilesDistance)
+    static placePlayerNextToObject(room, playerName, objectKey, sessionId, minimumTilesDistance, lineDistances = [])
     {
         let subjects = RoomPlayerPlacement.fetchPlacementSubjects(room, playerName, objectKey, sessionId);
         if(subjects.error){
@@ -134,10 +145,11 @@ class RoomPlayerPlacement
             room,
             subjects.roomObject.objectBody,
             subjects.playerSchema.physicalBody,
-            minimumTilesDistance
+            minimumTilesDistance,
+            lineDistances
         );
         if(!position){
-            return {error: 'No walkable tile next to the object '+objectKey+'.'};
+            return {error: 'No walkable tile next to the object '+objectKey+' (with a clear line at '+lineDistances.join(',')+').'};
         }
         return RoomPlayerPlacement.placePlayerOnPosition(subjects.playerSchema, subjects.roomObject, position);
     }
@@ -247,12 +259,22 @@ class RoomPlayerPlacement
                 bottom: playerBounds.upperBound[1]
             },
             distances,
-            [playerBody]
+            [playerBody, ...room.roomWorld.bodies.filter(body => false === body.collisionResponse)]
         );
         if(!tile){
-            return {error: 'No clear line of tiles from the player '+playerName+' in room '+room.roomName+'.'};
+            return {error: 'No clear line of tiles from the player '+playerName+' at '+sc.toJsonString(playerTile)
+                +' in room '+room.roomName+', bodies near it (key, x, y, collision response): '
+                +sc.toJsonString(RoomPlayerPlacement.describeNearBodies(room, playerBody, Math.max(...distances)))};
         }
         return {tile};
+    }
+
+    static describeNearBodies(room, playerBody, tilesDistance)
+    {
+        return room.roomWorld.bodies.filter((body) => playerBody !== body && !body.isWall
+            && (tilesDistance + 1) * room.roomWorld.mapJson.tilewidth
+                >= Math.hypot(body.position[0] - playerBody.position[0], body.position[1] - playerBody.position[1])
+        ).map((body) => [RoomObjectsState.describeBody(body), Math.round(body.position[0]), Math.round(body.position[1]), body.collisionResponse]);
     }
 
     static findObjectWithBody(room, objectKey)
@@ -278,7 +300,8 @@ class RoomPlayerPlacement
                     sc.get(request.body, 'playerName', ''),
                     sc.get(request.body, 'objectKey', ''),
                     String(sc.get(request.body, 'sessionId', '')),
-                    Number(sc.get(request.body, 'minimumTilesDistance', 0))
+                    Number(sc.get(request.body, 'minimumTilesDistance', 0)),
+                    [].concat(sc.get(request.body, 'lineDistances', [])).map(Number)
                 )
             );
         });
