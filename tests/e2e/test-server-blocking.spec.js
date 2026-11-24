@@ -213,7 +213,9 @@ class TestServerBlocking
         expect(await Login.selectPlayer(page, playerName), playerName).toBe(true);
         expect(await Login.selectScene(page, roomName), roomName).toBe(true);
         await LoginServerApi.setServerOverloaded(gameConfig, true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await expect(page.locator(GameConst.SELECTORS.PLAYER_SELECTION_ERRORS)).toHaveText(
             GameTranslations.game.errors.roomServerBusy,
             {timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)}
