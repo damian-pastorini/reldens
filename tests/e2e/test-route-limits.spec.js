@@ -22,7 +22,6 @@ let expect = BaseE2eTest.expect;
 class TestRouteLimits
 {
 
-    static TOO_MANY_REQUESTS_STATUS = 429;
     static FORBIDDEN_STATUS = 403;
     static TOKEN_LIFETIME_MS = 60000;
     static SPOOFED_ADDRESS = '10.20.30.40';
@@ -83,20 +82,6 @@ class TestRouteLimits
         expect(Object.keys(await statusResponse.json()).sort(), 'Usage report').toEqual(TestRouteLimits.REPORT_KEYS);
     }
 
-    static async exhaustRoute(gameConfig, host, route)
-    {
-        let firstResponse = await TestRouteLimits.fetchRoute(gameConfig, host, route);
-        let remainingMatch = String(firstResponse.headers.get('ratelimit')).match(/r=(\d+)/);
-        expect(remainingMatch, route+' must report the remaining requests').toBeTruthy();
-        let remainingRequests = Number([...remainingMatch].pop());
-        for(let requestIndex = 0; remainingRequests > requestIndex; requestIndex++){
-            await TestRouteLimits.fetchRoute(gameConfig, host, route);
-        }
-        expect((await TestRouteLimits.fetchRoute(gameConfig, host, route)).status, route).toBe(
-            TestRouteLimits.TOO_MANY_REQUESTS_STATUS
-        );
-    }
-
     static async runRouteLimitsTest(page, gameConfig)
     {
         await DirectFormSubmit.openPage(page);
@@ -107,7 +92,7 @@ class TestRouteLimits
         let limitedHost = isBrowserOnIpv4 ? GameRoomJoin.IPV6_HOST : GameRoomJoin.IPV4_HOST;
         let browserHost = isBrowserOnIpv4 ? GameRoomJoin.IPV4_HOST : GameRoomJoin.IPV6_HOST;
         for(let route of TestRouteLimits.LIMITED_ROUTES){
-            await TestRouteLimits.exhaustRoute(gameConfig, limitedHost, route);
+            await SecurityApi.exhaustRoute(gameConfig, limitedHost, route);
         }
         let spoofedHeaders = {
             'x-forwarded-for': TestRouteLimits.SPOOFED_ADDRESS,
@@ -116,7 +101,7 @@ class TestRouteLimits
         };
         let termsRoute = GameConst.ROUTE_PATHS.TERMS_AND_CONDITIONS;
         expect((await TestRouteLimits.fetchRoute(gameConfig, limitedHost, termsRoute, spoofedHeaders)).status, 'Spoofed').toBe(
-            TestRouteLimits.TOO_MANY_REQUESTS_STATUS
+            SecurityApi.TOO_MANY_REQUESTS_STATUS
         );
         expect((await TestRouteLimits.fetchRoute(gameConfig, browserHost, termsRoute)).status, 'Another address').toBe(200);
     }
