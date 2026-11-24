@@ -24,8 +24,18 @@ class TestTimingObject extends BaseTest
         this.healCheckWaitMs = 150;
         this.slowAddItemMs = 300;
         this.busyCheckWaitMs = 150;
-        this.cancelledResult = {sentActions: ['timingStart', 'timingCancel'], isActive: false, activeTiming: null};
-        this.runningResult = {sentActions: ['timingStart'], isActive: true, activeTiming: this.timingBuilder.objectKey};
+        this.cancelledResult = {
+            sentActions: ['timingStart', 'timingCancel'],
+            isActive: false,
+            activeTiming: null,
+            movementLocked: null
+        };
+        this.runningResult = {
+            sentActions: ['timingStart'],
+            isActive: true,
+            activeTiming: this.timingBuilder.objectKey,
+            movementLocked: null
+        };
     }
 
     async testPlayerLeavingTheRoomStopsTheTiming()
@@ -37,7 +47,10 @@ class TestTimingObject extends BaseTest
                     timingSetup.roomPlayers = {};
                 }
             );
-            this.assert.deepStrictEqual(result, {sentActions: ['timingStart'], isActive: false, activeTiming: null});
+            this.assert.deepStrictEqual(
+                result,
+                {sentActions: ['timingStart'], isActive: false, activeTiming: null, movementLocked: null}
+            );
         });
     }
 
