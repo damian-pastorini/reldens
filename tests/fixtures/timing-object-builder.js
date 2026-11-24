@@ -2,11 +2,12 @@
  *
  * Reldens - TimingObjectBuilder
  *
- * Builds a timing object with the given private params and duration, placed with its interaction area, and the setup
- * around it: the player schema in reach with its stats, private data and states, an inventory that records the added
- * items, a client that records the sent actions and the room that finds the player and the client by the session. It
- * runs a timing with a player change, starts a reward timing with the given item add, and asserts a busy timing and a
- * timing end that freed the object and the player.
+ * Builds a timing object with the given private params, duration and config values (the locked config enables
+ * server/objects/timing/lockPlayer), placed with its interaction area, and the setup around it: the player schema in
+ * reach with its stats, private data, states and a body that records its stops, an inventory that records the added
+ * items, a client that records the sent actions and messages and the room that finds the player and the client by the
+ * session and records the cleared movement intervals. It runs a timing with a player change, starts a reward timing
+ * with the given item add, and asserts a busy timing and a timing end that freed the object and the player.
  *
  */
 
@@ -41,21 +42,27 @@ class TimingObjectBuilder
             'client/actions/skills/affectedProperty': this.affectedProperty,
             'server/objects/actions/interactionsDistance': 50
         };
+        this.lockedConfigValues = Object.assign({'server/objects/timing/lockPlayer': true}, this.configValues);
     }
 
     /**
      * @param {Object} privateParams
      * @param {number} [timingDuration]
      * @param {string} [objectKey]
+     * @param {Object} [configValues]
      * @returns {TimingObject}
      */
-    createTimingObject(privateParams, timingDuration = this.timingDuration, objectKey = this.objectKey)
-    {
+    createTimingObject(
+        privateParams,
+        timingDuration = this.timingDuration,
+        objectKey = this.objectKey,
+        configValues = this.configValues
+    ){
         let timingObject = new TimingObject({
             events: {},
             config: {
-                get: (path) => this.configValues[path],
-                getWithoutLogs: (path, defaultValue) => defaultValue
+                get: (path) => configValues[path],
+                getWithoutLogs: (path, defaultValue) => sc.get(configValues, path, defaultValue)
             },
             dataServer: {},
             client_key: objectKey,
@@ -70,20 +77,31 @@ class TimingObjectBuilder
     /**
      * @param {Object} privateParams
      * @param {number} [timingDuration]
+     * @param {Object} [configValues]
      * @returns {Object}
      */
-    createTimingSetup(privateParams, timingDuration = this.timingDuration)
+    createTimingSetup(privateParams, timingDuration = this.timingDuration, configValues = this.configValues)
     {
         let timingSetup = {
-            timingObject: this.createTimingObject(privateParams, timingDuration),
-            client: {sessionId: this.sessionId, sentActions: []},
+            timingObject: this.createTimingObject(privateParams, timingDuration, this.objectKey, configValues),
+            client: {sessionId: this.sessionId, sentActions: [], sentMessages: []},
             addedItems: [],
+            bodyStops: [],
+            clearedIntervals: [],
             playerSchema: GameplayPlayerBuilder.createPlayerSchema({
                 sessionId: this.sessionId,
-                stats: {[this.affectedProperty]: this.startHp}
+                stats: {[this.affectedProperty]: this.startHp},
+                physicalBody: {
+                    isChangingScene: false,
+                    stopMove: () => timingSetup.bodyStops.push('stopMove'),
+                    resetAuto: () => timingSetup.bodyStops.push('resetAuto')
+                }
             })
         };
-        timingSetup.client.send = (type, data) => timingSetup.client.sentActions.push(data.act);
+        timingSetup.client.send = (type, data) => {
+            timingSetup.client.sentMessages.push(data);
+            timingSetup.client.sentActions.push(data.act);
+        };
         timingSetup.playerSchema.state = {x: this.objectPosition, y: this.objectPosition};
         timingSetup.playerSchema.inventory = {
             manager: {
@@ -95,7 +113,8 @@ class TimingObjectBuilder
         timingSetup.room = {
             config: timingSetup.timingObject.config,
             playerBySessionIdFromState: (sessionId) => sc.get(timingSetup.roomPlayers, sessionId, false),
-            getClientById: (sessionId) => sessionId === timingSetup.client.sessionId ? timingSetup.client : false
+            getClientById: (sessionId) => sessionId === timingSetup.client.sessionId ? timingSetup.client : false,
+            clearMovementIntervals: (playerId) => timingSetup.clearedIntervals.push(playerId)
         };
         return timingSetup;
     }
@@ -116,11 +135,12 @@ class TimingObjectBuilder
     /**
      * @param {Object} privateParams
      * @param {Function} changePlayer
+     * @param {Object} [configValues]
      * @returns {Promise<Object>}
      */
-    async runTimingWithPlayerChange(privateParams, changePlayer)
+    async runTimingWithPlayerChange(privateParams, changePlayer, configValues = this.configValues)
     {
-        let timingSetup = this.createTimingSetup(privateParams);
+        let timingSetup = this.createTimingSetup(privateParams, this.timingDuration, configValues);
         let timingObject = timingSetup.timingObject;
         timingObject.startTiming(timingSetup.client, timingSetup.room, timingSetup.playerSchema);
         await changePlayer(timingSetup.playerSchema, timingSetup);
@@ -130,7 +150,8 @@ class TimingObjectBuilder
         return {
             sentActions: timingSetup.client.sentActions,
             isActive: timingObject.isActive,
-            activeTiming: timingSetup.playerSchema.getPrivate(this.activeTimingKey)
+            activeTiming: timingSetup.playerSchema.getPrivate(this.activeTimingKey),
+            movementLocked: timingSetup.playerSchema.getPrivate(ObjectsConst.TIMING_MOVEMENT_LOCKED)
         };
     }
 
