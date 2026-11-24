@@ -6,6 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { LoginManager } = require('../lib/game/server/login-manager');
+const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { GameConst } = require('../lib/game/constants');
 const { Encryptor } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
@@ -29,6 +30,7 @@ class TestLoginManagerStoredIdentity extends BaseTest
                 server: {players: {guestUser: {roleId: this.rolesIds.guest}}}
             },
             events: {on: () => true, emitSync: () => true, emit: async () => true},
+            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, ''),
             usersManager: {
                 loadUserByUsername: async (username) => sc.get(usersByLookupValue, username, false),
                 loadUserByEmail: async (email) => sc.get(usersByLookupValue, email, false)
