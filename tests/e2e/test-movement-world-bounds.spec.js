@@ -133,16 +133,16 @@ class TestMovementWorldBounds
         await expect.poll(
             async () => {
                 let currentView = sc.toJsonString(await context.page.evaluate(TestMovementWorldBounds.READ_CLIENT_VIEW));
-                let isSettled = currentView === previousView;
+                let settledState = currentView === previousView ? 'settled' : previousView+' -> '+currentView;
                 previousView = currentView;
-                return isSettled;
+                return settledState;
             },
             {
-                message: 'The client settles on the '+borderName+' border',
+                message: 'The client settles on the '+borderName+' border (the last two client views show what moves)',
                 timeout: TimeConstants.SERVER_RESPONSE,
                 intervals: [TestMovementWorldBounds.SETTLE_POLL_MS]
             }
-        ).toBe(true);
+        ).toBe('settled');
         let server = await RoomMovementApi.fetchPlayer(context.gameConfig, Login.TOWN_ROOM_NAME, walkContext.playerName);
         expect(
             [
