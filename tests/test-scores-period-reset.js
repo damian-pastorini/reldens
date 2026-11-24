@@ -2,6 +2,9 @@
  *
  * Reldens - Test Scores Period Reset
  *
+ * Tests the scores period reset with the daily period: the check dates are built with the local Date constructor, so
+ * the period keys they get (the server local date) are the same in any server time zone.
+ *
  */
 
 const { BaseTest } = require('./base-test');
@@ -15,7 +18,8 @@ class TestScoresPeriodReset extends BaseTest
     {
         super(config);
         this.builder = new ScoresPeriodResetBuilder();
-        this.resetDate = new Date('2026-10-18T10:00:00Z');
+        this.resetDate = new Date(2026, 9, 18, 10, 0, 0);
+        this.previousPeriodDate = new Date(2026, 9, 17, 22, 0, 0);
         this.resetPeriodKey = '2026-10-18';
         this.previousPeriodKey = '2026-10-17';
         this.resetPendingValue = this.builder.buildPendingValue(
@@ -134,7 +138,7 @@ class TestScoresPeriodReset extends BaseTest
     {
         await this.test('another server reset makes this server send the stored scores', async () => {
             let setup = this.builder.createSetup(this.previousPeriodKey);
-            this.assert.strictEqual(await setup.scoresPeriodReset.check(new Date('2026-10-17T22:00:00Z')), false);
+            this.assert.strictEqual(await setup.scoresPeriodReset.check(this.previousPeriodDate), false);
             setup.repositories.config.lastPeriodRow.value = this.resetPeriodKey;
             let checkResult = await setup.scoresPeriodReset.check(this.resetDate);
             this.assert.deepStrictEqual(
@@ -157,7 +161,7 @@ class TestScoresPeriodReset extends BaseTest
     {
         await this.test('a failed scores refresh is sent again on the next check', async () => {
             let setup = this.builder.createSetup(this.previousPeriodKey);
-            await setup.scoresPeriodReset.check(new Date('2026-10-17T22:00:00Z'));
+            await setup.scoresPeriodReset.check(this.previousPeriodDate);
             setup.repositories.config.lastPeriodRow.value = this.resetPeriodKey;
             setup.repositories.scores.failedReads = 1;
             this.assert.strictEqual(await setup.scoresPeriodReset.check(this.resetDate), false);
