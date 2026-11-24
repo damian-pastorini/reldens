@@ -114,8 +114,10 @@ class TestAuthenticationServerGuards
     static async runOtherServerUnavailableTest(page, screenshots, gameConfig, longRun)
     {
         await LoginServerApi.setOtherServer(gameConfig, TestAuthenticationServerGuards.UNAVAILABLE_SERVER_URL, true);
-        await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
-        await screenshots.capture(page, 'other-server-unavailable-login-continues');
+        expect(await TestAuthenticationServerGuards.fetchRejectedLoginText(gameConfig, page, longRun)).toBe(
+            GameConst.JOIN_GAME_ERROR_MESSAGE
+        );
+        await screenshots.capture(page, 'other-server-unavailable-login-rejected');
     }
 
     static async runOtherServerErrorTest(page, screenshots, gameConfig, longRun)
@@ -160,7 +162,9 @@ class TestAuthenticationServerGuards
         await Login.loginRootPlayer(secondPage, gameConfig, longRun, '2');
         await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
         await LoginServerApi.setServerOverloaded(gameConfig, true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await expect(page.locator(GameConst.SELECTORS.PLAYER_SELECTION_ERRORS)).not.toBeEmpty({
             timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
         });
@@ -244,7 +248,7 @@ class TestAuthenticationServerGuards
             test('disconnect route handles a missing username and valid tokens', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runDisconnectRequestsTest(page, screenshots, gameConfig, longRun);
             });
-            test('other server unavailable lets the login continue', async ({ page, screenshots, gameConfig, longRun }) => {
+            test('other server unavailable rejects the login', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerUnavailableTest(page, screenshots, gameConfig, longRun);
             });
             test('other server answering an error rejects the login', async ({ page, screenshots, gameConfig, longRun }) => {
