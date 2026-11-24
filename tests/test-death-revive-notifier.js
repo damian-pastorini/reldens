@@ -2,6 +2,12 @@
  *
  * Reldens - Test Death Revive Notifier
  *
+ * Tests the revive message a dead player is told (in place, with the restoration item, the question to use it, or in
+ * the town room) and the resurrection ad the town revive offers through the "reldens.deathTownReviveData" event, answered
+ * by the ads ResurrectionAdGate (an enabled ad of the configured key, not closed in this death, in a room that allows
+ * the ad messages); the ad reward (the gate "onAfterGiveAdRewardItem") sets the choice to use the restoration item and
+ * tells the revive again through "reldens.deathReviveNotify" when the player client is in the room.
+ *
  */
 
 const { BaseTest } = require('./base-test');
@@ -9,6 +15,7 @@ const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder'
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
+const { sc } = require('@reldens/utils');
 
 class TestDeathReviveNotifier extends BaseTest
 {
@@ -57,28 +64,26 @@ class TestDeathReviveNotifier extends BaseTest
     async testTownReviveOffersTheEnabledResurrectionAd()
     {
         await this.test('the town revive tells the town title and offers only an enabled resurrection ad', async () => {
-            let collectionPath = AdsConst.CONFIG_PATHS.COLLECTION;
-            let adsKeyPath = ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY;
             let disabledAd = Object.assign({}, this.resurrectionAd, {enabled: 0});
             let disabledProviderAd = Object.assign({}, this.resurrectionAd, {provider: {enabled: 0}});
             let customEventAd = Object.assign({}, this.resurrectionAd, {eventKey: 'custom.resurrectionEvent'});
             let bannerAd = Object.assign({}, this.resurrectionAd);
             delete bannerAd.eventKey;
             let adCases = [
-                {configValues: {}, eventKey: this.resurrectionAd.eventKey},
-                {
-                    configValues: {[collectionPath]: {[customEventAd.id]: customEventAd}},
-                    eventKey: customEventAd.eventKey
-                },
-                {configValues: {[collectionPath]: {[bannerAd.id]: bannerAd}}, eventKey: ''},
-                {configValues: {[collectionPath]: {[disabledAd.id]: disabledAd}}, eventKey: ''},
-                {configValues: {[collectionPath]: {[disabledAd.id]: disabledProviderAd}}, eventKey: ''},
-                {configValues: {[collectionPath]: {}}, eventKey: ''},
-                {configValues: {[adsKeyPath]: ''}, eventKey: ''},
-                {configValues: {[adsKeyPath]: 'missing-video'}, eventKey: ''}
+                {gateOptions: {}, eventKey: this.resurrectionAd.eventKey},
+                {gateOptions: {adsCollection: {[customEventAd.id]: customEventAd}}, eventKey: customEventAd.eventKey},
+                {gateOptions: {adsCollection: {[bannerAd.id]: bannerAd}}, eventKey: ''},
+                {gateOptions: {adsCollection: {[disabledAd.id]: disabledAd}}, eventKey: ''},
+                {gateOptions: {adsCollection: {[disabledAd.id]: disabledProviderAd}}, eventKey: ''},
+                {gateOptions: {adsCollection: {}}, eventKey: ''},
+                {gateOptions: {resurrectionAdsKey: ''}, eventKey: ''},
+                {gateOptions: {resurrectionAdsKey: 'missing-video'}, eventKey: ''}
             ];
             for(let adCase of adCases){
-                let setup = await this.deathBuilder.createNotifierSetup(adCase.configValues, {restorationQty: 0});
+                let setup = await this.deathBuilder.createNotifierSetup(
+                    {},
+                    Object.assign({restorationQty: 0}, adCase.gateOptions)
+                );
                 this.assert.strictEqual(await setup.notify(), true);
                 this.assert.deepStrictEqual(
                     setup.client.sentMessages,
@@ -91,21 +96,43 @@ class TestDeathReviveNotifier extends BaseTest
     async testFailedOrEndedRequestedAdIsNotOfferedAgain()
     {
         await this.test('the resurrection ad requested in the death is offered while it plays, not once it failed or ended', async () => {
-            let privateDataKeys = ActionsConst.DEATH.PRIVATE_DATA;
             let adCases = [
-                {privateData: {[privateDataKeys.RESURRECTION_AD_REQUESTED]: 1}, eventKey: this.resurrectionAd.eventKey},
-                {privateData: {[privateDataKeys.RESURRECTION_AD_FAILED]: true}, eventKey: ''},
-                {privateData: {[privateDataKeys.RESURRECTION_AD_ENDED]: true}, eventKey: ''}
+                {isClosed: false, message: this.townMessage},
+                {isClosed: true, message: this.deathBuilder.townMessageWithoutAd}
             ];
             for(let adCase of adCases){
                 let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 0});
-                for(let privateDataKey of Object.keys(adCase.privateData)){
-                    setup.playerSchema.setPrivate(privateDataKey, adCase.privateData[privateDataKey]);
-                }
+                setup.playerSchema.setPrivate(AdsConst.PRIVATE_DATA.RESURRECTION_AD, {
+                    deathEvent: setup.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_EVENT),
+                    isRequested: true,
+                    isClosed: adCase.isClosed
+                });
+                this.assert.strictEqual(await setup.notify(), true);
+                this.assert.deepStrictEqual(setup.client.sentMessages, [adCase.message]);
+            }
+        });
+    }
+
+    async testRoomRefusingTheAdMessagesDoesNotOfferTheResurrectionAd()
+    {
+        await this.test('the resurrection ad is not offered in a room that refuses the ad start or end messages', async () => {
+            let withoutAd = this.deathBuilder.townMessageWithoutAd;
+            let roomCases = [
+                {roomCustomData: {disallowedActions: [GameConst.BUTTON_OPTION]}, message: this.townMessage},
+                {roomCustomData: {allActionsDisabled: true}, message: withoutAd},
+                {roomCustomData: {disallowedActions: [AdsConst.ACTIONS.AD_STARTED]}, message: withoutAd},
+                {roomCustomData: {disallowedActions: [AdsConst.ACTIONS.AD_ENDED]}, message: withoutAd}
+            ];
+            for(let roomCase of roomCases){
+                let setup = await this.deathBuilder.createNotifierSetup(
+                    {},
+                    {restorationQty: 0, roomCustomData: roomCase.roomCustomData}
+                );
                 this.assert.strictEqual(await setup.notify(), true);
                 this.assert.deepStrictEqual(
                     setup.client.sentMessages,
-                    [Object.assign({}, this.townMessage, {resurrectionAdEventKey: adCase.eventKey})]
+                    [roomCase.message],
+                    'Room custom data: '+sc.toJsonString(roomCase.roomCustomData)
                 );
             }
         });
@@ -169,7 +196,7 @@ class TestDeathReviveNotifier extends BaseTest
             let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 0});
             await setup.notify();
             setup.playerSchema.inventory.manager.items.restoration_scroll.qty = 1;
-            this.assert.strictEqual(await setup.notifier.onAfterGiveAdRewardItem(setup.rewardEvent), true);
+            this.assert.strictEqual(setup.gate.onAfterGiveAdRewardItem(setup.rewardEvent), true);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.townMessage, this.itemMessage]);
         });
     }
@@ -178,7 +205,7 @@ class TestDeathReviveNotifier extends BaseTest
     {
         await this.test('other ads rewards, missing ads keys or players and alive players are not told', async () => {
             let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
-            let notifier = setup.notifier;
+            let gate = setup.gate;
             let rewardEvent = setup.rewardEvent;
             let notToldEvents = [
                 Object.assign({}, rewardEvent, {playedAd: this.otherAd}),
@@ -188,17 +215,14 @@ class TestDeathReviveNotifier extends BaseTest
                 {}
             ];
             for(let notToldEvent of notToldEvents){
-                this.assert.strictEqual(await notifier.onAfterGiveAdRewardItem(notToldEvent), false);
+                this.assert.strictEqual(gate.onAfterGiveAdRewardItem(notToldEvent), false);
             }
-            let emptyKeySetup = await this.deathBuilder.createNotifierSetup({
-                [ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY]: ''
-            });
+            let emptyKeySetup = await this.deathBuilder.createNotifierSetup({}, {resurrectionAdsKey: ''});
             emptyKeySetup.rewardEvent.playedAd.key = '';
-            let emptyKeyResult = await emptyKeySetup.notifier.onAfterGiveAdRewardItem(emptyKeySetup.rewardEvent);
-            this.assert.strictEqual(emptyKeyResult, false);
+            this.assert.strictEqual(emptyKeySetup.gate.onAfterGiveAdRewardItem(emptyKeySetup.rewardEvent), false);
             this.assert.deepStrictEqual(emptyKeySetup.client.sentMessages, []);
             setup.playerSchema.inState = GameConst.STATUS.ACTIVE;
-            this.assert.strictEqual(await notifier.onAfterGiveAdRewardItem(rewardEvent), false);
+            this.assert.strictEqual(gate.onAfterGiveAdRewardItem(rewardEvent), false);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
             let choicePath = ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE;
             this.assert.strictEqual(setup.playerSchema.getPrivate(choicePath), null);
@@ -216,10 +240,7 @@ class TestDeathReviveNotifier extends BaseTest
             let choiceCases = [
                 {choice: '', message: askMessage},
                 {choice: ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.USE, message: this.itemMessage},
-                {
-                    choice: ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.KEEP,
-                    message: Object.assign({}, this.townMessage, {resurrectionAdEventKey: ''})
-                }
+                {choice: ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.KEEP, message: this.deathBuilder.townMessageWithoutAd}
             ];
             let choicePath = ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE;
             for(let choiceCase of choiceCases){
@@ -281,7 +302,7 @@ class TestDeathReviveNotifier extends BaseTest
             );
             await setup.notify();
             setup.playerSchema.inventory.manager.items.restoration_scroll.qty = 1;
-            this.assert.strictEqual(await setup.notifier.onAfterGiveAdRewardItem(setup.rewardEvent), true);
+            this.assert.strictEqual(setup.gate.onAfterGiveAdRewardItem(setup.rewardEvent), true);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.townMessage, this.itemMessage]);
             this.assert.strictEqual(
                 setup.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE),
@@ -292,11 +313,15 @@ class TestDeathReviveNotifier extends BaseTest
 
     async testRewardOfPlayerWithoutClientIsNotTold()
     {
-        await this.test('the resurrection ad reward of a dead player without room client is not told', async () => {
+        await this.test('the resurrection ad reward of a dead player without room client keeps the choice and tells nothing', async () => {
             let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
             setup.room.getClientById = () => false;
-            this.assert.strictEqual(await setup.notifier.onAfterGiveAdRewardItem(setup.rewardEvent), false);
+            this.assert.strictEqual(setup.gate.onAfterGiveAdRewardItem(setup.rewardEvent), true);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
+            this.assert.strictEqual(
+                setup.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE),
+                ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.USE
+            );
         });
     }
 
