@@ -9,7 +9,8 @@
  * PvP attack: the second player (secondPage) records its skills, gets the balanced combat stats of CombatSkillCasting
  * and a direct short attack (no critical hit, any distance, plus the given skill properties) and targets the first
  * player (page); the PvP death places it next to the first player, which is left with one life point, so its single
- * hit kills it.
+ * hit kills it. The server death is awaited on the player state (dead, its body out of the world), since the client
+ * sees the last hit points before the server ends the player movement and holds its death position.
  *
  */
 
@@ -20,6 +21,7 @@ const { CombatSkillCasting } = require('./combat-skill-casting');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { TimeConstants } = require('./time-constants');
 const { BaseE2eTest } = require('../base-e2e-test');
+const { GameConst } = require('../../../lib/game/constants');
 const { Logger, sc } = require('@reldens/utils');
 
 class TestCombatDeath
@@ -42,6 +44,19 @@ class TestCombatDeath
             .toBe(TestCombatDeath.LAST_HIT_POINTS);
         await TestCombatDeath.startEnemyAttack(gameConfig, enemyAssetKey);
         await TestCombatDeath.waitForPlayerHpCondition(page, 'dead', timeout);
+    }
+
+    static async waitForServerDeath(gameConfig, roomName, playerName)
+    {
+        let deadPlayer = {};
+        await expect.poll(async () => {
+            deadPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, roomName, playerName);
+            return [deadPlayer.inState, deadPlayer.bodyInWorld];
+        }, {
+            message: 'The server holds '+playerName+' dead with its body out of the world',
+            timeout: TimeConstants.SERVER_RESPONSE
+        }).toEqual([GameConst.STATUS.DEATH, false]);
+        return deadPlayer;
     }
 
     static async startEnemyAttack(gameConfig, enemyAssetKey)
