@@ -17,6 +17,7 @@ const { BaseE2eTest } = require('./base-e2e-test');
 const { Login } = require('./helpers/login');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { ChatSteps } = require('./helpers/chat-steps');
 const { Phaser } = require('./helpers/phaser');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
@@ -211,10 +212,12 @@ class TestMovementKeyboard
         await context.page.keyboard.down('ArrowDown');
         await context.page.waitForTimeout(TestMovementKeyboard.HOLD_MS);
         await context.page.keyboard.up('ArrowDown');
-        await expect.poll(
-            async () => [await walkContext.fetchPlayer()].map((player) => [player.velocityX, player.velocityY]).pop(),
-            {message: 'The key still held moves the player alone', timeout: TimeConstants.SERVER_RESPONSE}
-        ).toEqual([movementSpeed, 0]);
+        await RoomMovementApi.expectVelocity(
+            walkContext.fetchPlayer,
+            {x: movementSpeed, y: 0},
+            'The key still held moves the player alone',
+            TimeConstants.SERVER_RESPONSE
+        );
         await TestMovementKeyboard.releaseAndExpectMessages(
             context,
             walkContext,
