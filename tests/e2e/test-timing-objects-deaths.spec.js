@@ -6,7 +6,9 @@
  * the group (DeathReviveSteps) and its life set to the points one hit removes before the mining starts, so only the
  * killing hit of a passive forest enemy (TestCombatDeath) lowers it during the mining: with the hit rule on the kill
  * cancels the mining with no reward; with the hit rule off and the player kept dead (no auto revive and a long game
- * over) the death still cancels the mining with no reward and the rock is free; and with the hit rule off and the death teleport on the
+ * over) the death still cancels the mining with no reward and the rock is free; with the player lock on
+ * (server/objects/timing/lockPlayer, ISSUE #70) the killing hit cancels the locked mining with no reward and the miner
+ * revived in place can move again; and with the hit rule off and the death teleport on the
  * player moved to the town gets no reward and the rock is free.
  *
  */
@@ -19,6 +21,7 @@ const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { Navigation } = require('./helpers/navigation');
+const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ActionsConst } = require('../../lib/actions/constants');
@@ -105,6 +108,23 @@ class TestTimingObjectsDeaths
         await TestTimingObjectsDeaths.expectCancelledWithNoReward(context, mining, 'The death cancels the mining');
     }
 
+    static async runLockedKillTest(context)
+    {
+        let mining = await TestTimingObjectsDeaths.killDuringMining(
+            context,
+            {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false},
+            {lockPlayer: true}
+        );
+        await TestTimingObjectsDeaths.expectCancelledWithNoReward(context, mining, 'The killing hit cancels the locked mining');
+        await DeathReviveSteps.expectAliveInForest(context);
+        let revivedPosition = await Phaser.getPlayerServerPosition(context.page);
+        await TimingObjectSession.sideStep(context.page);
+        await expect.poll(
+            async () => await Phaser.getPlayerServerPosition(context.page),
+            {message: 'The revived miner moves again', timeout: mining.serverTimeout}
+        ).not.toEqual(revivedPosition);
+    }
+
     static async runDeathTeleportTest(context)
     {
         let mining = await TestTimingObjectsDeaths.killDuringMining(context, {
@@ -123,6 +143,9 @@ class TestTimingObjectsDeaths
             });
             test('hit rule off: the death cancels the mining of the kept dead miner with no reward', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTimingObjectsDeaths.runDeadMinerTest({page, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('lock on: the killing hit cancels the locked mining and the revived miner moves again', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTimingObjectsDeaths.runLockedKillTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('hit rule off: the miner moved by the death teleport gets no reward', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTimingObjectsDeaths.runDeathTeleportTest({page, screenshots, gameConfig, e2eGroup, longRun});
