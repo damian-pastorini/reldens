@@ -39,8 +39,8 @@
         <div class="rooms-association-content entry-collapsible-content hidden">
         <p>Notes:</p>
         <p>
-            - The room link does not exist as "entity" itself, this feature will create change points and return points in both directions (if specified).<br/>
-            - The "bidirectional" option will create a change point in the current room and another in the next, this will allow the player to go back and move between rooms.<br/>
+            - The room link does not exist as "entity" itself, this feature will create the change point in the current room to the next room and the return point where the player appears in the next room when it comes from the current room.<br/>
+            - The link goes in one direction, to allow the player to go back create the link again from the next room view, with its change point to this room and the return point in this room.<br/>
             - When selecting a return position, it can't be the same as the change point in that same room, otherwise the player will keep hitting the change points after each scene change entering an infinite loop.<br/>
             - Once the association is created, it can only be removed by deleting the related records in the change-points and return points sections.<br/>
         </p>
