@@ -4,6 +4,9 @@
  *
  * The death and revive steps of the death specs, over a context with the page, the screenshots, the game config, the
  * e2e group and the long run flag: override the death config for the group (the death teleport enabled unless overridden),
+ * stop the moving objects of the town room on their original tiles (the random walk of an NPC near the town return
+ * point pushes the player revived there; a town room the revive creates starts them on their original tiles; a town
+ * room out of the collected game data, like the server-2 room of the cross server deaths, has none to stop),
  * enter the forest and kill the player there with a real enemy hit (the aggressive enemies are disabled after the death
  * so the revived player is not killed again), optionally carrying one restoration item, and check the game over box:
  * the translated revive message of each case with the town room title and the restoration item label read from their
@@ -23,6 +26,7 @@ const { expect, test } = require('@playwright/test');
 const { Login } = require('./login');
 const { Navigation } = require('./navigation');
 const { RoomObjectsApi } = require('./room-objects-api');
+const { MovementScenario } = require('./movement-scenario');
 const { ChangePointsSteps } = require('./change-points-steps');
 const { TestCombatDeath } = require('./test-combat-death');
 const { ForestEnemyKill } = require('./forest-enemy-kill');
@@ -79,6 +83,7 @@ class DeathReviveSteps
             ActionsConst.DEATH.CONFIG_PATHS.RESTORATION_ITEM_KEY
         );
         context.reviveLabels = await DeathReviveSteps.fetchReviveLabels(context.gameConfig, restorationItemKey);
+        await MovementScenario.pauseMovingObjects(context.gameConfig, context.reviveLabels.townRoom.name);
         return restorationItemKey;
     }
 
@@ -119,19 +124,10 @@ class DeathReviveSteps
 
     static async killPlayerInForest(context, placement, deathStep)
     {
+        let gameConfig = context.gameConfig;
         await (context.longRun
-            ? ForestEnemyKill.fightUntilPlayerDeath(
-                context.page,
-                context.gameConfig,
-                placement.enemyKey,
-                TimeConstants.ENEMY_KILL
-            )
-            : TestCombatDeath.killPlayerWithEnemyAttack(
-                context.page,
-                context.gameConfig,
-                context.gameConfig.e2eEnemyKey,
-                TimeConstants.ENEMY_KILL
-            ));
+            ? ForestEnemyKill.fightUntilPlayerDeath(context.page, gameConfig, placement.enemyKey, TimeConstants.ENEMY_KILL)
+            : TestCombatDeath.killPlayerWithEnemyAttack(context.page, gameConfig, gameConfig.e2eEnemyKey, TimeConstants.ENEMY_KILL));
         await DeathReviveShowcase.showStep(context, deathStep);
         await RoomObjectsApi.disableEnemies(context.gameConfig, Login.FOREST_ROOM_NAME, true);
         await context.screenshots.capture(context.page, 'player-dead-in-forest');
