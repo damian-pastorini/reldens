@@ -2,6 +2,8 @@
  *
  * Reldens - Test Room Chat Global Messages
  *
+ * The private messages relayed between the chat servers are tested in TestPrivateMessageCrossServerRelay.
+ *
  */
 
 const { BaseTest } = require('./base-test');
