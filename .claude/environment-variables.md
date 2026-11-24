@@ -11,7 +11,7 @@ See `lib/game/server/install-templates/.env.dist` for the template file.
 - `RELDENS_APP_HOST` - Application host (default: `http://localhost`)
 - `PORT` - Application port, takes precedence over `RELDENS_APP_PORT` when it is set to a non zero number
 - `RELDENS_APP_PORT` - Application port, used when `PORT` is not set (default: 8080)
-- `RELDENS_PUBLIC_URL` - Public URL for the application (default: `RELDENS_APP_HOST` plus `:` plus the port)
+- `RELDENS_PUBLIC_URL` - Public URL for the application (default: `RELDENS_APP_HOST` plus `:` plus the port); in a multi-server setup it must be the address the other servers use for this one, since the requests between servers are validated against it (see [multiple servers](multi-server/overview.md))
 
 The port is resolved in `EnvironmentVariablesReader.fetchConfigServerFromEnvironmentVariables()` (`lib/game/server/environment-variables-reader.js`):
 
@@ -74,7 +74,7 @@ async enableServeStaticsAndHomePage()
 
 ## Security
 
-- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the reset password links, the multi-server disconnection requests and the names checks between the servers with their own database, shared by every server of a multi-server setup (default: `RELDENS_ADMIN_SECRET`)
+- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the reset password links and every request between the servers (disconnection, names check, status, teams, clans, chat and rooms syncs) and the logged users keys of the status report, shared by every server of a multi-server setup (default: `RELDENS_ADMIN_SECRET`), see [multiple servers](multi-server/overview.md)
 - `RELDENS_ADMIN_CSRF_ENABLED` - Session based CSRF tokens on the administration router, 0 or 1 (default: 1). The token is sent to the admin client JS in the `reldens-admin-csrf-token` cookie, added to every POST form as `_csrf` and to the fetch requests as the `X-CSRF-Token` header (the tileset analyzer admin JS sends it too, its routes are not exempt); only the maps wizard, the objects importer and the skills importer paths are added to the router `csrfProtection.ignoredPaths`, and their upload routes check the token after their uploader with their own `CsrfProtection` middleware. Projects created before this change must refresh their `theme/admin` templates and JS (`reldens fullRebuild`)
 - `RELDENS_ADMIN_LOGIN_WINDOW_MS` - Administration panel login limiter window (default: 900000)
 - `RELDENS_ADMIN_LOGIN_MAX_ATTEMPTS` - Failed administration panel logins allowed per IP and email in the window (default: 5)
@@ -112,7 +112,7 @@ The basic configuration (`migrations/production/reldens-basic-config-v4.0.0.sql`
 
 - `RELDENS_ADMIN_ROUTE_PATH` - Admin panel route path
 - `RELDENS_ADMIN_SECRET` - Admin authentication secret, the administration panel is not activated when it is empty
-- `RELDENS_SIGNED_TOKENS_SECRET` - Secret used to sign the expiring reset password links, the multi-server disconnect user requests and the names checks between the servers with their own database (default: `RELDENS_ADMIN_SECRET`). Every server in a multi-server setup must use the same value. The servers with their own database are listed in the `server/rooms/databases` config (comma separated URLs, the server own `server/publicUrl` is skipped): before a registration or a player creation is stored, the server holds the username and email, or the player name, and asks each listed server through the signed `/reldens-check-user-name` and `/reldens-check-player-name` routes, and stores it only when every server answers the values are free (a server that does not answer in 5 seconds counts as not free); a server sharing the database can be listed too, so two servers on one database never store the same name at the same time
+- `RELDENS_SIGNED_TOKENS_SECRET` - The same secret as in the Security section above; every server in a multi-server setup must use the same value. The names check between the servers of `server/rooms/databases` is described in [names check](multi-server/names-check.md)
 - `RELDENS_HOT_PLUG` - Enable hot-plug configuration updates (0/1, default: 1), read in `ServerManager.initializeConfiguration()` as `1 === Number(process.env.RELDENS_HOT_PLUG || 1)`
 - `RELDENS_BLOCKED_ADMIN` - Demo switch read only by the project `index.js` created from `theme/index.js.dist`: with `1` it listens to `reldens.afterCreateAdminManager` and blacklists the save and delete routes of every admin entity for the roles 1, 2 and 99, and denies the game login to the users with role 4; any other value (or unset) leaves the administration panel writable
 
