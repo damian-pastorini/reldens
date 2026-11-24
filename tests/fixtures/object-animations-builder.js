@@ -7,7 +7,9 @@
  * engine sprite creation uses: a game manager with the given config values, the room preload assets and the active
  * scene; a preloader with the loaded textures, the given frame numbers and the asset loader recording its loads and
  * its complete callbacks; and a scene creating recording sprites (played animations, listeners, tints, depth and
- * destroy).
+ * destroy). The timing context adds what the client timing object uses: the room messages listeners, the sent
+ * messages, the input check of the game DOM, and a preloader adding recording texts and graphics with a keyboard that
+ * keeps its listeners.
  *
  */
 
@@ -126,6 +128,68 @@ class ObjectAnimationsBuilder
         context.preloader.load.spritesheet = (key, file, params) => context.loadedSpritesheets.push({key, file, params});
         context.preloader.load.once = (eventName, callback) => context.loadCallbacks.push(callback);
         context.preloader.load.start = () => true;
+        return context;
+    }
+
+    /**
+     * @param {Object} context
+     * @param {Object} textData
+     * @returns {Object}
+     */
+    static addText(context, textData)
+    {
+        let text = Object.assign({origin: false, depth: false, interactive: false, destroyed: false, listeners: {}}, textData);
+        text.setOrigin = (originX, originY) => Object.assign(text, {origin: [originX, originY]});
+        text.setDepth = (depth) => Object.assign(text, {depth});
+        text.setInteractive = (interactiveConfig) => Object.assign(text, {interactive: interactiveConfig});
+        text.on = (eventName, callback) => {
+            text.listeners[eventName] = callback;
+            return text;
+        };
+        text.destroy = () => Object.assign(text, {destroyed: true});
+        context.texts.push(text);
+        return text;
+    }
+
+    /**
+     * @returns {Object}
+     */
+    static createGraphics()
+    {
+        let graphics = {destroyed: false};
+        for(let methodName of ['setDepth', 'clear', 'fillStyle', 'fillRect']){
+            graphics[methodName] = () => graphics;
+        }
+        graphics.destroy = () => Object.assign(graphics, {destroyed: true});
+        return graphics;
+    }
+
+    /**
+     * @param {Object} options
+     * @returns {Object}
+     */
+    static createTimingContext(options)
+    {
+        let context = ObjectAnimationsBuilder.createSpriteContext(options);
+        Object.assign(context, {sentMessages: [], roomListeners: [], keyboardListeners: [], texts: [], isInsideInput: false});
+        context.gameManager.gameDom = {insideInput: () => context.isInsideInput};
+        context.gameManager.activeRoomEvents.room = {onMessage: (type, callback) => context.roomListeners.push(callback)};
+        context.gameManager.activeRoomEvents.send = (message) => context.sentMessages.push(message);
+        context.preloader.add = {
+            text: (x, y, text, style) => ObjectAnimationsBuilder.addText(context, {x, y, text, style}),
+            graphics: () => ObjectAnimationsBuilder.createGraphics()
+        };
+        context.preloader.input = {keyboard: {}};
+        context.preloader.input.keyboard.on = (eventName, callback, callbackContext) => context.keyboardListeners.push(
+            {eventName, callback, callbackContext}
+        );
+        context.preloader.input.keyboard.off = (eventName, callback, callbackContext) => {
+            context.keyboardListeners = context.keyboardListeners.filter(
+                (listener) => eventName !== listener.eventName
+                    || callback !== listener.callback
+                    || callbackContext !== listener.callbackContext
+            );
+        };
         return context;
     }
 
