@@ -8,7 +8,9 @@ const { BaseTest } = require('./base-test');
 const { RequiredSdkReachabilityCheck } = require('../lib/ads/server/required-sdk-reachability-check');
 const { AdsPlugin } = require('../lib/ads/server/plugin');
 const { AdsConst } = require('../lib/ads/constants');
-const { sc } = require('@reldens/utils');
+const { ServerManagersInitializer } = require('../lib/game/server/server-managers-initializer');
+const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
+const { EventsManager, sc } = require('@reldens/utils');
 
 class TestAdsRequiredSdkReachability extends BaseTest
 {
@@ -157,6 +159,49 @@ class TestAdsRequiredSdkReachability extends BaseTest
             let event = {configProcessor: {}, continueProcess: true};
             await listener(event);
             this.assert.strictEqual(event.continueProcess, false);
+        });
+    }
+
+    createStartingServerManager(providers)
+    {
+        return {
+            events: new EventsManager(),
+            dataServer: {getEntity: (entityKey) => sc.get({
+                features: {loadBy: async () => [{code: 'ads', is_enabled: 1}]},
+                adsProviders: {loadAll: async () => providers},
+                adsTypes: {loadAll: async () => []},
+                ads: {loadAllWithRelations: async () => []}
+            }, entityKey, {})},
+            configManager: GameplayPlayerBuilder.createConfigManager({
+                [AdsConst.CONFIG_PATHS.SDK_REQUIRED]: true,
+                [AdsConst.CONFIG_PATHS.SDK_CHECK_TIMEOUT]: 1500
+            }),
+            themeManager: {reldensModulePath: ''},
+            projectRoot: ''
+        };
+    }
+
+    async testUnreachableRequiredSdkStopsTheServerStart()
+    {
+        await this.test('the server start stops before the users manager when a stored required SDK does not answer', async () => {
+            let serverManager = this.createStartingServerManager([
+                {key: 'unreachableProvider', enabled: 1, sdkUrl: 'http://127.0.0.1:9/sdk.js'}
+            ]);
+            let started = await new ServerManagersInitializer(serverManager).initializeManagers();
+            this.assert.deepStrictEqual(
+                [started, Object.keys(serverManager.featuresManager.featuresList), sc.get(serverManager, 'usersManager', false)],
+                [false, ['ads'], false]
+            );
+        });
+    }
+
+    async testDisabledRequiredSdkLetsTheFeaturesStart()
+    {
+        await this.test('the features start continues when the stored providers with an SDK are disabled', async () => {
+            let serverManager = this.createStartingServerManager([
+                {key: 'disabledProvider', enabled: 0, sdkUrl: 'http://127.0.0.1:9/sdk.js'}
+            ]);
+            this.assert.strictEqual(await new ServerManagersInitializer(serverManager).initializeFeaturesManager(), true);
         });
     }
 
