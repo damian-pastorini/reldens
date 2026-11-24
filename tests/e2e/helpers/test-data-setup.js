@@ -8,7 +8,8 @@
  * class path (level and experience) and inventory, so every group logs in with players that have the same data as the
  * configured ones (the users created by a previous run on the same database are kept); then ensures the required test
  * items exist in the inventory of every test player.
- * It also prepares the disposable rooms the admin rooms live deletion spec deletes, so the spec never deletes a sample
+ * It also prepares the disposable rooms the admin rooms live deletion and the cross server admin specs delete (the
+ * remote one is hosted on server-2 by its spec), so the specs never delete a sample
  * data room and every run starts with them whatever the last run deleted: before the game server loads the maps, every
  * disposable room map is written from the map of its base sample room (the tileset image renamed to the disposable
  * room image) next to a copy of that image, in the tested app theme maps folder (the rooms bucket a room delete removes
@@ -38,10 +39,12 @@ class TestDataSetup
     ];
     static PLAYERS_ROOM_KEY = 'players';
     static UNLINKED_ROOM_KEY = 'unlinked';
+    static REMOTE_ROOM_KEY = 'remote';
     static DISPOSABLE_ROOM_NAME_PREFIX = 'e2e-deleted-room-';
     static DISPOSABLE_BASE_ROOMS_NAMES = {
         [TestDataSetup.PLAYERS_ROOM_KEY]: 'reldens-new-age-town-house-05',
-        [TestDataSetup.UNLINKED_ROOM_KEY]: 'reldens-new-age-town-house-04'
+        [TestDataSetup.UNLINKED_ROOM_KEY]: 'reldens-new-age-town-house-04',
+        [TestDataSetup.REMOTE_ROOM_KEY]: 'reldens-new-age-town-house-03'
     };
     static ARRIVAL_OFFSET = 32;
     static SEPARATED_ARRIVAL = {roomName: 'reldens-bots-forest', fromRoomName: 'reldens-bots-forest-house-01-n0'};
