@@ -4,14 +4,15 @@
  *
  * Tests the completed trades between the group players (TradeSteps: the trade messages sent as a client sends them,
  * the live inventories read from the server and the stored inventory rows, the inventories of the players restored for
- * the group): one unit of a potions stack (a trade of more units merges only one, ISSUE #148) moves from the sender to
- * the receiver and merges into its stack, live, stored and
- * after the receiver logs in again, and both trade boxes close; the whole axe offered leaves the sender while a partial
+ * the group): one unit of a potions stack moves from the sender to the receiver and merges into its stack, live, stored
+ * and after the receiver logs in again, and both trade boxes close; every unit of a trade of more potions merges into
+ * the receiver stack (ISSUE #148); the whole axe offered leaves the sender while a partial
  * potions stack stays; both players offer and swap their items; after a completed trade both inventories are unlocked,
  * the received potion is usable and a second trade between the same players completes; non stackable items offered
- * with a quantity above 1 leave the sender (the receiver gets only one instance, ISSUE #150); both confirmations on an
- * empty trade move nothing; both players confirming at the same time move the offer once (a receiver confirming twice in
- * the same tick moves it twice, ISSUE #151); and when a sender confirms and leaves before the receiver confirms, the
+ * with a quantity above 1 leave the sender and the receiver gets one instance for every item (ISSUE #150); both
+ * confirmations on an empty trade move nothing; both players confirming at the same time move the offer once, and a
+ * receiver confirming twice in the same tick moves it once too (ISSUE #151); and when a sender confirms and leaves
+ * before the receiver confirms, the
  * trade is cancelled and moves nothing, the receiver live and stored and the sender stored quantities stay.
  *
  */
@@ -33,6 +34,7 @@ class TestTradingExchanges
     static NON_STACKABLE_ITEM_KEY = 'branch';
     static NON_STACKABLE_QUANTITY = 3;
     static NON_STACKABLE_OFFERED = 2;
+    static MERGED_QUANTITY = 2;
 
     static async enter(context, playersCount = 2, seededItems = [])
     {
@@ -55,12 +57,24 @@ class TestTradingExchanges
         await TradeSteps.offerAndConfirm(context, sender, receiver, potionId, TestTradingExchanges.OFFERED_QUANTITY);
     }
 
-    static async expectPotionsMoved(context, sender, receiver, startQuantities, message)
+    static async expectPotionsMoved(context, sender, receiver, startQuantities, message, offered = TestTradingExchanges.OFFERED_QUANTITY)
     {
         let potionKey = context.gameConfig.e2eConsumableItemId;
-        let offered = TestTradingExchanges.OFFERED_QUANTITY;
         await TradeSteps.expectQuantity(context, sender, potionKey, startQuantities[0] - offered, message+': sender');
         await TradeSteps.expectQuantity(context, receiver, potionKey, startQuantities[1] + offered, message+': receiver');
+    }
+
+    static async expectPotionsMovedOnce(context, sender, receiver, startQuantities)
+    {
+        await TestTradingExchanges.expectPotionsMoved(context, sender, receiver, startQuantities, 'Moved once');
+        await sender.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        await TestTradingExchanges.expectPotionsMoved(context, sender, receiver, startQuantities, 'Still moved once');
+    }
+
+    static async countInstances(context, player, itemKey)
+    {
+        let items = (await TradeSteps.fetchState(context, player)).items;
+        return Object.keys(items).filter(inventoryId => itemKey === items[inventoryId].key).length;
     }
 
     static async openPotionsOffer(context, sender, receiver)
@@ -88,9 +102,8 @@ class TestTradingExchanges
         let [sender, receiver] = await TestTradingExchanges.enter(context);
         let potionKey = context.gameConfig.e2eConsumableItemId;
         let startQuantities = await TestTradingExchanges.completePotionsTrade(context, sender, receiver, 'Potions move');
-        let receiverItems = (await TradeSteps.fetchState(context, receiver)).items;
         expect(
-            Object.keys(receiverItems).filter(inventoryId => potionKey === receiverItems[inventoryId].key).length,
+            await TestTradingExchanges.countInstances(context, receiver, potionKey),
             'The received potions merge into the receiver stack'
         ).toBe(1);
         let offered = TestTradingExchanges.OFFERED_QUANTITY;
@@ -182,12 +195,44 @@ class TestTradingExchanges
         let [sender, receiver] = await TestTradingExchanges.enter(context, 2, [
             {playerIndex: 0, itemKey, qty: TestTradingExchanges.NON_STACKABLE_QUANTITY}
         ]);
+        let receiverInstances = await TestTradingExchanges.countInstances(context, receiver, itemKey);
         await TradeSteps.open(sender, receiver);
         let itemId = await TradeSteps.fetchItemId(context, sender, itemKey);
-        await TradeSteps.offerAndConfirm(context, sender, receiver, itemId, TestTradingExchanges.NON_STACKABLE_OFFERED);
+        let offered = TestTradingExchanges.NON_STACKABLE_OFFERED;
+        await TradeSteps.offerAndConfirm(context, sender, receiver, itemId, offered);
         await TradeSteps.confirm(receiver, sender);
-        let expectedLeft = TestTradingExchanges.NON_STACKABLE_QUANTITY - TestTradingExchanges.NON_STACKABLE_OFFERED;
+        let expectedLeft = TestTradingExchanges.NON_STACKABLE_QUANTITY - offered;
         await TradeSteps.expectQuantity(context, sender, itemKey, expectedLeft, 'The sender keeps the rest');
+        await expect.poll(
+            async () => await TestTradingExchanges.countInstances(context, receiver, itemKey),
+            {message: 'The receiver gets one instance for every offered item', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(receiverInstances + offered);
+    }
+
+    static async openPotionsTrade(context)
+    {
+        let [sender, receiver] = await TestTradingExchanges.enter(context);
+        let potionKey = context.gameConfig.e2eConsumableItemId;
+        let startQuantities = await TestTradingExchanges.fetchQuantities(context, [sender, receiver], potionKey);
+        await TradeSteps.open(sender, receiver);
+        return {sender, receiver, startQuantities, potionId: await TradeSteps.fetchItemId(context, sender, potionKey)};
+    }
+
+    static async runMergedUnitsTest(context)
+    {
+        let {sender, receiver, startQuantities, potionId} = await TestTradingExchanges.openPotionsTrade(context);
+        let merged = TestTradingExchanges.MERGED_QUANTITY;
+        await TradeSteps.offerAndConfirm(context, sender, receiver, potionId, merged);
+        await TradeSteps.confirm(receiver, sender);
+        await TestTradingExchanges.expectPotionsMoved(context, sender, receiver, startQuantities, 'Every unit merges', merged);
+    }
+
+    static async runDoubleConfirmTest(context)
+    {
+        let [sender, receiver] = await TestTradingExchanges.enter(context);
+        let startQuantities = await TestTradingExchanges.openPotionsOffer(context, sender, receiver);
+        await TradeSteps.confirm(receiver, sender, 2);
+        await TestTradingExchanges.expectPotionsMovedOnce(context, sender, receiver, startQuantities);
     }
 
     static async runEmptyConfirmTest(context)
@@ -212,17 +257,11 @@ class TestTradingExchanges
 
     static async runSimultaneousConfirmTest(context)
     {
-        let [sender, receiver] = await TestTradingExchanges.enter(context);
-        let potionKey = context.gameConfig.e2eConsumableItemId;
-        let startQuantities = await TestTradingExchanges.fetchQuantities(context, [sender, receiver], potionKey);
-        await TradeSteps.open(sender, receiver);
-        let potionId = await TradeSteps.fetchItemId(context, sender, potionKey);
+        let {sender, receiver, startQuantities, potionId} = await TestTradingExchanges.openPotionsTrade(context);
         await TradeSteps.offer(sender, receiver, potionId, TestTradingExchanges.OFFERED_QUANTITY);
         await TradeSteps.expectOffered(context, sender, {[potionId]: TestTradingExchanges.OFFERED_QUANTITY}, 'Offered');
         await Promise.all([TradeSteps.confirm(sender, receiver), TradeSteps.confirm(receiver, sender)]);
-        await TestTradingExchanges.expectPotionsMoved(context, sender, receiver, startQuantities, 'Moved once');
-        await sender.page.waitForTimeout(TradeSteps.SETTLE_MS);
-        await TestTradingExchanges.expectPotionsMoved(context, sender, receiver, startQuantities, 'Still moved once');
+        await TestTradingExchanges.expectPotionsMovedOnce(context, sender, receiver, startQuantities);
     }
 
     static async runConfirmAndLeaveTest(context)
@@ -250,6 +289,9 @@ class TestTradingExchanges
             test('partial stack moves and merges, stored and after login', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingExchanges.runPartialStackTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
+            test('every traded unit of a stack merges into the receiver stack', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingExchanges.runMergedUnitsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
             test('whole item leaves the sender and a partial stack stays', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingExchanges.runWholeItemTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
@@ -267,6 +309,9 @@ class TestTradingExchanges
             });
             test('simultaneous confirmations move the offer once', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingExchanges.runSimultaneousConfirmTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('a receiver confirming twice in the same tick moves the offer once', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingExchanges.runDoubleConfirmTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('sender confirming and leaving cancels the trade and moves nothing', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingExchanges.runConfirmAndLeaveTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
