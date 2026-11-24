@@ -92,7 +92,9 @@ class TestCharacterSelection
         await E2eSeedAndRestoreApi.createRow(gameConfig, e2eGroup, 'players', {user_id: userId, name: playerName});
         await CharacterCreation.loginToCreation(page, gameConfig, longRun);
         expect(await Login.selectPlayer(page, playerName), playerName).toBe(true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await expect(page.locator(Selectors.reloadModal.message)).toHaveText(
             GameTranslations.game.errors.missingPlayerData,
             {timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)}
