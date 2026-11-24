@@ -10,7 +10,10 @@
  * given enemy fits beside the player so its attack never moves the player, with the inventory open and the reward
  * quantity read), wait the timing duration and check the reward quantity, and through TimingObjectsProbe change a
  * cancel rule of the object for the group, pin its respawn for the group to the closest tile out of reach of the old
- * place, read its timing state and override the inventory "addItem" of the player.
+ * place, read its timing state and override the inventory "addItem" of the player. The side step walks to the first
+ * tile next to the player that the server reports walkable and with no colliding body (RoomSideStepTiles: the mining
+ * rocks spawn on random tiles, a pointer move onto an occupied tile has no path and never moves the player, and a
+ * disabled enemy the client still keeps as a hidden sprite does not block it).
  *
  */
 
@@ -22,7 +25,6 @@ const { SecurityApi } = require('./security-api');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { Navigation } = require('./navigation');
 const { ObjectChase } = require('./object-chase');
-const { PhaserRange } = require('./phaser-range');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
 const { GameConst } = require('../../../lib/game/constants');
@@ -55,7 +57,7 @@ class TimingObjectSession
         expect(disabled.inState, 'The player is disabled: '+disabled.error).toBe(GameConst.STATUS.DISABLED);
     }
 
-    static async placeNextToObject(page, gameConfig, objectAssetKey, timeout, label, enemyKey = '')
+    static async placeNextToObject(page, gameConfig, objectAssetKey, timeout, label, enemyKey = '', lineDistances = [])
     {
         let placement = '' === enemyKey
             ? await RoomObjectsApi.placePlayerNextToObject(
@@ -63,7 +65,9 @@ class TimingObjectSession
                 gameConfig,
                 Login.FOREST_ROOM_NAME,
                 objectAssetKey,
-                timeout
+                timeout,
+                0,
+                lineDistances
             )
             : await RoomObjectsApi.placePlayerNextToObjectWithRoom(
                 page,
@@ -140,7 +144,7 @@ class TimingObjectSession
         await TimingObjectSession.waitForTimingAction(page, 'timingStart', timeout);
     }
 
-    static async prepareMining(page, gameConfig, longRun, enemyKey = '')
+    static async prepareMining(page, gameConfig, longRun, enemyKey = '', lineDistances = [])
     {
         test.setTimeout(TimeConstants.forLongRun(TimingObjectSession.MINING_TEST_TIMEOUT, longRun));
         let rockAssetKey = gameConfig.e2eMiningRockKey || '';
@@ -154,7 +158,8 @@ class TimingObjectSession
             rockAssetKey,
             forestData.sceneTimeout,
             'mining rock',
-            enemyKey
+            enemyKey,
+            lineDistances
         );
         await TimingObjectSession.openInventory(page, forestData.pauseMs);
         return {
@@ -168,16 +173,21 @@ class TimingObjectSession
     static async sideStep(page)
     {
         let position = await Phaser.getPlayerServerPosition(page);
-        let walkableOffsets = await PhaserRange.filterWalkableOffsets(
-            page,
-            position.x,
-            position.y,
-            ObjectChase.SIDESTEP_OFFSETS,
-            Navigation.TILE_SIZE
-        );
-        expect(walkableOffsets.length, 'A walkable tile next to '+position.x+','+position.y+' must exist')
-            .toBeGreaterThan(0);
-        let sideStepPoint = ObjectChase.offsetPoint(position.x, position.y, [...walkableOffsets].shift());
+        let sideStepTiles = await page.evaluate(async () => {
+            let roomEvents = window.reldens.activeRoomEvents;
+            let response = await fetch('/api/e2e/room-objects/side-step-offsets', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({roomName: roomEvents.roomName, sessionId: roomEvents.room.sessionId})
+            });
+            return await response.json();
+        });
+        let freeOffsets = sideStepTiles.freeOffsets || [];
+        expect(
+            freeOffsets.length,
+            'A walkable tile with no colliding body next to '+position.x+','+position.y+' must exist: '+sideStepTiles.error
+        ).toBeGreaterThan(0);
+        let sideStepPoint = ObjectChase.offsetPoint(position.x, position.y, [...freeOffsets].shift());
         await Navigation.moveToWorldPoint(page, sideStepPoint.x, sideStepPoint.y);
         return sideStepPoint;
     }
