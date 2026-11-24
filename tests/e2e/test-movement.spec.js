@@ -2,7 +2,9 @@
  *
  * Reldens - Test Movement
  *
- * Tests arrow key movement, all directions, room transitions, minimap, return-point on death and the scene selected on
+ * Tests arrow key movement, all directions, the click to move (to a tile of a clear line from the player read from the
+ * server, the player standing still on it), room transitions, minimap, return-point on death (the death position read
+ * once the server holds the player dead, every enemy switched off after it so nothing pushes the revived body) and the scene selected on
  * login (the player starts on the default return point of the selected room, on the server and on its sprite). After
  * the login the moving NPCs and traders of the room are stopped and placed back on their spawn tiles, so every walk
  * starts from the same room layout.
@@ -17,6 +19,8 @@ const { Navigation } = require('./helpers/navigation');
 const { MovementScenario } = require('./helpers/movement-scenario');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { RoomObjectsApi } = require('./helpers/room-objects-api');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
 const { ChangePointsSteps } = require('./helpers/change-points-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -31,6 +35,8 @@ class TestMovement
     static DOOR_MOVE_RETRY_MS = 1000;
     static DOOR_STEP_MS = 1500;
     static DOOR_ENTER_ATTEMPTS = 4;
+    static NEAR_DEATH_DISTANCE = 64;
+    static CLICK_TILES = [4, 3, 2];
 
     static async loginAndPrepare(page, gameConfig, longRun, scene = null)
     {
@@ -42,6 +48,42 @@ class TestMovement
         await Phaser.waitForPlayerInRoomState(page, TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun));
         await MovementScenario.pauseMovingObjects(gameConfig, await Navigation.getCurrentRoomName(page));
         await Navigation.focusGame(page);
+    }
+
+    static async fetchObjectsNear(gameConfig, roomName, position)
+    {
+        return (await RoomObjectsApi.fetchRoomObjects(gameConfig, roomName)).filter(
+            (roomObject) => TestMovement.NEAR_DEATH_DISTANCE >= Math.hypot(roomObject.x - position.x, roomObject.y - position.y)
+        );
+    }
+
+    static async moveObjectsAwayFromDeath(gameConfig, roomName, dead)
+    {
+        let nearObjects = await TestMovement.fetchObjectsNear(gameConfig, roomName, dead);
+        for(let roomObject of nearObjects){
+            await RoomMovementApi.placeObject(gameConfig, roomName, roomObject.key, [roomObject.originalCol, roomObject.originalRow]);
+        }
+        return nearObjects.map((roomObject) => [roomObject.bodyKey, roomObject.inState, roomObject.x, roomObject.y]);
+    }
+
+    static async collectReviveTrail(gameConfig, roomName)
+    {
+        let previous = false;
+        let revive = await RoomMovementApi.collectTrail(
+            async () => GameplayE2eStateApi.fetchPlayer(gameConfig, roomName, gameConfig.e2ePlayerName),
+            (snapshot) => {
+                let isSettled = Boolean(previous) && previous.bodyInWorld && snapshot.bodyInWorld
+                    && previous.x === snapshot.x && previous.y === snapshot.y;
+                previous = snapshot;
+                return isSettled;
+            },
+            TimeConstants.PLAYER_REVIVE
+        );
+        let reviveTrail = RoomMovementApi.dropRepeatedSteps(
+            revive.trail.map((snapshot) => [snapshot.inState, snapshot.bodyInWorld, snapshot.x, snapshot.y])
+        );
+        expect(revive.done, 'The revived body settles in the world: '+sc.toJsonString(reviveTrail)).toBe(true);
+        return reviveTrail;
     }
 
     static async runReturnPointTest(page, screenshots, gameConfig, longRun)
@@ -65,8 +107,14 @@ class TestMovement
             + TimeConstants.PLAYER_REVIVE
         );
         await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, enemyKey, TimeConstants.ENEMY_KILL);
-        let dead = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName);
+        let dead = await TestCombatDeath.waitForServerDeath(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName);
+        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME);
         await screenshots.capture(page, 'player-died-in-forest');
+        let objectsNearDeath = await TestMovement.moveObjectsAwayFromDeath(gameConfig, Login.FOREST_ROOM_NAME, dead);
+        let reviveTrail = await TestMovement.collectReviveTrail(gameConfig, returnRoom);
+        let objectsNearRevive = (await TestMovement.fetchObjectsNear(gameConfig, returnRoom, dead)).map(
+            (roomObject) => [roomObject.bodyKey, roomObject.inState, roomObject.x, roomObject.y]
+        );
         expect(
             await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', TimeConstants.PLAYER_REVIVE),
             'The player revives'
@@ -74,7 +122,10 @@ class TestMovement
         let revived = await GameplayE2eStateApi.fetchPlayer(gameConfig, returnRoom, gameConfig.e2ePlayerName);
         expect(
             [await Navigation.getCurrentRoomName(page), revived.scene, revived.x, revived.y],
-            'The player revives in the configured return room on the position where it died'
+            'The player revives in the configured return room on the position where it died (the server trail from the'
+                +' death, inState, body in the world, x and y: '+sc.toJsonString(reviveTrail)+'; the objects near the'
+                +' death position at the death and after the revive, body key, inState, x and y: '
+                +sc.toJsonString([objectsNearDeath, objectsNearRevive])+')'
         ).toEqual([returnRoom, returnRoom, dead.x, dead.y]);
         await page.waitForTimeout(pauseMs);
         await screenshots.capture(page, 'player-at-return-point-after-death');
@@ -95,13 +146,6 @@ class TestMovement
                 cameraVisible: minimap.minimapCamera.visible
             };
         });
-    }
-
-    static async sendPointerOriginMove(page, dx, dy)
-    {
-        let position = await Phaser.getPlayerServerPosition(page);
-        expect(position, 'Player position must be available before click-to-move').not.toBeNull();
-        await Navigation.moveToWorldPoint(page, position.x + dx, position.y + dy);
     }
 
     static async moveBelowTownDoor(page, timeout)
@@ -141,15 +185,18 @@ class TestMovement
     static async runClickToMoveTest(page, screenshots, gameConfig, longRun)
     {
         await TestMovement.loginAndPrepare(page, gameConfig, longRun);
+        let roomName = await Navigation.getCurrentRoomName(page);
         let before = await Phaser.getPlayerServerPosition(page);
+        expect(before, 'Player position must be available before click-to-move').not.toBeNull();
         await screenshots.capture(page, 'before-click-to-move');
-        await TestMovement.sendPointerOriginMove(page, 150, 0);
-        await page.waitForTimeout(2000);
-        let after = await Phaser.getPlayerServerPosition(page);
-        expect(before).not.toBeNull();
-        expect(after).not.toBeNull();
-        let moved = after.x !== before.x || after.y !== before.y;
-        expect(moved, 'Player position did not change after click-to-move').toBeTruthy();
+        await MovementScenario.walkClearLine(
+            page,
+            MovementScenario.createWalkContext(gameConfig, roomName, gameConfig.e2ePlayerName, longRun),
+            roomName,
+            gameConfig.e2ePlayerName,
+            TestMovement.CLICK_TILES
+        );
+        expect(await Phaser.getPlayerServerPosition(page), 'The click to a clear tile moves the player').not.toEqual(before);
         await screenshots.capture(page, 'after-click-to-move');
     }
 
