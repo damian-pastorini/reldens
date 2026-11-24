@@ -4,11 +4,13 @@
  *
  * Tests the same account used from more than one tab: the first session walking with a direction held (ended with the
  * session ended message, its body removed, no movement interval left and the second session standing still), the first
- * session in another scene
- * or still on the selection
- * (its lobby closed with the session ended message while only the second tab enters the game),
- * the position and stats handed to the second session, the sprites seen by a third client, the connections and active
- * sessions left behind, the failed state save and the tabs closed on the selection or in the game. The server side
+ * session in another scene, still on the selection or on the creation form (its lobby closed with the session ended
+ * message while only the second tab enters the game, and a create submitted after it is never sent nor stored),
+ * the first tab reloading after the double login (the second session keeps its entries, gets a private message and
+ * chats, and the next login of the account is a double login for it, ISSUE #16), the position and stats handed to the
+ * second session, the sprites seen by a third client, the connections and active
+ * sessions left behind, the failed state save (the first session still ends, only the second player stays, ISSUE #443)
+ * and the tabs closed on the selection or in the game. The server side
  * values come from the e2e state endpoints and the stored rows.
  *
  */
@@ -23,6 +25,9 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { ChatSteps } = require('./helpers/chat-steps');
+const { MovementScenario } = require('./helpers/movement-scenario');
+const { CharacterCreation } = require('./helpers/character-creation');
 const { GameConst } = require('../../lib/game/constants');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
@@ -62,11 +67,14 @@ class TestAuthenticationDoubleLogin
     static async walkAndWaitForMove(sessionPage, gameConfig, playerBefore)
     {
         await Navigation.walkInDirection(sessionPage, 'ArrowRight', TestAuthenticationDoubleLogin.WALK_MS);
-        await sessionPage.waitForTimeout(TestAuthenticationDoubleLogin.NOTHING_CHANGED_WAIT_MS);
-        expect(
-            (await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName)).x,
-            'The player must move'
-        ).not.toBe(playerBefore.x);
+        let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName});
+        await expect.poll(
+            async () => GameplayE2eStateApi.fetchMovementIntervals(gameConfig, Login.TOWN_ROOM_NAME, playerId),
+            {message: 'The stop is processed and no walk interval is left', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toEqual([]);
+        let settledPlayer = await RoomMovementApi.waitForPlayerSettled(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName, TimeConstants.SERVER_RESPONSE);
+        expect(settledPlayer.x, 'The player must move').not.toBe(playerBefore.x);
+        return settledPlayer;
     }
 
     static async runDifferentScenesTest(page, secondPage, screenshots, gameConfig, longRun)
@@ -120,8 +128,28 @@ class TestAuthenticationDoubleLogin
         await screenshots.capture(page, 'double-login-first-on-selection');
     }
 
+    static async runFirstOnCreationTest(page, secondPage, screenshots, gameConfig, longRun)
+    {
+        let createMessages = CharacterCreation.trackCreateMessages(page);
+        let playerName = CharacterCreation.createPlayerName();
+        await CharacterCreation.loginToCreation(page, gameConfig, longRun);
+        await page.locator(Selectors.characterSelect.newPlayerName).fill(playerName);
+        await Login.startConfigPlayer(secondPage, gameConfig, longRun);
+        await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
+        await page.locator(CharacterCreation.CREATE_FORM).evaluate((form) => form.requestSubmit());
+        await page.waitForTimeout(TestAuthenticationDoubleLogin.NOTHING_CHANGED_WAIT_MS);
+        expect(
+            [createMessages.count, (await CharacterCreation.loadPlayers(gameConfig, playerName)).length],
+            'The ended tab sends no create and no player is stored'
+        ).toEqual([0, 0]);
+        await expect(page.locator(Selectors.body.gameEngineStarted), 'The first tab never enters the game').toHaveCount(0);
+        expect(await Navigation.getCurrentRoomName(secondPage), 'The second tab plays').toBe(Login.TOWN_ROOM_NAME);
+        await screenshots.capture(page, 'double-login-first-on-creation');
+    }
+
     static async runStateHandedOverTest(page, secondPage, screenshots, gameConfig, longRun)
     {
+        await MovementScenario.pauseMovingObjects(gameConfig, Login.TOWN_ROOM_NAME);
         await Login.startConfigPlayer(page, gameConfig, longRun);
         let initialPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
         await RoomObjectsApi.setPlayerAffectedProperty(
@@ -135,8 +163,15 @@ class TestAuthenticationDoubleLogin
         await Login.startConfigPlayer(secondPage, gameConfig, longRun);
         await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
         let secondSessionPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
-        expect(secondSessionPlayer.x).toBe(firstSessionPlayer.x);
-        expect(secondSessionPlayer.y).toBe(firstSessionPlayer.y);
+        let savedState = await E2eSeedAndRestoreApi.fetchPlayerState(gameConfig, gameConfig.e2ePlayerName);
+        expect(
+            [secondSessionPlayer.x, secondSessionPlayer.y],
+            'The second session loads the position the ended first session saved'
+        ).toEqual([Number(savedState.x), Number(savedState.y)]);
+        expect(
+            Math.max(Math.abs(savedState.x - firstSessionPlayer.x), Math.abs(savedState.y - firstSessionPlayer.y)),
+            'The saved position is the one the first session stopped on, not a return point'
+        ).toBeLessThan(Navigation.TILE_SIZE);
         expect(secondSessionPlayer.stats).toEqual(firstSessionPlayer.stats);
         await screenshots.capture(secondPage, 'double-login-state-handed-over');
     }
@@ -165,14 +200,29 @@ class TestAuthenticationDoubleLogin
             gameConfig,
             await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName)
         );
-        let testMessage = 'e2e-double-login-'+Date.now();
-        await secondPage.click(Selectors.hud.chatOpen);
-        await secondPage.locator(Selectors.chat.input).fill(testMessage);
-        await secondPage.click(Selectors.chat.send);
-        await expect(secondPage.locator(Selectors.chat.tabContentGeneral)).toContainText(testMessage, {
-            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
-        });
+        await ChatSteps.sendAndExpectGeneral(secondPage, 'e2e-double-login-'+Date.now(), longRun);
         await screenshots.capture(secondPage, 'double-login-second-session-plays');
+    }
+
+    static async runFirstTabReloadTest(page, secondPage, screenshots, gameConfig, longRun)
+    {
+        await TestAuthenticationDoubleLogin.startDoubleLogin(page, secondPage, gameConfig, longRun);
+        let secondSessionsCount = await LoginServerApi.fetchActiveSessionsCount(gameConfig, gameConfig.e2eUsername);
+        await page.reload();
+        await page.waitForSelector(Selectors.login.form, {state: 'visible'});
+        await page.waitForTimeout(TestAuthenticationDoubleLogin.NOTHING_CHANGED_WAIT_MS);
+        expect(
+            await LoginServerApi.fetchActiveSessionsCount(gameConfig, gameConfig.e2eUsername),
+            'The first tab reload keeps the second session entries'
+        ).toBe(secondSessionsCount);
+        await ChatSteps.recordChat(secondPage);
+        let sender = await Login.openClientPage(page, gameConfig);
+        await Login.loginRootPlayer(sender.clientPage, gameConfig, longRun, '2');
+        await ChatSteps.expectPrivateReceived(sender.clientPage, secondPage, gameConfig.e2ePlayerName, 'e2e-reload-pm-'+Date.now());
+        await ChatSteps.sendAndExpectGeneral(secondPage, 'e2e-after-reload-'+Date.now(), longRun);
+        await Login.startConfigPlayer(page, gameConfig, longRun);
+        await TestAuthenticationDoubleLogin.expectSessionEnded(secondPage, longRun);
+        await screenshots.capture(secondPage, 'double-login-after-first-tab-reload');
     }
 
     static async runSecondOnFormTest(page, secondPage, screenshots, gameConfig, longRun)
@@ -190,16 +240,20 @@ class TestAuthenticationDoubleLogin
     static async runStateSaveFailureTest(page, secondPage, screenshots, gameConfig, longRun)
     {
         await Login.startConfigPlayer(page, gameConfig, longRun);
+        let playingSessionsCount = await LoginServerApi.fetchActiveSessionsCount(gameConfig, gameConfig.e2eUsername);
         await SecurityApi.request(gameConfig, 'POST', '/api/e2e/login-server/break-player-state-save', {
             roomName: Login.TOWN_ROOM_NAME,
             playerName: gameConfig.e2ePlayerName
         });
         await Login.startConfigPlayer(secondPage, gameConfig, longRun);
-        expect(await LoginServerApi.fetchPlayersInRoom(
-            gameConfig,
-            Login.TOWN_ROOM_NAME,
-            gameConfig.e2ePlayerName
-        ), 'The failed save must keep the first player').toBe(2);
+        await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
+        expect(
+            [
+                await LoginServerApi.fetchPlayersInRoom(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName),
+                await LoginServerApi.fetchActiveSessionsCount(gameConfig, gameConfig.e2eUsername)
+            ],
+            'The failed save still closes the first session: one player in the room and the entries of one playing session'
+        ).toEqual([1, playingSessionsCount]);
         await screenshots.capture(secondPage, 'double-login-state-save-failure');
     }
 
@@ -237,12 +291,11 @@ class TestAuthenticationDoubleLogin
         await Login.loginRootPlayer(secondPage, gameConfig, longRun, '2');
         await Login.startConfigPlayer(page, gameConfig, longRun);
         await expect.poll(async () => await TestAuthenticationDoubleLogin.fetchSpritesCount(secondPage, playerName)).toBe(1);
-        await TestAuthenticationDoubleLogin.walkAndWaitForMove(
+        let lastPosition = await TestAuthenticationDoubleLogin.walkAndWaitForMove(
             page,
             gameConfig,
             await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName)
         );
-        let lastPosition = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName);
         await page.goto('about:blank');
         await expect.poll(async () => await TestAuthenticationDoubleLogin.fetchSpritesCount(secondPage, playerName)).toBe(0);
         let playerId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: playerName});
@@ -264,6 +317,9 @@ class TestAuthenticationDoubleLogin
             test('first session on the selection ends with the session ended message', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runFirstOnSelectionTest(page, secondPage, screenshots, gameConfig, longRun);
             });
+            test('first session on the creation form ends with the session ended message and its create is never sent', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationDoubleLogin.runFirstOnCreationTest(page, secondPage, screenshots, gameConfig, longRun);
+            });
             test('second session loads the first session state', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runStateHandedOverTest(page, secondPage, screenshots, gameConfig, longRun);
             });
@@ -273,10 +329,13 @@ class TestAuthenticationDoubleLogin
             test('second session moves and uses the chat', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runSecondSessionPlaysTest(page, secondPage, screenshots, gameConfig, longRun);
             });
+            test('first tab reloading after the double login keeps the second session active and the next login is a double login', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationDoubleLogin.runFirstTabReloadTest(page, secondPage, screenshots, gameConfig, longRun);
+            });
             test('second tab on the login form leaves the first untouched', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runSecondOnFormTest(page, secondPage, screenshots, gameConfig, longRun);
             });
-            test('failed state save keeps the first player in the room', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+            test('failed state save still ends the first session and keeps only the second player in the room', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runStateSaveFailureTest(page, secondPage, screenshots, gameConfig, longRun);
             });
             test('two users logging in at once reach their own player', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
