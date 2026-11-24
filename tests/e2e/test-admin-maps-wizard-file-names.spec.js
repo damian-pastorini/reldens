@@ -4,7 +4,8 @@
  *
  * Tests the maps wizard generation paths: a generated folder sent in the generator data never moves the generated
  * maps out of the generate-data/generated folder, and the map, tile sheet, composite, layer elements and maps names
- * with folders are rejected for every strategy before any file is read, copied or written.
+ * with folders are rejected for every strategy before any file is read, copied or written; a main action other than
+ * generate or import, or none, redirects with the missing action error instead of hanging (ISSUE #181).
  *
  */
 
@@ -212,9 +213,35 @@ class TestAdminMapsWizardFileNames
         await screenshots.capture(page, 'maps-wizard-import-folder-names-rejected');
     }
 
+    static async runUnknownMainActionTest(page, screenshots, gameConfig, longRun)
+    {
+        let adminPath = AdminPanelSession.adminPath(gameConfig);
+        let expectedLocation = adminPath+'/maps-wizard?result=mapsWizardMissingActionError';
+        await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun);
+        for(let mainAction of ['e2e-unknown-action', '']){
+            let response = await page.request.post(adminPath+'/maps-wizard', {
+                multipart: {_csrf: await AdminPanelSession.fetchCsrfToken(page), mainAction},
+                maxRedirects: 0,
+                timeout: TimeConstants.SERVER_RESPONSE
+            });
+            expect(
+                [response.status(), sc.get(response.headers(), 'location', '')],
+                'The main action "'+mainAction+'" answers the missing action error'
+            ).toEqual([302, expectedLocation]);
+        }
+        await page.goto(expectedLocation);
+        await screenshots.capture(page, 'maps-wizard-unknown-main-action');
+    }
+
     static run()
     {
         test.describe('Admin Maps Wizard File Names', () => {
+            test(
+                'maps wizard with a main action other than generate or import redirects with the missing action error',
+                async ({ page, screenshots, gameConfig, longRun }) => {
+                    await TestAdminMapsWizardFileNames.runUnknownMainActionTest(page, screenshots, gameConfig, longRun);
+                }
+            );
             test(
                 'maps wizard keeps the generated maps in the generated folder',
                 async ({ page, screenshots, gameConfig, longRun }) => {
