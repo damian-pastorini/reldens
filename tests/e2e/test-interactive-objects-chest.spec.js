@@ -2,7 +2,8 @@
  *
  * Reldens - Test Interactive Objects Chest
  *
- * Tests the forest treasure chest (e2eChestKey) with the player placed next to it and its quests progress rows preserved
+ * Tests the forest treasure chest (e2eChestKey) with the forest moving objects paused on their original tiles (a
+ * wandering NPC over the chest would take a real click), the player placed next to it and its quests progress rows preserved
  * for the group (a stored chest row of the player is moved away, so every case starts with the chest not looted):
  * the first open gives one coin, stores the progress row, answers opened and plays the open animation; a second open
  * says it is empty with no coin; after a new login the chest is still looted; a second player loots it and gets its own
@@ -22,6 +23,7 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { Phaser } = require('./helpers/phaser');
 const { Login } = require('./helpers/login');
+const { MovementScenario } = require('./helpers/movement-scenario');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
@@ -69,6 +71,7 @@ class TestInteractiveObjectsChest
     {
         test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION * 2, context.longRun));
         await TimingObjectSession.enterForestWithoutEnemies(context.page, context.gameConfig, context.longRun);
+        await MovementScenario.pauseMovingObjects(context.gameConfig, Login.FOREST_ROOM_NAME);
     }
 
     static async fetchCoins(gameConfig)
@@ -183,7 +186,15 @@ class TestInteractiveObjectsChest
     {
         let chestState = await TimingObjectSession.fetchTimingState(context.gameConfig, chest.chestKey);
         expect(chestState.interactionArea, 'The chest interaction area is read: '+chestState.error).toBeGreaterThan(0);
-        await TimingMiningSteps.walkOutOfArea(context, {rock: chestState}, TestInteractiveObjectsChest.OUT_OF_REACH_TILES);
+        let lineStart = await RoomObjectsApi.placePlayerOnLineStart(
+            context.page,
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            TimeConstants.SCENE_LOAD,
+            TestInteractiveObjectsChest.OUT_OF_REACH_TILES
+        );
+        expect(lineStart.reached, 'The player is placed on a clear line of tiles near the chest: '+lineStart.error).toBe(true);
+        await TimingMiningSteps.walkToTileOutOfArea(context, {rock: chestState}, lineStart.tile);
     }
 
     static async runOutOfReachTest(context)
