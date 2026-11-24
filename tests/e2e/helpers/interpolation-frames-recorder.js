@@ -6,18 +6,21 @@
  * before the scene update (with the interpolation entry the update reads: the state x, y and mov) and after it, so the
  * client interpolation is verified frame by frame against the real Phaser Linear function: a moving entry moves the
  * sprite by the configured interpolation speed from its last position and keeps the entry, a stopped entry places the
- * sprite on the state position and ends the entry, an entry already on the sprite position ends without moving it and
- * a sprite without entry is never moved by the update. The players positions are rounded to 2 decimals and use the
+ * sprite on the state position and ends the entry, an entry whose target (for the players the state minus the size
+ * offsets, ISSUE #462) is already the sprite position ends (an object without moving it, a player still runs its last
+ * interpolation step or placement, so its stopped state stops the animation, ISSUE #465) and a sprite without entry is
+ * never moved by the update. The players positions are rounded to 2 decimals and use the
  * players size offsets, the objects and bullets positions are rounded to integers. Every frame also keeps the texture
  * its sprite renders while it is visible, so a bullet flying with a missing texture or hidden fails the spec, the
  * animation its sprite is playing (collected in the summary, so a bullet that never plays its animation fails), and for
  * the objects whether the sprite depth is the object Y plus the sprite height (counted in the summary). The page
- * errors are collected, so a failing client update (like a missing import) fails the spec.
+ * errors are collected, so a failing client update (like a missing import) fails the spec. The stopped recording also
+ * keeps the bullets still flying, and the bullets flight wait answers false when no bullet flew and ended in time.
  *
  */
 
 const Linear = require('../../../node_modules/phaser/src/math/Linear');
-const { sc } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 
 class InterpolationFramesRecorder
 {
@@ -117,6 +120,7 @@ class InterpolationFramesRecorder
             delete window.e2eInterpolationRecorder;
             return {
                 frames: recorder.frames,
+                flyingBullets: Object.keys(window.reldens.getFeature('objects').bullets),
                 interpolationSpeed: recorder.scene.interpolationSpeed,
                 leftOff: recorder.scene.player.leftOff,
                 topOff: recorder.scene.player.topOff
@@ -126,21 +130,22 @@ class InterpolationFramesRecorder
 
     static async waitForBulletsFlightEnd(page, timeout)
     {
-        return await (await page.waitForFunction(() => {
-            return window.e2eInterpolationRecorder.frames.some(frame => 'bullet' === frame.kind)
-                && 0 === Object.keys(window.reldens.getFeature('objects').bullets).length;
-        }, null, {timeout})).jsonValue();
+        let isFlightEnded = false;
+        try {
+            isFlightEnded = await (await page.waitForFunction(() => {
+                return window.e2eInterpolationRecorder.frames.some(frame => 'bullet' === frame.kind)
+                    && 0 === Object.keys(window.reldens.getFeature('objects').bullets).length;
+            }, null, {timeout})).jsonValue();
+        } catch(error) {
+            Logger.error('The bullets flight did not end in '+timeout+'ms.', error.message);
+        }
+        return isFlightEnded;
     }
 
     static expectFrame(frame, recording)
     {
         if(!frame.entry){
             return {step: 'none', after: frame.before, isEntryKept: false};
-        }
-        let isCurrentPosition = Math.round(frame.before.x) === Math.round(frame.entry.x)
-            && Math.round(frame.before.y) === Math.round(frame.entry.y);
-        if(isCurrentPosition){
-            return {step: 'current', after: frame.before, isEntryKept: false};
         }
         let isPlayer = InterpolationFramesRecorder.PLAYER_KIND === frame.kind;
         let precision = isPlayer ? InterpolationFramesRecorder.PLAYER_PRECISION : InterpolationFramesRecorder.OBJECT_PRECISION;
@@ -149,17 +154,25 @@ class InterpolationFramesRecorder
             y: frame.entry.y - (isPlayer ? recording.topOff : 0)
         };
         let placedPosition = InterpolationFramesRecorder.placedPosition(target, precision);
+        let interpolated = InterpolationFramesRecorder.interpolatedPosition(
+            frame.before,
+            target,
+            recording.interpolationSpeed,
+            precision
+        );
+        if(Math.round(frame.before.x) === Math.round(target.x) && Math.round(frame.before.y) === Math.round(target.y)){
+            return {
+                step: 'current',
+                after: isPlayer ? (frame.entry.mov ? interpolated : placedPosition) : frame.before,
+                isEntryKept: false
+            };
+        }
         if(!frame.entry.mov){
             return {step: 'placed', after: placedPosition, isEntryKept: false};
         }
         return {
             step: 'moving',
-            after: InterpolationFramesRecorder.interpolatedPosition(
-                frame.before,
-                target,
-                recording.interpolationSpeed,
-                precision
-            ),
+            after: interpolated,
             isEntryKept: true,
             isPartial: placedPosition.x !== frame.after.x || placedPosition.y !== frame.after.y
         };
