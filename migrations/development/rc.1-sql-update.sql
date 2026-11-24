@@ -304,6 +304,16 @@ INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
 	('server', 'players/drop/equippedItems', '1', 3),
 	('client', 'players/inventory/unequipOnRemove', '1', 3);
 
+-- Lock the player while a timing object runs (the mining rocks and the fishing spots), off by default: the player can
+-- not move until the timing ends and cancels it with the Esc key or the cancel button over the object
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('server', 'objects/timing/lockPlayer', '0', 3);
+
+-- One exchange per player (trader shop or player trade): off refuses a new exchange while another one is in progress,
+-- on starts the new exchange and cancels the exchanges in progress
+INSERT IGNORE INTO `config` (`scope`, `path`, `value`, `type`) VALUES
+	('server', 'players/exchanges/newCancelsActive', '0', 3);
+
 -- Allow the default administration role to send global chat messages (only when the default value was not changed)
 UPDATE `config` SET `value` = '1,99,9000' WHERE `scope` = 'server' AND `path` = 'chat/messages/global_allowed_roles' AND `value` = '1,9000';
 
@@ -455,6 +465,12 @@ INSERT INTO `objects_assets` (`object_id`, `asset_type`, `asset_key`, `asset_fil
 UPDATE `objects` SET `private_params` = JSON_SET(`private_params`, '$.killScore', 8)
 	WHERE `object_class_key` = 'enemy_1' AND `client_key` = 'enemy_forest_1'
 		AND JSON_VALID(`private_params`) AND JSON_EXTRACT(`private_params`, '$.killScore') IS NULL;
+
+-- Skill attacks still using the magic stats keys renamed to mAtk and mDef by beta.39
+UPDATE `skills_skill_attack` SET
+	`attackProperties` = REPLACE(`attackProperties`, 'stats/mgk-atk', 'stats/mAtk'),
+	`defenseProperties` = REPLACE(`defenseProperties`, 'stats/mgk-def', 'stats/mDef')
+	WHERE `attackProperties` LIKE '%stats/mgk-atk%' OR `defenseProperties` LIKE '%stats/mgk-def%';
 
 --
 
