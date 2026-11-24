@@ -73,7 +73,7 @@ class TestAdminLoginIdentity
             );
         }
         expect(
-            await SecurityApi.fetchIdentityHits(gameConfig, sharedPrefix),
+            (await SecurityApi.fetchIdentityState(gameConfig, sharedPrefix)).hits,
             'Both emails must count on the truncated identity'
         ).toBe(2);
         await screenshots.capture(page, 'long-emails-truncated-identity');
@@ -110,9 +110,14 @@ class TestAdminLoginIdentity
         for(let attempt = 1; TestAdminLoginIdentity.ATTEMPTS_LIMIT > attempt; attempt++){
             await AdminPanelSession.postLogin(page, gameConfig, longRun, seededUser.email, TestAdminLoginIdentity.WRONG_PASSWORD);
         }
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, seededUser.email)).toBe(TestAdminLoginIdentity.ATTEMPTS_LIMIT - 1);
+        expect((await SecurityApi.fetchIdentityState(gameConfig, seededUser.email)).hits).toBe(
+            TestAdminLoginIdentity.ATTEMPTS_LIMIT - 1
+        );
         await AdminPanelSession.loginAsAdmin(page, gameConfig, longRun, seededUser.email, TestAdminLoginIdentity.SEEDED_PASSWORD);
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, seededUser.email), 'The login must clear the failures').toBe(0);
+        expect(
+            (await SecurityApi.fetchIdentityState(gameConfig, seededUser.email)).hits,
+            'The login must clear the failures'
+        ).toBe(0);
         await screenshots.capture(page, 'identity-failures-cleared');
     }
 
