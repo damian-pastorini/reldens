@@ -102,6 +102,29 @@ class TestExpiringHmacToken extends BaseTest
         });
     }
 
+    async testAUsedTokenIsRejectedUntilItExpires()
+    {
+        await this.test('a token is marked used once, rejected again until it expires and then dropped from the used list', async () => {
+            let expiringHmacToken = new ExpiringHmacToken({secret: this.secret});
+            let now = Date.now();
+            let token = expiringHmacToken.generate([this.email], now+this.expirationMs);
+            let otherToken = expiringHmacToken.generate([this.passwordHash], now+this.expirationMs);
+            let usedResults = [
+                expiringHmacToken.isUsed(token, now),
+                expiringHmacToken.markUsed(token, now),
+                expiringHmacToken.isUsed(token, now),
+                expiringHmacToken.markUsed(token, now+this.expirationMs),
+                expiringHmacToken.isUsed(otherToken, now)
+            ];
+            let usedBeforeExpiration = Object.keys(expiringHmacToken.usedTokens);
+            let isUsedAfterExpiration = expiringHmacToken.isUsed(token, now+this.expirationMs+1);
+            this.assert.deepStrictEqual(
+                [usedResults, usedBeforeExpiration, isUsedAfterExpiration, expiringHmacToken.usedTokens],
+                [[false, true, true, false, false], [token], false, {}]
+            );
+        });
+    }
+
 }
 
 module.exports.TestExpiringHmacToken = TestExpiringHmacToken;
