@@ -15,12 +15,15 @@ class TestPlayerCreationRollback extends BaseTest
         super(config);
         this.builder = new PlayerCreationBuilder();
         this.creationError = 'There was an error creating your player, please try again.';
+        this.unavailableClassPath = 'The selected class path is not available, please choose another one.';
     }
 
-    createClassPathSetup()
+    createClassPathSetup(knownClassPathIds = [1, 2], offeredClassPathIds = knownClassPathIds)
     {
         let creationSetup = this.builder.createCreationSetup(4, true);
-        creationSetup.playerCreation.events = {emit: this.builder.storeClassPathOnCreated(creationSetup, [1, 2])};
+        creationSetup.playerCreation.events = {
+            emit: this.builder.storeClassPathOnCreated(creationSetup, knownClassPathIds, offeredClassPathIds)
+        };
         return creationSetup;
     }
 
@@ -31,10 +34,38 @@ class TestPlayerCreationRollback extends BaseTest
         );
     }
 
-    async testAnUnknownClassPathDeletesTheStoredPlayer()
+    async testAClassPathThatIsNotOfferedCreatesNothing()
     {
-        await this.test('an unknown class path returns the creation error and deletes the stored player', async () => {
-            let creationSetup = this.createClassPathSetup();
+        await this.test('a class path that is not offered (unknown or disabled) is rejected before anything is created', async () => {
+            let results = [];
+            for(let classPathCase of [{known: [1, 2], selected: '999999'}, {known: [1, 2, 3], selected: '3'}]){
+                let creationSetup = this.createClassPathSetup(classPathCase.known, [1, 2]);
+                let result = await this.createWithClassPath(creationSetup, 'player', classPathCase.selected);
+                results.push([
+                    result,
+                    creationSetup.createdPlayers,
+                    creationSetup.storedClassPaths,
+                    creationSetup.deletedPlayerIds,
+                    creationSetup.checkedNames,
+                    creationSetup.emittedEvents
+                ]);
+            }
+            let rejectedCreation = [
+                {error: true, message: this.unavailableClassPath},
+                [],
+                [],
+                [],
+                [],
+                ['reldens.createNewPlayerBefore']
+            ];
+            this.assert.deepStrictEqual(results, [rejectedCreation, rejectedCreation]);
+        });
+    }
+
+    async testAnOfferedClassPathRefusedByTheStorageDeletesTheStoredPlayer()
+    {
+        await this.test('an offered class path refused by the storage returns the creation error and deletes the stored player', async () => {
+            let creationSetup = this.createClassPathSetup([1, 2], [1, 2, 999999]);
             let result = await this.createWithClassPath(creationSetup, 'player', '999999');
             this.assert.strictEqual(result.error, true);
             this.assert.strictEqual(result.message, this.creationError);
@@ -47,12 +78,12 @@ class TestPlayerCreationRollback extends BaseTest
 
     async testAKnownClassPathKeepsTheStoredPlayer()
     {
-        await this.test('a known class path is stored for the created player and the player is kept', async () => {
+        await this.test('a known class path is stored as a number for the created player and the player is kept', async () => {
             let creationSetup = this.createClassPathSetup();
             let result = await this.createWithClassPath(creationSetup, 'player', '2');
             this.assert.strictEqual(result.error, false);
             this.assert.deepStrictEqual(creationSetup.storedClassPaths, [
-                {class_path_id: '2', owner_id: 1, currentLevel: 1, currentExp: 0}
+                {class_path_id: 2, owner_id: 1, currentLevel: 1, currentExp: 0}
             ]);
             this.assert.deepStrictEqual(creationSetup.deletedPlayerIds, []);
             this.assert.strictEqual(creationSetup.emittedEvents.pop(), 'reldens.createdNewPlayer');
@@ -63,7 +94,7 @@ class TestPlayerCreationRollback extends BaseTest
     {
         await this.test('the name of a player deleted after a failed creation is given to the next creation', async () => {
             let creationSetup = this.builder.createNamesCheckingSetup();
-            creationSetup.playerCreation.events = {emit: this.builder.storeClassPathOnCreated(creationSetup, [1])};
+            creationSetup.playerCreation.events = {emit: this.builder.storeClassPathOnCreated(creationSetup, [1], [1, 999999])};
             creationSetup.playerCreation.usersManager.deletePlayer = async (playerId) => {
                 creationSetup.deletedPlayerIds.push(playerId);
                 creationSetup.createdPlayers.splice(playerId - 1, 1);
@@ -79,10 +110,31 @@ class TestPlayerCreationRollback extends BaseTest
         });
     }
 
+    async testTheInitialClassPathIsUsedOnlyWhenOffered()
+    {
+        await this.test('a creation without a class path stores the initial class path only when it is offered', async () => {
+            let storedResults = [];
+            for(let initialClassPathId of [1, 3]){
+                let creationSetup = this.createClassPathSetup([1, 2, 3], [1, 2]);
+                creationSetup.playerCreation.config.get = (path, defaultValue) => {
+                    return 'server/players/actions/initialClassPathId' === path ? initialClassPathId : defaultValue;
+                };
+                let result = await creationSetup.playerCreation.createNewPlayer({'new-player-name': 'player', user_id: 1});
+                storedResults.push([
+                    result.error,
+                    creationSetup.storedClassPaths.map(row => row.class_path_id),
+                    creationSetup.createdPlayers.length,
+                    creationSetup.deletedPlayerIds
+                ]);
+            }
+            this.assert.deepStrictEqual(storedResults, [[false, [1], 1, []], [true, [], 0, []]]);
+        });
+    }
+
     async testAFailedRemovalStillReturnsTheCreationError()
     {
         await this.test('a failed removal of the stored player still returns the creation error', async () => {
-            let creationSetup = this.createClassPathSetup();
+            let creationSetup = this.createClassPathSetup([1, 2], [1, 2, 999999]);
             creationSetup.playerCreation.usersManager.deletePlayer = async () => Promise.reject({message: 'Storage.'});
             let result = await this.createWithClassPath(creationSetup, 'player', '999999');
             this.assert.strictEqual(result.message, this.creationError);
