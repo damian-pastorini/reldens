@@ -25,6 +25,7 @@ class TestGameRoomsConnections extends BaseTest
             userData: {selectedPlayer: 1},
             config: {},
             joinAttempts: [],
+            joinedOptions: [],
             emittedRooms: [],
             leftRooms: [],
             alerts: [],
@@ -34,7 +35,9 @@ class TestGameRoomsConnections extends BaseTest
         gameManager.gameDom = {alertReload: (message) => gameManager.alerts.push(message) && false};
         gameManager.emitJoinedRoom = async (room, roomName) => gameManager.emittedRooms.push(roomName);
         gameManager.gameClient = {
-            joinOrCreate: async (roomName) => gameManager.joinAttempts.push(roomName) && failingRoomName !== roomName
+            joinOrCreate: async (roomName, joinOptions) => gameManager.joinedOptions.push(joinOptions)
+                && gameManager.joinAttempts.push(roomName)
+                && failingRoomName !== roomName
                 && {roomName, leave: async () => gameManager.leftRooms.push(roomName)},
             leaveServersRooms: async () => ++gameManager.leftServersRooms
         };
@@ -45,10 +48,11 @@ class TestGameRoomsConnections extends BaseTest
     {
         await this.test('the features rooms are joined once and an already joined room is reused', async () => {
             let gameManager = this.createGameManager(this.featuresList);
-            let joinedClan = {roomName: 'clan'};
+            let joinedClan = {roomName: 'clan', connection: {isOpen: true}};
             gameManager.joinedRooms.clan = joinedClan;
-            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(), true);
+            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(gameManager.userData), true);
             this.assert.deepStrictEqual(gameManager.joinAttempts, ['chat', 'teams']);
+            this.assert.strictEqual(gameManager.joinedOptions.every(joinOptions => gameManager.userData === joinOptions), true);
             this.assert.deepStrictEqual(gameManager.emittedRooms, ['chat', 'teams']);
             this.assert.deepStrictEqual(Object.keys(gameManager.joinedRooms), ['clan', 'chat', 'teams']);
             this.assert.strictEqual(gameManager.joinedRooms.clan, joinedClan);
@@ -61,7 +65,7 @@ class TestGameRoomsConnections extends BaseTest
     {
         await this.test('a failed feature room join alerts the reload and stops the joins', async () => {
             let gameManager = this.createGameManager(this.featuresList, 'teams');
-            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(), false);
+            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(gameManager.userData), false);
             this.assert.deepStrictEqual(gameManager.joinAttempts, ['chat', 'teams']);
             this.assert.deepStrictEqual(gameManager.alerts, ['translated:game.errors.joiningFeatureRoom']);
             this.assert.deepStrictEqual(Object.keys(gameManager.joinedRooms), ['chat']);
@@ -74,7 +78,7 @@ class TestGameRoomsConnections extends BaseTest
         await this.test('without features no room is joined nor left', async () => {
             let gameManager = this.createGameManager({});
             gameManager.featuresRoomsPlayerId = 2;
-            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(), false);
+            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(gameManager.userData), false);
             this.assert.deepStrictEqual(gameManager.joinAttempts, []);
             this.assert.strictEqual(gameManager.leftServersRooms, 0);
         });
@@ -86,7 +90,7 @@ class TestGameRoomsConnections extends BaseTest
             let gameManager = this.createGameManager(this.featuresList);
             gameManager.featuresRoomsPlayerId = 2;
             gameManager.joinedRooms.chat = {leave: async () => gameManager.leftRooms.push('previous-chat')};
-            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(), true);
+            this.assert.strictEqual(await new GameRoomsConnections(gameManager).joinFeaturesRooms(gameManager.userData), true);
             this.assert.deepStrictEqual(gameManager.leftRooms, ['previous-chat']);
             this.assert.strictEqual(gameManager.leftServersRooms, 1);
             this.assert.deepStrictEqual(gameManager.joinAttempts, ['chat', 'teams', 'clan']);
