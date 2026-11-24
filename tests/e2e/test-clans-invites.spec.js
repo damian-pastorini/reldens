@@ -4,7 +4,8 @@
  *
  * Tests the clan invites between the group players in their scene (TeamSteps players, ClanSteps with the clan rows of
  * the players preserved, the first player owning a clan created by the case): the owner invites from the target box and
- * the accepted invite stores the membership, updates both panels (no create form on the member) and sends the owner the
+ * the accepted invite stores the membership, updates both panels (no create form on the member; the owner and the member
+ * get exactly two clan updates, one from the stats save of the joined player and one from the join, ISSUE #471) and sends the owner the
  * accepted line while an unrelated player gets nothing; a decline from the request box consumes the invite and sends
  * the rejected line; answers with no invite, a second accept and an accept after the disband
  * are rejected; an accept while in another clan leaves it first and an owner accepting another clan disbands its own;
@@ -33,6 +34,7 @@ class TestClansInvites
 
     static OPEN_INVITES_PATH = 'client/clan/general/openInvites';
     static SETTLE_MS = 1500;
+    static JOIN_CLAN_UPDATES = 2;
     static CLAN_GROUP = 'clan';
 
     static async enter(context, playersCount = 2, configValues = {})
@@ -71,8 +73,22 @@ class TestClansInvites
         let players = entered.players;
         await TestClansInvites.targetPlayer(players[0], players[1]);
         await players[0].page.locator(TestClansInvites.clanInviteButton(players[1])).click({timeout: TimeConstants.SERVER_RESPONSE});
+        for(let clanPlayer of players.slice(0, 2)){
+            await RoomMessagesRecorder.start(clanPlayer.page);
+        }
         await players[1].page.locator('[id^="opt-accept-'+TeamsConst.CLAN_KEY+'"]').first().click({timeout: TimeConstants.SERVER_RESPONSE});
         await ClanSteps.expectMembers(context.gameConfig, entered.clanId, [players[0].playerId, players[1].playerId], 'The invited player joins');
+        for(let clanPlayer of players.slice(0, 2)){
+            await expect.poll(
+                async () => (await RoomMessagesRecorder.fetchMessages(clanPlayer.page, TeamsConst.ACTIONS.CLAN_UPDATE)).length,
+                {message: clanPlayer.playerName+' gets the join clan updates', timeout: TimeConstants.SERVER_RESPONSE}
+            ).toBe(TestClansInvites.JOIN_CLAN_UPDATES);
+            await clanPlayer.page.waitForTimeout(TestClansInvites.SETTLE_MS);
+            expect(
+                (await RoomMessagesRecorder.fetchMessages(clanPlayer.page, TeamsConst.ACTIONS.CLAN_UPDATE)).length,
+                clanPlayer.playerName+' gets each join clan update once (ISSUE #471)'
+            ).toBe(TestClansInvites.JOIN_CLAN_UPDATES);
+        }
         expect((await ClanSteps.fetchStoredMemberships(context.gameConfig, players[1].playerId)).map(row => Number(row.clan_id)), 'Stored')
             .toEqual([Number(entered.clanId)]);
         await expect.poll(async () => await ChatSteps.fetchTexts(players[0].page, ChatConst.TYPES.TEAMS), {timeout: TimeConstants.SERVER_RESPONSE})
