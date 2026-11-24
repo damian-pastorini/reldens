@@ -4,7 +4,9 @@
  *
  * Tests the rooms deleted from the administration panel on the running server: the room view banner counts the players
  * that join and leave the room, the default room delete is blocked on the view, on the list row and on the selection
- * without any request sent, a room deleted with two players inside warns them with the closing countdown and shows them
+ * without any request sent, a room whose storage delete fails (the rooms repository delete made to answer false) shows
+ * the storage failure and stays stored and running with its player never warned (ISSUE #373, its stored player is still
+ * moved to the default room before the delete), a room deleted with two players inside warns them with the closing countdown and shows them
  * only the room closed modal while a player in another room keeps playing and the stored player of the deleted room
  * logs in to the default room, and a room deleted with the relocation disabled unlinks its stored player, that logs in
  * to the default room. The deleted rooms are the disposable rooms the global setup creates on every run before the rooms are defined (TestDataSetup), so
@@ -15,6 +17,7 @@
 const { BaseE2eTest } = require('./base-e2e-test');
 const { AdminPanelSession } = require('./helpers/admin-panel-session');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { Login } = require('./helpers/login');
 const { LoginServerApi } = require('./helpers/login-server-api');
 const { Navigation } = require('./helpers/navigation');
@@ -45,6 +48,8 @@ class TestAdminRoomsLiveDeletion
     static DEFAULT_ROOM_WARNING = 'you need to set another room as default first';
     static ACTIVE_PLAYERS_WARNING = 'This room has players in it right now.';
     static DELETE_CONFIRMATION = 'Are you sure you want to delete?';
+    static ERROR_NOTIFICATION = '.notification.error .message';
+    static STORAGE_FAILURE_RESULT = 'errorStorageFailure';
 
     static async openRoomView(page, gameConfig, longRun, roomId)
     {
@@ -157,9 +162,8 @@ class TestAdminRoomsLiveDeletion
             timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun)
         });
         await page.locator(Selectors.admin.dialogConfirm+':visible').click();
-        await expect(page).toHaveURL(/\/rooms\?result=success/, {
-            timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
-        });
+        await AdminPanelSession.expectSuccessNotification(page, longRun);
+        await expect(page, 'The delete goes back to the rooms list').toHaveURL(/\/rooms(\?result=success)?$/);
     }
 
     static async recordReloadMessages(clientPage)
@@ -185,6 +189,58 @@ class TestAdminRoomsLiveDeletion
                 .map(message => message[ChatConst.MESSAGE.DATA.KEY][ChatConst.MESSAGE.DATA.SECONDS]),
             reloadMessages: await clientPage.evaluate(() => window.e2eReloadMessages)
         };
+    }
+
+    static async failRoomDelete(page, gameConfig, e2eGroup, longRun)
+    {
+        let roomName = TestAdminRoomsLiveDeletion.PLAYERS_ROOM_NAME;
+        let roomId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'rooms', {name: roomName});
+        let offlineUser = await TestAdminRoomsLiveDeletion.preserveOfflinePlayerInRoom(gameConfig, e2eGroup, roomId);
+        let client = await TestAdminRoomsLiveDeletion.startClientInRoom(page, gameConfig, longRun, '', roomName);
+        await TestAdminRoomsLiveDeletion.recordReloadMessages(client.clientPage);
+        await GameplayE2eStateApi.failEntityMethod(gameConfig, e2eGroup, 'rooms', 'delete', 1);
+        await TestAdminRoomsLiveDeletion.openRoomView(page, gameConfig, longRun, roomId);
+        await page.click(Selectors.admin.deleteTopButton);
+        await expect(page.locator(TestAdminRoomsLiveDeletion.VISIBLE_DIALOG_MESSAGE)).toContainText(
+            TestAdminRoomsLiveDeletion.ACTIVE_PLAYERS_WARNING,
+            {timeout: TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun)}
+        );
+        await page.locator(Selectors.admin.dialogConfirm+':visible').click();
+        await expect(page.locator(TestAdminRoomsLiveDeletion.ERROR_NOTIFICATION), 'The failed delete shows its error')
+            .toContainText(TestAdminRoomsLiveDeletion.STORAGE_FAILURE_RESULT, {
+                timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)
+            });
+        await client.clientPage.waitForTimeout(TimeConstants.forLongRun(TimeConstants.UI_OPEN, longRun));
+        return {roomName, roomId, offlineUser, client};
+    }
+
+    static async runFailedDeleteTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        let failedDelete = await TestAdminRoomsLiveDeletion.failRoomDelete(page, gameConfig, e2eGroup, longRun);
+        expect(
+            {
+                clientResult: await TestAdminRoomsLiveDeletion.fetchClientResult(failedDelete.client.clientPage),
+                isRoomCreated: await LoginServerApi.isRoomCreated(gameConfig, failedDelete.roomName),
+                storedRooms: (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'rooms', {id: failedDelete.roomId})).length,
+                currentRoom: await Navigation.getCurrentRoomName(failedDelete.client.clientPage)
+            },
+            'A failed delete keeps the room stored and running, its player is never warned and keeps playing in it'
+        ).toEqual({
+            clientResult: {closingSeconds: [], reloadMessages: []},
+            isRoomCreated: true,
+            storedRooms: 1,
+            currentRoom: failedDelete.roomName
+        });
+        await screenshots.capture(page, 'failed-room-delete-error');
+    }
+
+    static async runFailedDeleteStoredPlayerTest(page, gameConfig, e2eGroup, longRun)
+    {
+        let failedDelete = await TestAdminRoomsLiveDeletion.failRoomDelete(page, gameConfig, e2eGroup, longRun);
+        expect(
+            (await E2eSeedAndRestoreApi.fetchPlayerState(gameConfig, failedDelete.offlineUser.playerName)).room_id,
+            'The stored player of a room whose delete failed stays in that room'
+        ).toBe(failedDelete.roomId);
     }
 
     static async runPlayersRoomDeletedTest(page, screenshots, gameConfig, e2eGroup, longRun)
@@ -268,6 +324,12 @@ class TestAdminRoomsLiveDeletion
             });
             test('the default room delete is blocked in the panel without any request', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminRoomsLiveDeletion.runDefaultRoomBlockedTest(page, screenshots, gameConfig, longRun);
+            });
+            test('a room whose storage delete failed stays stored and running and its player is never warned', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestAdminRoomsLiveDeletion.runFailedDeleteTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('a room whose storage delete failed keeps its stored player', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestAdminRoomsLiveDeletion.runFailedDeleteStoredPlayerTest(page, gameConfig, e2eGroup, longRun);
             });
             test('a room deleted with players inside warns them, closes the room and relocates its stored player', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestAdminRoomsLiveDeletion.runPlayersRoomDeletedTest(page, screenshots, gameConfig, e2eGroup, longRun);
