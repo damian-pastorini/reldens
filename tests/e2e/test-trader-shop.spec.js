@@ -6,8 +6,12 @@
  * the group and the quantities of the traded items set on the live inventory, the prices and rewards read from the
  * stored trader requirements and rewards): the Buy and Sell option buttons open their tabs; a bought item is shown in
  * the cart with its quantity, the confirm takes the required coins, gives the item and shows the buy confirmed text; a
- * sold item shows its reward in the sell value column, the confirm takes the item, gives the reward and shows the sell
- * confirmed text (a bought quantity above 1 gives one item, ISSUE #353); an item removed from the cart before the
+ * bought quantity above 1 takes the price of every unit and gives every unit (ISSUE #353); of two items affordable one
+ * by one but not together the second one is refused in the cart and only the first one is bought (ISSUE #354); a sold item shows its reward in the sell
+ * value column, the confirm takes the item, gives the reward and shows the sell confirmed text, also when the reward is
+ * required from the trader inventory (its reward row set to required and coins seeded on the trader, the town reloaded
+ * like a restart so the trader loads them, ISSUE #359) and refused in the cart while the trader does not own that
+ * reward; an item removed from the cart before the
  * confirm is not bought; a second purchase after a confirm runs as a new transaction; the bought item is kept after a new
  * login; and the sell list shows no equipped item and no item without a reward.
  *
@@ -19,6 +23,7 @@ const { TraderSteps } = require('./helpers/trader-steps');
 const { ItemsSteps } = require('./helpers/items-steps');
 const { TradeSteps } = require('./helpers/trade-steps');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
+const { SecurityApi } = require('./helpers/security-api');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const ObjectsTranslations = require('../../lib/objects/client/snippets/en_US');
@@ -30,6 +35,7 @@ class TestTraderShop
 
     static TRADER_SNIPPETS = ObjectsTranslations.objects.trader;
     static COINS = 10;
+    static BOUGHT_QUANTITY = 2;
     static fetchPrice = async (context, itemKey) => Number([
         ...await E2eSeedAndRestoreApi.loadRows(context.gameConfig, 'objectsItemsRequirements', {item_key: itemKey})
     ].shift().required_quantity);
@@ -86,6 +92,89 @@ class TestTraderShop
             {coins: TestTraderShop.COINS - await TestTraderShop.fetchPrice(context, 'axe'), axe: 1},
             'The purchase takes the axe price and gives one axe'
         );
+    }
+
+    static async runQuantityBuyTest(context)
+    {
+        let itemKey = context.gameConfig.e2eConsumableItemId;
+        let player = await TestTraderShop.enterWithItems(context, {coins: TestTraderShop.COINS, [itemKey]: 0});
+        let shop = await TraderSteps.openShop(context, player, 'buy');
+        let added = await TraderSteps.addToCart(shop, itemKey, TestTraderShop.BOUGHT_QUANTITY);
+        expect(added.subActionResult, 'The potions are added to the cart').toBe(true);
+        expect((await TraderSteps.confirm(shop)).subActionResult, 'The purchase is confirmed').toBe(true);
+        await ItemsSteps.expectStoredQuantities(
+            context,
+            player,
+            {
+                coins: TestTraderShop.COINS - TestTraderShop.BOUGHT_QUANTITY * await TestTraderShop.fetchPrice(context, itemKey),
+                [itemKey]: TestTraderShop.BOUGHT_QUANTITY
+            },
+            'A bought quantity above 1 takes the price of every unit and gives every unit'
+        );
+    }
+
+    static async runUnaffordableTogetherTest(context)
+    {
+        let coins = await TestTraderShop.fetchPrice(context, 'axe') + await TestTraderShop.fetchPrice(context, 'spear') - 1;
+        let player = await TestTraderShop.enterWithItems(context, {coins, axe: 0, spear: 0});
+        let shop = await TraderSteps.openShop(context, player, 'buy');
+        expect((await TraderSteps.addToCart(shop, 'axe')).subActionResult, 'The axe is added').toBe(true);
+        expect(
+            (await TraderSteps.addToCart(shop, 'spear')).subActionResult,
+            'The spear is refused, the coins do not pay both items'
+        ).toBe(false);
+        expect((await TraderSteps.confirm(shop)).subActionResult, 'The purchase of the axe alone is confirmed').toBe(true);
+        await ItemsSteps.expectStoredQuantities(
+            context,
+            player,
+            {coins: coins - await TestTraderShop.fetchPrice(context, 'axe'), axe: 1, spear: 0},
+            'Two items affordable one by one but not together are never both bought'
+        );
+    }
+
+    static async requireSellReward(context, traderCoins)
+    {
+        let gameConfig = context.gameConfig;
+        let traderId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'objects', {client_key: gameConfig.e2eTraderKey});
+        await E2eSeedAndRestoreApi.updateWithPreserve(
+            gameConfig,
+            context.e2eGroup,
+            'objectsItemsRewards',
+            {object_id: traderId, item_key: gameConfig.e2eSellItemId},
+            {reward_item_is_required: 1}
+        );
+        if(0 < traderCoins){
+            await E2eSeedAndRestoreApi.createRow(gameConfig, context.e2eGroup, 'objectsItemsInventory', {
+                owner_id: traderId,
+                item_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'itemsItem', {key: 'coins'}),
+                qty: traderCoins,
+                remaining_uses: -1,
+                is_active: 0
+            });
+        }
+        await SecurityApi.request(gameConfig, 'POST', '/api/e2e/data/reload-rooms', {
+            group: context.e2eGroup,
+            roomsNames: [Login.TOWN_ROOM_NAME]
+        });
+    }
+
+    static async runRequiredRewardSellTest(context)
+    {
+        await TestTraderShop.requireSellReward(context, TestTraderShop.COINS);
+        await TestTraderShop.runSellTest(context);
+    }
+
+    static async runMissingRequiredRewardSellTest(context)
+    {
+        let itemKey = context.gameConfig.e2eSellItemId;
+        await TestTraderShop.requireSellReward(context, 0);
+        let player = await TestTraderShop.enterWithItems(context, {coins: 0, [itemKey]: 1});
+        let shop = await TraderSteps.openShop(context, player, 'sell');
+        expect(
+            (await TraderSteps.addToCart(shop, itemKey)).subActionResult,
+            'The sale is refused while the trader does not own the required reward'
+        ).toBe(false);
+        await ItemsSteps.expectStoredQuantities(context, player, {coins: 0, [itemKey]: 1}, 'The seller keeps the item');
     }
 
     static async runSellTest(context)
@@ -181,6 +270,18 @@ class TestTraderShop
             });
             test('a sold item shows its reward, is taken, gives its reward and shows the sell confirmed text', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestTraderShop.runSellTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a bought quantity above 1 takes the price of every unit and gives every unit', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestTraderShop.runQuantityBuyTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('of two items affordable one by one but not together only the first one is bought', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestTraderShop.runUnaffordableTogetherTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a sale with its reward item required from the trader inventory completes', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestTraderShop.runRequiredRewardSellTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('a sale with its reward item required is refused while the trader does not own the reward', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestTraderShop.runMissingRequiredRewardSellTest({page, gameConfig, e2eGroup, longRun});
             });
             test('an item removed from the cart before the confirm is not bought', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestTraderShop.runRemoveTest({page, gameConfig, e2eGroup, longRun});
