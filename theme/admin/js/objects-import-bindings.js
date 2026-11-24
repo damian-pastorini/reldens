@@ -51,7 +51,7 @@ class ObjectsImportBindings
             'respawn': {'respawnTime': 2000,'instancesLimit': 5},
             'stats': {
                 'hp': 50,'mp': 50,'atk': 50,'def': 50,'dodge': 50,
-                'speed': 50,'aim': 50,'stamina': 50,'mgk-atk': 50,'mgk-def': 50
+                'speed': 50,'aim': 50,'stamina': 50,'mAtk': 50,'mDef': 50
             },
             'roomsNames': ['reldens-bots-forest']
         };
