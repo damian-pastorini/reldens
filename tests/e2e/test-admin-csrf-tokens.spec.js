@@ -158,7 +158,7 @@ class TestAdminCsrfTokens
         await page.locator(Selectors.admin.dialogConfirm).filter({visible: true}).click();
         await AdminPanelSession.expectSuccessNotification(page, longRun);
         expect(
-            await E2eSeedAndRestoreApi.loadRows(gameConfig, 'locale', {enabled: 0}),
+            (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'locale', {})).filter(row => seededIds.includes(row.id)),
             'Every selected row must be deleted'
         ).toEqual([]);
         await screenshots.capture(page, 'bulk-delete-rows-deleted');
