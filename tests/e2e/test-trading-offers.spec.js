@@ -10,7 +10,8 @@
  * no open trade or an unknown sub action send nothing; the equipped items are not listed (a tampered offer of an
  * equipped item is accepted, ISSUE #158); an offered item can not be equipped and stays offered; the locked inventory
  * rejects a trash and a consumable used during the trade (no heal, not consumed); an item given during the trade is
- * rejected by the lock; an action with the session of a third player sends that player nothing; a partner that leaves
+ * rejected by the lock; an action with the session of a third player or of the sender itself is refused (no update to
+ * anyone, nothing offered and the sender trade stays open); a partner that leaves
  * mid trade unlocks the remaining inventory and closes its trade box; and a player that reloads during the trade logs
  * in with an unlocked inventory.
  *
@@ -239,9 +240,15 @@ class TestTradingOffers
         let [starter, partner, third] = await TestTradingOffers.enter(context, 3);
         await TradeSteps.open(starter, partner);
         let potionId = await TradeSteps.fetchItemId(context, starter, context.gameConfig.e2eConsumableItemId);
-        await TradeSteps.offer(starter, third, potionId, 1);
-        await TradeSteps.expectNoTradeShow([third], 'The third player gets no trade update');
+        await RoomMessagesRecorder.start(starter.page);
+        await RoomMessagesRecorder.start(partner.page);
+        for(let namedPlayer of [third, starter]){
+            await TradeSteps.offer(starter, namedPlayer, potionId, 1);
+        }
+        await TradeSteps.expectNoTradeShow([third, starter, partner], 'The action naming a third session or the sender is refused');
         await expect(third.page.locator(Selectors.trade.sessionBoxes), 'The third player has no trade box').toHaveCount(0);
+        await TradeSteps.expectOffered(context, starter, {}, 'No sub action runs, nothing is offered');
+        await TradeSteps.expectTradeOpen(context, starter, true, 'The sender trade stays open');
     }
 
     static async runReloadTest(context)
@@ -299,7 +306,7 @@ class TestTradingOffers
             test('item given during the trade is rejected by the lock', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingOffers.runItemGivenDuringTradeTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('action with a third session sends that player nothing', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('action with a third session or the sender session is refused with no update', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingOffers.runThirdSessionActionTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('reload during the trade logs in with an unlocked inventory', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
