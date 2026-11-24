@@ -11,9 +11,10 @@
  * modal, a page closed while walking with a direction held that leaves no movement interval in the room once the room
  * removed the player, and the players state handler timer of a player that joined without life (the town
  * state handler is on with a short time out): the player joined without life is blocked (its direction moves nothing
- * and leaves no movement interval, checked with a time out longer than the test), the player that stays turns active
- * once the time out ends, and the player
- * that leaves before it keeps the dead state on its removed schema, since the leave clears the timer.
+ * and leaves no movement interval, checked with a time out longer than the test), the player that stays is still dead
+ * once the time out ends (ISSUE #47 and #451: the death of a player joined with no life is loaded again and replaces
+ * the state handler timer), and the player that leaves before it keeps the dead state on its removed schema, since the
+ * leave clears the timer.
  *
  */
 
@@ -190,12 +191,10 @@ class TestGameSessionInterruptions
             longRun,
             TestGameSessionInterruptions.STATE_TIME_OUT_MS
         );
-        let expectedPlayer = {inState: GameConst.STATUS.ACTIVE, inRoom: true};
         if(leavesBeforeTimeOut){
             await TestGameSessionInterruptions.leaveTown(page, gameConfig);
-            await page.waitForTimeout(TestGameSessionInterruptions.STATE_TIME_OUT_MS * 2);
-            expectedPlayer = {inState: GameConst.STATUS.DEATH, inRoom: false};
         }
+        await page.waitForTimeout(TestGameSessionInterruptions.STATE_TIME_OUT_MS * 2);
         await expect.poll(
             async () => SecurityApi.request(
                 gameConfig,
@@ -203,10 +202,11 @@ class TestGameSessionInterruptions
                 '/api/e2e/game-session/watched-player?'+new URLSearchParams({roomName: Login.TOWN_ROOM_NAME}).toString()
             ),
             {
-                message: 'The player that stays turns active after the time out, the one that left keeps its timer cleared',
+                message: 'The player joined without life stays dead after the time out (its death is loaded again),'
+                    +' the one that left keeps its timer cleared',
                 timeout: TimeConstants.SERVER_RESPONSE
             }
-        ).toEqual(expectedPlayer);
+        ).toEqual({inState: GameConst.STATUS.DEATH, inRoom: !leavesBeforeTimeOut});
     }
 
     static run()
@@ -227,7 +227,7 @@ class TestGameSessionInterruptions
             test('player joined without life is blocked before the state handler time out ends', async ({ page, gameConfig, longRun }) => {
                 await TestGameSessionInterruptions.runBlockedWhileDeadTest(page, gameConfig, longRun);
             });
-            test('player joined without life turns active once the state handler time out ends', async ({ page, gameConfig, longRun }) => {
+            test('player joined without life stays dead after the state handler time out, its death is loaded again', async ({ page, gameConfig, longRun }) => {
                 await TestGameSessionInterruptions.runStateTimeOutTest(page, gameConfig, longRun, false);
             });
             test('player that leaves before the state handler time out keeps its timer cleared', async ({ page, gameConfig, longRun }) => {
