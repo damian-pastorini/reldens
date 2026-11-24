@@ -20,8 +20,11 @@ const { KillRewardsSteps } = require('./helpers/kill-rewards-steps');
 const { DeathDropSteps } = require('./helpers/death-drop-steps');
 const { RoomMessagesRecorder } = require('./helpers/room-messages-recorder');
 const { Navigation } = require('./helpers/navigation');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ObjectsConst } = require('../../lib/objects/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -156,11 +159,26 @@ class TestRewardsDrops
         let dropId = [...dropsKill.drops].shift().id;
         let quantities = await KillRewardsSteps.fetchQuantities(context, dropsKill);
         let clientDrop = Object.assign({}, ...await DeathDropSteps.fetchDrops(context.page))[dropId];
-        await Navigation.moveToWorldPoint(context.page, clientDrop.x, clientDrop.y);
-        await expect.poll(async () => await KillRewardsSteps.fetchQuantities(context, dropsKill), {
-            message: 'The item given by walking over the drop',
-            timeout: TimeConstants.SERVER_RESPONSE
-        }).toEqual([quantities[0] + givenItems, quantities[1]]);
+        let sent = await Navigation.moveToWorldPoint(context.page, clientDrop.x, clientDrop.y);
+        let expectedQuantities = [quantities[0] + givenItems, quantities[1]];
+        let walk = await RoomMovementApi.collectTrail(
+            async () => ({
+                quantities: await KillRewardsSteps.fetchQuantities(context, dropsKill),
+                player: await RoomMovementApi.fetchPlayer(context.gameConfig, Login.FOREST_ROOM_NAME, context.gameConfig.e2ePlayerName),
+                other: await RoomMovementApi.fetchPlayer(context.gameConfig, Login.FOREST_ROOM_NAME, dropsKill.players[1].playerName)
+            }),
+            (snapshot) => expectedQuantities.join() === snapshot.quantities.join(),
+            TimeConstants.SERVER_RESPONSE
+        );
+        expect(
+            walk.last.quantities,
+            'The item given by walking over the drop (the client send, the drop, the player and the other player x, y,'
+                +' velocity, path steps and contacts and the room drops): '+sc.toJsonString([sent, [clientDrop.x, clientDrop.y]])+' '
+                +sc.toJsonString(RoomMovementApi.dropRepeatedSteps(walk.trail.map((snapshot) => [snapshot.player, snapshot.other].map(
+                    (player) => [player.x, player.y, player.velocityX, player.velocityY, player.pathSteps, player.contacts]
+                ))))+' '
+                +sc.toJsonString(await DeathDropSteps.fetchRoomDrops(context.gameConfig))
+        ).toEqual(expectedQuantities);
         await context.page.waitForTimeout(KillRewardsSteps.SETTLE_MS);
         expect(
             (await DeathDropSteps.fetchRoomDrops(context.gameConfig)).filter(drop => dropId === drop.id),
