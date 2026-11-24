@@ -10,10 +10,14 @@
  * wait, left by a room leave that failed, is removed with its team and its active player entry), the teams owned by the
  * group players (a team left with no players), the team invites they sent and their team records of a scene change are
  * cleared (the teams plugin keeps them over a new login), then the group players are
- * reset to full HP, placed on the default return point of the group start room, have all equipped items unequipped
+ * reset to full HP (every stat value and base value back to the captured base value, so a level up of an earlier test
+ * that raised the stored base never leaves a value below its base for the next test), placed on the default return point of the group start room, have all equipped items unequipped
  * and their scores and score details back to the rows captured on the setup (a kill of an earlier test never leaves a
  * score row the next test does not expect), the live objects and skills properties changed by the group (LiveObjectsOverrides) are restored, and the
- * enemies and the random movement are restored and the drops left by the tests removed only in the group rooms.
+ * enemies and the random movement are restored and the drops left by the tests removed only in the group rooms. The
+ * exclusive group runs after every other group ended, so its reset also restores the seeded rows, the config values and
+ * the live overrides every other group left from its last test (a clan level modifier seeded by the last social test
+ * would else be loaded twice by the first exclusive clan).
  *
  */
 
@@ -69,7 +73,7 @@ class PlayerStateReset
     static async restorePlayerStats(dataServer, stats)
     {
         for(let stat of stats){
-            await dataServer.getEntity('playersStats').updateById(stat.id, { value: stat.base_value });
+            await dataServer.getEntity('playersStats').updateById(stat.id, {value: stat.base_value, base_value: stat.base_value});
         }
     }
 
@@ -298,8 +302,11 @@ class PlayerStateReset
                 PlayerStateReset.removeStaleSessions(serverManager, groupSnapshots);
                 PlayerStateReset.clearTeamsPlayersState(serverManager, groupSnapshots);
                 await SecurityState.resetAll(serverManager);
-                LiveObjectsOverrides.restoreGroup(groupKey);
-                await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
+                let isExclusive = ParallelSpecGroups.EXCLUSIVE_GROUP === groupKey;
+                for(let restoredGroupKey of (isExclusive ? Object.keys(ParallelSpecGroups.GROUPS) : [groupKey])){
+                    LiveObjectsOverrides.restoreGroup(restoredGroupKey);
+                    await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, restoredGroupKey);
+                }
                 await PlayerStateReset.restoreSnapshots(
                     serverManager.dataServer,
                     groupSnapshots,
