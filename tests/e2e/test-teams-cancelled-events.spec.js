@@ -11,7 +11,8 @@
  * keeps the team of the owner, with no players, in the server; a cancelled clan invite start sends no invite; a cancelled
  * clan join stores no membership and restores the invite; a cancelled clan players update keeps the stored member but
  * sends no clan update and no accepted line; a cancelled clan disband deletes the memberships but keeps the clan row;
- * cancelled updates after a clan leave or a disconnection send the remaining owner no clan update; a cancelled clan
+ * cancelled updates after a clan leave or a disconnection send the remaining owner no clan update without the member
+ * (the clan updates of the join, still listing the member online, can reach the owner after the recording starts); a cancelled clan
  * enrich on a login leaves the member out of its clan with no panel; and a cancelled enrich update connects the member
  * but sends no clan update.
  *
@@ -196,7 +197,12 @@ class TestTeamsCancelledEvents
         await leaveMember(member, entered.clanId);
         await TeamSteps.waitForCancelled(context, entered.eventName, entered.cancelledCount);
         await ClanSteps.expectConnected(context.gameConfig, entered.clanId, [owner], 'Only the owner is connected');
-        await TestTeamsCancelledEvents.expectNoClanUpdates([owner]);
+        expect(
+            (await TeamSteps.fetchMessages(owner, TeamsConst.ACTIONS.CLAN_UPDATE)).filter(
+                (clanUpdate) => !Object.keys(clanUpdate.players || {}).includes(String(member.playerId))
+            ),
+            'No clan update without the member reaches the owner'
+        ).toEqual([]);
     }
 
     static async runClanEnrichCancelledTest(context, eventName, connectedPlayers)
