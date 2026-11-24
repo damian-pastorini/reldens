@@ -2,65 +2,25 @@
  *
  * Reldens - Test Collisions Objects And Bullets
  *
- * Tests the objects, bullets and players collisions: the hit of the bullet over an object or of the first object when
- * none has hit priority, the hit of the bullet with the higher hit priority between two bullets, a passive NPC hitting a player without messages nor battle and the player path recalculated,
- * the bullets removed and the moving objects path recalculated on an object hit, the stopped objects fully stopped when
- * the hit ends, the wall retries of a moving object up to its limit and then the walk back to its origin, the wall hit
- * listener keeping a bullet, the objects and players stopped by a bullet in the same broadphase pair only with
- * bulletsStopOnObject and bulletsStopOnPlayer on, the default collision masks that let the enemies bullets cross the
- * other enemies, a player wall contact (the begin listeners, the pointer path recalculated on its end or the player
- * stopped on a last step), the player stopped on an object contact end unless a listener keeps it moving, and both
- * players stopped on their contact end.
+ * Tests the objects, bullets and player wall collisions on the CollisionsBaseTest room stub: the hit of the bullet over
+ * an object or of the first object when none has hit priority, the hit of the bullet with the higher hit priority
+ * between two bullets, the bullets removed and the moving objects path recalculated on an object hit, the stopped
+ * objects fully stopped when the hit ends, the wall retries of a moving object up to its limit and then the walk back to
+ * its origin, the wall hit listener keeping a bullet, the objects and players stopped by a bullet in the same broadphase
+ * pair only with bulletsStopOnObject and bulletsStopOnPlayer on, the default collision masks that let the enemies
+ * bullets cross the other enemies, and a player wall contact (the begin listeners, the pointer path recalculated on its
+ * end or the player stopped on a last step). The players contacts with the objects and the other players are in
+ * TestCollisionsPlayersAndObjects.
  *
  */
 
-const { RandomMovementBaseTest } = require('./fixtures/random-movement-base-test');
-const { CollisionsManager } = require('../lib/world/server/collisions-manager');
-const { AnimationObject } = require('../lib/objects/server/object/type/animation-object');
+const { CollisionsBaseTest } = require('./fixtures/collisions-base-test');
 const { WorldConfig } = require('../lib/rooms/server/world-config');
 const { ConfigProcessor } = require('../lib/config/processor');
 const { WorldConst } = require('../lib/world/constants');
-const { sc } = require('@reldens/utils');
 
-class TestCollisionsObjectsAndBullets extends RandomMovementBaseTest
+class TestCollisionsObjectsAndBullets extends CollisionsBaseTest
 {
-
-    createCollisionsSetup(roomWorldProps)
-    {
-        let setup = {emittedEvents: [], removedBullets: [], hits: [], listeners: {}};
-        setup.collisionsManager = new CollisionsManager(null);
-        setup.collisionsManager.room = {
-            events: {emit: (eventName, eventData) => {
-                setup.emittedEvents.push(eventName);
-                return sc.get(setup.listeners, eventName, () => true)(eventData);
-            }},
-            roomWorld: Object.assign({removeBulletsStateIds: []}, roomWorldProps),
-            state: {removeBody: () => true}
-        };
-        return setup;
-    }
-
-    createBullet(setup, key, hitPriority)
-    {
-        return {
-            key,
-            isBullet: true,
-            isRoomObject: true,
-            hitPriority,
-            roomObject: {
-                onHit: () => setup.hits.push(key),
-                removeBullet: (bulletBody) => setup.removedBullets.push(bulletBody.key)
-            }
-        };
-    }
-
-    createRoomObjectBody(setup, key)
-    {
-        let body = this.bodyBuilder.build();
-        body.isRoomObject = true;
-        body.roomObject = {onHit: () => setup.hits.push(key)};
-        return body;
-    }
 
     async testABulletHitRunsTheBulletHitAndRecalculatesTheObjectPath()
     {
@@ -97,33 +57,6 @@ class TestCollisionsObjectsAndBullets extends RandomMovementBaseTest
                 hits.push(...setup.hits);
             }
             this.assert.deepStrictEqual(hits, ['bullet_a_3', 'bullet_b_3']);
-        });
-    }
-
-    async testAPassiveNpcHittingAPlayerStartsNothingAndThePlayerPathIsRecalculated()
-    {
-        await this.test('a passive NPC on its path hitting a player sends nothing, starts no battle and the player path is recalculated', async () => {
-            let setup = this.createCollisionsSetup({});
-            let sentMessages = [];
-            setup.collisionsManager.room.broadcast = (channel, message) => sentMessages.push(message);
-            setup.collisionsManager.room.getClientById = () => ({send: (channel, message) => sentMessages.push(message)});
-            let playerBody = this.bodyBuilder.build();
-            playerBody.playerId = 'session-a';
-            let pathTile = [this.originalTile + 3, this.originalTile];
-            playerBody.moveToPoint({column: pathTile[0], row: pathTile[1]});
-            playerBody.autoMoving.splice(1, 1);
-            let npcBody = this.bodyBuilder.build();
-            npcBody.isRoomObject = true;
-            npcBody.roomObject = Object.assign(Object.create(AnimationObject.prototype), {
-                key: 'people_town_1',
-                runOnHit: false,
-                playerVisible: true
-            });
-            setup.collisionsManager.onCollisionsBegin({bodyA: npcBody, bodyB: playerBody});
-            this.assert.deepStrictEqual(
-                [sentMessages, playerBody.autoMoving.length, playerBody.autoMoving.pop(), setup.emittedEvents],
-                [[], 4, pathTile, ['reldens.startPlayerHitObjectBegin', 'reldens.endPlayerHitObjectBegin']]
-            );
         });
     }
 
@@ -204,13 +137,6 @@ class TestCollisionsObjectsAndBullets extends RandomMovementBaseTest
         });
     }
 
-    createPlayerBody(playerId)
-    {
-        let playerBody = this.bodyBuilder.build();
-        playerBody.playerId = playerId;
-        return playerBody;
-    }
-
     async testAPlayerWallContactRecalculatesThePathOrStopsTheLastStep()
     {
         await this.test('a player wall contact runs its listeners, recalculates a pointer path on its end and stops a last step', async () => {
@@ -234,40 +160,6 @@ class TestCollisionsObjectsAndBullets extends RandomMovementBaseTest
                     [0, 0],
                     true
                 ]
-            );
-        });
-    }
-
-    async testAPlayerObjectContactEndStopsThePlayerUnlessAListenerKeepsIt()
-    {
-        await this.test('a player object contact end fully stops the player unless a listener sets continue to false', async () => {
-            let stops = [];
-            for(let keepMoving of [false, true]){
-                let setup = this.createCollisionsSetup({});
-                if(keepMoving){
-                    setup.listeners['reldens.playerHitObjectEnd'] = (event) => Object.assign(event.result, {continue: false});
-                }
-                let playerBody = this.createPlayerBody('session-a');
-                playerBody.velocity = [50, 0];
-                setup.collisionsManager.onCollisionsEnd({bodyA: playerBody, bodyB: this.createRoomObjectBody(setup, 'npc')});
-                stops.push([[...playerBody.velocity], Boolean(playerBody.pStop)]);
-            }
-            this.assert.deepStrictEqual(stops, [[[0, 0], true], [[50, 0], false]]);
-        });
-    }
-
-    async testTwoPlayersContactEndStopsBoth()
-    {
-        await this.test('the end of a two players contact stops both players and runs its listeners', async () => {
-            let setup = this.createCollisionsSetup({});
-            let pushingPlayer = this.createPlayerBody('session-a');
-            let pushedPlayer = this.createPlayerBody('session-b');
-            pushingPlayer.velocity = [50, 0];
-            pushedPlayer.velocity = [20, 0];
-            setup.collisionsManager.onCollisionsEnd({bodyA: pushingPlayer, bodyB: pushedPlayer});
-            this.assert.deepStrictEqual(
-                [[...pushingPlayer.velocity], [...pushedPlayer.velocity], setup.emittedEvents],
-                [[0, 0], [0, 0], ['reldens.playerHitPlayerEnd']]
             );
         });
     }
