@@ -6,7 +6,8 @@
  * the forest and the second player, moved from the town to the forest, only records): a bullet shot by the first
  * player at a passive enemy and a bullet shot by the aggressive forest enemy (the sample Tree with the attackBullet
  * skill, the only enemy left active, its aggression turned off for the group before the first player is placed six to
- * four tiles away, so only the battle the test starts shoots) are shown on the observer client, rendering
+ * four tiles away, so only the battle the test starts shoots, and its actions limited to attackBullet, so it never
+ * picks the default short attack at random and chases instead of shooting) are shown on the observer client, rendering
  * their texture and playing the animation of that same key (the default bullet one), and every recorded frame follows
  * the interpolation of its entry (InterpolationFramesRecorder); once the bullet ends its sprite is destroyed on the
  * observer and on the first player client. The sample fireball bullet has its own animation with left and right
@@ -52,13 +53,18 @@ class TestClientInterpolationObservers
     {
         let pageErrors = InterpolationFramesRecorder.trackPageErrors(observer.page);
         await InterpolationFramesRecorder.start(observer.page, {bullets: true});
-        await fire();
+        let fired = await fire();
         let isFlightEnded = await InterpolationFramesRecorder.waitForBulletsFlightEnd(
             observer.page,
             TimeConstants.SERVER_RESPONSE
         );
-        let summary = InterpolationFramesRecorder.summarize(await InterpolationFramesRecorder.stop(observer.page), 'bullet');
-        expect(isFlightEnded, 'The observer client shows a bullet flying and destroys its sprite once it ends').toBe(true);
+        let recording = await InterpolationFramesRecorder.stop(observer.page);
+        let summary = InterpolationFramesRecorder.summarize(recording, 'bullet');
+        expect(
+            isFlightEnded,
+            'The observer client shows a bullet flying and destroys its sprite once it ends (the bullet frames, the'
+                +' bullets still flying and the shot state): '+sc.toJsonString([summary.frames, recording.flyingBullets, fired])
+        ).toBe(true);
         expect(
             summary.mismatches,
             'Every observed bullet frame follows the interpolation of its entry: '+sc.toJsonString(summary.mismatches)
@@ -112,18 +118,26 @@ class TestClientInterpolationObservers
                 context.e2eGroup,
                 Login.FOREST_ROOM_NAME,
                 enemy.bodyKey,
-                {interactionRadio: TestClientInterpolationObservers.NO_AGGRESSION_RADIO},
+                {
+                    interactionRadio: TestClientInterpolationObservers.NO_AGGRESSION_RADIO,
+                    actionsKeys: [TestClientInterpolationObservers.BULLET_SKILL_KEY]
+                },
                 false
             )
         });
         await TestClientInterpolationObservers.expectObservedBullet(context, entered.observer, async () => {
-            let battle = await RoomObjectsApi.startEnemyBattle(
-                context.gameConfig,
-                Login.FOREST_ROOM_NAME,
-                context.gameConfig.e2ePlayerName,
-                entered.enemy.key
+            let gameConfig = context.gameConfig;
+            let shooter = (await RoomObjectsApi.fetchRoomObjects(gameConfig, Login.FOREST_ROOM_NAME)).find(
+                (snapshot) => entered.enemy.key === snapshot.key
             );
+            let target = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName);
+            let battle = await RoomObjectsApi.startEnemyBattle(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName, entered.enemy.key);
             expect(battle.enemyKey, 'The aggressive enemy starts its battle: '+battle.error).toBeTruthy();
+            return {
+                enemy: [shooter.x, shooter.y, shooter.inState, shooter.inBattlePlayers, shooter.pathSteps],
+                player: [target.x, target.y, target.inState],
+                placement: entered.placement
+            };
         }, TestClientInterpolationObservers.BULLET_TEXTURE_KEY);
     }
 
