@@ -42,7 +42,7 @@ class TestDeathResurrectionAdRewards
         return AdsConst.CONFIG_PATHS.COLLECTION+'/'+await E2eSeedAndRestoreApi.fetchRowId(context.gameConfig, 'ads', {
             key: await E2eSeedAndRestoreApi.fetchConfigValue(
                 context.gameConfig,
-                ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY
+                AdsConst.CONFIG_PATHS.RESURRECTION_ADS_KEY
             )
         })+'/'+propertyPath;
     }
@@ -66,7 +66,7 @@ class TestDeathResurrectionAdRewards
     {
         let adDeath = await DeathResurrectionAdSteps.killWithResurrectionAd(
             context,
-            {[ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY]: ''},
+            {[AdsConst.CONFIG_PATHS.RESURRECTION_ADS_KEY]: ''},
             0
         );
         await TestDeathResurrectionAdRewards.expectTownReviveWithoutItem(context, adDeath, 0);
