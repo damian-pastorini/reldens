@@ -3,7 +3,8 @@
  * Reldens - Test Authentication Registration
  *
  * Tests the values the server accepts on the registration and the login, sent directly through the game manager as a
- * modified client would do it: the invalid usernames, emails and passwords are rejected and create nothing, the email
+ * modified client would do it: the invalid usernames, emails (malformed, with the markup characters or a quote of
+ * tests/fixtures/markup-injection-payloads.json, too long or not a string) and passwords are rejected and create nothing, the email
  * already in use is rejected and counted, an existing username goes through the login path, the exact limits are
  * accepted, and the login handles metacharacters, oversized values, another letter case and an empty password. The
  * limits come from the stored config.
@@ -16,6 +17,7 @@ const { Login } = require('./helpers/login');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
 const { Selectors } = require('./selectors');
+const MarkupInjectionPayloads = require('../fixtures/markup-injection-payloads.json');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -41,7 +43,7 @@ class TestAuthenticationRegistration
             email: uniqueName+'@yourgame.com',
             password: DirectFormSubmit.VALID_PASSWORD
         };
-        return [
+        let invalidCases = [
             {...validValues, label: 'short username', username: 'x'.repeat(limits.usernameMinimum - 1)},
             {...validValues, label: 'long username', username: 'x'.repeat(limits.usernameMaximum + 1)},
             {...validValues, label: 'invalid characters', username: uniqueName+' !'},
@@ -51,6 +53,10 @@ class TestAuthenticationRegistration
             {...validValues, label: 'number username', username: 12345},
             {...validValues, label: 'number email', email: 12345}
         ];
+        for(let email of [MarkupInjectionPayloads.emailWithMarkup, MarkupInjectionPayloads.emailWithQuote]){
+            invalidCases.push({...validValues, label: 'email '+email, email});
+        }
+        return invalidCases;
     }
 
     static async runInvalidValuesTest(page, screenshots, gameConfig, longRun)
@@ -84,7 +90,10 @@ class TestAuthenticationRegistration
             );
             await DirectFormSubmit.expectFormError(page, Selectors.registerResponse.error, longRun, email);
             expect(await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', {username}), email).toEqual([]);
-            expect(await SecurityApi.fetchIdentityHits(gameConfig, username), 'The attempt must count as a failed login').toBe(1);
+            expect(
+                (await SecurityApi.fetchIdentityState(gameConfig, username)).hits,
+                'The attempt must count as a failed login'
+            ).toBe(1);
         }
         await screenshots.capture(page, 'registration-email-in-use');
     }
