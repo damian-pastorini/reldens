@@ -8,6 +8,7 @@ const { BaseTest } = require('./base-test');
 const { ActiveSessionsBuilder } = require('./fixtures/active-sessions-builder');
 const { ChatManager } = require('../lib/chat/server/manager');
 const { UserDisconnection } = require('../lib/game/server/user-disconnection');
+const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { SyncServerDriver } = require('../lib/sync/server/colyseus/sync-server-driver');
 const { MessageFactory } = require('../lib/chat/message-factory');
 const { ChatConst } = require('../lib/chat/constants');
@@ -136,13 +137,14 @@ class TestRoomChatDisconnection extends BaseTest
                     [this.chatRoomId]: setup.chatRoom
                 }
             },
-            activePlayers: setup.activePlayers
+            activePlayers: setup.activePlayers,
+            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, '')
         });
     }
 
     async testEveryRoomOfTheUserIsDisconnectedIncludingTheChat()
     {
-        await this.test('user scene and chat sessions are disconnected, game and other users are kept', async () => {
+        await this.test('user scene and chat sessions are disconnected, the game session only when not avoided, other users kept', async () => {
             for(let avoidGameRoom of [true, false]){
                 let setup = this.createSessionsSetup();
                 let sceneDisconnections = [];
@@ -162,10 +164,17 @@ class TestRoomChatDisconnection extends BaseTest
                     true
                 );
                 this.assert.deepStrictEqual(sceneDisconnections, ['scene-session']);
-                this.assert.deepStrictEqual(setup.closedSessions, [['chat-session', this.consentedCode]]);
-                this.assert.strictEqual(
-                    setup.gameRoom.activePlayerBySessionId('game-session', this.gameRoomId, false).client,
-                    gameClient
+                this.assert.deepStrictEqual(
+                    setup.closedSessions,
+                    [
+                        ...(avoidGameRoom ? [] : [['game-session', this.consentedCode]]),
+                        ['chat-session', this.consentedCode]
+                    ]
+                );
+                let gameSession = setup.gameRoom.activePlayerBySessionId('game-session', this.gameRoomId, false);
+                this.assert.deepStrictEqual(
+                    [Boolean(gameSession), avoidGameRoom ? gameSession.client === gameClient : true],
+                    [avoidGameRoom, true]
                 );
                 this.assert.strictEqual(
                     setup.chatRoom.activePlayerByUserName('other', this.chatRoomId).client,
