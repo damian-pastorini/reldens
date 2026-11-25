@@ -28,7 +28,8 @@ implements `receiveAction()`.
   and a random nonce, and expires after `GameConst.SIGNED_TOKENS.SERVERS_SYNC_EXPIRATION`. It answers the parsed
   response only when it has `isSuccess: true`, otherwise `false` (error status, network error, timeout of
   `GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS`).
-- `sendToServers(serversUrls, ...)` sends to every server, one after the other, and returns `{serverUrl, response}` per
+- `sendToServers(serversUrls, ...)` sends to every server (all the requests started before any answer is awaited, so
+  the unreachable servers cost one timeout) and returns `{serverUrl, response}` per
   server.
 - `receiveRequest(req)` validates the token against this server address and marks it used before calling the subclass
   `receiveAction(action, targetId, payload)`. A server without a valid `server/publicUrl` rejects every request.
