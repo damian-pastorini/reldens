@@ -7,12 +7,14 @@
  * live items read from the server; the group reset leaves every reward state ready for today): a claim of the daily
  * login reward adds its items, stores the claim completed with no given items left and sends the accepted reward; the
  * claim stays completed after a new login the same day, shown claimed with no balloon while the straight days reward is
- * not ready; a reward not ready or already completed and an unknown reward
+ * not ready (stored not ready before the login, since a ready straight days reward stays ready until it is claimed); a reward not ready or already completed and an unknown reward
  * id give nothing; a double claim in the same tick gives the reward once; two players claim their own rewards, each
  * claim stored apart, and a claim sends nothing to the other player; a reward with an unknown item key stays claimable
  * with no accepted reward; a reward with no items is completed with nothing given; a reward with a non stackable item
  * quantity above 1 is completed and gives every unit (ISSUE #150); a claim that fails on one item keeps the given items and a retry does not give
- * them again; and a claim sent right before the page reloads is stored and shown claimed on the next login.
+ * them again; a stored partly given item (the units kept from a failed give) gets only its missing units on the next
+ * claim, which completes the reward; and a claim sent right before the page reloads is stored and shown claimed on the
+ * next login.
  *
  */
 
@@ -36,6 +38,8 @@ class TestRewardsClaims
     static BRANCH = 'branch';
     static UNKNOWN_ITEM_KEY = 'e2e-unknown-item';
     static BRANCHES_QUANTITY = 2;
+    static PART_GIVEN_REWARD_QUANTITY = 3;
+    static KEPT_BRANCHES_QUANTITY = 1;
 
     static async enter(context, playersCount = 1)
     {
@@ -77,13 +81,18 @@ class TestRewardsClaims
         let coins = await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.COINS);
         await RewardsSteps.claim(player, [dailyReward.id]);
         await RewardsSteps.expectStoredState(context.gameConfig, player.playerId, dailyReward.id, {complete: true}, 'Claimed');
+        let straightReward = await RewardsSteps.fetchRewardEvent(context.gameConfig, RewardsSteps.STRAIGHT_DAYS_LOGIN);
+        await RewardsSteps.presetStoredState(context, player.playerId, straightReward.id, {
+            ready: false,
+            complete: false,
+            date: sc.formatDate(new Date(), 'Y-m-d')
+        });
         await player.page.reload();
         await Login.loginRootPlayer(player.page, context.gameConfig, context.longRun);
         await player.page.waitForTimeout(TradeSteps.SETTLE_MS);
         await RewardsSteps.expectStoredState(context.gameConfig, player.playerId, dailyReward.id, {complete: true}, 'Still claimed');
         expect(await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.COINS), 'Not given again').toBe(coins + dailyCoins);
         await expect(player.page.locator('.reward-'+dailyReward.id+'.reward-inactive'), 'Shown claimed').toHaveCount(1);
-        let straightReward = await RewardsSteps.fetchRewardEvent(context.gameConfig, RewardsSteps.STRAIGHT_DAYS_LOGIN);
         await RewardsSteps.expectStoredState(context.gameConfig, player.playerId, straightReward.id, {ready: false}, 'Not ready');
         await expect(player.page.locator(Selectors.rewards.notificationBalloon), 'No claimable reward, no balloon').toBeHidden();
     }
@@ -154,16 +163,30 @@ class TestRewardsClaims
         expect(await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.COINS), 'Nothing given').toBe(coins);
     }
 
-    static async runNonStackableQuantityTest(context)
+    static async claimBranchesReward(context, branchesQuantity, keptBranches)
     {
         let dailyReward = await RewardsSteps.fetchRewardEvent(context.gameConfig, RewardsSteps.DAILY_LOGIN);
         await RewardsSteps.changeRewardEvent(context, dailyReward.id, {}, {
-            items: {[TestRewardsClaims.BRANCH]: TestRewardsClaims.BRANCHES_QUANTITY}
+            items: {[TestRewardsClaims.BRANCH]: branchesQuantity}
         });
         let {players: [player]} = await TestRewardsClaims.enter(context);
+        if(0 < keptBranches){
+            let storedState = await RewardsSteps.fetchStoredState(context.gameConfig, player.playerId, dailyReward.id);
+            await RewardsSteps.presetStoredState(context, player.playerId, dailyReward.id, Object.assign({}, storedState, {
+                ready: true,
+                complete: false,
+                givenItems: {[TestRewardsClaims.BRANCH]: keptBranches}
+            }));
+        }
         let branches = await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.BRANCH);
         await RewardsSteps.claim(player, [dailyReward.id]);
         await RewardsSteps.expectStoredState(context.gameConfig, player.playerId, dailyReward.id, {complete: true}, 'Completed');
+        return {player, branches};
+    }
+
+    static async runNonStackableQuantityTest(context)
+    {
+        let {player, branches} = await TestRewardsClaims.claimBranchesReward(context, TestRewardsClaims.BRANCHES_QUANTITY, 0);
         await TradeSteps.expectQuantity(
             context,
             player,
@@ -191,6 +214,29 @@ class TestRewardsClaims
         await TestRewardsClaims.expectNoAccepted(player, 'The retry still fails on the unknown item');
         expect(await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.COINS), 'The retry does not give it again')
             .toBe(coins + 1);
+    }
+
+    static async runStoredPartQuantityTest(context)
+    {
+        let {player, branches} = await TestRewardsClaims.claimBranchesReward(
+            context,
+            TestRewardsClaims.PART_GIVEN_REWARD_QUANTITY,
+            TestRewardsClaims.KEPT_BRANCHES_QUANTITY
+        );
+        let expectedBranches = branches + TestRewardsClaims.PART_GIVEN_REWARD_QUANTITY
+            - TestRewardsClaims.KEPT_BRANCHES_QUANTITY;
+        await TradeSteps.expectQuantity(
+            context,
+            player,
+            TestRewardsClaims.BRANCH,
+            expectedBranches,
+            'The claim gives only the units missing from the stored given quantity'
+        );
+        await player.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        expect(
+            await TradeSteps.fetchQuantity(context, player, TestRewardsClaims.BRANCH),
+            'No unit of the stored given quantity is given again'
+        ).toBe(expectedBranches);
     }
 
     static async runClaimBeforeReloadTest(context)
@@ -239,6 +285,9 @@ class TestRewardsClaims
             });
             test('failed item give keeps the given items for the retry', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsClaims.runPartialGiveTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('a partly given item gives only its missing units on the next claim', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestRewardsClaims.runStoredPartQuantityTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('claim before a reload is stored and shown claimed', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsClaims.runClaimBeforeReloadTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
