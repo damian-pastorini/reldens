@@ -4,7 +4,9 @@ Back to the [overview](overview.md). The requests are described in [Signed reque
 
 Servers with their own database can not see the users and players stored by the others, so `CrossServerNamesCheck`
 (`lib/game/server/cross-server-names-check.js`) keeps the usernames, the emails and the player names unique between
-them. Servers sharing one database do not need it: the storage itself already has every row.
+them. Servers sharing one database do not need it: the storage itself already has every row. This check is the only
+part of the servers with their own database that is implemented, the other multiple servers flows still expect a
+shared database (see the [overview](overview.md)).
 
 ## Settings
 
