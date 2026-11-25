@@ -7,7 +7,7 @@
  * every other server to disconnect the user and fails when one does not confirm it; with the disconnection disabled a
  * login asks nothing and a server change only checks the user presence, where a server that fails the check counts as
  * not logged and the next servers are still checked (ISSUE #479), while with it enabled a failed server refuses the
- * server change; a timed out or failed request refuses the login; the answer keeps the logged user only from a success;
+ * server change (every server is requested before any answer is read); a timed out or failed request refuses the login; the answer keeps the logged user only from a success;
  * and the request token is valid only on its target server.
  *
  */
@@ -87,7 +87,7 @@ class TestUserDisconnectionBroadcast extends BaseTest
 
     async testAFailedServerCheckRefusesTheServerChangeOnlyWithTheDisconnectionEnabled()
     {
-        await this.test('with the disconnection disabled a failed server check never refuses the server change, with it enabled it does', async () => {
+        await this.test('with the disconnection disabled a failed server check never refuses the server change, with it enabled it does after every server was requested', async () => {
             let secondServerUrl = 'http://server-b:8080';
             let failedAnswer = {isSuccess: false, wasLogged: false};
             let loggedAnswer = {isSuccess: true, wasLogged: true};
@@ -119,7 +119,7 @@ class TestUserDisconnectionBroadcast extends BaseTest
                 [{isSuccess: true, wasLogged: true}, bothServers],
                 [{isSuccess: true, wasLogged: true}, bothServers],
                 [{isSuccess: true, wasLogged: false}, bothServers],
-                [failedAnswer, [this.otherServerUrl]]
+                [failedAnswer, bothServers]
             ]);
         });
     }
