@@ -9,8 +9,8 @@
  * exchange at a time (ISSUE #358): with server/players/exchanges/newCancelsActive off a locked inviter or invited player
  * refuses the trade invite, and a locked player refuses the accept, which consumes the invite and cancels the pending
  * exchange (never a trade the starter is already running, like a crossed second accept); with it on the accept cancels
- * the exchanges in progress of every locked player first and then starts the trade, unless the starter replaced its
- * invited exchange meanwhile; the Processor refuses a new exchange only with the option off and a locked player. A
+ * the exchanges in progress of every locked player first (the cancel unlocks their inventories) and then starts the
+ * trade, unless the starter replaced its invited exchange meanwhile; the Processor refuses a new exchange only with the option off and a locked player. A
  * player that accepts another invite cancels its own pending invite (ISSUE #475): the old invited player accept and
  * decline are refused while the new trade runs and after it closed, initializing and cancelling nothing of it. The
  * invited player has no trade in progress (the player schema gets one only on its first trade).
@@ -261,6 +261,10 @@ class TestPlayerTradeExchanges extends BaseTest
     {
         await this.test('with the new exchange cancel on the accept cancels the exchanges of every locked player and starts the trade', async () => {
             let setup = this.createAcceptSetup(['session1', 'session2'], true);
+            setup.room.events.emit = async (eventKey, eventData) => {
+                setup.emittedEvents.push({eventKey, eventData});
+                eventData.playerSchema.inventory.manager.locked = false;
+            };
             this.assert.deepStrictEqual(
                 [
                     await setup.accept(),
