@@ -3,13 +3,14 @@
  * Reldens - Test Give Reward Action
  *
  * Tests GiveRewardAction with a recording items manager (addItem keeps the added unit in its items and answers it, or
- * answers false like the items system Inventory, removeItem drops it or answers its given failure): a single created
- * instance (a single instance item or a quantity of 1) is added with addItem and its result is returned, an item
- * instance that could not be created adds nothing and answers false. The list of units created for a quantity of an
- * item that is not single instance is added unit by unit with addItem and answers true (ISSUE #477); a unit that fails
- * removes every unit still in the items (by its inventory id) and answers false so the reward can be given again, a
- * first unit that fails removes nothing, and an added unit that could not be removed is logged as critical while the
- * other units are still removed and the reward counts as given.
+ * answers false like the items system Inventory, removeItem drops it or answers its given failure); every give answers
+ * the units the player keeps: a single created instance (a single instance item or a quantity of 1) is added with
+ * addItem and answers its quantity, an item instance that could not be created or was refused answers 0. The list of
+ * units created for a quantity of an item that is not single instance is added unit by unit with addItem and answers
+ * the units count (ISSUE #477); a unit that fails removes every unit still in the items (by its inventory id) and
+ * answers 0 so the reward can be given again, a first unit that fails removes nothing, and an added unit that could
+ * not be removed is logged as critical with the units left while the other units are still removed, and the units
+ * left are answered as kept.
  *
  */
 
@@ -71,7 +72,7 @@ class TestGiveRewardAction extends BaseTest
 
     async testASingleCreatedInstanceIsAddedWithAddItem()
     {
-        await this.test('a single created instance is added with addItem and its result returned, an instance not created adds nothing', async () => {
+        await this.test('a single created instance is added with addItem and answers its quantity, an instance not created or refused answers 0', async () => {
             let singleItem = {key: 'coins', qty: 5};
             this.assert.deepStrictEqual(
                 [
@@ -80,9 +81,9 @@ class TestGiveRewardAction extends BaseTest
                     await this.executeRecordingErrors(this.createPlayerSchema(false, [true]), 1)
                 ],
                 [
-                    [singleItem, [['create', 'branch', 5], ['addItem', 'coins']], []],
-                    [false, [['create', 'branch', 5], ['addItem', 'coins']], []],
-                    [false, [['create', 'branch', 1]], [['Reward item instance could not be created.', 'branch']]]
+                    [singleItem.qty, [['create', 'branch', 5], ['addItem', 'coins']], []],
+                    [0, [['create', 'branch', 5], ['addItem', 'coins']], []],
+                    [0, [['create', 'branch', 1]], [['Reward item instance could not be created.', 'branch']]]
                 ]
             );
         });
@@ -90,17 +91,21 @@ class TestGiveRewardAction extends BaseTest
 
     async testACreatedListAddsEveryUnitAndAnswersTrue()
     {
-        await this.test('a created list adds every unit with addItem and answers true, removing nothing', async () => {
+        await this.test('a created list adds every unit with addItem and answers the units count, removing nothing', async () => {
             this.assert.deepStrictEqual(
                 await this.executeRecordingErrors(this.createPlayerSchema(this.itemsUnits, [true, true, true]), 3),
-                [true, [['create', 'branch', 3], ['addItem', 'unit-1'], ['addItem', 'unit-2'], ['addItem', 'unit-3']], []]
+                [
+                    this.itemsUnits.length,
+                    [['create', 'branch', 3], ['addItem', 'unit-1'], ['addItem', 'unit-2'], ['addItem', 'unit-3']],
+                    []
+                ]
             );
         });
     }
 
     async testAFailedUnitRemovesTheUnitsAlreadyAdded()
     {
-        await this.test('a created list whose second unit fails removes the first unit and answers false, a failed first unit removes nothing', async () => {
+        await this.test('a created list whose second unit fails removes the first unit and answers 0 kept units, a failed first unit removes nothing', async () => {
             let addFailedError = ['Reward item unit could not be added, the added units are removed.', 'branch'];
             this.assert.deepStrictEqual(
                 [
@@ -109,11 +114,11 @@ class TestGiveRewardAction extends BaseTest
                 ],
                 [
                     [
-                        false,
+                        0,
                         [['create', 'branch', 3], ['addItem', 'unit-1'], ['addItem', 'unit-2'], ['removeItem', 'unit-1']],
                         [addFailedError]
                     ],
-                    [false, [['create', 'branch', 3], ['addItem', 'unit-1']], [addFailedError]]
+                    [0, [['create', 'branch', 3], ['addItem', 'unit-1']], [addFailedError]]
                 ]
             );
         });
@@ -121,7 +126,7 @@ class TestGiveRewardAction extends BaseTest
 
     async testAnAddedUnitThatCannotBeRemovedIsLogged()
     {
-        await this.test('an added unit that cannot be removed is logged as critical, the other units are still removed and the reward counts as given', async () => {
+        await this.test('an added unit that cannot be removed is logged as critical, the other units are still removed and the kept units count is answered', async () => {
             let playerSchema = this.createPlayerSchema(this.itemsUnits, [true, true, false], {'unit-1': false});
             let unremovableManager = this.createPlayerSchema([], [], {'unit-2': false}).inventory.manager;
             unremovableManager.items = {'unit-1': this.itemsUnits[0], 'unit-2': this.itemsUnits[1]};
@@ -135,7 +140,7 @@ class TestGiveRewardAction extends BaseTest
                 ],
                 [
                     [
-                        true,
+                        1,
                         [
                             ['create', 'branch', 3],
                             ['addItem', 'unit-1'],
@@ -146,11 +151,11 @@ class TestGiveRewardAction extends BaseTest
                         ],
                         [
                             ['Reward item unit could not be added, the added units are removed.', 'branch'],
-                            ['Reward item units could not be removed, the units left count as given.', 'branch']
+                            ['Reward item units could not be removed, the units left count as given.', 'branch', 1]
                         ]
                     ],
-                    false,
-                    true
+                    1,
+                    0
                 ]
             );
         });
