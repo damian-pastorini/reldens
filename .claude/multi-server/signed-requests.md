@@ -48,7 +48,10 @@ implements `receiveAction()`.
 ## Rate limits
 
 The disconnect route uses the home limiter only for requests that are not an unused valid signed request
-(`UserDisconnection.isUnusedSignedRequest()`), so the other servers are never limited. The names check and the status
+(`UserDisconnection.isUnusedSignedRequest()`), so the other servers are never limited. The teams, clans, chat and rooms
+sync routes do the same: every feature registers its route with `SignedServerToServerMessenger.registerRoute()`, which
+sends to the home limiter every request that is not an unused valid signed one (`isUnusedSignedRequest()`), so a flood
+of invalid requests is limited before it reaches the handler and its log line. The names check and the status
 routes are behind the home limiter (`ServerManager`, `limitedRoutes`).
 
 ## Failure rules
