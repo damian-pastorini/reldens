@@ -8,8 +8,9 @@
  * loopback address never cut the e2e endpoints, and to server-1 unless the game config is the one of a numbered
  * instance (E2eServerInstances.forServer, its serverBaseUrl). It also exhausts the per address limiter of a rate
  * limited route from a given loopback host (the remaining requests read from the ratelimit header of a first request,
- * then the next one must answer too many requests; the disconnect user route is limited only on its unsigned POST
- * requests, so it is exhausted with POST requests and every other route with GET requests). A request the server does not answer within the request timeout
+ * then the next one must answer too many requests; the disconnect user route and the teams and chat sync routes are
+ * limited only on their unsigned POST requests, so they are exhausted with POST requests and every other route with GET
+ * requests). A request the server does not answer within the request timeout
  * logs its method and path as critical and gives false, so a blocked server is reported by the call that waited on it
  * instead of a test timeout.
  *
@@ -17,6 +18,8 @@
 
 const { expect } = require('@playwright/test');
 const { GameConst } = require('../../../lib/game/constants');
+const { TeamsConst } = require('../../../lib/teams/constants');
+const { ChatConst } = require('../../../lib/chat/constants');
 const { Logger, sc } = require('@reldens/utils');
 
 class SecurityApi
@@ -25,7 +28,7 @@ class SecurityApi
     static API_HOST = '127.0.0.1';
     static TOO_MANY_REQUESTS_STATUS = 429;
     static REQUEST_TIMEOUT_MS = 30000;
-    static POST_LIMITED_ROUTES = [GameConst.ROUTE_PATHS.DISCONNECT_USER];
+    static POST_LIMITED_ROUTES = [GameConst.ROUTE_PATHS.DISCONNECT_USER, TeamsConst.SYNC.TEAMS_ROUTE, ChatConst.SYNC.ROUTE];
 
     static baseUrl(gameConfig)
     {
