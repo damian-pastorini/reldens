@@ -9,8 +9,11 @@
  * scene joins refused (server-2 answers its disconnection requests with no success) and shows the second house
  * unreachable (server-2 answers its status request with an error, seen with the server blocking on); another server
  * that never answers the disconnect route makes the login and the scene joins fail after the disconnection request
- * timeout and not when that server answers; and the server-1 logins and moves keep working while the server-2
- * disconnect route limiter is exhausted from the loopback addresses the servers call each other from.
+ * timeout and not when that server answers; the server-1 logins and moves keep working while the server-2
+ * disconnect route limiter is exhausted from the loopback addresses the servers call each other from; and with the
+ * server-2 teams and chat sync limiters exhausted the same way (invalid requests, 429 over the limit), the team of a
+ * member crossing to server-2 and a private message from server-1 still reach server-2 (a valid signed request skips
+ * the limiter).
  *
  */
 
@@ -23,6 +26,8 @@ const { SecurityApi } = require('./helpers/security-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { GameRoomJoin } = require('./helpers/game-room-join');
 const { ChatSteps } = require('./helpers/chat-steps');
+const { TeamSteps } = require('./helpers/team-steps');
+const { TeamsConst } = require('../../lib/teams/constants');
 const { Navigation } = require('./helpers/navigation');
 const { Login } = require('./helpers/login');
 const { TimeConstants } = require('./helpers/time-constants');
@@ -154,17 +159,49 @@ class TestCrossServerSignedRequests
         );
     }
 
+    static async exhaustOnLoopbacks(serverConfig, route)
+    {
+        for(let loopbackHost of TestCrossServerSignedRequests.LOOPBACK_HOSTS){
+            await SecurityApi.exhaustRoute(serverConfig, loopbackHost, route);
+        }
+    }
+
     static async runExhaustedLimitTest(context)
     {
         let secondServerConfig = await CrossServerHouseAssignment.assignHouseToSecondServer(context);
-        for(let loopbackHost of TestCrossServerSignedRequests.LOOPBACK_HOSTS){
-            await SecurityApi.exhaustRoute(secondServerConfig, loopbackHost, GameConst.ROUTE_PATHS.DISCONNECT_USER);
-        }
+        await TestCrossServerSignedRequests.exhaustOnLoopbacks(secondServerConfig, GameConst.ROUTE_PATHS.DISCONNECT_USER);
         await Login.loginRootPlayer(context.page, context.gameConfig, context.longRun);
         await CrossServerHouseAssignment.walkFromTown(context, Login.FOREST_ROOM_NAME);
         expect(await Navigation.getCurrentRoomName(context.page), 'The player moves into the forest').toBe(
             Login.FOREST_ROOM_NAME
         );
+    }
+
+    static async runExhaustedSyncLimitTest(context)
+    {
+        let secondServerConfig = await CrossServerHouseAssignment.assignHouseToSecondServer(context);
+        await TestCrossServerSignedRequests.exhaustOnLoopbacks(secondServerConfig, TeamsConst.SYNC.TEAMS_ROUTE);
+        await TestCrossServerSignedRequests.exhaustOnLoopbacks(secondServerConfig, ChatConst.SYNC.ROUTE);
+        let [mover, owner] = await TeamSteps.enterPlayers(context, 2);
+        await TeamSteps.formTeam(context.gameConfig, owner, [mover]);
+        await CrossServerHouseAssignment.walkFromTown(context, CrossServerHouseAssignment.SECOND_HOUSE);
+        await expect.poll(
+            async () => (await TeamSteps.fetchState(secondServerConfig)).teams?.[owner.playerId]?.playersIds || [],
+            {
+                message: 'The team update of server-1 reaches server-2 while its teams sync limiter is exhausted',
+                timeout: TimeConstants.SERVER_RESPONSE
+            }
+        ).toEqual(TeamSteps.sortedIds([owner, mover]));
+        await ChatSteps.recordChat(mover.page);
+        let text = 'e2e-exhausted-sync-private-'+Date.now();
+        await ChatSteps.sendText(owner.page, '@'+mover.playerName+' '+text);
+        await expect.poll(
+            async () => await ChatSteps.fetchTexts(mover.page, ChatConst.TYPES.PRIVATE),
+            {
+                message: 'The private message of server-1 reaches server-2 while its chat sync limiter is exhausted',
+                timeout: TimeConstants.SERVER_RESPONSE
+            }
+        ).toContain(text);
     }
 
     static run()
@@ -190,6 +227,9 @@ class TestCrossServerSignedRequests
             });
             test('logins and moves keep working while the server-2 disconnect route limiter is exhausted', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestCrossServerSignedRequests.runExhaustedLimitTest({page, gameConfig, e2eGroup, longRun});
+            });
+            test('team updates and private messages reach server-2 while its teams and chat sync limiters are exhausted', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
+                await TestCrossServerSignedRequests.runExhaustedSyncLimitTest({page, secondPage, gameConfig, e2eGroup, longRun});
             });
         });
     }
