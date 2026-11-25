@@ -110,11 +110,15 @@ Loot and rewards system
 - Reward distribution
 - The accept of a reward event (`server/rewards-events-message-actions.js`) gives the items only of a `ready` and not
   `complete` state, the accepts of a player run one after the other, every given item is stored in the state
-  `givenItems` as soon as it is given (an item the inventory does not add or a rejected give stops the claim, which is
-  never sent as accepted), so a claim that failed after some items gives only the missing ones when it is claimed
-  again; the completed state drops `givenItems` and a new claim date clears it (`LoginStateHandler.resetRewardState()`)
+  `givenItems` as soon as it is given (`true` once all its units were given, or the number of units kept from a partly
+  failed give; an item the inventory does not add, a rejected give or a partly given item stops the claim, which is
+  never sent as accepted), so a claim that failed after some items or units gives only the missing ones when it is
+  claimed again; the completed state drops `givenItems` and a new claim date clears it
+  (`LoginStateHandler.resetRewardState()`)
 - A reward item with several units (`server/actions/give-reward-action.js`) adds the units one by one and removes the
-  units already added when one fails, so a failed give leaves nothing that the reward would give again
+  units already added when one fails; `execute()` answers the units the player keeps (0 when nothing was given), a
+  unit that can not be removed is kept and counted (critical log), so the event rewards give only the missing units and
+  the kill, ads and ticket gives take any kept unit as given and never give it twice
 - Login rewards (`server/event-handlers/login-state-handler.js`): the daily reward is ready on a login of the current
   local day; the straight days reward counts the logins from the local day after the day it was last made ready, and a
   ready, not claimed straight days reward stays ready until it is claimed
