@@ -121,10 +121,12 @@ Each scene room extends `RoomScene extends RoomLogin` (`lib/rooms/server/scene.j
 
 ## Multiple Servers Flow
 
-A game can run on several servers, sharing one database or each with its own. A room belongs to the server of its
-`server_url`, and the other servers are the distinct addresses of those values (`client/rooms/servers`). Every server
-needs the same `RELDENS_SIGNED_TOKENS_SECRET` and its own reachable `RELDENS_PUBLIC_URL`, since the servers talk
-through signed one-use requests:
+A game can run on several servers sharing one database. Servers with their own database are not fully supported yet:
+only the usernames, emails and player names check between them is implemented, every other flow (players moving
+between servers, clans, private messages, deleted rooms) expects the shared database. A room belongs to the server of
+its `server_url`, and the other servers are the distinct addresses of those values (`client/rooms/servers`). Every
+server needs the same `RELDENS_SIGNED_TOKENS_SECRET` and its own reachable `RELDENS_PUBLIC_URL`, since the servers
+talk through signed one-use requests:
 
 - A login disconnects the user on the other servers; a scene join to another server is sent as a server change, so the
   old server closes the user rooms with the close code 4100 the moving client ignores
