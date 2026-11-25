@@ -38,7 +38,7 @@ class TestRewardsSubscriber extends BaseTest
             statsBase: {hp: 100},
             inventory: {
                 manager: {
-                    createItemInstance: (itemKey, quantity) => ({itemKey, quantity, playerId}),
+                    createItemInstance: (itemKey, quantity) => ({itemKey, quantity, qty: quantity, playerId}),
                     addItem: async (itemInstance) => addedItems.push(itemInstance)
                 }
             },
