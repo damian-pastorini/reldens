@@ -6,7 +6,8 @@ Back to the [overview](overview.md). The requests used here are described in [Si
 
 A user keeps one session. Every room join (`RoomLogin.onAuth()`, `lib/rooms/server/login.js`) calls
 `UserDisconnection.broadcastDisconnectionMessage(user, isSceneChange)` (`lib/game/server/user-disconnection.js`), which
-posts `/reldens-disconnect-user` to every other server, one after the other:
+posts `/reldens-disconnect-user` to every other server, all the requests started before any answer is awaited (the
+unreachable servers cost one timeout):
 
 - A new login (`isSceneChange` not set) asks the other servers to disconnect the user. Each server closes every room of
   that user (game room included) with the consented close code, so the old client shows the "session ended" alert.
