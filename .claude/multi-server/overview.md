@@ -1,8 +1,13 @@
 # Multiple Servers - Overview
 
 A Reldens game can run on several game servers. Each server is a full Reldens process (game room, scene rooms, feature
-rooms, admin panel) and the servers either share one database or each one has its own. A room belongs to a server
-through its `server_url` column; a player moving into a room of another server reconnects the client to that server.
+rooms, admin panel) and the servers share one database. A room belongs to a server through its `server_url` column; a
+player moving into a room of another server reconnects the client to that server.
+
+Servers with their own database are not fully supported yet. Only the usernames, emails and player names check between
+them is implemented ([Names check](names-check.md)); every other flow expects the shared database: a player moving to
+another server is loaded from the storage there, the clans, the private messages recipients (a player ID) and the
+deleted rooms (room IDs) use the stored rows and IDs of the shared database.
 
 ## Documents
 
