@@ -20,11 +20,13 @@ route `/reldens-check-player-name`):
 
 1. `holdEverywhere(routePath, values)` creates a random hold ID and holds the values here for
    `GameConst.NAMES_CHECK.LOCAL_HOLD_MS`; values already held here refuse the creation.
-2. It sends a `check` request to every listed server, one after the other. Each server validates the token (one use, bound
+2. It sends a `check` request to every listed server, all started before any answer is awaited, so the unreachable
+   servers cost one timeout. Each server validates the token (one use, bound
    to its own address), checks its storage (`UsersManager.loadUserByUsername()` / `loadUserByEmail()` /
    `isNameAvailable()`) and holds the values under the same hold ID for `GameConst.NAMES_CHECK.REMOTE_HOLD_MS`.
-3. The first refused or failed check (error status, unreachable, timeout of `GameConst.NAMES_CHECK.REQUEST_TIMEOUT_MS`)
-   stops the checks, releases the holds and refuses the registration or the player creation.
+3. A refused or failed check on any server (error status, unreachable, timeout of
+   `GameConst.NAMES_CHECK.REQUEST_TIMEOUT_MS`) releases the holds everywhere once every check answered (so no check
+   still on its way holds the values after the release) and refuses the registration or the player creation.
 4. After the row is stored (or the creation failed), `release()` removes the local hold and sends a `release` request
    to every server, which removes only the holds of that hold ID.
 
