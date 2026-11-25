@@ -8,7 +8,8 @@
  * (a not string or empty recipient gets no message, a too long name or one with invalid characters gets the not found
  * line); the relayed message is delivered only with a valid text and sender name, cleaned and cut to the
  * chat characters limit, and only for the private message action; and the chat plugin builds the relay from its config
- * and the shared servers values (never without its events, config or servers values) and serves the relay route.
+ * and the shared servers values (never without its events, config or servers values) and serves the relay route, where
+ * only an unused valid signed request skips the invalid requests limiter (an invalid or already used one reaches it).
  *
  */
 
@@ -20,6 +21,7 @@ const { MessageFactory } = require('../lib/chat/message-factory');
 const { PrivateMessageCrossServerRelay } = require('../lib/chat/server/private-message-cross-server-relay');
 const { ChatPlugin } = require('../lib/chat/server/plugin');
 const { FetchStubRouteDispatcher } = require('./fixtures/fetch-stub-route-dispatcher');
+const { GlobalFetchStub } = require('./fixtures/global-fetch-stub');
 const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { sc } = require('@reldens/utils');
@@ -218,6 +220,19 @@ class TestPrivateMessageCrossServerRelay extends BaseTest
         };
     }
 
+    async fetchSignedBodyForFirstServer()
+    {
+        let signedBodies = [];
+        let second = this.createChatServer(this.secondServerUrl, {}, {senderMessages: [], relayedRequests: [], savedMessages: []});
+        await GlobalFetchStub.withFetch(async (requestUrl, options) => {
+            signedBodies.push(sc.parseJson(options.body));
+            return {ok: true, json: async () => ({isSuccess: true})};
+        }, async () => {
+            await second.relay.sendRequest(this.firstServerUrl, ChatConst.SYNC.PRIVATE_MESSAGE, 'ImRoot', {text: 'hi'});
+        });
+        return [...signedBodies].shift();
+    }
+
     async testTheChatPluginBuildsTheRelayFromItsConfig()
     {
         await this.test('the chat plugin builds the relay from its config and serves its route, never without events, config or servers values', async () => {
@@ -234,9 +249,22 @@ class TestPrivateMessageCrossServerRelay extends BaseTest
             let plugin = new ChatPlugin();
             await plugin.setup(this.createPluginProps(listeners));
             let postedRoutes = [];
-            let app = {post: (routePath, routeHandler) => postedRoutes.push([routePath, typeof routeHandler])};
-            listeners['reldens.serverBeforeListen']({serverManager: {app}});
+            let routeMiddlewares = [];
+            let limitedRequests = [];
+            let app = {post: (routePath, routeMiddleware, routeHandler) => {
+                postedRoutes.push([routePath, typeof routeHandler]);
+                routeMiddlewares.push(routeMiddleware);
+            }};
+            let rateLimitConfigurer = {createHomeLimiter: () => (req) => limitedRequests.push(req.body)};
+            listeners['reldens.serverBeforeListen']({serverManager: {app, appServerFactory: {rateLimitConfigurer}}});
             let relay = plugin.privateMessageRelay;
+            let signedBody = await this.fetchSignedBodyForFirstServer();
+            let passedRequests = [];
+            let routeMiddleware = [...routeMiddlewares].shift();
+            routeMiddleware({body: {action: 'e2e', targetId: 'ImRoot'}}, {}, () => passedRequests.push('invalid'));
+            routeMiddleware({body: signedBody}, {}, () => passedRequests.push('signed'));
+            relay.expiringHmacToken.markUsed(signedBody.token, Date.now());
+            routeMiddleware({body: signedBody}, {}, () => passedRequests.push('used'));
             this.assert.deepStrictEqual(
                 [
                     missingResults,
@@ -244,7 +272,9 @@ class TestPrivateMessageCrossServerRelay extends BaseTest
                     relay.characterLimit,
                     relay.serverSelfAddress,
                     relay.otherServersUrls,
-                    postedRoutes
+                    postedRoutes,
+                    passedRequests,
+                    limitedRequests
                 ],
                 [
                     [[false, []], [false, []], [false, []]],
@@ -252,7 +282,9 @@ class TestPrivateMessageCrossServerRelay extends BaseTest
                     this.characterLimit,
                     this.firstServerUrl,
                     [this.secondServerUrl],
-                    [[ChatConst.SYNC.ROUTE, 'function']]
+                    [[ChatConst.SYNC.ROUTE, 'function']],
+                    ['signed'],
+                    [{action: 'e2e', targetId: 'ImRoot'}, signedBody]
                 ]
             );
         });
