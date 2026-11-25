@@ -98,7 +98,7 @@ async enableServeStaticsAndHomePage()
 - `RELDENS_PASSWORD_MAXIMUM_LENGTH` - Maximum password length for the registration and the password reset (default: 128)
 - `RELDENS_VALIDATE_ROOMS_ORIGIN` - Validate the `Origin` header on every room join, 0 or 1 (default: 0)
 - `RELDENS_ALLOW_REQUESTS_WITHOUT_ORIGIN` - Accept joins without an `Origin` header, needed by the Node clients, 0 or 1 (default: 1)
-- `RELDENS_ROOMS_DATABASES` - The `server/rooms/databases` config: comma separated URLs of the other servers with their own database (or sharing this one), checked before a registration or a player creation is stored so the usernames, emails and player names stay unique between them; this server own `server/publicUrl` is skipped (default: empty, no check)
+- `RELDENS_ROOMS_DATABASES` - The `server/rooms/databases` config: comma separated URLs of the other servers with their own database (or sharing this one), checked before a registration or a player creation is stored so the usernames, emails and player names stay unique between them; this server own addresses are skipped (default: empty, no check). Only this names check is implemented for servers with their own database, the other multiple servers flows expect one shared database
 - `RELDENS_GUESTS_CLEANUP_ENABLED` - Remove the stale guest accounts on an interval, 0 or 1 (default: 0)
 - `RELDENS_GUESTS_CLEANUP_AFTER_MS` - Time without activity before a guest account is removed (default: 604800000)
 - `RELDENS_GUESTS_CLEANUP_INTERVAL_MS` - Interval between the guests cleanup runs (default: 3600000)
