@@ -13,14 +13,8 @@
  * so a preserved row that references a seeded row (a user locale that points to a seeded locale) never blocks the
  * seeded row delete. The locales reload runs the snippets ConfigurationEnricher again, so a seeded locale reaches the
  * client config sent on the next login. The config values that the running server reads only once (the config rows
- * are never hot plugged, a server restart applies them) are read again after every override and restore: the death
- * relocator, the rooms auto recovery, the kill score subscriber, the scores page size and title, the player creation
- * (the player name lengths and the rooms selection), created again with the new values, the rooms server validation
- * flag of every defined room (RoomsServerValidationFlagRefresher, the next instance gets it like on a restart), and the
- * game over time
- * of the
- * live enemy and player battles (BattlesLoadedConfig) and the resurrection ad gate values
- * (ResurrectionAdLoadedConfig), like the restart that loads them. The stored rooms, change points and return points are also read only at the server start: a rooms reload loads
+ * are never hot plugged, a server restart applies them) are read again after every override and restore
+ * (LoadedConfigReloader). The stored rooms, change points and return points are also read only at the server start: a rooms reload loads
  * them again, sets the new room data on every defined room, the rooms servers addresses sent to the clients (and read by
  * the rooms availability) and the other servers the disconnect requests and the signed server to server messengers are
  * sent to, and disposes the live instances of the
@@ -35,11 +29,8 @@
 const { TestDataSetup } = require('./test-data-setup');
 const { RoomObjectsState } = require('./room-objects-state');
 const { ServersSignedRequestsState } = require('./servers-signed-requests-state');
-const { BattlesLoadedConfig } = require('./battles-loaded-config');
-const { ResurrectionAdLoadedConfig } = require('./resurrection-ad-loaded-config');
-const { RoomsServerValidationFlagRefresher } = require('./rooms-server-validation-flag-refresher');
+const { LoadedConfigReloader } = require('./loaded-config-reloader');
 const { DataLoader } = require('../../../lib/actions/server/data-loader');
-const { IncreaseScoreOnKill } = require('../../../lib/scores/server/subscriber/increase-score-on-kill');
 const { Logger, sc } = require('@reldens/utils');
 
 class E2eSeedAndRestoreEndpoints
@@ -174,25 +165,6 @@ class E2eSeedAndRestoreEndpoints
         });
     }
 
-    static async reloadLoadedConfig(serverManager)
-    {
-        let actionsPlugin = serverManager.featuresManager.featuresList.actions.package;
-        await actionsPlugin.playerDeathRelocator.loadTownRoom(serverManager.roomsManager);
-        actionsPlugin.playerDeathRelocator.loadConfig();
-        actionsPlugin.roomAutoRecovery.loadConfig();
-        let scoresPlugin = serverManager.featuresManager.featuresList.scores.package;
-        scoresPlugin.increaseScoreOnKill = new IncreaseScoreOnKill({
-            config: scoresPlugin.config,
-            dataServer: scoresPlugin.dataServer
-        });
-        scoresPlugin.createScoresRoute.loadConfig();
-        serverManager.loginManager.playerCreation = serverManager.loginManager.createPlayerCreation();
-        let updatedBattles = BattlesLoadedConfig.applyGameOverTimeOut(serverManager);
-        let isGateUpdated = ResurrectionAdLoadedConfig.applyGateValues(serverManager);
-        RoomsServerValidationFlagRefresher.apply(serverManager);
-        Logger.debug('E2e loaded config reload: '+updatedBattles+' live battles, resurrection ad gate: '+isGateUpdated);
-    }
-
     static async reloadRooms(serverManager, roomsNames)
     {
         let roomsManager = serverManager.roomsManager;
@@ -240,7 +212,7 @@ class E2eSeedAndRestoreEndpoints
             E2eSeedAndRestoreEndpoints.restoreConfigValue(serverManager.configManager, path, groupOriginalValues[path]);
         }
         delete E2eSeedAndRestoreEndpoints.originalConfigValues[groupKey];
-        await E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
+        Logger.debug(await LoadedConfigReloader.reload(serverManager));
         if(E2eSeedAndRestoreEndpoints.reloadLocalesGroups.includes(groupKey)){
             E2eSeedAndRestoreEndpoints.reloadLocalesGroups.splice(
                 E2eSeedAndRestoreEndpoints.reloadLocalesGroups.indexOf(groupKey),
@@ -333,7 +305,7 @@ class E2eSeedAndRestoreEndpoints
                 sc.get(request.body, 'value', null),
                 true === sc.get(request.body, 'remove', false)
             );
-            await E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
+            Logger.debug(await LoadedConfigReloader.reload(serverManager));
             response.json({ok: true});
         });
         app.post('/api/e2e/data/reload-locales', async (request, response) => {
