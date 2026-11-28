@@ -4,9 +4,10 @@
  *
  * Tests the PlayersExperiencePerLevelImporter and the ClassPathsImporter with recording repositories: the experience
  * import refuses data that is not an object, creates a levels set only when none is given (and fails when it can not be
- * created) and skips a level whose required experience is not a finite number; the class paths import gives every
- * class path its own levels set from the levels data of its label (or the levels data for all), loads that set levels
- * once to link its level labels, skips a label of a missing level and a class path that could not be created.
+ * created) and imports a level whose required experience is not a number with zero; the class paths import gives every
+ * class path its own levels set from the levels data of its label (or the levels data for all), loads the level of
+ * each label from that set by its key to link it, skips a label of a missing level and a class path that could not be
+ * created.
  *
  */
 
@@ -28,9 +29,9 @@ class TestClassPathsImporterUnits extends BaseTest
                 storage[entityKey].push(createdRow);
                 return createdRow;
             },
-            loadBy: async (field, value) => {
-                storage.loadedSets.push(value);
-                return storage[entityKey].filter(row => value === row[field]);
+            loadOne: async (filters) => {
+                storage.loadedSets.push([filters.level_set_id, filters.key]);
+                return storage[entityKey].find(row => filters.level_set_id === row.level_set_id && filters.key === row.key);
             }
         };
     }
@@ -100,7 +101,7 @@ class TestClassPathsImporterUnits extends BaseTest
                     [['Warrior', 1, 1], ['Mage', 2, 1]],
                     [['1', 1], ['2', 1], ['1', 2]],
                     [[1, 'Novice', 1], [1, 'Adept', 2], [2, 'Apprentice', 3]],
-                    [1, 2]
+                    [[1, '1'], [1, '2'], [2, '1'], [2, '9']]
                 ]
             );
         });
