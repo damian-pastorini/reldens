@@ -8,10 +8,10 @@
  * returns the translated not found error to the sender only; a message to oneself reaches the same client twice; an
  * "@name" with no text is not sent and the input is cleared; a tampered message reaches only the "t" recipient, one
  * with no "t" or with no space after the name reaches nobody and stores no row; a third player in the scene never sees
- * the content over the sender; a forged "t" recipient loses the characters a player name can not have (the bold
- * payload of tests/fixtures/markup-injection-payloads.json gets the not found line and row with the cleaned name, no
- * element is created) and one empty after the cleaning ("<>") gets no answer and no row; and a recipient that
- * reloaded and logged in again gets one copy.
+ * the content over the sender; a forged "t" recipient with characters a player name can not have (the bold payload of
+ * tests/fixtures/markup-injection-payloads.json, "<>") is never relayed to the other servers and gets the not found
+ * line and row like a valid unknown name, with no element created; and a recipient that reloaded and logged in again
+ * gets one copy.
  *
  */
 
@@ -175,10 +175,11 @@ class TestChatPrivate
             }, true);
             await context.page.waitForTimeout(TestChatPrivate.COOLDOWN_MS);
         }
-        await TestChatPrivate.expectNotFoundNames(context.page, [unknownName]);
+        let notFoundNames = [MarkupInjectionPayloads.boldWithId, '<>', unknownName];
+        await TestChatPrivate.expectNotFoundNames(context.page, notFoundNames);
         await expect(context.page.locator('#'+MarkupInjectionPayloads.boldWithIdElementId), 'No element is created').toHaveCount(0);
-        expect(await TestChatPrivate.fetchStoredNotFoundNames(context.gameConfig), 'Only the valid unknown name is stored')
-            .toEqual([...storedNames, unknownName]);
+        expect(await TestChatPrivate.fetchStoredNotFoundNames(context.gameConfig), 'Every not found line is stored')
+            .toEqual([...storedNames, ...notFoundNames]);
         expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
     }
 
@@ -186,7 +187,7 @@ class TestChatPrivate
     {
         await expect.poll(
             async () => await TestChatPrivate.fetchNotFoundNames(page),
-            {message: 'The markup and empty recipients are refused with no line, the valid unknown one gets the not found line', timeout: TimeConstants.SERVER_RESPONSE}
+            {message: 'The markup, "<>" and valid unknown recipients are never relayed and get the not found line', timeout: TimeConstants.SERVER_RESPONSE}
         ).toEqual(expectedNames);
     }
 
@@ -221,7 +222,7 @@ class TestChatPrivate
             test('tampered private messages reach only the "t" recipient or nobody', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatPrivate.runTamperedTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('a forged recipient with markup or an empty one is refused, a valid unknown one gets the not found line', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('a forged recipient with markup or invalid characters is never relayed and gets the not found line like a valid unknown one', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatPrivate.runForgedRecipientTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('recipient logged in again gets one copy', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
