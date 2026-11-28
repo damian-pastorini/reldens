@@ -3,7 +3,9 @@
  * Reldens - Test Authentication Server Guards
  *
  * Tests the login guards that depend on the server state: the signed disconnect route with bad, expired, server status,
- * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error or switched off, the overloaded
+ * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error or switched off
+ * (with it off a scene change sends a check only request to the other server and its error refuses nothing, ISSUE
+ * #479), the overloaded
  * server on the login and on the scene join, the single player mode with the player room unavailable, the rooms origin
  * validation and the terms and conditions route with an unknown language.
  *
@@ -19,6 +21,8 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
 const { GameRoomJoin } = require('./helpers/game-room-join');
+const { ChangePointsSteps } = require('./helpers/change-points-steps');
+const { Navigation } = require('./helpers/navigation');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -154,6 +158,31 @@ class TestAuthenticationServerGuards
         await screenshots.capture(page, 'other-server-disconnection-off');
     }
 
+    static async runOtherServerCheckErrorSceneChangeTest(page, screenshots, gameConfig, longRun)
+    {
+        await LoginServerApi.setOtherServer(gameConfig, TestAuthenticationServerGuards.fetchErrorServerUrl(gameConfig), false);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let topology = await ChangePointsSteps.loadTopology(gameConfig);
+        let roomName = await Navigation.getCurrentRoomName(page);
+        let changePoint = topology.changePoints.find(row => topology.roomsIds[roomName] === Number(row.room_id));
+        expect(changePoint, 'The room '+roomName+' has a change point').toBeTruthy();
+        let nextRoomName = Object.keys(topology.roomsIds).find(
+            name => topology.roomsIds[name] === Number(changePoint.next_room_id)
+        );
+        let hitsBefore = await LoginServerApi.fetchOtherServerHits(gameConfig);
+        await ChangePointsSteps.enterNextRoom(
+            {gameConfig, longRun},
+            {page, playerName: gameConfig.e2ePlayerName},
+            {roomName, nextRoomName, tileIndex: String(changePoint.tile_index)}
+        );
+        expect(
+            await LoginServerApi.fetchOtherServerHits(gameConfig),
+            'The scene change sends the other server one check only request and its error refuses nothing'
+        ).toBe(hitsBefore + 1);
+        await TestAuthenticationServerGuards.expectSessionKept(page, 'The session stays in '+nextRoomName);
+        await screenshots.capture(page, 'other-server-check-error-scene-change');
+    }
+
     static async runServerBusyLoginTest(page, screenshots, gameConfig, longRun)
     {
         await LoginServerApi.setServerOverloaded(gameConfig, true);
@@ -264,6 +293,9 @@ class TestAuthenticationServerGuards
             });
             test('disconnect on server change off sends no request', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerSwitchedOffTest(page, screenshots, gameConfig, longRun);
+            });
+            test('disconnect on server change off: a scene change checks the other server and its error refuses nothing', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationServerGuards.runOtherServerCheckErrorSceneChangeTest(page, screenshots, gameConfig, longRun);
             });
             test('login is rejected while the server is overloaded', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runServerBusyLoginTest(page, screenshots, gameConfig, longRun);
