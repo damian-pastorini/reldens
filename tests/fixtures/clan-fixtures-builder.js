@@ -107,7 +107,6 @@ class ClanFixturesBuilder
         ));
         serversSync.sendToServers = async (serversUrls, action, targetId, payload) => {
             sentSyncs.push([action, String(targetId), payload]);
-            return [];
         };
         return serversSync;
     }
