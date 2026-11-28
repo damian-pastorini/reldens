@@ -42,14 +42,14 @@ class TestCrossServerSignedRequests
 {
 
     static TOKEN_LIFETIME_MS = 60000;
-    static REFUSAL_TIMEOUT_MS = GameConst.DISCONNECTION.REQUEST_TIMEOUT_MS + TimeConstants.SERVER_RESPONSE;
+    static REFUSAL_TIMEOUT_MS = GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS + TimeConstants.SERVER_RESPONSE;
     static LOOPBACK_HOSTS = [GameRoomJoin.IPV4_HOST, GameRoomJoin.IPV6_HOST];
 
-    static async fetchDisconnectAnswers(username, serversTokens)
+    static async fetchDisconnectAnswers(serversRequests)
     {
         let answers = [];
-        for(let [serverConfig, token] of serversTokens){
-            let answer = await SecurityApi.request(serverConfig, 'POST', GameConst.ROUTE_PATHS.DISCONNECT_USER, {username, token});
+        for(let [serverConfig, requestBody] of serversRequests){
+            let answer = await SecurityApi.request(serverConfig, 'POST', GameConst.ROUTE_PATHS.DISCONNECT_USER, requestBody);
             answers.push(answer.isSuccess);
         }
         return answers;
@@ -63,19 +63,18 @@ class TestCrossServerSignedRequests
         await Login.loginRootPlayer(secondServerPage, secondServerConfig, longRun);
         let username = gameConfig.e2eUsername;
         let expiresAt = Date.now() + TestCrossServerSignedRequests.TOKEN_LIFETIME_MS;
-        let firstServerToken = await LoginServerApi.fetchDisconnectToken(gameConfig, username, expiresAt);
+        let firstServerRequest = await LoginServerApi.fetchDisconnectRequest(gameConfig, username, expiresAt);
         expect(
             await TestCrossServerSignedRequests.fetchDisconnectAnswers(
-                username,
-                [[gameConfig, firstServerToken], [secondServerConfig, firstServerToken]]
+                [[gameConfig, firstServerRequest], [secondServerConfig, firstServerRequest]]
             ),
             'The server-1 token is accepted by server-1 and rejected when it is replayed on server-2'
         ).toEqual([true, false]);
         await secondServerPage.waitForTimeout(CrossServerHouseAssignment.QUIET_MS);
         await expect(secondServerPage.locator(Selectors.reloadModal.container), 'The server-2 session is kept').toBeHidden();
-        let secondServerToken = await LoginServerApi.fetchDisconnectToken(secondServerConfig, username, expiresAt);
+        let secondServerRequest = await LoginServerApi.fetchDisconnectRequest(secondServerConfig, username, expiresAt);
         expect(
-            await TestCrossServerSignedRequests.fetchDisconnectAnswers(username, [[secondServerConfig, secondServerToken]]),
+            await TestCrossServerSignedRequests.fetchDisconnectAnswers([[secondServerConfig, secondServerRequest]]),
             'A server-2 token is accepted by server-2'
         ).toEqual([true]);
         await expect(secondServerPage.locator(Selectors.reloadModal.message), 'The server-2 token ends the server-2 session')
