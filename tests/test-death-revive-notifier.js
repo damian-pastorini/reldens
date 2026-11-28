@@ -5,7 +5,7 @@
  * Tests the revive message a dead player is told (in place, with the restoration item, the question to use it, or in
  * the town room) and the resurrection ad the town revive offers through the "reldens.deathTownReviveData" event, answered
  * by the ads ResurrectionAdGate (an enabled ad of the configured key, not closed in this death, in a room that allows
- * the ad messages); the ad reward (the gate "onAfterGiveAdRewardItem") sets the choice to use the restoration item and
+ * the ad messages); the ad reward (the gate "chooseRestorationItemUse") sets the choice to use the restoration item and
  * tells the revive again through "reldens.deathReviveNotify" when the player client is in the room.
  *
  */
@@ -196,7 +196,7 @@ class TestDeathReviveNotifier extends BaseTest
             let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 0});
             await setup.notify();
             setup.playerSchema.inventory.manager.items.restoration_scroll.qty = 1;
-            this.assert.strictEqual(setup.gate.onAfterGiveAdRewardItem(setup.rewardEvent), true);
+            setup.gate.chooseRestorationItemUse(setup.rewardEvent);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.townMessage, this.itemMessage]);
         });
     }
@@ -215,14 +215,14 @@ class TestDeathReviveNotifier extends BaseTest
                 {}
             ];
             for(let notToldEvent of notToldEvents){
-                this.assert.strictEqual(gate.onAfterGiveAdRewardItem(notToldEvent), false);
+                gate.chooseRestorationItemUse(notToldEvent);
             }
             let emptyKeySetup = await this.deathBuilder.createNotifierSetup({}, {resurrectionAdsKey: ''});
             emptyKeySetup.rewardEvent.playedAd.key = '';
-            this.assert.strictEqual(emptyKeySetup.gate.onAfterGiveAdRewardItem(emptyKeySetup.rewardEvent), false);
+            emptyKeySetup.gate.chooseRestorationItemUse(emptyKeySetup.rewardEvent);
             this.assert.deepStrictEqual(emptyKeySetup.client.sentMessages, []);
             setup.playerSchema.inState = GameConst.STATUS.ACTIVE;
-            this.assert.strictEqual(gate.onAfterGiveAdRewardItem(rewardEvent), false);
+            gate.chooseRestorationItemUse(rewardEvent);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
             let choicePath = ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE;
             this.assert.strictEqual(setup.playerSchema.getPrivate(choicePath), null);
@@ -302,7 +302,7 @@ class TestDeathReviveNotifier extends BaseTest
             );
             await setup.notify();
             setup.playerSchema.inventory.manager.items.restoration_scroll.qty = 1;
-            this.assert.strictEqual(setup.gate.onAfterGiveAdRewardItem(setup.rewardEvent), true);
+            setup.gate.chooseRestorationItemUse(setup.rewardEvent);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.townMessage, this.itemMessage]);
             this.assert.strictEqual(
                 setup.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE),
@@ -316,7 +316,7 @@ class TestDeathReviveNotifier extends BaseTest
         await this.test('the resurrection ad reward of a dead player without room client keeps the choice and tells nothing', async () => {
             let setup = await this.deathBuilder.createNotifierSetup({}, {restorationQty: 1});
             setup.room.getClientById = () => false;
-            this.assert.strictEqual(setup.gate.onAfterGiveAdRewardItem(setup.rewardEvent), true);
+            setup.gate.chooseRestorationItemUse(setup.rewardEvent);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
             this.assert.strictEqual(
                 setup.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE),
