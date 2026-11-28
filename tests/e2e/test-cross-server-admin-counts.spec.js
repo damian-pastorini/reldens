@@ -82,12 +82,7 @@ class TestCrossServerAdminCounts
     {
         let {page, secondPage, gameConfig, longRun} = context;
         let secondServerConfig = await CrossServerHouseAssignment.assignHouseToSecondServer(context);
-        for(let serverConfig of [gameConfig, secondServerConfig]){
-            expect(
-                await LoginServerApi.setDisconnectUsersOnServerChange(serverConfig, false),
-                'The server keeps the user logged on the server it leaves'
-            ).toBe(false);
-        }
+        await CrossServerHouseAssignment.keepUsersOnLeftServers(gameConfig, secondServerConfig);
         await CrossServerHouseAssignment.storePlayerInHouse(context, gameConfig.e2ePlayerName2, Navigation.TILE_SIZE);
         await Login.loginRootPlayer(secondPage, gameConfig, longRun, '2');
         await Navigation.waitForRoom(secondPage, CrossServerHouseAssignment.SECOND_HOUSE, TimeConstants.ROOM_TRANSITION);
