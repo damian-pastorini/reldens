@@ -6,7 +6,10 @@
  * configured enemy placed next to the player, every other enemy disabled and the player skills recorded, and that enemy
  * kills the player with a real hit): after the revive the player body is back in the room physics world (so it
  * collides again), the player walks with a tap move two tiles away, and its attack skill hits the enemy again (the
- * attack range check is off for the group). Another player placed next to the player before its death (the death
+ * attack range check is off for the group); a player killed while its held key presses it against a wall (placed on
+ * the tile before a wall, ISSUE #460) revives standing where the same player rests against that wall once its key is
+ * released (the pressed body sits a few pixels inside the wall, the soft contact of the physics, ISSUE #505 false), and
+ * stays still there, the other enemies disabled after the death so no contact moves it. Another player placed next to the player before its death (the death
  * position is read once the server holds the player dead, since the enemy attack placement can move the player to a
  * free tile pair and the enemy contact can push it, and the dead body keeps that position; its tile comes from that
  * position, since a body out of the world has no map to give its tiles) walks with a pointer move
@@ -41,6 +44,9 @@ class TestDeathRevivedBody
     static DIRECT_ATTACK = {criticalChance: 0, range: 0};
     static WALK_TILES = 2;
     static WALKER_SUFFIX = '2';
+    static WALL_KEYS = {'1,0': 'ArrowRight', '-1,0': 'ArrowLeft', '0,1': 'ArrowDown', '0,-1': 'ArrowUp'};
+    static QUIET_MS = 1500;
+    static WALL_CONTACT = 'wall';
 
     static async runRevivedBodyTest(context)
     {
@@ -74,6 +80,59 @@ class TestDeathRevivedBody
         await CombatSkillCasting.targetEnemy(context.page, combat);
         let hit = await CombatSkillCasting.castSkill(context.page, combat, TestDeathRevivedBody.ATTACK_SHORT, 1);
         expect(hit, 'The revived player attack hits the enemy').toBeTruthy();
+    }
+
+    static async runRevivedAgainstWallTest(context)
+    {
+        let {page, gameConfig} = context;
+        await DeathReviveSteps.prepareDeath(context, TestDeathRevivedBody.TELEPORT_OFF);
+        let combat = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, context.longRun);
+        let beforeWall = await RoomObjectsApi.placePlayerBeforeWall(page, gameConfig, Login.FOREST_ROOM_NAME, TimeConstants.SCENE_LOAD);
+        expect(beforeWall.position, 'The player stands on the tile before a wall: '+beforeWall.error).toBeTruthy();
+        let wallKey = TestDeathRevivedBody.WALL_KEYS[beforeWall.direction.join(',')];
+        await TestDeathRevivedBody.pressWall(context, wallKey);
+        await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, combat.enemyKey, TimeConstants.ENEMY_KILL);
+        await page.keyboard.up(wallKey);
+        let dead = await TestCombatDeath.waitForServerDeath(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName);
+        await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME);
+        await DeathReviveSteps.expectAliveInForest(context);
+        let revived = await TestDeathRevivedBody.fetchSettledPlayer(context);
+        await TestDeathRevivedBody.pressWall(context, wallKey);
+        await page.keyboard.up(wallKey);
+        let wallContact = await TestDeathRevivedBody.fetchSettledPlayer(context);
+        expect(
+            [revived.x, revived.y],
+            'The player killed while pressing a wall (dead at '+sc.toJsonString([dead.x, dead.y])+') revives standing where'
+                +' it rests against that wall once its key is released, the pressed depth away from its death position'
+        ).toEqual([wallContact.x, wallContact.y]);
+        await page.waitForTimeout(TestDeathRevivedBody.QUIET_MS);
+        let stillPlayer = await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME);
+        expect([stillPlayer.x, stillPlayer.y], 'The revived player stays still on the wall contact position')
+            .toEqual([revived.x, revived.y]);
+    }
+
+    static async pressWall(context, wallKey)
+    {
+        await context.page.keyboard.down(wallKey);
+        await expect.poll(
+            async () => (await RoomMovementApi.fetchPlayer(
+                context.gameConfig,
+                Login.FOREST_ROOM_NAME,
+                context.gameConfig.e2ePlayerName
+            )).contacts,
+            {message: 'The held key presses the player against the wall', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toContain(TestDeathRevivedBody.WALL_CONTACT);
+    }
+
+    static async fetchSettledPlayer(context)
+    {
+        await RoomMovementApi.waitForPlayerSettled(
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            context.gameConfig.e2ePlayerName,
+            TimeConstants.SERVER_RESPONSE
+        );
+        return await DeathReviveSteps.fetchPlayer(context, Login.FOREST_ROOM_NAME);
     }
 
     static async walkIntoTarget(context, walker, startPosition, targetTile, targetContact)
@@ -145,6 +204,9 @@ class TestDeathRevivedBody
         test.describe('Death Revived Body', () => {
             test('another player walks through the dead player body and collides with it once revived', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathRevivedBody.runOtherPlayerBodyTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('player killed while pressing a wall revives standing on its death position', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestDeathRevivedBody.runRevivedAgainstWallTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('player revived in place walks, collides and casts its skills again', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestDeathRevivedBody.runRevivedBodyTest({page, screenshots, gameConfig, e2eGroup, longRun});
