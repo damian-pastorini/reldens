@@ -9,7 +9,9 @@
  * sends nothing; a player keeps one exchange at a time (ISSUE #358): with server/players/exchanges/newCancelsActive off
  * (the default) a player in a trade inviting another player, or an invite to a player in a trade, is refused and the
  * open trade stays locked, with it on starting a new trade cancels the open exchange while the box of the old partner
- * stays open and a player in a trade that accepts another invite ends the old trade for its old partner; two players
+ * stays open and a player in a trade that accepts another invite ends the old trade for its old partner; a player with
+ * its own invite pending that accepts another invite drops its invite, so the old invited player neither joins nor
+ * cancels the new trade, live or once it is closed (ISSUE #475); two players
  * inviting the same player give one request box per inviter; an unrelated player gets no trade message or box; and two
  * players that invite each other and both accept get one consistent trade: the first accept starts it, the crossed
  * second accept is refused (both players are in an exchange) and never cancels it, and the offer works on it.
@@ -174,6 +176,29 @@ class TestTradingRequests
         await TradeSteps.expectOffered(context, first, {[potionId]: 1}, 'The first player offers from its own side');
     }
 
+    static async runStaleInviteTest(context)
+    {
+        let [inviter, oldInvited, newInviter] = await TestTradingRequests.enter(context);
+        await TradeSteps.start(inviter, oldInvited);
+        await TradeSteps.waitForMessages(oldInvited, InventoryConst.ACTIONS.TRADE_START, 1);
+        await TradeSteps.open(newInviter, inviter);
+        expect((await TradeSteps.fetchState(context, inviter)).invitedSessionId, 'The accepting player drops its own invite')
+            .toBe(false);
+        await TradeSteps.answer(oldInvited, inviter);
+        await inviter.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        await TradeSteps.expectNoTradeShow([oldInvited], 'The old invited player can not join the live trade');
+        expect((await TradeSteps.fetchState(context, inviter)).trade.ownersIds, 'The live trade is not cancelled')
+            .toEqual({A: newInviter.sessionId, B: inviter.sessionId});
+        await TradeSteps.close(inviter, newInviter);
+        await TradeSteps.expectTradeOpen(context, newInviter, false, 'The trade is closed');
+        await TradeSteps.answer(oldInvited, inviter);
+        await inviter.page.waitForTimeout(TradeSteps.SETTLE_MS);
+        await TradeSteps.expectNoTradeShow([oldInvited], 'The old invite starts nothing once the trade is closed');
+        for(let player of [inviter, newInviter]){
+            await TradeSteps.expectTradeOpen(context, player, false, 'No exchange is restarted for '+player.playerName);
+        }
+    }
+
     static async runAcceptWhileTradingTest(context)
     {
         let [newInviter, invited, oldPartner] = await TestTradingRequests.enter(context);
@@ -214,6 +239,9 @@ class TestTradingRequests
             });
             test('crossed invites both accepted give one consistent trade', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingRequests.runMutualInvitesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('a player that accepts another invite drops its own invite, the old invited player can not join or cancel the trade', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestTradingRequests.runStaleInviteTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('with the new exchange cancel on accepting another invite ends the old trade', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestTradingRequests.runAcceptWhileTradingTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
