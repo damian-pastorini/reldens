@@ -67,7 +67,7 @@ class TestDeletedRoomPlayersRelocator extends BaseTest
             events,
             playerStateRepository: this.createPlayersStateRepository(storageCalls, failedMethod)
         }).listenEvents();
-        return new DeletedRoomPlayersRelocator(events, this.createConfig(defaultRoomId, setDefaultEnabled), setDefaultEnabled);
+        return new DeletedRoomPlayersRelocator(events, this.createConfig(defaultRoomId, setDefaultEnabled));
     }
 
     async testDeletingTheDefaultRoomIsPrevented()
