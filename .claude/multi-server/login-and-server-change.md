@@ -7,7 +7,7 @@ Back to the [overview](overview.md). The requests used here are described in [Si
 A user keeps one session. Every room join (`RoomLogin.onAuth()`, `lib/rooms/server/login.js`) calls
 `UserDisconnection.broadcastDisconnectionMessage(user, isSceneChange)` (`lib/game/server/user-disconnection.js`, a
 signed messenger of the `/reldens-disconnect-user` route), which sends the username to every other server with
-`sendToServers()`, all the requests started before any answer is awaited (the unreachable servers cost one timeout):
+`sendToServers()`, one server after the other (each unreachable server costs its own timeout):
 
 - A new login (`isSceneChange` not set) sends the `disconnect` action. Each server closes every room of that user (game
   room included) with the consented close code, so the old client shows the "session ended" alert.
@@ -23,6 +23,9 @@ signed messenger of the `/reldens-disconnect-user` route), which sends the usern
   `wasLogged: false` and disconnects nothing.
 - `RoomLogin.disconnectFromOtherServers()` refuses the join ("Could not connect to the game.") when a disconnection
   failed, and sets `userModel.isLoginContinued = isSceneChange && wasLogged`.
+- `UserDisconnection.disconnectUserFromEveryRoom()` ends the scene rooms of the user first and stops at the first room
+  that can not end its session (the player state not saved), so a refused disconnection, here or on another server,
+  keeps every other session of the user, its chat and game room too.
 
 `RoomGame.onJoin()` (`lib/rooms/server/game.js`) ends any other session of the same user already in this game room, and
 records a new login (`users_login` row and login count) unless `isLoginContinued`, so a server change never counts as a
