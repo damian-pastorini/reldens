@@ -7,8 +7,10 @@
  * unparsable public URL the own address is empty); a room maps only to the address of another server; a signed request
  * reaches the other server once with a new nonce on every message and its replay is rejected; a modified or incomplete
  * request, one signed for another server or received by a server without own address is rejected and never marks the
- * token used; the received action answer is returned as is and only a success answer counts as sent; a failed status, a rejected fetch or a missing secret send nothing; and the servers are sent in
- * parallel with their own results.
+ * token used, while one signed for the public or the base URL of the receiving server is accepted; an error on the
+ * received action answers a failed route result; the received action answer is returned as is and only a success
+ * answer counts as sent; a failed status, a rejected fetch or a missing secret send nothing; and the servers are sent
+ * in parallel with their own results.
  *
  */
 
@@ -16,6 +18,7 @@ const { BaseTest } = require('./base-test');
 const { SignedServerToServerMessenger } = require('../lib/game/server/signed-server-to-server-messenger');
 const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { GlobalFetchStub } = require('./fixtures/global-fetch-stub');
+const { JsonResponseRecorder } = require('./fixtures/json-response-recorder');
 const { sc } = require('@reldens/utils');
 
 class TestSignedServerToServerMessenger extends BaseTest
@@ -152,6 +155,48 @@ class TestSignedServerToServerMessenger extends BaseTest
                 [results, acceptedResult, received],
                 [new Array(invalidBodies.length + 1).fill(this.rejected), {isSuccess: true}, [['sync', '7', {hp: 5}]]]
             );
+        });
+    }
+
+    async testARequestSignedForAnyOwnAddressIsAccepted()
+    {
+        await this.test('a request signed for the public or the base URL of the receiving server is accepted, another one is not', async () => {
+            let received = [];
+            let first = this.createMessenger(this.firstServerUrl, []);
+            let baseUrl = 'http://internal-2:9000';
+            let second = new SignedServerToServerMessenger(Object.assign(
+                {routePath: this.routePath},
+                ServerMessengerPropsBuilder.createShared(this.secondServerUrl, this.roomsServers, 'test-secret', {
+                    'server/baseUrl': baseUrl
+                })
+            ));
+            second.receiveAction = async (action, targetId, payload) => {
+                received.push([action, targetId, payload]);
+                return {isSuccess: true};
+            };
+            let results = [];
+            for(let serverUrl of [this.secondServerUrl, baseUrl, 'http://internal-3:9000']){
+                results.push(await second.receiveRequest({body: first.createRequestBody(serverUrl, 'sync', 7, {})}));
+            }
+            this.assert.deepStrictEqual(
+                [second.serverSelfAddresses, results, received.length],
+                [[this.secondServerUrl, baseUrl], [{isSuccess: true}, {isSuccess: true}, this.rejected], 2]
+            );
+        });
+    }
+
+    async testAReceivedActionErrorAnswersAFailedRouteResult()
+    {
+        await this.test('an error on the received action answers a failed result with the error status instead of rejecting', async () => {
+            let first = this.createMessenger(this.firstServerUrl, []);
+            let second = this.createMessenger(this.secondServerUrl, []);
+            second.receiveAction = async () => Promise.reject({message: 'Storage.'});
+            let responses = [];
+            await second.handleRouteRequest(
+                {body: first.createRequestBody(this.secondServerUrl, 'sync', 7, {})},
+                new JsonResponseRecorder().create(responses)
+            );
+            this.assert.deepStrictEqual(responses, [500, this.rejected]);
         });
     }
 
