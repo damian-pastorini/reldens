@@ -5,7 +5,9 @@
  * Tests the team kept between two servers wired through a fake fetch that delivers every signed request to the other
  * server route handler: a member moving to a room of the other server keeps its team there and both servers list both
  * players with the data of the remote one; a member leaving on the other server disbands the team on both; an arrival
- * for a player already playing on the destination joins it right away; a failed arrival drops the member and disbands
+ * for a player already playing on the destination joins it right away and queues the update of the team servers (one
+ * update after the update interval); a leave a server does not answer is logged and answers false; a failed arrival
+ * drops the member and disbands
  * the team; a request with a forged token or signed for another server is rejected; and only a room of another server
  * counts as a server change.
  *
@@ -19,7 +21,8 @@ const { TeamLeave } = require('../lib/teams/server/message-actions/team-leave');
 const { TeamsConst } = require('../lib/teams/constants');
 const { FetchStubRouteDispatcher } = require('./fixtures/fetch-stub-route-dispatcher');
 const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
-const { sc } = require('@reldens/utils');
+const { ScheduledTimeouts } = require('./fixtures/scheduled-timeouts');
+const { Logger, sc } = require('@reldens/utils');
 
 class TestTeamCrossServerStateSync extends BaseTest
 {
@@ -199,14 +202,65 @@ class TestTeamCrossServerStateSync extends BaseTest
                 playerSchema: arrivedMember,
                 client: arrivedSession.client
             };
+            let queuedTimeouts = new ScheduledTimeouts();
             await this.withServersFetch(teamSetup.servers, async () => {
-                await teamSetup.servers.first.teamCrossServerStateSync.moveMemberToServer(teamSetup.member, this.secondServerUrl);
+                await queuedTimeouts.capture(async () => {
+                    await teamSetup.servers.first.teamCrossServerStateSync.moveMemberToServer(
+                        teamSetup.member,
+                        this.secondServerUrl
+                    );
+                });
+            });
+            let queuedDelays = queuedTimeouts.scheduledTimeouts.map(scheduledTimeout => scheduledTimeout.delayMs);
+            await this.withServersFetch(teamSetup.servers, async () => {
+                await queuedTimeouts.scheduledTimeouts[0].timeoutCallback();
             });
             this.assert.deepStrictEqual(
-                [arrivedMember.currentTeam, this.mapTeamState(teamSetup.servers.second), teamSetup.servers.second.teamChangingRoomPlayers],
-                [2, {2: {local: ['1'], remote: [['2', this.firstServerUrl]]}}, {}]
+                [
+                    arrivedMember.currentTeam,
+                    this.mapTeamState(teamSetup.servers.second),
+                    teamSetup.servers.second.teamChangingRoomPlayers,
+                    queuedDelays,
+                    this.mapTeamState(teamSetup.servers.first)
+                ],
+                [
+                    2,
+                    {2: {local: ['1'], remote: [['2', this.firstServerUrl]]}},
+                    {},
+                    [TeamsConst.SYNC.UPDATE_INTERVAL_MS],
+                    {2: {local: ['2'], remote: [['1', this.secondServerUrl]]}}
+                ]
             );
             this.assert.strictEqual([...arrivedMessages].pop().act, TeamsConst.ACTIONS.TEAM_UPDATE);
+        });
+    }
+
+    async testATeamLeaveNotAnsweredIsLoggedAndAnswersFalse()
+    {
+        await this.test('a team leave that a server does not answer is logged and answers false, an answered one true', async () => {
+            let teamSetup = await this.moveMemberAndJoin(this.createServersWithTeam());
+            let serversSync = teamSetup.servers.first.teamCrossServerStateSync;
+            let loggerWarning = Logger.warning;
+            let loggedWarnings = [];
+            Logger.warning = (...logArguments) => loggedWarnings.push(logArguments);
+            let isNotAnsweredSent = true;
+            await FetchStubRouteDispatcher.withServers({}, async () => {
+                isNotAnsweredSent = await serversSync.sendLeave([this.secondServerUrl], 2, 1);
+            });
+            Logger.warning = loggerWarning;
+            let isAnsweredSent = false;
+            await this.withServersFetch(teamSetup.servers, async () => {
+                isAnsweredSent = await serversSync.sendLeave([this.secondServerUrl], 2, '');
+            });
+            this.assert.deepStrictEqual(
+                [isNotAnsweredSent, loggedWarnings, isAnsweredSent, teamSetup.servers.second.teams],
+                [
+                    false,
+                    [['Team leave not answered.', {serverUrl: this.secondServerUrl, teamId: 2, playerId: 1}]],
+                    true,
+                    {}
+                ]
+            );
         });
     }
 
