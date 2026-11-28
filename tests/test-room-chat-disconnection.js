@@ -152,6 +152,7 @@ class TestRoomChatDisconnection extends BaseTest
                 let setup = this.createSessionsSetup();
                 let sceneDisconnections = [];
                 setup.sceneRoom.disconnectBySessionId = async (sessionId) => sceneDisconnections.push(sessionId);
+                setup.sceneRoom.playerBySessionIdFromState = (sessionId) => 'scene-session' === sessionId ? {sessionId} : false;
                 let gameClient = ActiveSessionsBuilder.joinRoom(setup, setup.gameRoom, 'game-session', this.userModel);
                 ActiveSessionsBuilder.joinRoom(setup, setup.sceneRoom, 'scene-session', this.userModel);
                 ActiveSessionsBuilder.joinRoom(setup, setup.chatRoom, 'chat-session', this.userModel);
@@ -182,6 +183,31 @@ class TestRoomChatDisconnection extends BaseTest
                 this.assert.strictEqual(
                     setup.chatRoom.activePlayerByUserName('other', this.chatRoomId).client,
                     otherClient
+                );
+            }
+        });
+    }
+
+    async testAScenePlayerNotSavedKeepsEveryOtherSession()
+    {
+        await this.test('a scene that can not save the player stops the disconnection before the chat and game sessions end (ISSUE #499)', async () => {
+            for(let avoidGameRoom of [true, false]){
+                let setup = this.createSessionsSetup();
+                let sceneDisconnections = [];
+                setup.sceneRoom.disconnectBySessionId = async (sessionId) => sceneDisconnections.push(sessionId) && false;
+                setup.sceneRoom.playerBySessionIdFromState = (sessionId) => 'scene-session' === sessionId ? {sessionId} : false;
+                ActiveSessionsBuilder.joinRoom(setup, setup.chatRoom, 'chat-session', this.userModel);
+                ActiveSessionsBuilder.joinRoom(setup, setup.gameRoom, 'game-session', this.userModel);
+                ActiveSessionsBuilder.joinRoom(setup, setup.sceneRoom, 'scene-session', this.userModel);
+                let userDisconnection = this.createUserDisconnection(setup);
+                this.assert.deepStrictEqual(
+                    [
+                        await userDisconnection.disconnectUserFromEveryRoom(this.userModel, avoidGameRoom),
+                        sceneDisconnections,
+                        setup.closedSessions,
+                        ActiveSessionsBuilder.fetchUserSessions(setup, this.userModel.id).sort()
+                    ],
+                    [false, ['scene-session'], [], ['chat-session', 'game-session', 'scene-session']]
                 );
             }
         });
