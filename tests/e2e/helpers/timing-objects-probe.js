@@ -14,7 +14,8 @@
  * area plus half a tile from a given player (instead of a random tile, which can be the same tile or one next to it;
  * with no such free tile the respawn stays random and the error is logged), and the next calls of a method of a player
  * inventory manager (the
- * "addItem" a completion runs) delayed, answering false (like a full inventory) or rejected, kept and restored per
+ * "addItem" a completion runs) delayed, answering false (like a full inventory) or rejected after the given passed
+ * calls, kept and restored per
  * parallel spec group by LiveObjectsOverrides.
  *
  */
@@ -239,6 +240,7 @@ class TimingObjectsProbe
                     {
                         callsKey: 'inventory.'+sc.get(request.body, 'playerName', ''),
                         delayMs: Number(sc.get(request.body, 'delayMs', 0)),
+                        passesCount: Number(sc.get(request.body, 'passesCount', 0)),
                         failuresCount: Number(sc.get(request.body, 'failuresCount', 0)),
                         rejects: true === sc.get(request.body, 'rejects', false)
                     }
