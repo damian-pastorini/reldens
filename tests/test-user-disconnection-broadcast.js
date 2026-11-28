@@ -7,7 +7,7 @@
  * every other server to disconnect the user and fails when one does not confirm it; with the disconnection disabled a
  * login asks nothing and a server change only checks the user presence, where a server that fails the check counts as
  * not logged and the next servers are still checked (ISSUE #479), while with it enabled a failed server refuses the
- * server change (every server is requested before any answer is read); a timed out or failed request refuses the login;
+ * server change (every server is still requested); a timed out or failed request refuses the login;
  * the answer keeps the logged user only from a success; and the message is valid only on its target server.
  *
  */
