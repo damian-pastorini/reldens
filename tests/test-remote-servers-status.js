@@ -158,9 +158,9 @@ class TestRemoteServersStatus extends BaseTest
         });
     }
 
-    async testTheStatusesOfSeveralServersAreRequestedTogether()
+    async testTheStatusesOfSeveralServersAreRequestedOneAfterTheOther()
     {
-        await this.test('the statuses of several servers are all requested before any answer, keyed by server and once each', async () => {
+        await this.test('the statuses of several servers are requested one after the other, keyed by server and once each', async () => {
             let secondServerUrl = 'http://localhost:8100';
             let requestedUrls = [];
             let startedWhenAnswered = [];
@@ -184,7 +184,7 @@ class TestRemoteServersStatus extends BaseTest
                 [
                     [this.remoteServerUrl, secondServerUrl],
                     [[this.remoteServerUrl, true], [secondServerUrl, true]],
-                    [2, 2],
+                    [1, 2],
                     {}
                 ]
             );
