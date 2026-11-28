@@ -53,11 +53,11 @@ class TestUserRegistration extends BaseTest
             passwordManager: Encryptor,
             loginAttempts: new LoginAttempts({maxAttempts: 1}),
             crossServerNamesCheck: {
-                holdEverywhere: async (routePath, values) => {
+                holdEverywhere: async (values) => {
                     registrationSetup.heldValues.push(...values);
                     return registrationSetup.isFreeOnOtherServers ? 'hold-'+values.join('-') : false;
                 },
-                release: (routePath, values, holdId) => 'hold-'+values.join('-') === holdId
+                release: (values, holdId) => 'hold-'+values.join('-') === holdId
                     && registrationSetup.releasedValues.push(...values)
             },
             logUserData: (userData) => ({user: {username: userData.username}})
