@@ -3,7 +3,8 @@
  * Reldens - Login Server State
  *
  * Server side e2e endpoints for the login guards that depend on the server state: the overloaded server (blocking or
- * only monitored), the created rooms, the rooms availability seen by the game room, the rooms origin validation, the
+ * only monitored; while the blocking is on only the forced memory limit decides, the CPU and event loop limits are off
+ * so the machine load of the parallel runs never blocks a login), the created rooms, the rooms availability seen by the game room, the rooms origin validation, the
  * other servers of a multi-server setup (with a route answering an error and a route answering only after three times
  * the disconnection request timeout, both counting their requests), the disconnection of the users on a server change
  * switched off or on (restored by the reset), the disconnect message another server sends to this one for a username
@@ -43,7 +44,9 @@ class LoginServerState
         let userDisconnection = serverManager.loginManager.userDisconnection;
         LoginServerState.healthDefaults = {
             blockingEnabled: monitor.blockingEnabled,
-            maxMemoryPercent: monitor.limits.maxMemoryPercent
+            maxMemoryPercent: monitor.limits.maxMemoryPercent,
+            maxCpuPercent: monitor.limits.maxCpuPercent,
+            maxEventLoopDelayMs: monitor.limits.maxEventLoopDelayMs
         };
         LoginServerState.disconnectionDefaults = {
             otherServersUrls: [...userDisconnection.otherServersUrls],
@@ -58,10 +61,13 @@ class LoginServerState
     static setServerOverloaded(serverManager, isOverloaded, blockingEnabled)
     {
         let monitor = serverManager.serverHealthMonitor;
+        let healthDefaults = LoginServerState.healthDefaults;
         monitor.blockingEnabled = blockingEnabled;
         monitor.limits.maxMemoryPercent = isOverloaded
             ? LoginServerState.OVERLOADED_MEMORY_LIMIT
-            : LoginServerState.healthDefaults.maxMemoryPercent;
+            : healthDefaults.maxMemoryPercent;
+        monitor.limits.maxCpuPercent = blockingEnabled ? 0 : healthDefaults.maxCpuPercent;
+        monitor.limits.maxEventLoopDelayMs = blockingEnabled ? 0 : healthDefaults.maxEventLoopDelayMs;
         monitor.checkUsage();
     }
 
