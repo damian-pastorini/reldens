@@ -5,7 +5,8 @@
  * The two servers setup of the cross server specs: the second house is stored with the server-2 address and the town
  * with the server-1 address, and the stored rooms are reloaded on both servers like a restart (the room data, the
  * rooms servers addresses sent to the clients and the servers the disconnect requests go to), all restored by the
- * group reset of server-1 and then of server-2. It also stores a player in the second house and logs it in from the
+ * group reset of server-1 and then of server-2; the users kept logged on the server they leave
+ * (server/players/disconnectUsersOnServerChange off on both servers, restored by the same reset). It also stores a player in the second house and logs it in from the
  * server-1 page as a house observer, walks the player from the town through a change point, logs
  * the player and a town observer in, reads the arrival in
  * the second house from the town, logs the player in the town with its chat recorded and the server-1 blocking on
@@ -48,6 +49,16 @@ class CrossServerHouseAssignment
             ).serverBaseUrl,
             [Login.TOWN_ROOM_NAME]: E2eServerInstances.fetchAllServersUrls()[0]
         });
+    }
+
+    static async keepUsersOnLeftServers(gameConfig, secondServerConfig)
+    {
+        for(let serverConfig of [gameConfig, secondServerConfig]){
+            expect(
+                await LoginServerApi.setDisconnectUsersOnServerChange(serverConfig, false),
+                'The server keeps the user logged on the server it leaves'
+            ).toBe(false);
+        }
     }
 
     static async assignRoomsServersUrls(context, roomsServersUrls)
