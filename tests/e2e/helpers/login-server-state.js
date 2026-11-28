@@ -26,6 +26,7 @@ class LoginServerState
     static OVERLOADED_MEMORY_LIMIT = 0.0001;
     static OTHER_SERVER_ERROR_PATH = '/api/e2e/security/other-server-error';
     static OTHER_SERVER_SILENT_PATH = '/api/e2e/security/other-server-silent';
+    static OTHER_SERVER_ANSWER_PATH = '/api/e2e/security/other-server-answer';
     static SILENT_ANSWER_MS = GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS * 3;
     static OTHER_SERVER_INSTANCE_ID = 'e2e-other-server-instance';
     static UNKNOWN_STATE_COLUMN = 'e2e_unknown_column';
@@ -37,6 +38,7 @@ class LoginServerState
     static roomsOriginDefaults = {};
     static originalAvailability = {};
     static otherServerHits = 0;
+    static otherServerAnswerHits = 0;
 
     static captureDefaults(serverManager)
     {
@@ -116,12 +118,13 @@ class LoginServerState
         }
     }
 
-    static setOtherServer(serverManager, serverUrl, disconnectUsersOnServerChange)
+    static setOtherServers(serverManager, serversUrls, disconnectUsersOnServerChange)
     {
         let userDisconnection = serverManager.loginManager.userDisconnection;
-        userDisconnection.otherServersUrls = [serverUrl];
+        userDisconnection.otherServersUrls = [...serversUrls];
         userDisconnection.disconnectUsersOnServerChange = disconnectUsersOnServerChange;
         LoginServerState.otherServerHits = 0;
+        LoginServerState.otherServerAnswerHits = 0;
     }
 
     static async fetchActiveSessions(serverManager, username)
@@ -264,9 +267,9 @@ class LoginServerState
             response.json({ok: true});
         });
         app.post('/api/e2e/login-server/other-server', (request, response) => {
-            LoginServerState.setOtherServer(
+            LoginServerState.setOtherServers(
                 serverManager,
-                sc.get(request.body, 'serverUrl', ''),
+                sc.get(request.body, 'serversUrls', [sc.get(request.body, 'serverUrl', '')]),
                 true === sc.get(request.body, 'disconnectUsersOnServerChange', true)
             );
             response.json({ok: true});
@@ -280,7 +283,7 @@ class LoginServerState
             response.json({enabled: serverManager.loginManager.userDisconnection.disconnectUsersOnServerChange});
         });
         app.get('/api/e2e/login-server/other-server-hits', (request, response) => {
-            response.json({hits: LoginServerState.otherServerHits});
+            response.json({hits: LoginServerState.otherServerHits, answerHits: LoginServerState.otherServerAnswerHits});
         });
         app.post('/api/e2e/login-server/disconnect-request', (request, response) => {
             let userDisconnection = serverManager.loginManager.userDisconnection;
@@ -317,6 +320,10 @@ class LoginServerState
         app.post(LoginServerState.OTHER_SERVER_ERROR_PATH+GameConst.ROUTE_PATHS.DISCONNECT_USER, (request, response) => {
             LoginServerState.otherServerHits++;
             response.status(500).json({isSuccess: false});
+        });
+        app.post(LoginServerState.OTHER_SERVER_ANSWER_PATH+GameConst.ROUTE_PATHS.DISCONNECT_USER, (request, response) => {
+            LoginServerState.otherServerAnswerHits++;
+            response.json({isSuccess: true, wasLogged: false});
         });
         app.post(LoginServerState.OTHER_SERVER_SILENT_PATH+GameConst.ROUTE_PATHS.DISCONNECT_USER, (request, response) => {
             LoginServerState.otherServerHits++;
