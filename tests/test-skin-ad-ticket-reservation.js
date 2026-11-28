@@ -30,10 +30,10 @@ class TestSkinAdTicketReservation extends BaseTest
                 reservedOnRemoval.push(Boolean(playerSchema.getPrivate(this.reservedKey)));
                 return await fixtureDecrease(inventoryId, qty);
             };
-            this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), true);
+            this.assert.strictEqual(await gate.reserveTicketBeforeReward(rewardEvent), true);
             this.assert.deepStrictEqual(reservedOnRemoval, [true]);
             this.assert.strictEqual(Boolean(playerSchema.getPrivate(this.reservedKey)), true);
-            await gate.onAfterAdEnded(SkinAdTicketGateBuilder.createAdEndedEvent(rewardEvent, {id: 1}));
+            await gate.endTicketReservation(SkinAdTicketGateBuilder.createAdEndedEvent(rewardEvent, {id: 1}));
             this.assert.strictEqual(Boolean(playerSchema.getPrivate(this.reservedKey)), false);
         });
     }
@@ -44,12 +44,12 @@ class TestSkinAdTicketReservation extends BaseTest
             let gate = SkinAdTicketGateBuilder.createGate();
             let rewardEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 1);
             rewardEvent.playerSchema.inventory.manager.decreaseItemQty = async () => false;
-            this.assert.strictEqual(await gate.onBeforeGiveAdRewardItem(rewardEvent), false);
+            this.assert.strictEqual(await gate.reserveTicketBeforeReward(rewardEvent), false);
             this.assert.strictEqual(rewardEvent.continueEvent, false);
             this.assert.strictEqual(Boolean(rewardEvent.playerSchema.getPrivate(this.reservedKey)), false);
             let acceptEvent = SkinAdTicketGateBuilder.createTradeAcceptEvent(false, false, '1');
             acceptEvent.playerSchema = rewardEvent.playerSchema;
-            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(acceptEvent), false);
+            this.assert.strictEqual(await gate.guardSkinTicketMessages(acceptEvent), false);
             this.assert.strictEqual(acceptEvent.canContinue, true);
         });
     }
@@ -61,9 +61,9 @@ class TestSkinAdTicketReservation extends BaseTest
             let rewardEvent = SkinAdTicketGateBuilder.createRewardEvent('skin-ad-ticket', 1);
             let playerSchema = rewardEvent.playerSchema;
             playerSchema.inventory.manager.decreaseItemQty = async () => Promise.reject({message: 'Storage.'});
-            await this.assert.rejects(gate.onBeforeGiveAdRewardItem(rewardEvent), {message: 'Storage.'});
+            await this.assert.rejects(gate.reserveTicketBeforeReward(rewardEvent), {message: 'Storage.'});
             this.assert.strictEqual(Boolean(playerSchema.getPrivate(this.reservedKey)), true);
-            await gate.onAfterAdEnded(SkinAdTicketGateBuilder.createAdEndedEvent(rewardEvent, false));
+            await gate.endTicketReservation(SkinAdTicketGateBuilder.createAdEndedEvent(rewardEvent, false));
             this.assert.strictEqual(Boolean(playerSchema.getPrivate(this.reservedKey)), false);
         });
     }
@@ -74,11 +74,11 @@ class TestSkinAdTicketReservation extends BaseTest
             let gate = SkinAdTicketGateBuilder.createGate();
             for(let reservedCase of [[true, false], [false, true], [true, true]]){
                 let event = SkinAdTicketGateBuilder.createTradeAcceptEvent(...reservedCase, '1');
-                this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(event), true);
+                this.assert.strictEqual(await gate.guardSkinTicketMessages(event), true);
                 this.assert.strictEqual(event.canContinue, false);
             }
             let notReservedEvent = SkinAdTicketGateBuilder.createTradeAcceptEvent(false, false, '1');
-            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(notReservedEvent), false);
+            this.assert.strictEqual(await gate.guardSkinTicketMessages(notReservedEvent), false);
             this.assert.strictEqual(notReservedEvent.canContinue, true);
         });
     }
@@ -89,11 +89,11 @@ class TestSkinAdTicketReservation extends BaseTest
             let gate = SkinAdTicketGateBuilder.createGate();
             let reservedEvent = SkinAdTicketGateBuilder.createTradeAcceptEvent(true, false, '1');
             reservedEvent.messageData.id = 'missing-session';
-            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(reservedEvent), true);
+            this.assert.strictEqual(await gate.guardSkinTicketMessages(reservedEvent), true);
             this.assert.strictEqual(reservedEvent.canContinue, false);
             let notReservedEvent = SkinAdTicketGateBuilder.createTradeAcceptEvent(false, true, '1');
             notReservedEvent.messageData.id = 'missing-session';
-            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(notReservedEvent), false);
+            this.assert.strictEqual(await gate.guardSkinTicketMessages(notReservedEvent), false);
             this.assert.strictEqual(notReservedEvent.canContinue, true);
         });
     }
@@ -102,7 +102,7 @@ class TestSkinAdTicketReservation extends BaseTest
     {
         await this.test('a trade decline is not refused even with a reserved ticket on both players', async () => {
             let event = SkinAdTicketGateBuilder.createTradeAcceptEvent(true, true, '2');
-            this.assert.strictEqual(await SkinAdTicketGateBuilder.createGate().onBeforeSceneExecuteMessages(event), false);
+            this.assert.strictEqual(await SkinAdTicketGateBuilder.createGate().guardSkinTicketMessages(event), false);
             this.assert.strictEqual(event.canContinue, true);
         });
     }
@@ -113,13 +113,13 @@ class TestSkinAdTicketReservation extends BaseTest
             let gate = SkinAdTicketGateBuilder.createGate();
             let reservedEvent = SkinAdTicketGateBuilder.createEvent({act: GameConst.BUTTON_OPTION, id: 10, value: 'buy'}, 1);
             reservedEvent.playerSchema.setPrivate(this.reservedKey, true);
-            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(reservedEvent), true);
+            this.assert.strictEqual(await gate.guardSkinTicketMessages(reservedEvent), true);
             this.assert.strictEqual(reservedEvent.canContinue, false);
             let notReservedEvent = SkinAdTicketGateBuilder.createEvent(
                 {act: GameConst.BUTTON_OPTION, id: 10, value: 'buy'},
                 1
             );
-            this.assert.strictEqual(await gate.onBeforeSceneExecuteMessages(notReservedEvent), false);
+            this.assert.strictEqual(await gate.guardSkinTicketMessages(notReservedEvent), false);
             this.assert.strictEqual(notReservedEvent.canContinue, true);
             this.assert.deepStrictEqual(notReservedEvent.client.sentMessages, []);
         });
