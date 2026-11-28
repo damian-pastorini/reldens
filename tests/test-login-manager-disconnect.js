@@ -147,24 +147,36 @@ class TestLoginManagerDisconnect extends BaseTest
 
     async testARequestOfThisSameServerIsAnsweredWithNoDisconnection()
     {
-        await this.test('a signed disconnect message carrying this server instance ID is answered with no disconnection', async () => {
+        await this.test('a disconnect message carrying this server instance ID is answered with no disconnection, also signed for a host alias (ISSUE #500)', async () => {
             let disconnectedUsers = [];
             let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, disconnectedUsers);
             let ownInstanceId = userDisconnection.serverInstanceId;
+            let aliasUrl = 'http://127.0.0.1:8080';
+            let disconnectAction = GameConst.DISCONNECTION.DISCONNECT;
+            let bodies = [
+                UserDisconnectionBuilder.createRequestBody(userDisconnection, 'victim', disconnectAction, ownInstanceId),
+                userDisconnection.createRequestBody(aliasUrl, disconnectAction, 'victim', {senderInstanceId: ownInstanceId}),
+                userDisconnection.createRequestBody(aliasUrl, disconnectAction, 'victim', {senderInstanceId: 'another'}),
+                UserDisconnectionBuilder.createRequestBody(userDisconnection, 'victim', disconnectAction, '')
+            ];
             let results = [];
-            for(let senderInstanceId of [ownInstanceId, '']){
-                let body = UserDisconnectionBuilder.createRequestBody(
-                    userDisconnection,
-                    'victim',
-                    GameConst.DISCONNECTION.DISCONNECT,
-                    senderInstanceId
-                );
+            for(let body of bodies){
                 results.push(await userDisconnection.receiveRequest({body}));
             }
             let otherInstanceId = UserDisconnectionBuilder.createForServer(this.victimUserModel, []).serverInstanceId;
             this.assert.deepStrictEqual(
                 [results, disconnectedUsers, /^[\w-]{16,}$/.test(ownInstanceId), ownInstanceId === otherInstanceId],
-                [[{isSuccess: true, wasLogged: false}, {isSuccess: true, wasLogged: true}], ['victim'], true, false]
+                [
+                    [
+                        {isSuccess: true, wasLogged: false},
+                        {isSuccess: true, wasLogged: false},
+                        this.rejected,
+                        {isSuccess: true, wasLogged: true}
+                    ],
+                    ['victim'],
+                    true,
+                    false
+                ]
             );
         });
     }
