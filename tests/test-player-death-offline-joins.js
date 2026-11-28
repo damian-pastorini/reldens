@@ -72,18 +72,17 @@ class TestPlayerDeathOfflineJoins extends BaseTest
             setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: setup.playerSchema});
             let raceJoin = await this.deathBuilder.joinOfflineDeathAgain(setup, 0, GameConst.STATUS.ACTIVE, 'session-8');
             setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: raceJoin.joinedPlayer});
-            let isOldLeaveKept = setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
+            setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
             let record = setup.offlineDeaths.deathsByPlayerId[setup.playerSchema.player_id];
             this.assert.deepStrictEqual(
                 [
                     raceJoin.isRestored,
                     raceJoin.joinedPlayer.inState,
                     4000 < raceJoin.reviveDelayMs && 5000 >= raceJoin.reviveDelayMs,
-                    isOldLeaveKept,
                     record.sessionId,
                     record.timer
                 ],
-                [true, GameConst.STATUS.DEATH, true, false, 'session-8', false]
+                [true, GameConst.STATUS.DEATH, true, 'session-8', false]
             );
         });
     }
@@ -94,11 +93,11 @@ class TestPlayerDeathOfflineJoins extends BaseTest
             let setup = await this.deathBuilder.createOfflineDeathsSetup();
             let noLifePlayer = {stats: {hp: 0}, state: {inState: GameConst.STATUS.ACTIVE}};
             let lifePlayer = {stats: {hp: 50}, state: {inState: GameConst.STATUS.ACTIVE}};
-            let holdResults = [setup.offlineDeaths.holdDeath(noLifePlayer), setup.offlineDeaths.holdDeath(lifePlayer)];
+            setup.offlineDeaths.holdDeath(noLifePlayer);
+            setup.offlineDeaths.holdDeath(lifePlayer);
             let heldWithLifeJoin = await this.deathBuilder.joinOfflineDeathAgain(setup, 50, GameConst.STATUS.DEATH);
             this.assert.deepStrictEqual(
                 [
-                    holdResults,
                     noLifePlayer.state.inState,
                     lifePlayer.state.inState,
                     heldWithLifeJoin.isRestored,
@@ -106,7 +105,6 @@ class TestPlayerDeathOfflineJoins extends BaseTest
                     setup.activatedStates
                 ],
                 [
-                    [true, false],
                     GameConst.STATUS.DEATH,
                     GameConst.STATUS.ACTIVE,
                     false,
@@ -127,10 +125,14 @@ class TestPlayerDeathOfflineJoins extends BaseTest
                 setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: setup.playerSchema});
                 setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
                 let joiningPlayer = {player_id: playerId, stats: {hp: joinedLife}, state: {inState: GameConst.STATUS.ACTIVE}};
-                let isHeld = setup.offlineDeaths.holdDeath(joiningPlayer);
+                setup.offlineDeaths.holdDeath(joiningPlayer);
                 await waitMs(this.handlerTimerMs * 10);
                 this.assert.deepStrictEqual(
-                    [isHeld, setup.offlineDeaths.deathsByPlayerId[playerId].timer, setup.storedUpdates],
+                    [
+                        GameConst.STATUS.DEATH === joiningPlayer.state.inState,
+                        setup.offlineDeaths.deathsByPlayerId[playerId].timer,
+                        setup.storedUpdates
+                    ],
                     [0 === joinedLife, false, []],
                     'Joined life: '+joinedLife
                 );
