@@ -10,7 +10,7 @@
  * token used, while one signed for the public or the base URL of the receiving server is accepted; an error on the
  * received action answers a failed route result; the received action answer is returned as is and only a success
  * answer counts as sent; a failed status, a rejected fetch or a missing secret send nothing; and the servers are sent
- * in parallel with their own results.
+ * one after the other with their own results.
  *
  */
 
