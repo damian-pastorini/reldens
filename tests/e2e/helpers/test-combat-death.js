@@ -4,7 +4,10 @@
  *
  * Death detection and revive waiting helpers for combat tests, and the deterministic death: the server sets the player
  * life to the points one hit removes and places an enemy next to the player with its battle started, so the death
- * comes from a real enemy hit without depending on the enemies damage rate. A later death of the same player uses the
+ * comes from a real enemy hit without depending on the enemies damage rate; that death is awaited on the player stats
+ * update with no life the client applied (its stats update after event, listened once per page), since with a game
+ * over time of 0 the player is revived right after and a poll of the client life can miss the 0. A later death of the
+ * same player uses the
  * other enemy of the configured enemy respawn layer (the aggressive enemies are disabled after the first death). The
  * PvP attack: the second player (secondPage) records its skills, gets the balanced combat stats of CombatSkillCasting
  * and a direct short attack (no critical hit, any distance, plus the given skill properties) and targets the first
@@ -42,8 +45,25 @@ class TestCombatDeath
         );
         expect(lastHitPoints.value, 'The player last hit points must be set: '+sc.get(lastHitPoints, 'error', ''))
             .toBe(TestCombatDeath.LAST_HIT_POINTS);
+        await TestCombatDeath.recordDeathStats(page);
         await TestCombatDeath.startEnemyAttack(gameConfig, enemyAssetKey);
-        await TestCombatDeath.waitForPlayerHpCondition(page, 'dead', timeout);
+        await page.waitForFunction(() => true === window.e2eDeathStatsReceived, null, {timeout});
+    }
+
+    static async recordDeathStats(page)
+    {
+        await page.evaluate(() => {
+            window.e2eDeathStatsReceived = false;
+            if(window.e2eDeathStatsListening){
+                return;
+            }
+            window.e2eDeathStatsListening = true;
+            window.reldens.events.on('reldens.playerStatsUpdateAfter', (message) => {
+                if(0 >= Number(message?.stats?.hp)){
+                    window.e2eDeathStatsReceived = true;
+                }
+            });
+        });
     }
 
     static async waitForServerDeath(gameConfig, roomName, playerName)
