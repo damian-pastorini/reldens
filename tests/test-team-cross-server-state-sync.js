@@ -230,15 +230,15 @@ class TestTeamCrossServerStateSync extends BaseTest
     {
         await this.test('servers that dropped each other members find them again on the next update once they answer (ISSUE #504)', async () => {
             let {servers} = await this.moveMemberAndJoin(this.createServersWithTeam());
+            let bothServers = [servers.first, servers.second];
             await FetchStubRouteDispatcher.withServers({}, async () => {
-                await servers.first.teamCrossServerStateSync.sendUpdate(servers.first.teams[2], 2);
-                await servers.second.teamCrossServerStateSync.sendUpdate(servers.second.teams[2], 2);
+                for(let server of bothServers){
+                    await server.teamCrossServerStateSync.sendUpdate(server.teams[2], 2);
+                }
             });
-            let droppedServers = [servers.first.teams[2].remoteServersUrls(), servers.second.teams[2].remoteServersUrls()];
+            let droppedServers = bothServers.map(server => server.teamCrossServerStateSync.fetchGroupServersUrls(server.teams[2]));
             let droppedState = sc.toJsonString([this.mapTeamState(servers.first), this.mapTeamState(servers.second)]);
-            await this.withServersFetch(servers, async () => {
-                await servers.first.teamCrossServerStateSync.sendUpdate(servers.first.teams[2], 2);
-            });
+            await this.withServersFetch(servers, async () => await servers.first.teamCrossServerStateSync.sendUpdate(servers.first.teams[2], 2));
             this.assert.deepStrictEqual(
                 [droppedServers, droppedState, [this.mapTeamState(servers.first), this.mapTeamState(servers.second)]],
                 [
