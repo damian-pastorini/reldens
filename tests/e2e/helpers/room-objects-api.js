@@ -246,6 +246,17 @@ class RoomObjectsApi
         );
     }
 
+    static async placePlayerBeforeWall(page, gameConfig, roomName, timeout)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-before-wall',
+            {roomName},
+            timeout
+        );
+    }
+
     static async fetchChangePoints(gameConfig, roomName)
     {
         return await SecurityApi.request(
