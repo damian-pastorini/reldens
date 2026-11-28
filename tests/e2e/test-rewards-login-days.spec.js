@@ -7,8 +7,9 @@
  * the earlier tests before a midnight never count as another day) and the past login days of the case are stored for
  * its user, then the page is reloaded and the player logs in again): a
  * daily reward completed or partially given on the previous day is claimable again with its given items cleared; a
- * straight days reward is ready with logins on consecutive days, not ready with too few login days or with a broken
- * streak, and not ready again on the day after its claim; a reward event with no action in its live event data changes
+ * straight days reward is ready with logins on consecutive days, stays not ready with too few login days (a not ready
+ * state) or with a broken streak, stays ready until it is claimed when it was made ready that day or the day before
+ * (ISSUE #476), and not ready again on the day after its claim; a reward event with no action in its live event data changes
  * no state; and the rewards message that arrives before the UI scene exists is queued and rendered once the scene is
  * created.
  *
@@ -64,9 +65,21 @@ class TestRewardsLoginDays
             },
             straightTooFew: {
                 action: RewardsSteps.STRAIGHT_DAYS_LOGIN,
-                storedState: {ready: true, complete: false},
-                expectedState: {ready: false, complete: false},
+                storedState: {ready: false, complete: false, date: yesterday},
+                expectedState: {ready: false, complete: false, date: yesterday},
                 shownAs: Selectors.rewards.inactive
+            },
+            straightReadyToday: {
+                action: RewardsSteps.STRAIGHT_DAYS_LOGIN,
+                storedState: {ready: true, complete: false, date: today},
+                expectedState: {ready: true, complete: false, date: today},
+                shownAs: Selectors.rewards.active
+            },
+            straightReadyYesterday: {
+                action: RewardsSteps.STRAIGHT_DAYS_LOGIN,
+                storedState: {ready: true, complete: false, date: yesterday},
+                expectedState: {ready: true, complete: false, date: yesterday},
+                shownAs: Selectors.rewards.active
             },
             straightBroken: {
                 action: RewardsSteps.STRAIGHT_DAYS_LOGIN,
@@ -172,6 +185,18 @@ class TestRewardsLoginDays
                 await TestRewardsLoginDays.runLoginDaysTest(
                     {page, secondPage, screenshots, gameConfig, e2eGroup, longRun},
                     'straightTooFew'
+                );
+            });
+            test('straight days reward made ready today and not claimed stays ready on the next login', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestRewardsLoginDays.runLoginDaysTest(
+                    {page, secondPage, screenshots, gameConfig, e2eGroup, longRun},
+                    'straightReadyToday'
+                );
+            });
+            test('straight days reward made ready the day before and not claimed stays ready with no new login days', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestRewardsLoginDays.runLoginDaysTest(
+                    {page, secondPage, screenshots, gameConfig, e2eGroup, longRun},
+                    'straightReadyYesterday'
                 );
             });
             test('straight days reward not ready with a broken streak', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
