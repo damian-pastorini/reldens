@@ -31,9 +31,9 @@ the names check (`CrossServerNamesCheck`, one per names route). Each one is buil
 - `sendRequest(serverUrl, action, targetId, payload)` posts that body to `serverUrl + routePath`. It answers the parsed
   response only when it has `isSuccess: true`, otherwise `false` (no secret, error status, network error, timeout of
   `GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS`).
-- `sendToServers(serversUrls, ...)` sends to every server (all the requests started before any answer is awaited, so
-  the unreachable servers cost one timeout) and returns `{serverUrl, response}` per server. It is the only place that
-  sends a signed message to several servers.
+- `sendToServers(serversUrls, ...)` sends to every server, one after the other (each unreachable server costs its own
+  timeout), and returns `{serverUrl, response}` per server. It is the only place that sends a signed message to several
+  servers.
 - `receiveRequest(req)` validates the token against every address of this server (public or base URL) and marks it
   used before calling the subclass `receiveAction(action, targetId, payload)`. A server without a valid
   `server/publicUrl` nor `server/baseUrl` rejects every request. An error in `receiveAction()` answers
@@ -48,8 +48,8 @@ the names check (`CrossServerNamesCheck`, one per names route). Each one is buil
 - Names check (`/reldens-check-user-name` and `/reldens-check-player-name`): the target is the hold ID, the action is
   `check` or `release` and the payload carries the values. See [Names check](names-check.md).
 - Server status (`RemoteServersStatus` / `ServerStatusRoute`): not a messenger message, it signs only
-  `GameConst.HEALTH.STATUS_TOKEN_VALUE` and is sent as a query parameter. The statuses of several servers are all
-  requested before any answer is awaited (`RemoteServersStatus.fetchStatuses()`). See
+  `GameConst.HEALTH.STATUS_TOKEN_VALUE` and is sent as a query parameter. The statuses of several servers are
+  requested one after the other (`RemoteServersStatus.fetchStatuses()`). See
   [Server health monitor](../server-health-monitor.md).
 
 ## Rate limits
