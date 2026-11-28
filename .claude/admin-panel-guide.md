@@ -150,7 +150,7 @@ default first (room view, "Set default").
 
 For any other room the player states pointing at it are moved to the default room once the delete succeeded, and the
 pending saves of the disconnected players use the default room id too. That is `server/rooms/deletion/setDefault`
-(boolean, default `1`, read once when the admin starts). The rooms module never touches the player states: the
+(boolean, default `1`, read from the config manager on every delete, like the default room id). The rooms module never touches the player states: the
 relocator emits `reldens.prepareDeletedRoomsPlayersRelocation` (`{roomIds, defaultRoomId, deleteControl}`) before the
 delete, where the users module `PlayerStatesMover` (`lib/users/server/player-states-mover.js`, created by
 `UsersManager`) keeps the ids of the player states in those rooms (they must be read before, the foreign key unlinks
