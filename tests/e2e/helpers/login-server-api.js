@@ -79,9 +79,25 @@ class LoginServerApi
         );
     }
 
+    static async setOtherServers(gameConfig, serversUrls, disconnectUsersOnServerChange)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/login-server/other-server',
+            {serversUrls, disconnectUsersOnServerChange}
+        );
+    }
+
     static async fetchOtherServerHits(gameConfig)
     {
         return (await SecurityApi.request(gameConfig, 'GET', '/api/e2e/login-server/other-server-hits')).hits;
+    }
+
+    static async fetchOtherServersHits(gameConfig)
+    {
+        let {hits, answerHits} = await SecurityApi.request(gameConfig, 'GET', '/api/e2e/login-server/other-server-hits');
+        return {hits, answerHits};
     }
 
     static async fetchActiveSessionsCount(gameConfig, username)
