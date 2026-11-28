@@ -34,8 +34,10 @@ There is no servers list setting for the game flows: the other servers are the d
   `client/rooms/loginServerUrl` (this server URL), used by the client to recognize the rooms of its login server.
 - `ServerUrlMatcher` (`lib/game/server-url-matcher.js`) compares the URLs by origin and path: the `ws`/`wss` schemes are
   mapped to `http`/`https` and the trailing slashes are removed, an invalid URL gives an empty address.
-  `fetchServersAddresses(serversUrls, excludedAddresses)` returns the distinct valid addresses of a URLs list or map
-  that are not excluded.
+  `fetchServersAddresses(serversUrls, excludedAddresses)` reads a URLs list or map in one pass and returns
+  `{addressesByKey, addresses}`: the valid address of every key, and the distinct valid addresses that are not excluded.
+  The client gets `client/rooms/loginServerUrl` once: `GameManager.beforeStartGame()` sets it as
+  `GameClient.loginServerUrl` after merging the game config.
 - `ServerManagersInitializer.createServerToServerMessengerProps()` reads the servers values once when the managers
   start and keeps them in one `ServerToServerMessengerProps` instance (`serverManager.serverToServerMessengerProps`):
   the signed tokens instance, `client/rooms/servers`, this server address (`server/publicUrl`), every address of this
