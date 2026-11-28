@@ -240,7 +240,9 @@ class TestSignedServerToServerMessenger extends BaseTest
             });
             let serversResults = [];
             await this.sendTo(second, async () => {
-                serversResults = await first.sendToServers(first.otherServersUrls, 'sync', 7, {});
+                await first.sendToServers(first.otherServersUrls, 'sync', 7, {}, (response, serverUrl) => {
+                    serversResults.push({serverUrl, response});
+                });
             });
             this.assert.deepStrictEqual(
                 [failedStatus, rejectedFetch, noSecretResult, noSecretRequests, serversResults],
