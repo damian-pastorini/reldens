@@ -10,6 +10,8 @@ const { RoomsPlugin } = require('../lib/rooms/server/plugin');
 const { RoomsConst } = require('../lib/rooms/constants');
 const { FetchStubRouteDispatcher } = require('./fixtures/fetch-stub-route-dispatcher');
 const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
+const { LoggerOutputCapture } = require('./fixtures/logger-output-capture');
+const { Logger } = require('@reldens/utils');
 
 class TestDeletedRoomsCrossServerClose extends BaseTest
 {
@@ -34,30 +36,36 @@ class TestDeletedRoomsCrossServerClose extends BaseTest
     {
         let closedRooms = {first: [], second: []};
         let firstServer = this.createServerClose(this.firstServerUrl, firstSecret, closedRooms.first);
-        let secondServer = this.createServerClose(this.secondServerUrl, secondSecret, closedRooms.second);
-        let responses = [];
-        await FetchStubRouteDispatcher.withServers(
-            {[this.firstServerUrl]: firstServer, [this.secondServerUrl]: secondServer},
-            async () => responses = await firstServer.sendDeletedRooms([4, 5])
-        );
-        return {closedRooms, responses};
+        return {
+            closedRooms,
+            loggedErrors: await LoggerOutputCapture.capture(Logger.logLevels.error, async () => {
+                await FetchStubRouteDispatcher.withServers(
+                    {
+                        [this.firstServerUrl]: firstServer,
+                        [this.secondServerUrl]: this.createServerClose(this.secondServerUrl, secondSecret, closedRooms.second)
+                    },
+                    async () => await firstServer.sendDeletedRooms([4, 5])
+                );
+            })
+        };
     }
 
     async testTheDeletedRoomsAreClosedOnEveryOtherServerOnce()
     {
         await this.test('the deleted rooms are sent once to every other server and closed there, never on the sender', async () => {
             let sent = await this.sendFromTheFirstServer('shared-secret', 'shared-secret');
-            this.assert.deepStrictEqual(sent.closedRooms, {first: [], second: [[4, 5]]});
-            this.assert.deepStrictEqual(sent.responses, [{serverUrl: this.secondServerUrl, response: {isSuccess: true}}]);
+            this.assert.deepStrictEqual(sent, {closedRooms: {first: [], second: [[4, 5]]}, loggedErrors: ''});
         });
     }
 
     async testARequestSignedWithAnotherSecretClosesNothing()
     {
-        await this.test('a deleted rooms request signed with another secret closes nothing and counts as not sent', async () => {
+        await this.test('a deleted rooms request signed with another secret closes nothing and logs the server as not closed', async () => {
             let sent = await this.sendFromTheFirstServer('first-secret', 'second-secret');
-            this.assert.deepStrictEqual(sent.closedRooms, {first: [], second: []});
-            this.assert.deepStrictEqual(sent.responses, [{serverUrl: this.secondServerUrl, response: false}]);
+            this.assert.deepStrictEqual(
+                [sent.closedRooms, sent.loggedErrors.includes('Deleted rooms could not be closed on server: '+this.secondServerUrl)],
+                [{first: [], second: []}, true]
+            );
         });
     }
 
@@ -84,14 +92,12 @@ class TestDeletedRoomsCrossServerClose extends BaseTest
                 {driverResource: {id: () => 'objects'}, ids: [6], deleteResult: 1},
                 {driverResource: {id: () => 'rooms'}, ids: [7]}
             ];
-            let results = [await roomsPlugin.sendDeletedRoomsToOtherServers(deleteEvents[0])];
-            roomsPlugin.deletedRoomsCrossServerClose = {
-                sendDeletedRooms: async (roomIds) => sentRoomIds.push(roomIds) && [{serverUrl: this.secondServerUrl, response: false}]
-            };
+            await roomsPlugin.sendDeletedRoomsToOtherServers(deleteEvents[0]);
+            roomsPlugin.deletedRoomsCrossServerClose = {sendDeletedRooms: async (roomIds) => sentRoomIds.push(roomIds)};
             for(let deleteEvent of deleteEvents){
-                results.push(await roomsPlugin.sendDeletedRoomsToOtherServers(deleteEvent));
+                await roomsPlugin.sendDeletedRoomsToOtherServers(deleteEvent);
             }
-            this.assert.deepStrictEqual([results, sentRoomIds], [[false, true, false, false, false], [[4]]]);
+            this.assert.deepStrictEqual(sentRoomIds, [[4]]);
         });
     }
 
