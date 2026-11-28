@@ -36,7 +36,7 @@ class ActiveSessionsBuilder
      */
     static createSetup()
     {
-        let setup = {activePlayers: new ActivePlayers.constructor(), closedSessions: []};
+        let setup = {activePlayers: new ActivePlayers(), closedSessions: []};
         setup.activePlayers.gameRoomInstanceId = ActiveSessionsBuilder.GAME_ROOM_ID;
         setup.gameRoom = ActiveSessionsBuilder.createRoom(RoomGame, ActiveSessionsBuilder.GAME_ROOM_ID, setup);
         setup.sceneRoom = ActiveSessionsBuilder.createRoom(RoomScene, ActiveSessionsBuilder.SCENE_ROOM_ID, setup);
