@@ -160,7 +160,7 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         await this.test('the scheduled death resolution revives the player in town after the game over time', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
             setup.event.reviveDelayMs = this.deathTimeOutMs;
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
             await timersPromises.setTimeout(this.deathTimeOutWaitMs);
             this.assertRevivedInTown(setup);
@@ -172,8 +172,8 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         await this.test('a new death replaces the pending death resolution so it runs once', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
             setup.event.reviveDelayMs = this.deathTimeOutMs;
-            setup.relocator.onPlayerDeath(setup.event);
-            setup.relocator.onPlayerDeath(setup.event);
+            setup.relocator.scheduleRevive(setup.event);
+            setup.relocator.scheduleRevive(setup.event);
             await timersPromises.setTimeout(this.deathTimeOutWaitMs);
             this.assertRevivedInTown(setup);
             this.assert.strictEqual(setup.client.sentMessages.length, 1);
@@ -186,7 +186,7 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
             let setup = await this.deathBuilder.createRelocatorSetup({}, {restorationQty: 1});
             setup.event.reviveDelayMs = this.deathTimeOutMs;
             setup.playerSchema.inventory.manager.decreaseItemQty = async () => Promise.reject({message: 'Storage.'});
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             await timersPromises.setTimeout(this.deathTimeOutWaitMs);
             this.assert.strictEqual(setup.revivedPlayers, 0);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
