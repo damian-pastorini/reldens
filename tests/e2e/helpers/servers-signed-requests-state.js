@@ -4,9 +4,9 @@
  *
  * Server side e2e endpoints for the signed requests between the servers of a multi-server setup: the signed tokens
  * secret of the server, of the logged users keys of its rooms usage and of every signed server to server messenger
- * (chat relay, deleted rooms close, teams and clans sync; the given one, or the server one again with none), the other
- * servers of the user disconnection and of those
- * messengers listed again from the reloaded rooms servers, the other servers the rooms availability asks for their status (listed again from the
+ * (chat relay, deleted rooms close, teams and clans sync; the given one, or the server one again with none), the
+ * shared rooms servers addresses and the other servers of the user disconnection and of those messengers listed again
+ * from the reloaded rooms servers, the other servers the rooms availability asks for their status (listed again from the
  * current rooms servers like the server start does, with the cached statuses dropped) and the cached statuses (their
  * cache time, the cached ones expired, a status requested so it is cached). The reset restores all of them before every
  * test and clears the loopback addresses counters of every route limiter, since the other servers of a test run call
@@ -88,15 +88,16 @@ class ServersSignedRequestsState
 
     static reloadOtherServersUrls(serverManager, roomsServers)
     {
-        let otherServersUrls = ServerUrlMatcher.fetchServersAddresses(
+        let serversAddresses = ServerUrlMatcher.fetchServersAddresses(
             roomsServers,
             serverManager.serverToServerMessengerProps.serverSelfAddresses
         );
-        serverManager.loginManager.userDisconnection.otherServersUrls = [...otherServersUrls];
+        Object.assign(serverManager.serverToServerMessengerProps.roomsServers, serversAddresses.addressesByKey);
+        serverManager.loginManager.userDisconnection.otherServersUrls = [...serversAddresses.addresses];
         for(let messenger of ServersSignedRequestsState.fetchSignedMessengers(serverManager)){
-            messenger.otherServersUrls = [...otherServersUrls];
+            messenger.otherServersUrls = [...serversAddresses.addresses];
         }
-        return otherServersUrls;
+        return serversAddresses.addresses;
     }
 
     static async resetAll(serverManager)
@@ -133,7 +134,7 @@ class ServersSignedRequestsState
             ServersSignedRequestsState.setRemoteServersUrls(serverManager, ServerUrlMatcher.fetchServersAddresses(
                 roomsAvailability.roomsServers,
                 serverManager.serverToServerMessengerProps.serverSelfAddresses
-            ));
+            ).addresses);
             response.json({remoteServersUrls: roomsAvailability.remoteServersUrls});
         });
     }
