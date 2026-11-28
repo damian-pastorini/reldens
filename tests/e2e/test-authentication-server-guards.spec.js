@@ -58,22 +58,23 @@ class TestAuthenticationServerGuards
     {
         await Login.loginRootPlayer(page, gameConfig, longRun);
         let username = gameConfig.e2eUsername;
-        let expiredToken = await LoginServerApi.fetchDisconnectToken(
+        let validExpiration = Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS;
+        let validRequest = await LoginServerApi.fetchDisconnectRequest(gameConfig, username, validExpiration);
+        let expiredRequest = await LoginServerApi.fetchDisconnectRequest(
             gameConfig,
             username,
             Date.now() - TestAuthenticationServerGuards.TOKEN_LIFETIME_MS
         );
-        for(let token of ['not-a-signed-token', expiredToken]){
-            expect(await TestAuthenticationServerGuards.postDisconnect(page, {username, token}), token).toBe(false);
+        for(let rejectedRequest of [Object.assign({}, validRequest, {token: 'not-a-signed-token'}), expiredRequest]){
+            expect(await TestAuthenticationServerGuards.postDisconnect(page, rejectedRequest), rejectedRequest.token).toBe(false);
         }
         let statusValue = GameConst.HEALTH.STATUS_TOKEN_VALUE;
-        let statusToken = await LoginServerApi.fetchStatusToken(
-            gameConfig,
-            statusValue,
-            Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS
-        );
+        let statusToken = await LoginServerApi.fetchStatusToken(gameConfig, statusValue, validExpiration);
         expect(
-            await TestAuthenticationServerGuards.postDisconnect(page, {username: statusValue, token: statusToken}),
+            await TestAuthenticationServerGuards.postDisconnect(
+                page,
+                Object.assign({}, validRequest, {targetId: statusValue, token: statusToken})
+            ),
             'A server status token is not a disconnection token'
         ).toBe(false);
         await TestAuthenticationServerGuards.expectSessionKept(page, 'A rejected token disconnects nobody');
@@ -85,25 +86,32 @@ class TestAuthenticationServerGuards
         await Login.loginRootPlayer(page, gameConfig, longRun);
         let validExpiration = Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS;
         expect(await TestAuthenticationServerGuards.postDisconnect(page, {}), 'Missing username').toBe(false);
-        let notLoggedToken = await LoginServerApi.fetchDisconnectToken(gameConfig, gameConfig.e2eUsername2, validExpiration);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername2,
-            token: notLoggedToken
-        }), 'A user without a session has nothing to disconnect').toBe(true);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername2,
-            token: notLoggedToken
-        }), 'A used token is rejected').toBe(false);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername,
-            token: notLoggedToken
-        }), 'A token signed for another username').toBe(false);
+        let notLoggedRequest = await LoginServerApi.fetchDisconnectRequest(
+            gameConfig,
+            gameConfig.e2eUsername2,
+            validExpiration
+        );
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, notLoggedRequest),
+            'A user without a session has nothing to disconnect'
+        ).toBe(true);
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, notLoggedRequest),
+            'A used token is rejected'
+        ).toBe(false);
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(
+                page,
+                Object.assign({}, notLoggedRequest, {targetId: gameConfig.e2eUsername})
+            ),
+            'A token signed for another username'
+        ).toBe(false);
         await TestAuthenticationServerGuards.expectSessionKept(page, 'Only the requested user is disconnected');
-        let loggedToken = await LoginServerApi.fetchDisconnectToken(gameConfig, gameConfig.e2eUsername, validExpiration);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername,
-            token: loggedToken
-        }), 'A valid token disconnects the user').toBe(true);
+        let loggedRequest = await LoginServerApi.fetchDisconnectRequest(gameConfig, gameConfig.e2eUsername, validExpiration);
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, loggedRequest),
+            'A valid token disconnects the user'
+        ).toBe(true);
         await expect(page.locator(Selectors.reloadModal.message)).toHaveText(
             TestAuthenticationServerGuards.SESSION_ENDED_MESSAGE,
             {timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)}
