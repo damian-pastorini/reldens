@@ -3,8 +3,9 @@
  * Reldens - Test Route Limits
  *
  * Tests the server status route answers for the missing, invalid, foreign, expired and valid tokens, and the per
- * address limiters of the reset password, disconnect user, terms, mailer, firebase, server status and firebase verify
- * routes, exhausted from the local address the browser does not use, with the spoofed forwarding headers ignored.
+ * address limiters of the reset password, disconnect user, names check, terms, mailer, firebase, server status and
+ * firebase verify routes, exhausted from the local address the browser does not use, with the spoofed forwarding headers
+ * ignored.
  *
  */
 
@@ -28,6 +29,8 @@ class TestRouteLimits
     static REPORT_KEYS = ['blockingEnabled', 'exceededLimits', 'isBlocking', 'isOverloaded', 'limits', 'roomsUsage', 'usage'];
     static LIMITED_ROUTES = [
         GameConst.ROUTE_PATHS.DISCONNECT_USER,
+        GameConst.ROUTE_PATHS.CHECK_USER_NAME,
+        GameConst.ROUTE_PATHS.CHECK_PLAYER_NAME,
         GameConst.ROUTE_PATHS.FIREBASE,
         GameConst.ROUTE_PATHS.MAILER,
         GameConst.ROUTE_PATHS.RESET_PASSWORD,
@@ -65,7 +68,7 @@ class TestRouteLimits
         let rejectedTokens = {
             foreign: await LoginServerApi.fetchStatusToken(gameConfig, 'e2e-not-the-status-value', futureExpiration),
             expired: await LoginServerApi.fetchStatusToken(gameConfig, statusValue, Date.now() - TestRouteLimits.TOKEN_LIFETIME_MS),
-            disconnection: await LoginServerApi.fetchDisconnectToken(gameConfig, statusValue, futureExpiration)
+            disconnection: (await LoginServerApi.fetchDisconnectRequest(gameConfig, statusValue, futureExpiration)).token
         };
         for(let rejectedKey of Object.keys(rejectedTokens)){
             expect(await TestRouteLimits.fetchStatusCode(gameConfig, rejectedTokens[rejectedKey]), rejectedKey).toBe(
