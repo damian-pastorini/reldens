@@ -28,7 +28,13 @@ class SecurityApi
     static API_HOST = '127.0.0.1';
     static TOO_MANY_REQUESTS_STATUS = 429;
     static REQUEST_TIMEOUT_MS = 30000;
-    static POST_LIMITED_ROUTES = [GameConst.ROUTE_PATHS.DISCONNECT_USER, TeamsConst.SYNC.TEAMS_ROUTE, ChatConst.SYNC.ROUTE];
+    static POST_LIMITED_ROUTES = [
+        GameConst.ROUTE_PATHS.DISCONNECT_USER,
+        GameConst.ROUTE_PATHS.CHECK_USER_NAME,
+        GameConst.ROUTE_PATHS.CHECK_PLAYER_NAME,
+        TeamsConst.SYNC.TEAMS_ROUTE,
+        ChatConst.SYNC.ROUTE
+    ];
 
     static baseUrl(gameConfig)
     {
