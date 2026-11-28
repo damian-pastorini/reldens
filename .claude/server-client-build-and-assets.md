@@ -68,7 +68,8 @@ this.load.tilemapTiledJSON(this.preloadMapKey, '/assets/maps/'+this.preloadMapKe
 ```
 
 - `ThemeManager.buildCss()` builds `css/styles.scss` into the theme `css` folder and copies `styles.css` into `dist/css`
-  only when it does not exist yet (`FileHandler.copyFileSyncIfDoesNotExist()`).
+  on every build, replacing the existing copy (`FileHandler.copyFile()`, a failed copy is logged), so the Control Panel
+  "Build CSS" publishes the rebuilt styles.
 - `config.js` is written into the project theme by `HomepageLoader.createConfigFile()` (`lib/game/server/homepage-loader.js`)
   on startup, called from `ServerManager.startGameServerInstance()` when `RELDENS_CREATE_CONFIG_FILE` is unset or `1`, it
   holds `window.reldensInitialConfig` and only reaches the browser through the bundle.
