@@ -198,9 +198,9 @@ class TestRoomsAvailability extends BaseTest
         };
     }
 
-    async testTheRoomsOfDifferentServersAreRequestedTogether()
+    async testTheRoomsOfDifferentServersAreRequestedOneAfterTheOther()
     {
-        await this.test('the availability of rooms of different servers is requested from every server before any answer', async () => {
+        await this.test('the availability of rooms of different servers is requested from every server one after the other', async () => {
             let statusRequests = {started: [], startedWhenAnswered: []};
             let roomsAvailability = new RoomsAvailability({
                 serverHealthMonitor: {blockingEnabled: true, isBlocking: false, usageReport: {isBlocking: false}},
@@ -217,9 +217,10 @@ class TestRoomsAvailability extends BaseTest
                 await roomsAvailability.fetchRoomsAvailability(['reldens-forest', 'reldens-desert']),
                 {'reldens-forest': unreachableRoom, 'reldens-desert': unreachableRoom}
             );
-            this.assert.deepStrictEqual(statusRequests.started, [this.remoteServerUrl, 'http://localhost:8100']);
-            let everyRequestStarted = statusRequests.started.length;
-            this.assert.deepStrictEqual(statusRequests.startedWhenAnswered, [everyRequestStarted, everyRequestStarted]);
+            this.assert.deepStrictEqual(
+                [statusRequests.started, statusRequests.startedWhenAnswered],
+                [[this.remoteServerUrl, 'http://localhost:8100'], [1, 2]]
+            );
         });
     }
 
