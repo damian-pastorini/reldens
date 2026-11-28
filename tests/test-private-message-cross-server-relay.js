@@ -49,7 +49,7 @@ class TestPrivateMessageCrossServerRelay extends BaseTest
         chatRoom.activePlayerByPlayerName = (playerName) => sc.get(playersByName, playerName, false);
         chatRoom.chatManager = {saveMessage: async (...savedData) => 0 < sent.savedMessages.push(savedData)};
         chatRoom.privateMessageRelay = relay;
-        relay.registerChatRoom(chatRoom);
+        relay.chatRoom = chatRoom;
         let receiveRequest = relay.receiveRequest.bind(relay);
         relay.receiveRequest = async (req) => sent.relayedRequests.push(req.body.targetId) && await receiveRequest(req);
         return {relay, chatRoom};
