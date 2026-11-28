@@ -60,11 +60,11 @@ class PlayerCreationBuilder
             events: {emit: async (eventName) => creationSetup.emittedEvents.push(eventName)},
             playerRoomState: new PlayerRoomState({config, roomsManager}),
             crossServerNamesCheck: {
-                holdEverywhere: async (routePath, values) => {
+                holdEverywhere: async (values) => {
                     creationSetup.heldNames.push(...values);
                     return creationSetup.isFreeOnOtherServers ? 'hold-'+values.join('-') : false;
                 },
-                release: (routePath, values, holdId) => 'hold-'+values.join('-') === holdId
+                release: (values, holdId) => 'hold-'+values.join('-') === holdId
                     && creationSetup.releasedNames.push(...values)
             },
             minimumPlayerNameLength: 3,
