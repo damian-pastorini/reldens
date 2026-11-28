@@ -8,6 +8,10 @@
  * return tile picked on a town tile where the players arrive from another room (the tile center the form picker sends),
  * the stored rooms are reloaded like a server restart, which disposes the bots house with the player in it, and the
  * player logged in again walks through the new change point, arrives standing on the picked town tile and stays there.
+ * The same arrival is checked on a town return tile picked away from the arrival points (the center of the tile the
+ * form picker sends, a walkable tile with no room object within two tiles, since an NPC body pushes an arriving player
+ * off its tile), alone and with a town change point linked to the bots house two rows above it (the town change points
+ * and the bots house return points preserved too).
  *
  */
 
@@ -21,7 +25,6 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { SecurityApi } = require('./helpers/security-api');
 const { WalkableTileLocator } = require('./helpers/walkable-tile-locator');
 const { Login } = require('./helpers/login');
-const { TimeConstants } = require('./helpers/time-constants');
 const { FileHandler } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
@@ -35,8 +38,12 @@ class TestAdminRoomsLink
     static CHANGE_POINT_OFFSET = [2, 0];
     static TILES_RADIUS = 3;
     static QUIET_MS = 1500;
+    static CLEAR_TILES_RADIUS = 6;
+    static ARRIVAL_DISTANCE_TILES = 2;
+    static CHANGE_POINT_ROWS_ABOVE = 2;
+    static OBJECTS_CLEAR_DISTANCE = 64;
 
-    static loadHouseMapWidth()
+    static loadMapJson(roomName)
     {
         let mapJson = FileHandler.fetchFileJson(FileHandler.joinPaths(
             process.cwd(),
@@ -44,10 +51,44 @@ class TestAdminRoomsLink
             'default',
             'assets',
             'maps',
-            TestAdminRoomsLink.BOTS_HOUSE+'.json'
+            roomName+'.json'
         ));
-        expect(mapJson, 'The bots house map json is readable').toBeTruthy();
-        return mapJson.width;
+        expect(mapJson, 'The '+roomName+' map json is readable').toBeTruthy();
+        return mapJson;
+    }
+
+    static async findClearTownTiles(context, topology, arrivalPoint)
+    {
+        let {page, gameConfig, longRun} = context;
+        await ChangePointsSteps.storeRoomArrival(context, topology, Login.TOWN_ROOM_NAME);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let {tilewidth, tileheight} = TestAdminRoomsLink.loadMapJson(Login.TOWN_ROOM_NAME);
+        let arrivalTile = [Math.floor(arrivalPoint.x / tilewidth), Math.floor(arrivalPoint.y / tileheight)];
+        let walkable = sc.get(
+            await RoomMovementApi.fetchTiles(gameConfig, Login.TOWN_ROOM_NAME, arrivalTile, TestAdminRoomsLink.CLEAR_TILES_RADIUS),
+            'walkable',
+            []
+        );
+        let roomObjects = await RoomObjectsApi.fetchRoomObjects(gameConfig, Login.TOWN_ROOM_NAME);
+        let isWalkable = (tile) => walkable.some(walkableTile => tile[0] === walkableTile[0] && tile[1] === walkableTile[1]);
+        let returnTile = walkable.find(
+            tile => TestAdminRoomsLink.ARRIVAL_DISTANCE_TILES <= Math.hypot(tile[0] - arrivalTile[0], tile[1] - arrivalTile[1])
+                && isWalkable([tile[0], tile[1] - TestAdminRoomsLink.CHANGE_POINT_ROWS_ABOVE])
+                && roomObjects.every(roomObject => TestAdminRoomsLink.OBJECTS_CLEAR_DISTANCE < Math.hypot(
+                    roomObject.x - (tile[0] * tilewidth + tilewidth / 2),
+                    roomObject.y - (tile[1] * tileheight + tileheight / 2)
+                ))
+        );
+        expect(
+            [0 < roomObjects.length, Boolean(returnTile)],
+            'The town objects are loaded and a walkable town tile away from the arrival point has no room object within'
+                +' two tiles (an NPC body pushes an arriving player off) and a walkable tile two rows above it'
+        ).toEqual([true, true]);
+        await page.reload();
+        return {
+            returnPoint: {x: returnTile[0] * tilewidth + tilewidth / 2, y: returnTile[1] * tileheight + tileheight / 2},
+            changePointTile: [returnTile[0], returnTile[1] - TestAdminRoomsLink.CHANGE_POINT_ROWS_ABOVE]
+        };
     }
 
     static fetchPickedTownPoint(topology)
@@ -58,6 +99,27 @@ class TestAdminRoomsLink
         );
         expect(pickedPoint, 'A town tile where the players arrive from another room').toBeTruthy();
         return pickedPoint;
+    }
+
+    static async linkTownToHouse(context, topology, townChangePointTile)
+    {
+        if(!townChangePointTile){
+            return;
+        }
+        let {page, gameConfig, e2eGroup, longRun} = context;
+        let houseId = topology.roomsIds[TestAdminRoomsLink.BOTS_HOUSE];
+        let townId = topology.roomsIds[Login.TOWN_ROOM_NAME];
+        await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'roomsChangePoints', {room_id: townId});
+        await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'roomsReturnPoints', {room_id: houseId});
+        let housePlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, TestAdminRoomsLink.BOTS_HOUSE, gameConfig.e2ePlayerName);
+        await TestAdminRoomsLink.submitRoomsLink(page, gameConfig, longRun, {
+            roomId: townId,
+            tileIndex: townChangePointTile[1] * TestAdminRoomsLink.loadMapJson(Login.TOWN_ROOM_NAME).width
+                + townChangePointTile[0],
+            nextRoomId: houseId,
+            x: housePlayer.x,
+            y: housePlayer.y
+        });
     }
 
     static async pickChangePointTile(gameConfig, playerName)
@@ -109,18 +171,22 @@ class TestAdminRoomsLink
 
     static async fetchTownPosition(gameConfig, playerName)
     {
-        let townPlayer = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
-        return [townPlayer.x, townPlayer.y];
+        let {x, y} = await GameplayE2eStateApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
+        return [x, y];
     }
 
-    static async runLinkedRoomsTest(context)
+    static async runLinkedRoomsTest(context, linkCase)
     {
         let {page, gameConfig, e2eGroup, longRun} = context;
         let playerName = gameConfig.e2ePlayerName;
         let topology = await ChangePointsSteps.loadTopology(gameConfig);
         let houseId = topology.roomsIds[TestAdminRoomsLink.BOTS_HOUSE];
         let townId = topology.roomsIds[Login.TOWN_ROOM_NAME];
-        let pickedPoint = TestAdminRoomsLink.fetchPickedTownPoint(topology);
+        let arrivalPoint = TestAdminRoomsLink.fetchPickedTownPoint(topology);
+        let clearTiles = linkCase.clearTile
+            ? await TestAdminRoomsLink.findClearTownTiles(context, topology, arrivalPoint)
+            : false;
+        let pickedPoint = clearTiles ? clearTiles.returnPoint : arrivalPoint;
         await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'roomsChangePoints', {room_id: houseId});
         await E2eSeedAndRestoreApi.preserveRows(gameConfig, e2eGroup, 'roomsReturnPoints', {room_id: townId});
         await ChangePointsSteps.storeRoomArrival(
@@ -130,8 +196,14 @@ class TestAdminRoomsLink
             TestAdminRoomsLink.BOTS_FOREST
         );
         await Login.loginRootPlayer(page, gameConfig, longRun);
+        await TestAdminRoomsLink.linkTownToHouse(
+            context,
+            topology,
+            true === linkCase.withTownChangePoint && clearTiles.changePointTile
+        );
         let changePointTile = await TestAdminRoomsLink.pickChangePointTile(gameConfig, playerName);
-        let tileIndex = changePointTile[1] * TestAdminRoomsLink.loadHouseMapWidth() + changePointTile[0];
+        let tileIndex = changePointTile[1] * TestAdminRoomsLink.loadMapJson(TestAdminRoomsLink.BOTS_HOUSE).width
+            + changePointTile[0];
         await TestAdminRoomsLink.submitRoomsLink(page, gameConfig, longRun, {
             roomId: houseId,
             tileIndex,
@@ -158,9 +230,12 @@ class TestAdminRoomsLink
             {roomName: TestAdminRoomsLink.BOTS_HOUSE, nextRoomName: Login.TOWN_ROOM_NAME, tileIndex: String(tileIndex)}
         );
         let pickedPosition = [Number(pickedPoint.x), Number(pickedPoint.y)];
+        let arrivalPosition = await TestAdminRoomsLink.fetchTownPosition(gameConfig, playerName);
+        let {velocityX, velocityY, contacts} = await RoomMovementApi.fetchPlayer(gameConfig, Login.TOWN_ROOM_NAME, playerName);
         expect(
-            await TestAdminRoomsLink.fetchTownPosition(gameConfig, playerName),
-            'The player arrives standing on the picked town tile'
+            arrivalPosition,
+            'The player arrives standing on the picked town tile (its body velocity and contacts: '
+                +sc.toJsonString({velocityX, velocityY, contacts})+')'
         ).toEqual(pickedPosition);
         await page.waitForTimeout(TestAdminRoomsLink.QUIET_MS);
         expect(
@@ -173,7 +248,16 @@ class TestAdminRoomsLink
     {
         test.describe('Admin Rooms Link', () => {
             test('rooms linked from the admin Link rooms form and reloaded arrive standing on the picked return tile', async ({ page, gameConfig, e2eGroup, longRun }) => {
-                await TestAdminRoomsLink.runLinkedRoomsTest({page, gameConfig, e2eGroup, longRun});
+                await TestAdminRoomsLink.runLinkedRoomsTest({page, gameConfig, e2eGroup, longRun}, {});
+            });
+            test('a town return tile picked away from the arrival points is where the player arrives and stays', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestAdminRoomsLink.runLinkedRoomsTest({page, gameConfig, e2eGroup, longRun}, {clearTile: true});
+            });
+            test('a town return tile picked two rows below a town change point linked to the house is where the player arrives and stays', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestAdminRoomsLink.runLinkedRoomsTest(
+                    {page, gameConfig, e2eGroup, longRun},
+                    {clearTile: true, withTownChangePoint: true}
+                );
             });
         });
     }
