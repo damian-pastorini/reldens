@@ -48,10 +48,10 @@ class TestDeathReviveRequests extends BaseTest
         await this.test('the revive request message revives the player only once its revive is ready', async () => {
             let setup = await this.createRequestsSetup(this.manualInPlaceRevive);
             let requestEvent = setup.createEvent({act: ActionsConst.DEATH.ACTIONS.REVIVE_REQUEST});
-            this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(requestEvent), false);
+            this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(requestEvent), false);
             this.assert.strictEqual(setup.revivedPlayers, 0);
             setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.REVIVE_READY, true);
-            this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(requestEvent), true);
+            this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(requestEvent), true);
             this.assert.strictEqual(setup.revivedPlayers, 1);
             this.assert.strictEqual(requestEvent.canContinue, true);
             this.assert.deepStrictEqual(setup.client.sentMessages, []);
@@ -76,10 +76,10 @@ class TestDeathReviveRequests extends BaseTest
             for(let choiceCase of choiceCases){
                 let setup = await this.createRequestsSetup(this.askedItem, {restorationQty: 1});
                 let choiceEvent = setup.createEvent({act: this.choiceAction, use: choiceCase.use});
-                this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(choiceEvent), true);
+                this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(choiceEvent), true);
                 this.assert.strictEqual(setup.playerSchema.getPrivate(this.choicePath), choiceCase.choice);
                 this.assert.deepStrictEqual(setup.client.sentMessages, [choiceCase.message]);
-                this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(choiceEvent), false);
+                this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(choiceEvent), false);
                 this.assert.deepStrictEqual(setup.client.sentMessages, [choiceCase.message]);
                 this.assert.deepStrictEqual(setup.playerSchema.inventory.manager.decreasedItems, []);
                 this.assert.strictEqual(setup.revivedPlayers, 0);
@@ -101,7 +101,7 @@ class TestDeathReviveRequests extends BaseTest
             let setup = await this.createRequestsSetup(this.askedItem, {restorationQty: 1});
             for(let invalidMessage of invalidMessages){
                 this.assert.strictEqual(
-                    await setup.requests.onBeforeSceneExecuteMessages(setup.createEvent(invalidMessage)),
+                    await setup.requests.answerReviveRequestOrItemChoice(setup.createEvent(invalidMessage)),
                     false
                 );
             }
@@ -119,7 +119,7 @@ class TestDeathReviveRequests extends BaseTest
             ];
             for(let setup of rejectedSetups){
                 let choiceEvent = setup.createEvent({act: this.choiceAction, use: true});
-                this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(choiceEvent), false);
+                this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(choiceEvent), false);
                 this.assert.strictEqual(setup.playerSchema.getPrivate(this.choicePath), null);
                 this.assert.deepStrictEqual(setup.client.sentMessages, []);
             }
@@ -136,10 +136,10 @@ class TestDeathReviveRequests extends BaseTest
             setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.REVIVE_READY, true);
             for(let messageData of [{act: 'otherAction', use: true}, {}, null]){
                 let messageEvent = setup.createEvent(messageData);
-                this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(messageEvent), false);
+                this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(messageEvent), false);
                 this.assert.strictEqual(messageEvent.canContinue, true);
             }
-            this.assert.strictEqual(await setup.requests.onBeforeSceneExecuteMessages(null), false);
+            this.assert.strictEqual(await setup.requests.answerReviveRequestOrItemChoice(null), false);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.choicePath), null);
             this.assert.strictEqual(setup.revivedPlayers, 0);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
