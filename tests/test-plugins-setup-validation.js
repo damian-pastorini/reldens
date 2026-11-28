@@ -114,7 +114,7 @@ class TestPluginsSetupValidation extends BaseTest
             this.assert.strictEqual(plugin.playerDeathRelocator.autoReviveEnabled, false);
             let serverManager = {
                 roomsManager: {loadRoomById: async () => false},
-                usersManager: {key: 'usersManager'},
+                usersManager: {key: 'usersManager', statsRepository: {loadOneBy: async (field, value) => ({id: 3, field, value})}},
                 loginManager: {playerRoomState: {key: 'playerRoomState'}}
             };
             await props.listenedEvents['reldens.serverReady'][1]({serverManager});
@@ -123,9 +123,17 @@ class TestPluginsSetupValidation extends BaseTest
                 [
                     plugin.offlinePlayerDeaths.playerDeathRelocator,
                     plugin.offlinePlayerDeaths.usersManager,
-                    plugin.offlinePlayerDeaths.playerRoomState
+                    plugin.offlinePlayerDeaths.playerRoomState,
+                    plugin.offlinePlayerDeaths.affectedStatId,
+                    sc.hasOwn(plugin.offlinePlayerDeaths, 'config')
                 ],
-                [plugin.playerDeathRelocator, serverManager.usersManager, serverManager.loginManager.playerRoomState]
+                [
+                    plugin.playerDeathRelocator,
+                    serverManager.usersManager,
+                    serverManager.loginManager.playerRoomState,
+                    3,
+                    false
+                ]
             );
             this.assert.strictEqual(plugin.deathReviveNotifier.playerDeathRelocator, plugin.playerDeathRelocator);
             this.assert.strictEqual(plugin.deathReviveRequests.deathReviveNotifier, plugin.deathReviveNotifier);
