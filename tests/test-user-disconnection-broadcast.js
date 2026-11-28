@@ -7,7 +7,7 @@
  * every other server to disconnect the user and fails when one does not confirm it; with the disconnection disabled a
  * login asks nothing and a server change only checks the user presence, where a server that fails the check counts as
  * not logged and the next servers are still checked (ISSUE #479), while with it enabled a failed server refuses the
- * server change (every server is still requested); a timed out or failed request refuses the login;
+ * server change after every server was requested; a timed out or failed request refuses the login;
  * the answer keeps the logged user only from a success; and the message is valid only on its target server.
  *
  */
@@ -101,7 +101,8 @@ class TestUserDisconnectionBroadcast extends BaseTest
                 [false, [false, loggedAnswer]],
                 [false, [loggedAnswer, false]],
                 [false, [false, false]],
-                [true, [false, loggedAnswer]]
+                [true, [false, loggedAnswer]],
+                [true, [loggedAnswer, false]]
             ]){
                 let requestedServers = [];
                 let userDisconnection = UserDisconnectionBuilder.createForServer(
@@ -124,6 +125,7 @@ class TestUserDisconnectionBroadcast extends BaseTest
                 [{isSuccess: true, wasLogged: true}, bothServers],
                 [{isSuccess: true, wasLogged: true}, bothServers],
                 [{isSuccess: true, wasLogged: false}, bothServers],
+                [this.failedAnswer, bothServers],
                 [this.failedAnswer, bothServers]
             ]);
         });
