@@ -5,22 +5,22 @@ Back to the [overview](overview.md). The requests used here are described in [Si
 ## One session per user
 
 A user keeps one session. Every room join (`RoomLogin.onAuth()`, `lib/rooms/server/login.js`) calls
-`UserDisconnection.broadcastDisconnectionMessage(user, isSceneChange)` (`lib/game/server/user-disconnection.js`), which
-posts `/reldens-disconnect-user` to every other server, all the requests started before any answer is awaited (the
-unreachable servers cost one timeout):
+`UserDisconnection.broadcastDisconnectionMessage(user, isSceneChange)` (`lib/game/server/user-disconnection.js`, a
+signed messenger of the `/reldens-disconnect-user` route), which sends the username to every other server with
+`sendToServers()`, all the requests started before any answer is awaited (the unreachable servers cost one timeout):
 
-- A new login (`isSceneChange` not set) asks the other servers to disconnect the user. Each server closes every room of
-  that user (game room included) with the consented close code, so the old client shows the "session ended" alert.
-- A scene join (`isSceneChange: true`, sent by the client on its first scene and on every scene change) asks it as a
-  server change: the old server closes the user rooms with `GameConst.DISCONNECTION.SERVER_CHANGE_CLOSE_CODE` (4100),
-  which the moving client ignores.
+- A new login (`isSceneChange` not set) sends the `disconnect` action. Each server closes every room of that user (game
+  room included) with the consented close code, so the old client shows the "session ended" alert.
+- A scene join (`isSceneChange: true`, sent by the client on its first scene and on every scene change) sends the
+  `serverChange` action: the old server closes the user rooms with
+  `GameConst.DISCONNECTION.SERVER_CHANGE_CLOSE_CODE` (4100), which the moving client ignores.
 - The receiving server takes a server change as such only when the user is changing scene there (its player body
   `isChangingScene`) or has no scene player there (before its first scene); a user settled in a scene there is
   disconnected like on a new login (`UserDisconnection.isSettledInScene()`), so a join that only claims a scene change
   never leaves the other client frozen.
 - The answer `{isSuccess, wasLogged}`: `wasLogged` is true when the user was present there and not settled in a scene.
-  A request carrying this server own instance ID (an alias of this same server) answers `wasLogged: false` and
-  disconnects nothing.
+  A message carrying this server own instance ID in its payload (an alias of this same server) answers
+  `wasLogged: false` and disconnects nothing.
 - `RoomLogin.disconnectFromOtherServers()` refuses the join ("Could not connect to the game.") when a disconnection
   failed, and sets `userModel.isLoginContinued = isSceneChange && wasLogged`.
 
@@ -36,8 +36,8 @@ A guest scene join is accepted only when the guest is active on this server or a
 - `1` (default): the behaviour above. A failed disconnection (server down, error status, timeout) refuses the login or
   the scene join, so a second session can never stay open on an unreachable server.
 - `0`: the servers never disconnect a user from the other servers. The login server acts as the main server that keeps
-  the user game room while the user plays on other servers. A new login sends nothing; a scene join sends a check only
-  request (`isCheckOnly`) to learn whether the user is logged elsewhere, so the server change is a continued login and
+  the user game room while the user plays on other servers. A new login sends nothing; a scene join sends the
+  `checkOnly` action to learn whether the user is logged elsewhere, so the server change is a continued login and
   the logins are not counted twice. A failed check counts as "not logged there" and never refuses the join. The admin
   logged users count still counts such a user once (see [Counts, statuses and periods](counts-and-periods.md)).
 
