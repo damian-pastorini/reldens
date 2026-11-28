@@ -5,8 +5,9 @@
  * Tests the rewards a player gets for killing the configured forest enemy (exclusive group, KillRewardsSteps: the
  * enemy placed with one hit point and the reward of its live instances changed for the group): a non droppable item
  * reward goes straight to the inventory with its experience, also every non stackable item of a drop quantity above one
- * (ISSUE #150); a reward with a drop rate or a drop quantity of zero gives
- * nothing; a reward with no item, modifier or experience gives nothing; an item reward with no drop animation goes
+ * (ISSUE #150), and a reward of several non stackable items whose second unit fails to be added removes the unit added
+ * before it and the next kill gives the whole quantity once (ISSUE #477, the inventory add answers false once after one
+ * passed call); a reward with a drop rate or a drop quantity of zero gives nothing; a reward with no item, modifier or experience gives nothing; an item reward with no drop animation goes
  * straight to the inventory; a reldens.beforeGiveRewards listener that cancels the event leaves nothing given; a
  * reward with a missing item record gives no item and no experience; a unique reward is given and its
  * stored was_given is set, and once the killed enemy respawns the next kill of a placed enemy of the same object does
@@ -20,6 +21,8 @@ const { ForestEnemyKill } = require('./helpers/forest-enemy-kill');
 const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Login } = require('./helpers/login');
+const { SecurityApi } = require('./helpers/security-api');
+const { TimingObjectSession } = require('./helpers/timing-object-session');
 const { TimeConstants } = require('./helpers/time-constants');
 const { ModifierConst } = require('@reldens/modifiers');
 const { sc } = require('@reldens/utils');
@@ -63,7 +66,7 @@ class TestRewardsKills
         return killerRewards;
     }
 
-    static async killWithReward(context, rewardChanges)
+    static async killWithReward(context, rewardChanges, addItemFailure = false)
     {
         test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START + TimeConstants.NAVIGATION, context.longRun)
             + 2 * TimeConstants.ENEMY_KILL);
@@ -71,6 +74,9 @@ class TestRewardsKills
         let placement = await KillRewardsSteps.enterWithPlacedEnemy(context);
         await KillRewardsSteps.changeEnemyReward(context, rewardChanges);
         let before = await TestRewardsKills.fetchKillerRewards(context, reward.item.key);
+        if(addItemFailure){
+            await TimingObjectSession.overrideInventoryMethod(context.gameConfig, context.e2eGroup, 'addItem', addItemFailure);
+        }
         await KillRewardsSteps.killPlacedEnemy(context, placement);
         return {reward, before, placement};
     }
@@ -191,6 +197,34 @@ class TestRewardsKills
         ).toBe(1);
     }
 
+    static async runPartlyFailedGiveTest(context)
+    {
+        let gameConfig = context.gameConfig;
+        let killed = await TestRewardsKills.killWithReward(context, TestRewardsKills.CASES.nonDroppableQuantity.rewardChanges, {
+            passesCount: 1,
+            failuresCount: 1,
+            rejects: false
+        });
+        await expect.poll(
+            async () => (await SecurityApi.request(
+                gameConfig,
+                'GET',
+                '/api/e2e/live-objects/room-method-failures?callsKey='+encodeURIComponent('inventory.'+gameConfig.e2ePlayerName)
+                    +'&methodKey=addItem'
+            )).done,
+            {message: 'The second unit of the reward fails to be added', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(1);
+        await expect.poll(
+            async () => (await TestRewardsKills.fetchKillerRewards(context, killed.reward.item.key)).quantity,
+            {message: 'The unit added before the failed one is removed, nothing is given', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(killed.before.quantity);
+        await TestRewardsKills.killAfterRespawn(context, killed.placement);
+        await expect.poll(
+            async () => (await TestRewardsKills.fetchKillerRewards(context, killed.reward.item.key)).quantity,
+            {message: 'The next kill gives the whole quantity once', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(killed.before.quantity + TestRewardsKills.CASES.nonDroppableQuantity.givenItems);
+    }
+
     static async runModifierTest(context)
     {
         let killed = await TestRewardsKills.killWithReward(context, {
@@ -240,6 +274,9 @@ class TestRewardsKills
             });
             test('unique reward with a failed item gives nothing and the next kill gives it once', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsKills.runUniqueRetryTest({page, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('a reward of several items that fails on its second unit gives nothing and the next kill gives them all once', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestRewardsKills.runPartlyFailedGiveTest({page, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('modifier reward is applied to the killer', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestRewardsKills.runModifierTest({page, screenshots, gameConfig, e2eGroup, longRun});
