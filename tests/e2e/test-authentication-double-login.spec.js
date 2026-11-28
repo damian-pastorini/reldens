@@ -9,7 +9,8 @@
  * the first tab reloading after the double login (the second session keeps its entries, gets a private message and
  * chats, and the next login of the account is a double login for it, ISSUE #16), the position and stats handed to the
  * second session, the sprites seen by a third client, the connections and active
- * sessions left behind, the failed state save (the first session still ends, only the second player stays, ISSUE #443)
+ * sessions left behind, the failed state save (the first session that could not be saved is kept playing and the
+ * second login is refused, so a session is never ended without its state stored)
  * and the tabs closed on the selection or in the game. The server side
  * values come from the e2e state endpoints and the stored rows.
  *
@@ -245,14 +246,16 @@ class TestAuthenticationDoubleLogin
             roomName: Login.TOWN_ROOM_NAME,
             playerName: gameConfig.e2ePlayerName
         });
-        await Login.startConfigPlayer(secondPage, gameConfig, longRun);
-        await TestAuthenticationDoubleLogin.expectSessionEnded(page, longRun);
+        await Login.submitLogin(secondPage, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
+        await expect(secondPage.locator(Selectors.login.error), 'The unsaved first session is kept, the second login refused')
+            .toHaveText(GameConst.JOIN_GAME_ERROR_MESSAGE, {timeout: TimeConstants.SERVER_RESPONSE});
+        await expect(page.locator(Selectors.reloadModal.container), 'The first session keeps playing').toBeHidden();
         expect(
             [
                 await LoginServerApi.fetchPlayersInRoom(gameConfig, Login.TOWN_ROOM_NAME, gameConfig.e2ePlayerName),
                 await LoginServerApi.fetchActiveSessionsCount(gameConfig, gameConfig.e2eUsername)
             ],
-            'The failed save still closes the first session: one player in the room and the entries of one playing session'
+            'The failed save keeps the first session: one player in the room and the entries of one playing session'
         ).toEqual([1, playingSessionsCount]);
         await screenshots.capture(secondPage, 'double-login-state-save-failure');
     }
@@ -335,7 +338,7 @@ class TestAuthenticationDoubleLogin
             test('second tab on the login form leaves the first untouched', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runSecondOnFormTest(page, secondPage, screenshots, gameConfig, longRun);
             });
-            test('failed state save still ends the first session and keeps only the second player in the room', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
+            test('a failed state save keeps the first session playing and refuses the second login', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationDoubleLogin.runStateSaveFailureTest(page, secondPage, screenshots, gameConfig, longRun);
             });
             test('two users logging in at once reach their own player', async ({ page, secondPage, screenshots, gameConfig, longRun }) => {
