@@ -12,7 +12,11 @@ their routes on `reldens.serverBeforeListen`. With no other server in `client/ro
 
 - `players` / `clients`: the members playing on this server; only they get the group modifiers here.
 - `remotePlayers`: the members playing on other servers, as `{serverUrl, data}` (the mapped shared properties, no
-  client, no modifiers). `remoteServersUrls()` lists their servers.
+  client, no modifiers).
+- `unansweredServersUrls`: the servers that did not answer the last group update.
+
+`GroupCrossServerStateSync.fetchGroupServersUrls(group)` lists the group servers: every other server for the clans, the
+servers of the remote members plus the unanswered servers for the teams.
 
 A member joining on this server (`Team.join()`) stops being remote. A received entry is accepted only for a positive
 integer player ID that is not local and a server URL of the configured other servers
@@ -31,7 +35,8 @@ integer player ID that is not local and a server URL of the configured other ser
   come from a configured server or be this server), applies the members, and joins the player when it is already in a
   scene here, or keeps it in `teamChangingRoomPlayers` so it joins on its scene join.
 - Updates: `TeamUpdatesHandler.updateTeamPlayers()` only sends the members to the local clients. The `update` (this
-  server local members) goes to the team servers only (`remoteServersUrls()`): right away and awaited on a join
+  server local members) goes to the team servers only (the remote members servers and the unanswered ones, listed by
+  the sync): right away and awaited on a join
   (`TeamJoin`, `CreatePlayerTeamHandler`), queued on a stats change and on an arrival (see below). The update flow is
   the same as the clans one, both are `GroupCrossServerStateSync.sendUpdate()`, `queueUpdate()` and `receiveUpdate()`.
 - Leave and disband (`TeamLeave`): a removed remote member is dropped here and the `leave` is sent to the team servers
@@ -46,9 +51,9 @@ Clans are stored rows, so the clan sync expects the servers to share the databas
 - Updates: `ClanUpdatesHandler.updateClanPlayers()` only sends the clan to the local clients. The `update` with this
   server online members goes to every other server: right away and awaited on a login (`CreatePlayerClanHandler`), a
   join (`ClanJoin`) and a disconnect (`ClanDisconnect`), queued on a stats change. Each server answers with its own
-  online members; the group (team or clan) is sent again to the local clients only when those answers changed the
-  remote members, and a server that does not answer gets its members dropped from the group (logged) and stays one of
-  the group servers (`SharedModifiersGroup.unansweredServersUrls`) until it answers, so the next update asks it again
+  online members, each answer applied right after it; the group (team or clan) is sent again to the local clients only
+  when those answers changed the remote members, and a server that does not answer gets its members dropped from the
+  group (logged) and stays one of the group servers (`unansweredServersUrls`) until it answers, so the next update asks it again
   and its answer adds them back, also when both servers dropped each other members. A received update replaces the
   members of its sender and is sent to the local clients.
 - Queued updates (`queueUpdate()`): one update per group and per `TeamsConst.SYNC.UPDATE_INTERVAL_MS` (1 second), sent
