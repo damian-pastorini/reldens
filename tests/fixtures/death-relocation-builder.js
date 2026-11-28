@@ -127,7 +127,7 @@ class DeathRelocationBuilder
      */
     startDeath(setup)
     {
-        let isHandled = setup.relocator.onPlayerDeath(setup.event);
+        let isHandled = setup.relocator.scheduleRevive(setup.event);
         clearTimeout(setup.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_TIMER));
         return isHandled;
     }
@@ -161,7 +161,7 @@ class DeathRelocationBuilder
             ),
             maximumDuration: AdsConst.VIDEOS_MAXIMUM_DURATION
         });
-        setup.events.on('reldens.deathTownReviveData', (event) => setup.gate.onTownReviveData(event));
+        setup.events.on('reldens.deathTownReviveData', (event) => setup.gate.appendResurrectionAdOffer(event));
         setup.notifier = new DeathReviveNotifier({playerDeathRelocator: setup.relocator, events: setup.events});
         setup.events.on('reldens.deathReviveNotify', (event) => setup.notifier.notifyClient(
             event.room.getClientById(event.playerSchema.sessionId),
@@ -185,6 +185,7 @@ class DeathRelocationBuilder
         });
         setup.storedUpdates = [];
         setup.usersManager = {
+            statsRepository: {loadOneBy: async (field, value) => 'key' === field && 'hp' === value ? {id: this.hpStatId} : null},
             updatePlayerStatByIds: async (playerId, statId, patch) => setup.storedUpdates.push(['stat', playerId, statId, patch]),
             updateUserStateByPlayerId: async (playerId, state) => setup.storedUpdates.push(['state', playerId, state])
         };
@@ -201,10 +202,9 @@ class DeathRelocationBuilder
         setup.offlineDeaths = new OfflinePlayerDeaths({
             playerDeathRelocator: setup.relocator,
             events: setup.room.events,
-            config: setup.room.config,
             affectedProperty: setup.room.config.get('client/actions/skills/affectedProperty')
         });
-        setup.offlineDeaths.loadServerManagers({usersManager: setup.usersManager, loginManager: setup.room.loginManager});
+        await setup.offlineDeaths.loadServerManagers({usersManager: setup.usersManager, loginManager: setup.room.loginManager});
         return setup;
     }
 
@@ -214,10 +214,11 @@ class DeathRelocationBuilder
      */
     keepOfflineDeathWithoutTimer(setup)
     {
+        let playerId = setup.playerSchema.player_id;
         setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: setup.playerSchema});
-        let isKept = setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
-        clearTimeout(setup.offlineDeaths.deathsByPlayerId[setup.playerSchema.player_id]?.timer);
-        return isKept;
+        setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
+        clearTimeout(setup.offlineDeaths.deathsByPlayerId[playerId]?.timer);
+        return sc.hasOwn(setup.offlineDeaths.deathsByPlayerId, playerId);
     }
 
     /**
@@ -236,18 +237,18 @@ class DeathRelocationBuilder
             physicalBody: setup.playerBody
         });
         joinedPlayer.state = setup.playerSchema.state;
-        let isRestored = await setup.offlineDeaths.restoreDeath({
+        let isRestoredEvent = emitted => 'reldens.playerDeathRestored' === emitted.eventName;
+        let restoredBefore = setup.room.events.emittedEvents.filter(isRestoredEvent).length;
+        await setup.offlineDeaths.restoreDeath({
             roomScene: setup.room,
             client: setup.client,
             loggedPlayer: joinedPlayer
         });
         clearTimeout(joinedPlayer.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_TIMER));
         return {
-            isRestored,
+            isRestored: restoredBefore < setup.room.events.emittedEvents.filter(isRestoredEvent).length,
             joinedPlayer,
-            reviveDelayMs: sc.get(sc.get(setup.room.events.emittedEvents.find(
-                emitted => 'reldens.playerDeathRestored' === emitted.eventName
-            ), 'event', {}), 'reviveDelayMs', false),
+            reviveDelayMs: sc.get(sc.get(setup.room.events.emittedEvents.find(isRestoredEvent), 'event', {}), 'reviveDelayMs', false),
             isNewDeathEmitted: setup.room.events.emittedEvents.some(emitted => 'reldens.playerDeath' === emitted.eventName)
         };
     }
