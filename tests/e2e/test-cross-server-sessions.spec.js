@@ -18,7 +18,9 @@
  * keeps playing in the second house; with client/rooms/autoConnectServerGameRoom off in the initial client config of
  * the page (InitialClientConfig) the player visiting
  * the second house joins no server-2 game room, and a new login of the same user on server-1 still ends that server-2
- * session; and the reward (the inventory and the reward
+ * session; with server/players/disconnectUsersOnServerChange off on both servers, the user playing on server-2 that
+ * logs in again on server-1 and moves to server-2 ends its old server-2 session there (session ended modal, one player
+ * of the user left in the second house, ISSUE #480); and the reward (the inventory and the reward
  * states of the player preserved and restored by the group reset).
  *
  */
@@ -230,6 +232,28 @@ class TestCrossServerSessions
         await Navigation.waitForRoom(secondPage, CrossServerHouseAssignment.SECOND_HOUSE, TimeConstants.ROOM_TRANSITION);
     }
 
+    static async runContinuedLoginEndsOldSessionTest(context)
+    {
+        let {page, secondPage, gameConfig, longRun} = context;
+        let playerName = gameConfig.e2ePlayerName;
+        let secondServerConfig = await CrossServerHouseAssignment.assignHouseToSecondServer(context);
+        await CrossServerHouseAssignment.keepUsersOnLeftServers(gameConfig, secondServerConfig);
+        await CrossServerHouseAssignment.storePlayerInHouse(context, playerName, 0);
+        let oldSessionPage = (await Login.openClientPage(page, secondServerConfig)).clientPage;
+        await Login.loginRootPlayer(oldSessionPage, secondServerConfig, longRun);
+        await Navigation.waitForRoom(oldSessionPage, CrossServerHouseAssignment.SECOND_HOUSE, TimeConstants.ROOM_TRANSITION);
+        await Login.loginRootPlayer(secondPage, gameConfig, longRun);
+        await Navigation.waitForRoom(secondPage, CrossServerHouseAssignment.SECOND_HOUSE, TimeConstants.ROOM_TRANSITION);
+        await TestCrossServerSessions.expectSessionEnded(
+            oldSessionPage,
+            'The continued login on server-2 ends the old server-2 session of the same user'
+        );
+        expect(
+            await LoginServerApi.fetchPlayersInRoom(secondServerConfig, CrossServerHouseAssignment.SECOND_HOUSE, playerName),
+            'No ghost player of the old session stays in the second house'
+        ).toBe(1);
+    }
+
     static async expectSessionEnded(sessionPage, message)
     {
         await expect.poll(
@@ -275,6 +299,9 @@ class TestCrossServerSessions
             test('with no server-2 game room joined a new login on server-1 ends the session visiting server-2', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
                 test.setTimeout(TimeConstants.GAME_START * 3 + TimeConstants.ROOM_TRANSITION);
                 await TestCrossServerSessions.runNoGameRoomVisitorTest({page, secondPage, gameConfig, e2eGroup, longRun});
+            });
+            test('with the users kept on the server they leave a login on server-1 that moves to server-2 ends the old server-2 session', async ({ page, secondPage, gameConfig, e2eGroup, longRun }) => {
+                await TestCrossServerSessions.runContinuedLoginEndsOldSessionTest({page, secondPage, gameConfig, e2eGroup, longRun});
             });
             test('a reward claimed on server-1 is not given again when claimed on server-2', async ({ page, gameConfig, e2eGroup, longRun }) => {
                 await TestCrossServerSessions.runRewardClaimedOnceTest({page, gameConfig, e2eGroup, longRun});
