@@ -27,7 +27,7 @@ class TestRoomsUsageCollector extends BaseTest
     async testTheSummaryListsTheLoggedUsersKeysAndThePlayersPerStoredRoom()
     {
         await this.test('the rooms usage lists the logged users as keys, never their ids, and the players of every stored room', async () => {
-            let activePlayers = new ActivePlayers.constructor();
+            let activePlayers = new ActivePlayers();
             activePlayers.playersSessionsByUserId = {7: {sessionA: 'town'}, 8: {}, 9: {sessionB: 'house'}};
             let createdInstances = {
                 townInstanceA: {state: {}, roomData: {roomId: 4}, playersCountInState: () => 2},
@@ -37,7 +37,7 @@ class TestRoomsUsageCollector extends BaseTest
             };
             let roomsUsageCollector = new RoomsUsageCollector(createdInstances, activePlayers, this.usersKeysSecret);
             let roomsUsage = roomsUsageCollector.summarize(roomsUsageCollector.collect());
-            let noUsersCollector = new RoomsUsageCollector({}, new ActivePlayers.constructor(), this.usersKeysSecret);
+            let noUsersCollector = new RoomsUsageCollector({}, new ActivePlayers(), this.usersKeysSecret);
             let noUsersSummary = noUsersCollector.summarize([]);
             this.assert.deepStrictEqual(
                 [
