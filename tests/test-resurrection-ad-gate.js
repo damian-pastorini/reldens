@@ -64,7 +64,7 @@ class TestResurrectionAdGate extends BaseTest
     createRequestedEvent(gate)
     {
         let event = this.createEvent();
-        gate.onBeforeSceneExecuteMessages(event);
+        gate.closeRequestOrHoldRevive(event);
         return event;
     }
 
@@ -75,12 +75,12 @@ class TestResurrectionAdGate extends BaseTest
             let gate = this.createGate(notified);
             let event = this.createEvent();
             let requestedBefore = Date.now();
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(event), true);
+            gate.closeRequestOrHoldRevive(event);
             this.assert.strictEqual(event.canContinue, true);
             this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey).isRequested, true);
             this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey) >= requestedBefore + this.maximumDuration, true);
             event.canContinue = true;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(event), false);
+            gate.closeRequestOrHoldRevive(event);
             this.assert.strictEqual(event.canContinue, false);
             this.assert.deepStrictEqual(notified, []);
         });
@@ -92,12 +92,12 @@ class TestResurrectionAdGate extends BaseTest
             let gate = this.createGate([]);
             let event = this.createRequestedEvent(gate);
             event.messageData.act = AdsConst.ACTIONS.AD_FAILED;
-            gate.onBeforeSceneExecuteMessages(event);
+            gate.closeRequestOrHoldRevive(event);
             this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey).isClosed, true);
             event.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_EVENT, {targetSchema: event.playerSchema});
             event.messageData.act = AdsConst.ACTIONS.AD_STARTED;
             event.canContinue = true;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(event), true);
+            gate.closeRequestOrHoldRevive(event);
             this.assert.strictEqual(event.canContinue, true);
             this.assert.deepStrictEqual(
                 [event.playerSchema.getPrivate(this.stateKey).isRequested, event.playerSchema.getPrivate(this.stateKey).isClosed],
@@ -113,7 +113,7 @@ class TestResurrectionAdGate extends BaseTest
             for(let customData of [{allActionsDisabled: true}, {disallowedActions: [AdsConst.ACTIONS.AD_STARTED]}]){
                 let event = this.createEvent();
                 event.room = this.createRoom(customData);
-                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(event), false);
+                gate.closeRequestOrHoldRevive(event);
                 this.assert.strictEqual(event.canContinue, false);
                 this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey), null);
                 this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey).isRequested, false);
@@ -127,13 +127,13 @@ class TestResurrectionAdGate extends BaseTest
             let gate = this.createGate([]);
             for(let inState of [GameConst.STATUS.ACTIVE, GameConst.STATUS.DISABLED]){
                 let event = this.createEvent(this.resurrectionAd.id, AdsConst.ACTIONS.AD_STARTED, inState);
-                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(event), false);
+                gate.closeRequestOrHoldRevive(event);
                 this.assert.strictEqual(event.canContinue, false);
                 this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey), null);
             }
             let missingPlayerEvent = this.createEvent();
             missingPlayerEvent.playerSchema = false;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(missingPlayerEvent), false);
+            gate.closeRequestOrHoldRevive(missingPlayerEvent);
             this.assert.strictEqual(missingPlayerEvent.canContinue, false);
         });
     }
@@ -147,15 +147,18 @@ class TestResurrectionAdGate extends BaseTest
             let disabledGate = this.createGate([], this.resurrectionAd.key, Object.assign({}, this.resurrectionAd, {enabled: 0}));
             let disabledEvent = this.createEvent();
             for(let [checkedGate, event] of [[gate, endedEvent], [gate, otherAdEvent], [disabledGate, disabledEvent]]){
-                this.assert.strictEqual(checkedGate.onBeforeSceneExecuteMessages(event), false);
+                checkedGate.closeRequestOrHoldRevive(event);
                 this.assert.strictEqual(event.canContinue, true);
                 this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey), null);
+                this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey), null);
             }
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(null), false);
-            for(let emptyEvent of [null, {}]){
-                this.assert.strictEqual(gate.onAfterAdStarted(emptyEvent), false);
-                this.assert.strictEqual(gate.onAfterAdEnded(emptyEvent), false);
+            let emptyEvents = [null, {}];
+            for(let emptyEvent of emptyEvents){
+                gate.closeRequestOrHoldRevive(emptyEvent);
+                gate.holdReviveOrCloseFailedStart(emptyEvent);
+                gate.releaseReviveHold(emptyEvent);
             }
+            this.assert.deepStrictEqual(emptyEvents, [null, {}]);
         });
     }
 
@@ -168,7 +171,7 @@ class TestResurrectionAdGate extends BaseTest
             event.playerSchema.setPrivate(this.holdKey, 1);
             event.startResult = {id: 'stored-played-ad'};
             let startedBefore = Date.now();
-            this.assert.strictEqual(gate.onAfterAdStarted(event), true);
+            gate.holdReviveOrCloseFailedStart(event);
             this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey) >= startedBefore + this.maximumDuration, true);
             this.assert.deepStrictEqual(notified, []);
         });
@@ -178,30 +181,32 @@ class TestResurrectionAdGate extends BaseTest
     {
         await this.test('a rejected start, a failed ad or an end without reward release the hold and tell the revive, a rewarded end does not tell', async () => {
             let closeCases = [
-                {close: (gate, event) => gate.onAfterAdStarted(Object.assign(event, {startResult: false})), isTold: true},
+                {close: (gate, event) => gate.holdReviveOrCloseFailedStart(Object.assign(event, {startResult: false})), isTold: true},
                 {
-                    close: (gate, event) => gate.onBeforeSceneExecuteMessages(
+                    close: (gate, event) => gate.closeRequestOrHoldRevive(
                         Object.assign(event, {messageData: {act: AdsConst.ACTIONS.AD_FAILED, ads_id: this.resurrectionAd.id}})
                     ),
                     isTold: true
                 },
-                {close: (gate, event) => gate.onAfterAdEnded(Object.assign(event, {claimResult: false})), isTold: true},
-                {close: (gate, event) => gate.onAfterAdEnded(Object.assign(event, {claimResult: {id: 'reward'}})), isTold: false}
+                {close: (gate, event) => gate.releaseReviveHold(Object.assign(event, {claimResult: false})), isTold: true},
+                {close: (gate, event) => gate.releaseReviveHold(Object.assign(event, {claimResult: {id: 'reward'}})), isTold: false}
             ];
             for(let closeCase of closeCases){
                 let notified = [];
                 let gate = this.createGate(notified);
                 let event = this.createRequestedEvent(gate);
-                this.assert.strictEqual(closeCase.close(gate, event), true);
+                closeCase.close(gate, event);
+                let toldNotifications = closeCase.isTold ? [['reldens.deathReviveNotify', event.playerSchema.sessionId]] : [];
                 this.assert.deepStrictEqual(
                     [event.playerSchema.getPrivate(this.stateKey).isClosed, event.playerSchema.privateData[this.holdKey], notified],
-                    [true, 0, closeCase.isTold ? [['reldens.deathReviveNotify', event.playerSchema.sessionId]] : []]
+                    [true, 0, toldNotifications]
                 );
                 event.messageData = {act: AdsConst.ACTIONS.AD_STARTED, ads_id: this.resurrectionAd.id};
                 event.canContinue = true;
-                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(event), false);
+                gate.closeRequestOrHoldRevive(event);
                 this.assert.strictEqual(event.canContinue, false);
-                this.assert.strictEqual(gate.onAfterAdEnded(event), false);
+                gate.releaseReviveHold(Object.assign(event, {claimResult: false}));
+                this.assert.deepStrictEqual([event.playerSchema.privateData[this.holdKey], notified], [0, toldNotifications]);
             }
         });
     }
@@ -216,12 +221,20 @@ class TestResurrectionAdGate extends BaseTest
             let failedEvent = this.createEvent(this.resurrectionAd.id, AdsConst.ACTIONS.AD_FAILED);
             let otherAdEvent = this.createRequestedEvent(gate);
             otherAdEvent.messageData = {act: AdsConst.ACTIONS.AD_ENDED, ads_id: this.otherAd.id};
-            this.assert.strictEqual(gate.onAfterAdStarted(notRequestedEvent), false);
-            this.assert.strictEqual(gate.onAfterAdEnded(notRequestedEvent), false);
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(failedEvent), false);
-            this.assert.strictEqual(gate.onAfterAdEnded(otherAdEvent), false);
-            this.assert.strictEqual(otherAdEvent.playerSchema.getPrivate(this.stateKey).isClosed, false);
-            this.assert.deepStrictEqual(notified, []);
+            gate.holdReviveOrCloseFailedStart(notRequestedEvent);
+            gate.releaseReviveHold(notRequestedEvent);
+            gate.closeRequestOrHoldRevive(failedEvent);
+            gate.releaseReviveHold(otherAdEvent);
+            this.assert.deepStrictEqual(
+                [
+                    notRequestedEvent.playerSchema.getPrivate(this.holdKey),
+                    notRequestedEvent.playerSchema.getPrivate(this.stateKey).isClosed,
+                    failedEvent.playerSchema.getPrivate(this.stateKey).isClosed,
+                    otherAdEvent.playerSchema.getPrivate(this.stateKey).isClosed,
+                    notified
+                ],
+                [null, false, false, false, []]
+            );
         });
     }
 
@@ -232,7 +245,7 @@ class TestResurrectionAdGate extends BaseTest
             let gate = this.createGate(notified);
             let event = this.createEvent();
             let rewardEvent = {playerSchema: event.playerSchema, room: event.room, playedAd: this.resurrectionAd};
-            this.assert.strictEqual(gate.onAfterGiveAdRewardItem(rewardEvent), true);
+            gate.chooseRestorationItemUse(rewardEvent);
             this.assert.strictEqual(
                 event.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE),
                 ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.USE
@@ -247,9 +260,12 @@ class TestResurrectionAdGate extends BaseTest
                 [gate, null]
             ];
             for(let [checkedGate, notRewardedEvent] of notRewarded){
-                this.assert.strictEqual(checkedGate.onAfterGiveAdRewardItem(notRewardedEvent), false);
+                checkedGate.chooseRestorationItemUse(notRewardedEvent);
             }
-            this.assert.strictEqual(notified.length, 1);
+            this.assert.deepStrictEqual(
+                [notified.length, aliveEvent.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE)],
+                [1, null]
+            );
         });
     }
 
@@ -266,10 +282,10 @@ class TestResurrectionAdGate extends BaseTest
                 hasRestorationItem: false,
                 reviveData
             };
-            this.assert.strictEqual(gate.onTownReviveData(townEvent), true);
+            gate.appendResurrectionAdOffer(townEvent);
             this.assert.deepStrictEqual(reviveData, {resurrectionAdEventKey: this.resurrectionAd.eventKey});
             let closedEvent = this.createRequestedEvent(gate);
-            gate.onAfterAdEnded(Object.assign(closedEvent, {claimResult: false}));
+            gate.releaseReviveHold(Object.assign(closedEvent, {claimResult: false}));
             let notOfferedCases = [
                 Object.assign({}, townEvent, {hasRestorationItem: true, reviveData: {}}),
                 Object.assign({}, townEvent, {playerSchema: closedEvent.playerSchema, reviveData: {}}),
@@ -280,7 +296,7 @@ class TestResurrectionAdGate extends BaseTest
                 })
             ];
             for(let notOfferedEvent of notOfferedCases){
-                this.assert.strictEqual(gate.onTownReviveData(notOfferedEvent), false);
+                gate.appendResurrectionAdOffer(notOfferedEvent);
                 this.assert.deepStrictEqual(notOfferedEvent.reviveData, {});
             }
         });
