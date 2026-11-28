@@ -118,14 +118,14 @@ class LoginServerApi
         return (await SecurityApi.request(gameConfig, 'POST', '/api/e2e/login-server/signed-token', {values, expiresAt})).token;
     }
 
-    static async fetchDisconnectToken(gameConfig, username, expiresAt)
+    static async fetchDisconnectRequest(gameConfig, username, expiresAt)
     {
         return (await SecurityApi.request(
             gameConfig,
             'POST',
-            '/api/e2e/login-server/disconnect-token',
+            '/api/e2e/login-server/disconnect-request',
             {username, expiresAt}
-        )).token;
+        )).requestBody;
     }
 
     static async fetchStatusToken(gameConfig, statusValue, expiresAt)
