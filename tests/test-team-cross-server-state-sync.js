@@ -53,18 +53,11 @@ class TestTeamCrossServerStateSync extends BaseTest
     createPlayerSessions(sessionsData)
     {
         let sessions = [];
-        for(let sessionData of sessionsData){
-            sessions.push({
-                player: {
-                    player_id: sessionData.playerId,
-                    playerName: sessionData.playerName,
-                    sessionId: 's'+sessionData.playerId,
-                    currentTeam: false,
-                    stats: {hp: sessionData.hp},
-                    statsBase: {hp: 100}
-                },
-                client: {ref: {readyState: 1}, send: (type, message) => sessionData.messages.push(message)}
-            });
+        for(let {playerId, playerName, hp, messages} of sessionsData){
+            let player = {player_id: playerId, playerName, sessionId: 's'+playerId, currentTeam: false};
+            player.stats = {hp};
+            player.statsBase = {hp: 100};
+            sessions.push({player, client: {ref: {readyState: 1}, send: (type, message) => messages.push(message)}});
         }
         return sessions;
     }
@@ -92,10 +85,10 @@ class TestTeamCrossServerStateSync extends BaseTest
 
     async withServersFetch(servers, testCallback, isRouteAvailable = true)
     {
-        let routeHandlers = {};
-        routeHandlers[this.firstServerUrl] = servers.first.teamCrossServerStateSync;
-        routeHandlers[this.secondServerUrl] = servers.second.teamCrossServerStateSync;
-        await FetchStubRouteDispatcher.withServers(routeHandlers, testCallback, isRouteAvailable);
+        await FetchStubRouteDispatcher.withServers({
+            [this.firstServerUrl]: servers.first.teamCrossServerStateSync,
+            [this.secondServerUrl]: servers.second.teamCrossServerStateSync
+        }, testCallback, isRouteAvailable);
     }
 
     async moveMemberAndJoin(teamSetup)
@@ -124,11 +117,9 @@ class TestTeamCrossServerStateSync extends BaseTest
     {
         let teamsState = {};
         for(let teamId of Object.keys(teamsPlugin.teams)){
-            let team = teamsPlugin.teams[teamId];
-            teamsState[teamId] = {
-                local: Object.keys(team.players),
-                remote: Object.keys(team.remotePlayers).map(playerId => [playerId, team.remotePlayers[playerId].serverUrl])
-            };
+            let {players, remotePlayers} = teamsPlugin.teams[teamId];
+            let remote = Object.keys(remotePlayers).map(playerId => [playerId, remotePlayers[playerId].serverUrl]);
+            teamsState[teamId] = {local: Object.keys(players), remote};
         }
         return teamsState;
     }
@@ -232,6 +223,30 @@ class TestTeamCrossServerStateSync extends BaseTest
                 ]
             );
             this.assert.strictEqual([...arrivedMessages].pop().act, TeamsConst.ACTIONS.TEAM_UPDATE);
+        });
+    }
+
+    async testServersThatDroppedEachOtherMembersFindThemAgain()
+    {
+        await this.test('servers that dropped each other members find them again on the next update once they answer (ISSUE #504)', async () => {
+            let {servers} = await this.moveMemberAndJoin(this.createServersWithTeam());
+            await FetchStubRouteDispatcher.withServers({}, async () => {
+                await servers.first.teamCrossServerStateSync.sendUpdate(servers.first.teams[2], 2);
+                await servers.second.teamCrossServerStateSync.sendUpdate(servers.second.teams[2], 2);
+            });
+            let droppedServers = [servers.first.teams[2].remoteServersUrls(), servers.second.teams[2].remoteServersUrls()];
+            let droppedState = sc.toJsonString([this.mapTeamState(servers.first), this.mapTeamState(servers.second)]);
+            await this.withServersFetch(servers, async () => {
+                await servers.first.teamCrossServerStateSync.sendUpdate(servers.first.teams[2], 2);
+            });
+            this.assert.deepStrictEqual(
+                [droppedServers, droppedState, [this.mapTeamState(servers.first), this.mapTeamState(servers.second)]],
+                [
+                    [[this.secondServerUrl], [this.firstServerUrl]],
+                    sc.toJsonString([{2: {local: ['2'], remote: []}}, {2: {local: ['1'], remote: []}}]),
+                    [{2: {local: ['2'], remote: [['1', this.secondServerUrl]]}}, {2: {local: ['1'], remote: [['2', this.firstServerUrl]]}}]
+                ]
+            );
         });
     }
 
