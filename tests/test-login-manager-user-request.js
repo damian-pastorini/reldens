@@ -256,11 +256,15 @@ class TestLoginManagerUserRequest extends BaseTest
             getWithoutLogs: (path, defaultValue) => sc.get(joinSetup.configValues, path, defaultValue)
         };
         roomGame.activePlayerByUserName = () => false;
-        roomGame.roomsAvailability = Object.create(RoomsAvailability.prototype);
-        roomGame.roomsAvailability.fetchRoomAvailability = async (roomName) => {
-            joinSetup.requestedRooms.push(roomName);
-            return sc.get(joinSetup.availabilityByRoom, roomName, false);
-        };
+        roomGame.roomsAvailability = new RoomsAvailability({
+            serverHealthMonitor: {blockingEnabled: true, isBlocking: true},
+            remoteServersStatus: {fetchStatuses: async () => ({})},
+            isRoomCreated: (roomName) => {
+                joinSetup.requestedRooms.push(roomName);
+                return sc.get(sc.get(joinSetup.availabilityByRoom, roomName, {}), 'isAvailable', false);
+            },
+            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, '')
+        });
         let userModel = {
             username: 'player',
             related_players: [{id: 1, state: {scene: 'reldens-bots-forest'}}, {id: 2, state: {scene: 'reldens-town'}}]
