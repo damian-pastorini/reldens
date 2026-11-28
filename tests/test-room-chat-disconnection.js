@@ -128,18 +128,21 @@ class TestRoomChatDisconnection extends BaseTest
 
     createUserDisconnection(setup)
     {
-        return new UserDisconnection({
-            config: {getWithoutLogs: (path, defaultValue) => defaultValue},
-            roomsManager: {
-                createdInstances: {
-                    [ActiveSessionsBuilder.GAME_ROOM_ID]: setup.gameRoom,
-                    [ActiveSessionsBuilder.SCENE_ROOM_ID]: setup.sceneRoom,
-                    [this.chatRoomId]: setup.chatRoom
-                }
+        return new UserDisconnection(Object.assign(
+            {
+                roomsManager: {
+                    createdInstances: {
+                        [ActiveSessionsBuilder.GAME_ROOM_ID]: setup.gameRoom,
+                        [ActiveSessionsBuilder.SCENE_ROOM_ID]: setup.sceneRoom,
+                        [this.chatRoomId]: setup.chatRoom
+                    }
+                },
+                activePlayers: setup.activePlayers,
+                disconnectUsersOnServerChange: true,
+                serverInstanceId: 'chat-test-instance'
             },
-            activePlayers: setup.activePlayers,
-            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, '')
-        });
+            ServerMessengerPropsBuilder.create('', {}, '', GameConst.ROUTE_PATHS.DISCONNECT_USER)
+        ));
     }
 
     async testEveryRoomOfTheUserIsDisconnectedIncludingTheChat()
