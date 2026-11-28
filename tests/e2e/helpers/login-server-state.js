@@ -6,9 +6,9 @@
  * only monitored), the created rooms, the rooms availability seen by the game room, the rooms origin validation, the
  * other servers of a multi-server setup (with a route answering an error and a route answering only after three times
  * the disconnection request timeout, both counting their requests), the disconnection of the users on a server change
- * switched off or on (restored by the reset), the tokens signed over the given values (the
- * disconnection and the server status ones) and the ServersSignedRequestsState ones. The reset runs with the
- * SecurityState one before every test.
+ * switched off or on (restored by the reset), the disconnect message another server sends to this one for a username
+ * (signed until the given expiration), the tokens signed over the given values (the server status ones) and the
+ * ServersSignedRequestsState ones. The reset runs with the SecurityState one before every test.
  *
  */
 
@@ -25,7 +25,8 @@ class LoginServerState
     static OVERLOADED_MEMORY_LIMIT = 0.0001;
     static OTHER_SERVER_ERROR_PATH = '/api/e2e/security/other-server-error';
     static OTHER_SERVER_SILENT_PATH = '/api/e2e/security/other-server-silent';
-    static SILENT_ANSWER_MS = GameConst.DISCONNECTION.REQUEST_TIMEOUT_MS * 3;
+    static SILENT_ANSWER_MS = GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS * 3;
+    static OTHER_SERVER_INSTANCE_ID = 'e2e-other-server-instance';
     static UNKNOWN_STATE_COLUMN = 'e2e_unknown_column';
     static brokenSavePlayerIds = [];
     static guestRoomsDefaults = {};
@@ -275,19 +276,29 @@ class LoginServerState
         app.get('/api/e2e/login-server/other-server-hits', (request, response) => {
             response.json({hits: LoginServerState.otherServerHits});
         });
-        app.post('/api/e2e/login-server/disconnect-token', (request, response) => {
+        app.post('/api/e2e/login-server/disconnect-request', (request, response) => {
             let userDisconnection = serverManager.loginManager.userDisconnection;
-            response.json({
-                token: serverManager.loginManager.expiringHmacToken.generate(
-                    userDisconnection.disconnectionTokenValues(
-                        serverManager.serverToServerMessengerProps.serverSelfAddress,
-                        sc.get(request.body, 'username', ''),
-                        false,
-                        false
-                    ),
+            let serverSelfAddress = serverManager.serverToServerMessengerProps.serverSelfAddress;
+            let requestBody = userDisconnection.createRequestBody(
+                serverSelfAddress,
+                GameConst.DISCONNECTION.DISCONNECT,
+                sc.get(request.body, 'username', ''),
+                {senderInstanceId: LoginServerState.OTHER_SERVER_INSTANCE_ID}
+            );
+            if(requestBody){
+                requestBody.token = serverManager.loginManager.expiringHmacToken.generate(
+                    [
+                        userDisconnection.routePath,
+                        serverSelfAddress,
+                        requestBody.action,
+                        requestBody.targetId,
+                        requestBody.payload,
+                        requestBody.nonce
+                    ],
                     Number(sc.get(request.body, 'expiresAt', 0))
-                )
-            });
+                );
+            }
+            response.json({requestBody});
         });
         app.post('/api/e2e/login-server/signed-token', (request, response) => {
             response.json({
