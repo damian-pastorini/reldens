@@ -23,6 +23,7 @@ const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
 const { GameConst } = require('../../../lib/game/constants');
+const { sc } = require('@reldens/utils');
 const { ObjectsConst } = require('../../../lib/objects/constants');
 
 class CombatSkillCasting
@@ -253,8 +254,15 @@ class CombatSkillCasting
     {
         await CombatSkillCasting.clickWhenReady(page, context, skillKey);
         await expect.poll(
-            async () => (await CombatSkillCasting.fetchRecorded(context)).damages.length,
-            {message: skillKey+' damage must be recorded', timeout: context.timeout}
+            async () => {
+                let recorded = await CombatSkillCasting.fetchRecorded(context);
+                return expectedDamagesCount === recorded.damages.length ? expectedDamagesCount : sc.toJsonString({
+                    recorded,
+                    skill: await CombatSkillCasting.fetchSkill(context, skillKey),
+                    target: await page.evaluate(() => window.reldens.getActiveScene().player.currentTarget)
+                });
+            },
+            {message: skillKey+' damage must be recorded (else the recorded actions, skill and target)', timeout: context.timeout}
         ).toBe(expectedDamagesCount);
         return [...(await CombatSkillCasting.fetchRecorded(context)).damages].pop();
     }

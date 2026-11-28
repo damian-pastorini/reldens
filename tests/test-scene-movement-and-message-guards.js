@@ -2,12 +2,20 @@
  *
  * Reldens - Test Scene Movement And Message Guards
  *
+ * Tests the scene movement input: a dead or disabled player is stopped, a body changing scene or blocked ignores the
+ * input, the stop message stops a blocked body, the pointer move needs the tap movement and both tile values, an
+ * invalid direction is rejected, a direction moves the body at once and repeats the move every world step (the world
+ * timer step time, 1000 * world.timeStep milliseconds, ISSUE #456) and is ignored before the world steps started, a
+ * direction stopped before the first world step moves once and leaves no interval, the same direction replaces its
+ * interval, and the scene and game rooms ignore invalid messages.
+ *
  */
 
 const timersPromises = require('timers/promises');
 const { BaseTest } = require('./base-test');
 const { RoomScene } = require('../lib/rooms/server/scene');
 const { RoomGame } = require('../lib/rooms/server/game');
+const { WorldTimer } = require('../lib/world/world-timer');
 const { GameConst } = require('../lib/game/constants');
 
 class TestSceneMovementAndMessageGuards extends BaseTest
@@ -22,6 +30,7 @@ class TestSceneMovementAndMessageGuards extends BaseTest
             player_id: 7,
             isDeath: () => 'death' === movementSetup.inState,
             isDisabled: () => 'disabled' === movementSetup.inState,
+            getPrivate: () => null,
             physicalBody: {
                 isChangingScene: false,
                 isBlocked: false,
@@ -30,7 +39,21 @@ class TestSceneMovementAndMessageGuards extends BaseTest
                 stopMove: () => movementSetup.stopsCount++
             }
         };
+        movementSetup.room.worldTimer = new WorldTimer({clockInstance: {setInterval: () => 'world-steps-timer'}});
+        movementSetup.room.worldTimer.startWorldSteps(movementSetup.playerSchema.physicalBody.world);
         return movementSetup;
+    }
+
+    async testADirectionBeforeTheWorldStepsIsIgnored()
+    {
+        await this.test('a direction sent before the world steps started is ignored and moves nothing', async () => {
+            let movementSetup = this.createMovementSetup(0.04);
+            movementSetup.room.worldTimer = new WorldTimer({});
+            this.assert.deepStrictEqual(
+                await this.sendRecordingIntervalDelays(movementSetup, [{dir: GameConst.LEFT}]),
+                {results: [false], movedDirections: [], intervalDelays: []}
+            );
+        });
     }
 
     async sendMovementMessages(room, playerSchema, messages)
@@ -156,6 +179,49 @@ class TestSceneMovementAndMessageGuards extends BaseTest
             let movesAfterClear = movementSetup.movedDirections.length;
             await timersPromises.setTimeout(50);
             this.assert.strictEqual(movementSetup.movedDirections.length, movesAfterClear);
+        });
+    }
+
+    async sendRecordingIntervalDelays(movementSetup, messages)
+    {
+        let originalSetInterval = global.setInterval;
+        let intervalDelays = [];
+        global.setInterval = (callback, delay) => {
+            intervalDelays.push(delay);
+            return originalSetInterval(callback, delay);
+        };
+        let results = await this.sendMovementMessages(movementSetup.room, movementSetup.playerSchema, messages);
+        global.setInterval = originalSetInterval;
+        let movedDirections = [...movementSetup.movedDirections];
+        movementSetup.room.clearMovementIntervals(movementSetup.playerSchema.player_id);
+        return {results, movedDirections, intervalDelays};
+    }
+
+    async testADirectionMovesAtOnceAndRepeatsOncePerWorldStep()
+    {
+        await this.test('a direction moves the body at once and repeats the move once per world step (ISSUE #456)', async () => {
+            let movementSetup = this.createMovementSetup(0.04);
+            this.assert.deepStrictEqual(
+                await this.sendRecordingIntervalDelays(movementSetup, [{dir: GameConst.LEFT}]),
+                {results: [true], movedDirections: [GameConst.LEFT], intervalDelays: [40]}
+            );
+        });
+    }
+
+    async testADirectionStoppedAtOnceStillMovesTheFirstStep()
+    {
+        await this.test('a direction stopped before the first world step still moves once and leaves no interval', async () => {
+            let movementSetup = this.createMovementSetup(0.04);
+            await this.sendMovementMessages(movementSetup.room, movementSetup.playerSchema, [
+                {dir: GameConst.DOWN},
+                {act: GameConst.STOP}
+            ]);
+            let intervalsAfterStop = Object.keys(movementSetup.room.movementInterval);
+            await timersPromises.setTimeout(100);
+            this.assert.deepStrictEqual(
+                [movementSetup.movedDirections, movementSetup.stopsCount, intervalsAfterStop],
+                [[GameConst.DOWN], 1, []]
+            );
         });
     }
 

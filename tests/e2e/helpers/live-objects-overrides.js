@@ -8,8 +8,10 @@
  * live body (the movement speed of a player or an object) or of the scene room itself (a flag read when the room was
  * created, like the players last state handler), make the next calls of a method (of a scene room or of another live
  * server object, like the kill score subscriber) fail the way the method fails on a storage error (rejected, like the
- * stats save, or answering false, like the state save, the calls after the given failures run the method, and the calls
- * and failures done are counted per room, or calls key, and method so a spec proves the failure happened), delay every
+ * stats save, or answering false, like the state save, after the given passed calls that still run the method, like the
+ * first unit of a reward of several units, the calls after the given failures run the method, and the calls
+ * and failures done are counted per room, or calls key, and method so a spec proves the failure happened; the same for
+ * a method of a storage repository, like the rooms delete the administration panel runs), delay every
  * call of that method, hide the client of a player from the room
  * (its schema stays in the state while the room finds no client for it, like a socket gone before the leave) and
  * restore them; and dispose a live room (the stored rooms never dispose when empty), so the next player that enters it
@@ -27,6 +29,7 @@ const { ErrorManager, Logger, sc } = require('@reldens/utils');
 class LiveObjectsOverrides
 {
 
+    static ENTITY_CALLS_PREFIX = 'entity.';
     static changedProperties = {};
     static methodFailures = {};
 
@@ -130,6 +133,7 @@ class LiveObjectsOverrides
         if(!sc.isFunction(target[methodKey])){
             return {error: 'Method '+methodKey+' not found in '+behavior.callsKey+'.'};
         }
+        let passesCount = Number(sc.get(behavior, 'passesCount', 0));
         let calls = {left: behavior.failuresCount, done: 0, called: 0};
         LiveObjectsOverrides.methodFailures[behavior.callsKey+'.'+methodKey] = calls;
         let method = target[methodKey];
@@ -138,7 +142,7 @@ class LiveObjectsOverrides
             if(0 < behavior.delayMs){
                 await timersPromises.setTimeout(behavior.delayMs);
             }
-            if(0 >= calls.left){
+            if(calls.called <= passesCount || 0 >= calls.left){
                 return await method.apply(target, methodArguments);
             }
             calls.left--;
@@ -284,6 +288,24 @@ class LiveObjectsOverrides
                     }
                 )
             );
+        });
+        serverManager.app.post('/api/e2e/live-objects/entity-method-override', (request, response) => {
+            let entityKey = String(sc.get(request.body, 'entityKey', ''));
+            let repository = serverManager.dataServer.getEntity(entityKey);
+            if(!repository){
+                return response.json({error: 'Entity '+entityKey+' not found.'});
+            }
+            response.json(LiveObjectsOverrides.overrideMethod(
+                sc.get(request.body, 'group', ''),
+                repository,
+                String(sc.get(request.body, 'methodKey', '')),
+                {
+                    callsKey: LiveObjectsOverrides.ENTITY_CALLS_PREFIX+entityKey,
+                    delayMs: 0,
+                    failuresCount: Number(sc.get(request.body, 'failuresCount', 0)),
+                    rejects: true === sc.get(request.body, 'rejects', false)
+                }
+            ));
         });
         serverManager.app.get('/api/e2e/live-objects/room-method-failures', (request, response) => {
             response.json(sc.get(

@@ -6,7 +6,9 @@
  * point to the sample room without allowGuest (the first house floor) accepted with the sample
  * server/players/guestUser/allowOnRooms on and rejected with the chat error line once the guest rooms are computed with
  * it off, the scene
- * change with the server generated password, the random spawn, a guest used from two tabs, and the stale guests removed
+ * change with the server generated password, a guest whose session ended (its client closed) refused when it joins a
+ * scene again as a scene change with its valid password and no failed login counted (ISSUE #446, with every room on the
+ * login server, so no other server can confirm it), the random spawn, a guest used from two tabs, and the stale guests removed
  * or kept by the cleanup. The stale rows are seeded with a date older than the cleanup limit used by the test, so only
  * those rows can be selected.
  *
@@ -25,6 +27,7 @@ const { SecurityApi } = require('./helpers/security-api');
 const { ChatSteps } = require('./helpers/chat-steps');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { ChangePointsSteps } = require('./helpers/change-points-steps');
+const { GameRoomJoin } = require('./helpers/game-room-join');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
@@ -56,7 +59,9 @@ class TestAuthenticationGuests
         let guest = await CharacterCreation.enterGuestInGame(page, longRun, Login.TOWN_ROOM_NAME);
         await Login.loginToSelection(secondPage, guest.username, guest.password, longRun);
         await SecurityApi.request(gameConfig, 'POST', '/api/e2e/login-server/guest-rooms-empty', {});
-        await secondPage.click(Selectors.characterSelect.selectorSubmit);
+        await secondPage.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await expect(secondPage.locator(GameConst.SELECTORS.PLAYER_SELECTION_ERRORS)).not.toBeEmpty({
             timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
         });
@@ -163,6 +168,32 @@ class TestAuthenticationGuests
             'The guest must change the scene'
         ).toBe(Login.FOREST_ROOM_NAME);
         await screenshots.capture(page, 'guest-scene-change');
+    }
+
+    static async runEndedSessionSceneJoinTest(page, gameConfig, longRun)
+    {
+        let client = await Login.openClientPage(page, gameConfig);
+        let guest = await CharacterCreation.enterGuestInGame(client.clientPage, longRun, Login.TOWN_ROOM_NAME);
+        let [guestPlayer] = await CharacterCreation.loadPlayers(gameConfig, guest.playerName);
+        await client.clientContext.close();
+        await expect.poll(
+            async () => await LoginServerApi.fetchActiveSessionsCount(gameConfig, guest.username),
+            {message: 'The guest session ends', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toBe(0);
+        expect(
+            (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', {username: guest.username})).length,
+            'The guest account is kept'
+        ).toBe(1);
+        let joinResult = await GameRoomJoin.join(
+            gameConfig,
+            {username: guest.username, password: guest.password, isSceneChange: true, selectedPlayer: guestPlayer.id},
+            GameRoomJoin.IPV4_HOST,
+            Login.TOWN_ROOM_NAME
+        );
+        expect(
+            {joinResult, failedLogins: (await SecurityApi.fetchIdentityState(gameConfig, guest.username)).hits},
+            'The ended guest session can not join a scene again with its valid password'
+        ).toEqual({joinResult: GameRoomJoin.REJECTED, failedLogins: 0});
     }
 
     static async runRandomSpawnTest(page, screenshots, gameConfig, longRun)
@@ -291,6 +322,9 @@ class TestAuthenticationGuests
             });
             test('guest changes the scene with the generated password', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationGuests.runSceneChangeTest(page, screenshots, gameConfig, longRun);
+            });
+            test('an ended guest session joining a scene again as a scene change is refused', async ({ page, gameConfig, longRun }) => {
+                await TestAuthenticationGuests.runEndedSessionSceneJoinTest(page, gameConfig, longRun);
             });
             test('guest spawns in a random place', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationGuests.runRandomSpawnTest(page, screenshots, gameConfig, longRun);

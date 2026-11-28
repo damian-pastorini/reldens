@@ -10,7 +10,7 @@
  * --skip-servers=server-2 flag avoids creating an instance and --skip-db-reset=server-1,server-2 avoids the database
  * reset of an instance (a database shared by several instances is reset once; a server with its own database in a
  * "servers" entry is reset only when its dbName is also listed, --db-reset=<first dbName>,<second dbName>). --instance=<name> runs an isolated
- * suite (E2eInstance): its own database (it must exist, confirmed with --db-reset=<its dbName>), its own ports
+ * suite (E2eInstance): its own database (created when missing by the reset confirmed with --db-reset=<its dbName>), its own ports
  * and its own results folder (test-results/instances/<name>), so it runs at the same time as the default run. The
  * --clean-output of an instance removes only its folder and the one of the default run keeps every instance folder.
  * Supports --long, --filter, --port, --clean-output, --db-reset, --skip-servers, --skip-db-reset and --instance flags.

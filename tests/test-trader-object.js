@@ -163,18 +163,40 @@ class TestTraderObject extends BaseTest
             let sellerInventory = seller.playerSchema.inventory.manager;
             let playerId = seller.playerSchema.player_id;
             let lockedWhileTrading = sellerInventory.locked;
-            let cancelledWithoutObjects = objectsManager.cancelPlayerTrades(playerId);
+            let cancelledWithoutObjects = objectsManager.cancelPlayerTrades(playerId, false);
             objectsManager.roomObjects = {[this.traderId]: trader};
             this.assert.deepStrictEqual(
                 [
                     lockedWhileTrading,
                     cancelledWithoutObjects,
-                    objectsManager.cancelPlayerTrades(playerId),
+                    objectsManager.cancelPlayerTrades(playerId, false),
                     sellerInventory.locked,
                     sc.hasOwn(trader.tradesInProgress, playerId),
                     trader.cancelPlayerTrade(playerId)
                 ],
                 [true, false, true, false, false, false]
+            );
+        });
+    }
+
+    async testACancelledTradeClosesTheTraderUiOfItsClient()
+    {
+        await this.test('a cancelled trade closes the trader UI of the given client, a player without trade gets nothing', async () => {
+            let trader = await this.createRequiredRewardTrader({axe: 1});
+            let seller = await this.createSeller();
+            await this.sendSellMessage(trader, seller, {});
+            let objectsManager = new ObjectsManager({config: {}, events: {}, dataServer: {}});
+            objectsManager.roomObjects = {[this.traderId]: trader};
+            let sentMessages = [];
+            let client = {send: (type, message) => sentMessages.push(message)};
+            let playerId = seller.playerSchema.player_id;
+            let results = [
+                objectsManager.cancelPlayerTrades(playerId, client),
+                objectsManager.cancelPlayerTrades(playerId, client)
+            ];
+            this.assert.deepStrictEqual(
+                [results, sentMessages],
+                [[true, true], [{act: GameConst.CLOSE_UI_ACTION, id: trader.id}]]
             );
         });
     }

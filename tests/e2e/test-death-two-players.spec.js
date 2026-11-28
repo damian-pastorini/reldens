@@ -18,13 +18,11 @@ const { DeathReviveShowcase } = require('./helpers/death-revive-showcase');
 const { DeathResurrectionAdSteps } = require('./helpers/death-resurrection-ad-steps');
 const { DeathObserverSteps } = require('./helpers/death-observer-steps');
 const { AdMessagesPlayer } = require('./helpers/ad-messages-player');
-const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TestCombatDeath } = require('./helpers/test-combat-death');
 const { Login } = require('./helpers/login');
 const { Navigation } = require('./helpers/navigation');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
-const { ActionsConst } = require('../../lib/actions/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -55,15 +53,7 @@ class TestDeathTwoPlayers
     static async runOneAdWatchedTest(context)
     {
         let resurrectionAd = await DeathResurrectionAdSteps.enableResurrectionAd(context);
-        await AdMessagesPlayer.enableAd(
-            context.gameConfig,
-            context.e2eGroup,
-            await E2eSeedAndRestoreApi.fetchConfigValue(
-                context.gameConfig,
-                ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY
-            ),
-            context.gameConfig.e2ePlayerName2
-        );
+        await DeathResurrectionAdSteps.enableResurrectionAd(context, context.gameConfig.e2ePlayerName2);
         let restorationItemKey = await DeathReviveSteps.prepareDeath(context, {});
         let secondContext = await DeathObserverSteps.loginBothInForest(context);
         let adTimeout = TimeConstants.forLongRun(TimeConstants.UI_OPEN, context.longRun);

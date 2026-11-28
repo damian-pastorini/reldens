@@ -229,7 +229,10 @@ class TestDeathDropsSelection
             async () => await E2eSeedAndRestoreApi.fetchInventoryQuantity(gameConfig, secondPlayerConfig.e2ePlayerName, axeKey),
             {message: 'The second player stores the picked axe', timeout: TimeConstants.SERVER_RESPONSE}
         ).toBe(secondAxeQuantity + 1);
-        expect((await DeathDropSteps.fetchRoomDrops(gameConfig)).map(drop => drop.id), 'The drop leaves the room').not.toContain(dropId);
+        await expect.poll(
+            async () => (await DeathDropSteps.fetchRoomDrops(gameConfig)).map(drop => drop.id),
+            {message: 'The drop leaves the room once its item is stored', timeout: TimeConstants.SERVER_RESPONSE}
+        ).not.toContain(dropId);
         for(let clientPage of [context.page, context.secondPage]){
             await expect.poll(
                 async () => (await RoomMessagesRecorder.fetchMessages(clientPage, ObjectsConst.DROPS.REMOVE)).map(message => message.id),

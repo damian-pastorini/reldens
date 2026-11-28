@@ -8,8 +8,10 @@
  * returns the translated not found error to the sender only; a message to oneself reaches the same client twice; an
  * "@name" with no text is not sent and the input is cleared; a tampered message reaches only the "t" recipient, one
  * with no "t" or with no space after the name reaches nobody and stores no row; a third player in the scene never sees
- * the content over the sender; and a recipient that
- * reloaded and logged in again gets one copy.
+ * the content over the sender; a forged "t" recipient with characters a player name can not have (the bold payload of
+ * tests/fixtures/markup-injection-payloads.json, "<>") is never relayed to the other servers and gets the not found
+ * line and row like a valid unknown name, with no element created; and a recipient that reloaded and logged in again
+ * gets one copy.
  *
  */
 
@@ -21,6 +23,8 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ChatConst } = require('../../lib/chat/constants');
 const ChatTranslations = require('../../lib/chat/client/snippets/en_US');
+const MarkupInjectionPayloads = require('../fixtures/markup-injection-payloads.json');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -142,6 +146,51 @@ class TestChatPrivate
             .toEqual([]);
     }
 
+    static async fetchStoredNotFoundNames(gameConfig)
+    {
+        return (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'chat', {
+            player_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName}),
+            message_type: ChatConst.TYPES.ERROR
+        })).map(row => sc.get(sc.toJson(row.message, {}), ChatConst.MESSAGE.DATA.PLAYER_NAME, ''));
+    }
+
+    static async fetchNotFoundNames(page)
+    {
+        return (await ChatSteps.fetchChat(page)).filter(message => ChatConst.TYPES.ERROR === message[ChatConst.TYPES.KEY]).map(
+            message => sc.get(message[ChatConst.MESSAGE.DATA.KEY], ChatConst.MESSAGE.DATA.PLAYER_NAME, '')
+        );
+    }
+
+    static async runForgedRecipientTest(context)
+    {
+        await TestChatPrivate.enter(context);
+        await ChatSteps.openChat(context.page);
+        await ChatSteps.recordChat(context.page);
+        let storedNames = await TestChatPrivate.fetchStoredNotFoundNames(context.gameConfig);
+        let unknownName = 'e2eNobodyHere';
+        for(let recipient of [MarkupInjectionPayloads.boldWithId, '<>', unknownName]){
+            await ChatSteps.sendRaw(context.page, {
+                [ChatConst.MESSAGE.KEY]: TestChatPrivate.privateText(context.gameConfig.e2ePlayerName2, 'e2e-forged-recipient'),
+                [ChatConst.CHAT_TO]: recipient
+            }, true);
+            await context.page.waitForTimeout(TestChatPrivate.COOLDOWN_MS);
+        }
+        let notFoundNames = [MarkupInjectionPayloads.boldWithId, '<>', unknownName];
+        await TestChatPrivate.expectNotFoundNames(context.page, notFoundNames);
+        await expect(context.page.locator('#'+MarkupInjectionPayloads.boldWithIdElementId), 'No element is created').toHaveCount(0);
+        expect(await TestChatPrivate.fetchStoredNotFoundNames(context.gameConfig), 'Every not found line is stored')
+            .toEqual([...storedNames, ...notFoundNames]);
+        expect(await ChatSteps.fetchPlayersChat(context.secondPage), 'Nothing is delivered').toEqual([]);
+    }
+
+    static async expectNotFoundNames(page, expectedNames)
+    {
+        await expect.poll(
+            async () => await TestChatPrivate.fetchNotFoundNames(page),
+            {message: 'The markup, "<>" and valid unknown recipients are never relayed and get the not found line', timeout: TimeConstants.SERVER_RESPONSE}
+        ).toEqual(expectedNames);
+    }
+
     static async runReloginTest(context)
     {
         await TestChatPrivate.enter(context);
@@ -172,6 +221,9 @@ class TestChatPrivate
             });
             test('tampered private messages reach only the "t" recipient or nobody', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatPrivate.runTamperedTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('a forged recipient with markup or invalid characters is never relayed and gets the not found line like a valid unknown one', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestChatPrivate.runForgedRecipientTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('recipient logged in again gets one copy', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatPrivate.runReloginTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

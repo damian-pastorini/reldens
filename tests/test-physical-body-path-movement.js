@@ -2,7 +2,8 @@
  *
  * Reldens - Test Physical Body Path Movement
  *
- * Tests the path movement of a body on a real path finder grid: a target on a blocked tile or a body without path
+ * Tests the path movement of a body on a real path finder grid: a diagonal path step counts a retry only when the body
+ * made no progress since the last world step, a target on a blocked tile or a body without path
  * finder stops the body and restores its collision group, the walk back to the original tile with the objects
  * collisions disabled or not on return and the group restored on arrival, a chase with the objects collisions disabled
  * or not on chase, the return delay, the movement area check, a dead or disabled body not following its path, the
@@ -44,6 +45,25 @@ class TestPhysicalBodyPathMovement extends RandomMovementBaseTest
         body.disableObjectsCollisionsOnReturn = disableObjectsCollisionsOnReturn;
         body.moveToOriginalPointWithDelay = moveToOriginalPointWithDelay;
         return body;
+    }
+
+    async testADiagonalStepCountsARetryOnlyWithoutProgress()
+    {
+        await this.test('a diagonal path step counts a retry only when the body made no progress since the last step', async () => {
+            let retries = [];
+            for(let stepProgress of [5, 0]){
+                let body = this.bodyBuilder.buildWithShape(this.objectGroup);
+                body.updateCurrentPoints();
+                let target = [body.currentCol + 1, body.currentRow + 1];
+                body.autoMoving = [target];
+                body.speedToNextRetryCounter = {col: target[0], row: target[1], retries: 0};
+                body.velocity = [127, 127];
+                body.previousPosition = [body.position[0] - stepProgress, body.position[1] - stepProgress];
+                body.speedToNext();
+                retries.push(body.speedToNextRetryCounter.retries);
+            }
+            this.assert.deepStrictEqual(retries, [0, 1]);
+        });
     }
 
     async testATargetOnABlockedTileStopsTheBody()

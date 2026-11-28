@@ -26,7 +26,8 @@ class TeamsProbe
             let team = teamsPlugin.teams[ownerId];
             teams[ownerId] = {
                 ownerId: Number(team.owner.player_id),
-                playersIds: Object.keys(team.players).map(Number).sort((idA, idB) => idA - idB)
+                playersIds: Object.keys(Object.assign({}, team.players, team.remotePlayers)).map(Number)
+                    .sort((idA, idB) => idA - idB)
             };
         }
         let pendingInvites = {};

@@ -21,6 +21,8 @@ const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { EnemyAggressionSteps } = require('./helpers/enemy-aggression-steps');
 const { Navigation } = require('./helpers/navigation');
 const { Phaser } = require('./helpers/phaser');
+const { RoomMovementApi } = require('./helpers/room-movement-api');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -108,9 +110,13 @@ class TestEnemyBattleStart
     {
         let walked = await TestEnemyBattleStart.walkIntoEnemy(page, gameConfig, e2eGroup, longRun, {});
         await expect.poll(
-            async () => await CombatSkillCasting.fetchEnemyInBattle(walked.context),
-            {message: 'The collision starts the battle', timeout: walked.context.timeout}
-        ).toBe(1);
+            async () => 1 === await CombatSkillCasting.fetchEnemyInBattle(walked.context) ? 'battle' : sc.toJsonString({
+                player: await RoomMovementApi.fetchPlayer(gameConfig, walked.context.roomName, walked.context.playerName),
+                enemy: await CombatSkillCasting.fetchEnemySnapshot(walked.context),
+                enemyPlacedAt: walked.enemyPosition
+            }),
+            {message: 'The collision starts the battle (else the player and enemy server states)', timeout: walked.context.timeout}
+        ).toBe('battle');
         await screenshots.capture(page, 'collision-started');
     }
 
@@ -120,9 +126,11 @@ class TestEnemyBattleStart
             startBattleOnHit: false
         });
         let playerPosition = await Phaser.getPlayerServerPosition(page);
+        let enemy = await CombatSkillCasting.fetchEnemySnapshot(walked.context);
         expect(
-            Math.hypot(playerPosition.x - walked.enemyPosition.x, playerPosition.y - walked.enemyPosition.y),
-            'The enemy body must stop the player walk'
+            Math.hypot(playerPosition.x - enemy.x, playerPosition.y - enemy.y),
+            'The enemy body must stop the player walk (the player, the enemy and the enemy placed positions): '
+                +sc.toJsonString([playerPosition, [enemy.x, enemy.y], walked.enemyPosition])
         ).toBeLessThan(TestEnemyBattleStart.TOUCHING_TILES * Navigation.TILE_SIZE);
         await EnemyAggressionSteps.expectNoBattle(page, walked.context, 'startBattleOnHit off ignores the collision');
         await screenshots.capture(page, 'collision-ignored');

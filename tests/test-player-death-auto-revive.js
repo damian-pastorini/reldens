@@ -7,6 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
 const { ActionsConst } = require('../lib/actions/constants');
+const { AdsConst } = require('../lib/ads/constants');
 const { GameConst } = require('../lib/game/constants');
 const { once } = require('events');
 const timersPromises = require('timers/promises');
@@ -65,8 +66,14 @@ class TestPlayerDeathAutoRevive extends BaseTest
                 this.assert.strictEqual(setup.revivedPlayers, 0);
             }
             let battleReviveSetup = await this.deathBuilder.createRelocatorSetup({[this.paths.TELEPORT_ENABLED]: false});
+            let battleDeathTime = Date.now();
             this.assert.strictEqual(this.deathBuilder.startDeath(battleReviveSetup), false);
-            this.assert.strictEqual(battleReviveSetup.playerSchema.getPrivate(this.privateData.REVIVE_AT), null);
+            let battleReviveAt = battleReviveSetup.playerSchema.getPrivate(this.privateData.REVIVE_AT);
+            this.assert.strictEqual(battleDeathTime + 60000 <= battleReviveAt && battleReviveAt <= Date.now() + 60000, true);
+            battleReviveSetup.event.reviveDelayMs = 5000;
+            this.deathBuilder.startDeath(battleReviveSetup);
+            let leftReviveAt = battleReviveSetup.playerSchema.getPrivate(this.privateData.REVIVE_AT);
+            this.assert.strictEqual(leftReviveAt <= Date.now() + 5000 && Date.now() + 4000 < leftReviveAt, true);
         });
     }
 
@@ -117,11 +124,10 @@ class TestPlayerDeathAutoRevive extends BaseTest
     async testScheduledReviveTimeTellsTheReviveReady()
     {
         await this.test('the scheduled game over time of the disabled auto revive tells the revive ready', async () => {
-            let setup = await this.deathBuilder.createRelocatorSetup(
-                Object.assign({[this.paths.GAME_OVER_TIME_OUT]: 1}, this.manualRevive)
-            );
+            let setup = await this.deathBuilder.createRelocatorSetup(this.manualRevive);
+            setup.event.reviveDelayMs = 1;
             let reviveReadyEvent = once(setup.eventsEmitter, this.reviveReadyEventKey);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             this.assert.strictEqual((await reviveReadyEvent).shift(), setup.event);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.privateData.REVIVE_READY), true);
             this.assert.strictEqual(setup.revivedPlayers, 0);
@@ -218,11 +224,10 @@ class TestPlayerDeathAutoRevive extends BaseTest
                 setup.eventsEmitter.emit('sceneChange', data);
             };
             let townRevive = once(setup.eventsEmitter, 'sceneChange');
-            setup.playerSchema.setPrivate(this.privateData.RESURRECTION_AD_REQUESTED, Date.now());
-            setup.playerSchema.setPrivate(this.privateData.RESURRECTION_AD_STARTED, Date.now());
+            setup.playerSchema.setPrivate(this.privateData.REVIVE_HOLD_UNTIL, Date.now() + AdsConst.VIDEOS_MAXIMUM_DURATION);
             this.assert.strictEqual(await setup.relocator.requestRevive(setup.playerSchema, setup.room), true);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
-            setup.playerSchema.setPrivate(this.privateData.RESURRECTION_AD_FAILED, true);
+            setup.playerSchema.setPrivate(this.privateData.REVIVE_HOLD_UNTIL, 0);
             await townRevive;
             this.assert.deepStrictEqual(setup.sceneChanges, this.townChange);
             this.assert.deepStrictEqual(setup.client.sentMessages, [this.revivedMessage]);

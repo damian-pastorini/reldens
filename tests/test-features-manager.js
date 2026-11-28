@@ -28,7 +28,8 @@ class TestFeaturesManager extends BaseTest
                 return storedRows;
             }})},
             config: {},
-            themeManager: {}
+            themeManager: {},
+            serverToServerMessengerProps: {}
         });
         featuresManager.availableFeatures = {
             chat: class {

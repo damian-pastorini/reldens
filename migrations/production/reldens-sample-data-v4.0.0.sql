@@ -917,7 +917,7 @@ REPLACE INTO `skills_skill_animations` (`id`, `skill_id`, `key`, `classKey`, `an
 REPLACE INTO `skills_skill_attack` (`id`, `skill_id`, `affectedProperty`, `allowEffectBelowZero`, `hitDamage`, `applyDirectDamage`, `attackProperties`, `defenseProperties`, `aimProperties`, `dodgeProperties`, `dodgeFullEnabled`, `dodgeOverAimSuccess`, `damageAffected`, `criticalAffected`) VALUES
 	(1, 1, 'stats/hp', 0, 3, 0, 'stats/atk,stats/speed', 'stats/def,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
 	(2, 2, 'stats/hp', 0, 5, 0, 'stats/atk,stats/speed', 'stats/def,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
-	(3, 3, 'stats/hp', 0, 7, 0, 'stats/mgk-atk,stats/speed', 'stats/mgk-def,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
+	(3, 3, 'stats/hp', 0, 7, 0, 'stats/mAtk,stats/speed', 'stats/mDef,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
 	(4, 5, 'stats/hp', 0, 9, 0, 'stats/atk,stats/speed', 'stats/def,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
 	(5, 6, 'stats/hp', 0, 14, 0, 'stats/atk,stats/speed', 'stats/def,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),
 	(6, 7, 'stats/hp', 0, 20, 0, 'stats/atk,stats/speed', 'stats/def,stats/speed', 'stats/aim', 'stats/dodge', 0, 1, 0, 0),

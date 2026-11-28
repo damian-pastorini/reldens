@@ -3,12 +3,11 @@
  * Reldens - Test CrazyGames Banners Handler
  *
  * Tests the CrazyGames BannersHandler with a stubbed SDK, game DOM and events manager: a full time banner of a valid
- * size is requested in its container and placed with its styles (its configured position is replaced, ISSUE #402, so
- * the position is not checked); a UI banner is requested only on opening its referenced UI or any UI with ANY, hidden
- * on the UI close, reused inside the refresh time and regenerated after it; a banner without banner data, UI
- * references or a valid size is not created (a UI banner that fails to be created breaks the next close and open of
- * its UI, ISSUE #401, so only the creation is checked); a responsive banner uses requestResponsiveBanner; and an SDK
- * request error answers false without throwing.
+ * size is requested in its container and placed with its styles and its configured position (absolute when none is
+ * configured); a UI banner is requested only on opening its referenced UI or any UI with ANY, hidden on the UI close,
+ * reused inside the refresh time and regenerated after it; a banner without banner data, UI references or a valid
+ * size is not created, and a UI banner that could not be created is not stored, so its UI close and reopen keep
+ * working; a responsive banner uses requestResponsiveBanner; and an SDK request error answers false without throwing.
  *
  */
 
@@ -32,16 +31,15 @@ class TestCrazyGamesBannersHandler extends BaseTest
         setup.requests = [];
         setup.appended = [];
         setup.listeners = {};
-        let gameManager = {
-            gameDom: {
-                createElement: (tagName, elementId) => this.createBannerElement(elementId),
-                getElement: () => ({append: (element) => setup.appended.push(element)}),
-                setElementStyles: (element, styles) => element.styles = styles
-            },
-            events: {on: (eventName, callback) => setup.listeners[eventName] = callback}
-        };
         return new BannersHandler({
-            gameManager,
+            gameManager: {
+                gameDom: {
+                    createElement: (tagName, elementId) => this.createBannerElement(elementId),
+                    getElement: () => ({append: (element) => setup.appended.push(element)}),
+                    setElementStyles: (element, styles) => element.styles = styles
+                },
+                events: {on: (eventName, callback) => setup.listeners[eventName] = callback}
+            },
             metaData: {sdkBannerRefreshTime: sc.get(setup, 'refreshTime', 60000)},
             sdk: {banner: {
                 requestBanner: async (options) => {
@@ -57,14 +55,10 @@ class TestCrazyGamesBannersHandler extends BaseTest
         });
     }
 
-    async activateUiBanner(setup, uiReferenceIds)
+    async activateUiBanner(setup, uiReferenceIds, styles = {width: '300', height: '250', position: null})
     {
         let handler = this.createHandler(setup);
-        let activated = await handler.activateAdBanner({
-            id: 'banner-ui',
-            bannerData: {uiReferenceIds},
-            styles: {width: '300', height: '250'}
-        });
+        let activated = await handler.activateAdBanner({id: 'banner-ui', bannerData: {uiReferenceIds}, styles});
         this.assert.strictEqual(activated, undefined);
         return handler;
     }
@@ -76,13 +70,20 @@ class TestCrazyGamesBannersHandler extends BaseTest
             let banner = await this.createHandler(setup).activateAdBanner({
                 id: 'banner-full',
                 bannerData: {fullTime: true},
-                styles: {width: '728', height: '90', top: '10px', left: '20px'}
+                styles: {width: '728', height: '90', top: '10px', left: '20px', position: 'fixed'}
             });
             this.assert.deepStrictEqual(setup.requests, [{id: 'banner-container-banner-full', width: '728', height: '90'}]);
             this.assert.deepStrictEqual(setup.appended, [banner]);
             this.assert.deepStrictEqual(
-                [banner.classes, banner.styles['z-index'], banner.styles.width, banner.styles.height, banner.styles.top],
-                [['ads-banner-container'], 200000000, '728', '90', '10px']
+                [
+                    banner.classes,
+                    banner.styles['z-index'],
+                    banner.styles.width,
+                    banner.styles.height,
+                    banner.styles.top,
+                    banner.styles.position
+                ],
+                [['ads-banner-container'], 200000000, '728', '90', '10px', 'fixed']
             );
             this.assert.strictEqual(banner.styles.left, '20px');
         });
@@ -113,7 +114,10 @@ class TestCrazyGamesBannersHandler extends BaseTest
             await setup.listeners['reldens.openUI'](openEvent);
             let firstBanner = handler.activeBanners['banner-ui-inventory'].banner;
             await setup.listeners['reldens.closeUI'](openEvent);
-            this.assert.deepStrictEqual(firstBanner.classes, ['ads-banner-container', 'hidden']);
+            this.assert.deepStrictEqual(
+                [firstBanner.classes, firstBanner.styles.position],
+                [['ads-banner-container', 'hidden'], 'absolute']
+            );
             await setup.listeners['reldens.openUI'](openEvent);
             this.assert.deepStrictEqual([firstBanner.classes, setup.requests.length], [['ads-banner-container'], 1]);
             let refreshSetup = {refreshTime: -1};
@@ -144,6 +148,23 @@ class TestCrazyGamesBannersHandler extends BaseTest
         });
     }
 
+    async testAUiBannerNotCreatedKeepsItsUiCloseAndReopenWorking()
+    {
+        await this.test('a UI banner that could not be created is not stored and its UI close and reopen keep working', async () => {
+            let setup = {};
+            let handler = await this.activateUiBanner(setup, ['inventory'], {width: '100', height: '100'});
+            let openEvent = {openButton: {id: 'inventory'}};
+            await setup.listeners['reldens.openUI'](openEvent);
+            let isStoredAfterOpen = sc.hasOwn(handler.activeBanners, 'banner-ui-inventory');
+            await setup.listeners['reldens.closeUI'](openEvent);
+            await setup.listeners['reldens.openUI'](openEvent);
+            this.assert.deepStrictEqual(
+                [isStoredAfterOpen, handler.activeBanners, setup.requests, setup.appended],
+                [false, {}, [], []]
+            );
+        });
+    }
+
     async testAResponsiveBannerIsRequestedThroughTheResponsiveRequest()
     {
         await this.test('a responsive banner is requested through requestResponsiveBanner with its container', async () => {
@@ -155,8 +176,8 @@ class TestCrazyGamesBannersHandler extends BaseTest
             });
             this.assert.deepStrictEqual(setup.requests, ['responsive-banner-container-banner-responsive']);
             this.assert.deepStrictEqual(
-                [setup.appended, banner.classes, sc.hasOwn(banner.styles, 'width'), banner.styles.top],
-                [[banner], ['ads-banner-container'], false, '5px']
+                [setup.appended, banner.classes, sc.hasOwn(banner.styles, 'width'), banner.styles.top, banner.styles.position],
+                [[banner], ['ads-banner-container'], false, '5px', 'absolute']
             );
         });
     }

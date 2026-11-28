@@ -2,10 +2,15 @@
  *
  * Reldens - Test Pick Up Object
  *
+ * Tests the drop pick up: overlapping pick ups give the item once, a locked inventory, a missing or failed item load
+ * and an object with no item keep the drop, and a drop hit with the teams feature disabled (ISSUE #300) is picked up by
+ * the player that hit it.
+ *
  */
 
 const { BaseTest } = require('./base-test');
 const { PickUpObject } = require('../lib/rewards/server/pick-up-object');
+const { DropObject } = require('../lib/objects/server/object/type/drop-object');
 const timersPromises = require('timers/promises');
 
 class TestPickUpObject extends BaseTest
@@ -96,6 +101,30 @@ class TestPickUpObject extends BaseTest
                 this.assert.deepStrictEqual(setup.removedObjects, []);
                 this.assert.strictEqual(setup.dropObject.isPickedUp, false);
             }
+        });
+    }
+
+    async testADropHitWithTheTeamsFeatureDisabledIsPickedUp()
+    {
+        await this.test('a drop hit with the teams feature disabled is picked up by the player that hit it', async () => {
+            let setup = this.createPickUpSetup();
+            let dropObject = new DropObject({
+                events: {},
+                config: {get: () => 32, getWithoutLogs: setup.room.config.getWithoutLogs},
+                dataServer: {},
+                client_key: this.itemModel.key,
+                id: setup.dropObject.id
+            });
+            dropObject.itemId = this.itemModel.id;
+            dropObject.autoPickUpOnHit = true;
+            setup.playerSchema.currentTeam = 35;
+            setup.room.featuresManager = {featuresList: {rewards: {package: {}}}};
+            setup.room.playerBySessionIdFromState = (sessionId) => 'session-7' === sessionId ? setup.playerSchema : false;
+            let pickUpResult = await dropObject.onHit({bodyA: {playerId: 'session-7'}, bodyB: {}, room: setup.room});
+            this.assert.deepStrictEqual(
+                [pickUpResult, setup.addedItems, setup.removedObjects],
+                [true, [this.itemModel.key], [setup.dropObject.id]]
+            );
         });
     }
 

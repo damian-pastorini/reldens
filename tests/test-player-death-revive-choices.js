@@ -116,10 +116,10 @@ class TestPlayerDeathReviveChoices extends BaseTest
 
     async testResurrectionAdRewardUsesTheRestorationItem()
     {
-        await this.test('the resurrection ad reward uses the restoration item without asking', async () => {
+        await this.test('the resurrection ad reward given by the ads gate uses the restoration item without asking', async () => {
             let setup = await this.deathBuilder.createNotifierSetup(this.askedItem, {restorationQty: 1});
             this.deathBuilder.startDeath(setup);
-            this.assert.strictEqual(setup.notifier.onAfterGiveAdRewardItem(setup.rewardEvent), true);
+            setup.gate.chooseRestorationItemUse(setup.rewardEvent);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.choicePath), this.choices.USE);
             this.assert.strictEqual(setup.relocator.isRestorationItemQuestionOpen(setup.playerSchema), false);
             this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);

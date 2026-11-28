@@ -5,7 +5,8 @@
  * Tests how a placed forest enemy battle goes on and ends (CombatSkillCasting places it next to the player with its
  * aggression held and disables every other enemy, the server starts the enemy battle in place): a hit on a player that
  * keeps life lowers the HUD, live and stored life and the enemy keeps hitting; a hit that kills the player ends the
- * enemy battle, the enemy walks back to its origin after the chase and hits no more; the player revived next to the
+ * enemy battle (the enemy actions limited for the group to its own skill, so the counted hits are never those of the
+ * default skill it picks at random), the enemy walks back to its origin after the chase and hits no more; the player revived next to the
  * enemy that killed it (with its aggression off by a 1 pixel "interactionRadio") sees the default config game over box
  * (the title, the auto revive wait text and the revive in place message, no buttons, the forest group keeps the stored
  * death config), revives where it died with exactly its base life and the enemy waits until the player hits it; a
@@ -31,6 +32,7 @@ const { DeathReviveSteps } = require('./helpers/death-revive-steps');
 const { Selectors } = require('./selectors');
 const { ActionsConst } = require('../../lib/actions/constants');
 const { GameConst } = require('../../lib/game/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -108,6 +110,9 @@ class TestEnemyBattleEnd
     {
         let chase = await EnemyAggressionSteps.prepareChase(page, gameConfig, longRun);
         let context = chase.context;
+        await GameplayE2eStateApi.changeEnemyBattle(gameConfig, e2eGroup, context.roomName, context.bodyKey, {
+            actionsKeys: [chase.enemySkill.key]
+        }, false);
         await RoomMessagesRecorder.start(page);
         await TestEnemyBattleEnd.killPlayer(page, context);
         expect(
@@ -137,12 +142,23 @@ class TestEnemyBattleEnd
         test.setTimeout(gameOverTimeOut + context.timeout * 6);
         await TestEnemyBattleEnd.killPlayer(page, context);
         let deadPlayer = await TestEnemyBattleEnd.fetchPlayer(context);
+        let enemyAtDeath = await CombatSkillCasting.fetchEnemySnapshot(context);
         await TestEnemyBattleEnd.expectDefaultDeathBox(page);
         let isRevived = await TestCombatDeath.waitForPlayerHpCondition(page, 'alive', gameOverTimeOut + context.timeout);
         expect(isRevived, 'The player must be revived').toBe(true);
         let revivedPlayer = await TestEnemyBattleEnd.fetchPlayer(context);
         expect(revivedPlayer.life, 'Revived with exactly its base life').toBe(revivedPlayer.totalLife);
-        expect([revivedPlayer.x, revivedPlayer.y], 'Revived where it died').toEqual([deadPlayer.x, deadPlayer.y]);
+        let revivedBody = await RoomMovementApi.fetchPlayer(gameConfig, context.roomName, context.playerName);
+        let enemyAtRevive = await CombatSkillCasting.fetchEnemySnapshot(context);
+        expect(
+            [revivedPlayer.x, revivedPlayer.y],
+            'Revived where it died (velocity and contacts of the revived body, then x, y and contacts of the enemy on the'
+                +' death and on the revive): '+sc.toJsonString([
+                    [revivedBody.velocityX, revivedBody.velocityY, revivedBody.contacts],
+                    [enemyAtDeath.x, enemyAtDeath.y, enemyAtDeath.contacts],
+                    [enemyAtRevive.x, enemyAtRevive.y, enemyAtRevive.contacts]
+                ])
+        ).toEqual([deadPlayer.x, deadPlayer.y]);
         await EnemyAggressionSteps.expectNoBattle(page, context, 'The enemy waits until the revived player hits it');
         expect((await TestEnemyBattleEnd.fetchPlayer(context)).life, 'No hit on the revived player').toBe(
             revivedPlayer.totalLife

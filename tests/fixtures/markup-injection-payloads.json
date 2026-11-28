@@ -1,5 +1,11 @@
 {
     "imageWithHandler": "<img id=\"e2e-markup-probe\" src=\"x\" onerror=\"window.e2eMarkupProbe=1\">",
     "imageWithHandlerElementId": "e2e-markup-probe",
-    "imageWithHandlerWindowFlag": "e2eMarkupProbe"
+    "imageWithHandlerWindowFlag": "e2eMarkupProbe",
+    "boldWithId": "<b id=\"e2e-markup-bold\">E2e</b>",
+    "boldWithIdElementId": "e2e-markup-bold",
+    "boldWithIdCleaned": "b id=\"e2e-markup-bold\"E2e/b",
+    "boldWithIdPlayerName": "bide2e-markup-boldE2eb",
+    "emailWithMarkup": "<e2e>@yourgame.com",
+    "emailWithQuote": "e2e\"quote@yourgame.com"
 }

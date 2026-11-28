@@ -51,6 +51,24 @@ class TestAdsMessageActionsConfig extends BaseTest
         });
     }
 
+    async testAnUnknownProviderUsesTheDefaultMinimumDuration()
+    {
+        await this.test('an ad of a provider without configured duration is checked with the default minimum duration', async () => {
+            let rewardsCounts = [];
+            for(let startedElapsedMs of [AdsConst.VIDEOS_MINIMUM_DURATION / 2, AdsConst.VIDEOS_MINIMUM_DURATION * 2]){
+                let adsSetup = this.adsBuilder.createAdsSetup(
+                    true,
+                    GameConst.STATUS.ACTIVE,
+                    {related_ads_providers: {id: 2, key: 'notConfiguredProvider', enabled: 1}}
+                );
+                this.adsBuilder.storeStartedAd(adsSetup, startedElapsedMs);
+                await adsSetup.adsMessageActions.adEnded(adsSetup.endedMessage, adsSetup.room, adsSetup.playerSchema);
+                rewardsCounts.push(adsSetup.givenRewards.length);
+            }
+            this.assert.deepStrictEqual(rewardsCounts, [0, 1]);
+        });
+    }
+
 }
 
 module.exports.TestAdsMessageActionsConfig = TestAdsMessageActionsConfig;

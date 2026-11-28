@@ -3,12 +3,15 @@
  * Reldens - Timing Mining Steps
  *
  * The steps of the timing objects rules specs on the first forest mining rock (TimingObjectSession): the mining
- * prepared with the cancel rules of that rock changed for the group (and its server timing state read), the completed
+ * prepared with the miner placed on the closest tile next to the rock that has a clear line of tiles out of the rock
+ * area (the rocks of the cluster spawn on random tiles and can close every line of the closest tile), with the cancel
+ * rules of that rock changed for the group (and its server timing state read), the completed
  * mining (one timingComplete and the reward added once) and the cancelled one (one timingCancel and no reward after
  * the whole duration), a short walk of the player along the rock side that keeps it inside the rock interaction area,
  * a walk out of that area along a clear line of tiles, the interaction messages the server hands to the rock counted
- * (TimingObjectsProbe), the pending action flag a client keeps for the rock after its click, and the timing progress
- * bar and tool sprite a client keeps for the rock.
+ * (TimingObjectsProbe), the pending action flag a client keeps for the rock after its click, the timing progress
+ * bar and tool sprite a client keeps for the rock, the rock interaction sent while the player walks along the rock side,
+ * and the attack of a passive forest enemy started on the player.
  *
  */
 
@@ -21,6 +24,8 @@ const { Phaser } = require('./phaser');
 const { PhaserRange } = require('./phaser-range');
 const { Login } = require('./login');
 const { SecurityApi } = require('./security-api');
+const { RoomObjectsApi } = require('./room-objects-api');
+const { BaseE2eTest } = require('../base-e2e-test');
 const { sc } = require('@reldens/utils');
 
 class TimingMiningSteps
@@ -30,6 +35,7 @@ class TimingMiningSteps
     static CANCEL = 'timingCancel';
     static COMPLETE = 'timingComplete';
     static BUSY = 'timingBusy';
+    static ENEMY_OBJECT_TYPE = 4;
     static SHORT_WALK_MS = 100;
     static OUT_OF_AREA_DISTANCES = [5, 4, 3];
     static SIDE_WALKS = {
@@ -39,7 +45,13 @@ class TimingMiningSteps
 
     static async prepare(context, rules = {})
     {
-        let mining = await TimingObjectSession.prepareMining(context.page, context.gameConfig, context.longRun);
+        let mining = await TimingObjectSession.prepareMining(
+            context.page,
+            context.gameConfig,
+            context.longRun,
+            '',
+            TimingMiningSteps.OUT_OF_AREA_DISTANCES
+        );
         for(let ruleKey of Object.keys(rules)){
             await TimingObjectSession.changeObjectProperty(
                 context.gameConfig,
@@ -109,24 +121,57 @@ class TimingMiningSteps
 
     static async walkOutOfArea(context, mining, distances = TimingMiningSteps.OUT_OF_AREA_DISTANCES)
     {
-        let playerName = context.gameConfig.e2ePlayerName;
-        let walkContext = MovementScenario.createWalkContext(
-            context.gameConfig,
-            Login.FOREST_ROOM_NAME,
-            playerName,
-            context.longRun
-        );
         let walkTile = await RoomMovementApi.fetchClearLineTile(
             context.gameConfig,
             Login.FOREST_ROOM_NAME,
-            playerName,
+            context.gameConfig.e2ePlayerName,
             distances
         );
         expect(walkTile, 'A clear line of tiles must start on the miner').toBeTruthy();
+        return await TimingMiningSteps.walkToTileOutOfArea(context, mining, walkTile);
+    }
+
+    static async walkToTileOutOfArea(context, mining, walkTile)
+    {
+        let walkContext = MovementScenario.createWalkContext(
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            context.gameConfig.e2ePlayerName,
+            context.longRun
+        );
         let movement = await MovementScenario.movePlayer(context.page, walkContext, walkTile, walkContext.navTimeout);
-        expect(movement.done, 'The miner must walk away: '+sc.toJsonString(movement.last)).toBe(true);
+        expect(
+            movement.done,
+            'The miner must walk away to the tile '+walkTile.join(',')+', first and last positions: '
+                +sc.toJsonString([movement.trail[0], movement.last])
+        ).toBe(true);
         expect(TimingMiningSteps.isInsideArea(movement.last, mining.rock), 'The player leaves the rock area').toBe(false);
         return movement.last;
+    }
+
+    static async startWalkingInteraction(page, mining)
+    {
+        let position = await Phaser.getPlayerServerPosition(page);
+        let direction = await TimingMiningSteps.fetchSideWalkDirection(page, position, mining.rock);
+        await TimingObjectSession.recordTimingActions(page);
+        await page.evaluate((walkDirection) => window.reldens.getActiveScene().player[walkDirection](), direction);
+        expect(await Phaser.triggerObjectInteraction(page, mining.rockKey), 'The interaction is sent').toBeTruthy();
+    }
+
+    static async startPassiveEnemyAttack(gameConfig)
+    {
+        let passiveEnemyArea = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']).find(
+            area => TimingMiningSteps.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
+        );
+        expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
+        let enemyAttack = await RoomObjectsApi.startEnemyAttack(
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            gameConfig.e2ePlayerName,
+            passiveEnemyArea.assetKey
+        );
+        expect(enemyAttack.enemyKey, 'The enemy attack must start: '+enemyAttack.error).toBeTruthy();
+        return enemyAttack;
     }
 
     static async countInteractions(gameConfig, group, objectKey)

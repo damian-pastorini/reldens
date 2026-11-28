@@ -3,7 +3,10 @@
  * Reldens - Test Authentication Server Guards
  *
  * Tests the login guards that depend on the server state: the signed disconnect route with bad, expired, server status,
- * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error or switched off, the overloaded
+ * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error (with two other
+ * servers, the first one answering an error refuses the login and the second one is still asked) or switched off
+ * (with it off a scene change sends a check only request to the other server and its error refuses nothing, ISSUE
+ * #479), the overloaded
  * server on the login and on the scene join, the single player mode with the player room unavailable, the rooms origin
  * validation and the terms and conditions route with an unknown language.
  *
@@ -19,6 +22,8 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { GameConst } = require('../../lib/game/constants');
 const { GameRoomJoin } = require('./helpers/game-room-join');
+const { ChangePointsSteps } = require('./helpers/change-points-steps');
+const { Navigation } = require('./helpers/navigation');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -58,22 +63,23 @@ class TestAuthenticationServerGuards
     {
         await Login.loginRootPlayer(page, gameConfig, longRun);
         let username = gameConfig.e2eUsername;
-        let expiredToken = await LoginServerApi.fetchDisconnectToken(
+        let validExpiration = Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS;
+        let validRequest = await LoginServerApi.fetchDisconnectRequest(gameConfig, username, validExpiration);
+        let expiredRequest = await LoginServerApi.fetchDisconnectRequest(
             gameConfig,
             username,
             Date.now() - TestAuthenticationServerGuards.TOKEN_LIFETIME_MS
         );
-        for(let token of ['not-a-signed-token', expiredToken]){
-            expect(await TestAuthenticationServerGuards.postDisconnect(page, {username, token}), token).toBe(false);
+        for(let rejectedRequest of [Object.assign({}, validRequest, {token: 'not-a-signed-token'}), expiredRequest]){
+            expect(await TestAuthenticationServerGuards.postDisconnect(page, rejectedRequest), rejectedRequest.token).toBe(false);
         }
         let statusValue = GameConst.HEALTH.STATUS_TOKEN_VALUE;
-        let statusToken = await LoginServerApi.fetchStatusToken(
-            gameConfig,
-            statusValue,
-            Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS
-        );
+        let statusToken = await LoginServerApi.fetchStatusToken(gameConfig, statusValue, validExpiration);
         expect(
-            await TestAuthenticationServerGuards.postDisconnect(page, {username: statusValue, token: statusToken}),
+            await TestAuthenticationServerGuards.postDisconnect(
+                page,
+                Object.assign({}, validRequest, {targetId: statusValue, token: statusToken})
+            ),
             'A server status token is not a disconnection token'
         ).toBe(false);
         await TestAuthenticationServerGuards.expectSessionKept(page, 'A rejected token disconnects nobody');
@@ -85,25 +91,32 @@ class TestAuthenticationServerGuards
         await Login.loginRootPlayer(page, gameConfig, longRun);
         let validExpiration = Date.now() + TestAuthenticationServerGuards.TOKEN_LIFETIME_MS;
         expect(await TestAuthenticationServerGuards.postDisconnect(page, {}), 'Missing username').toBe(false);
-        let notLoggedToken = await LoginServerApi.fetchDisconnectToken(gameConfig, gameConfig.e2eUsername2, validExpiration);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername2,
-            token: notLoggedToken
-        }), 'A user without a session has nothing to disconnect').toBe(true);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername2,
-            token: notLoggedToken
-        }), 'A used token is rejected').toBe(false);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername,
-            token: notLoggedToken
-        }), 'A token signed for another username').toBe(false);
+        let notLoggedRequest = await LoginServerApi.fetchDisconnectRequest(
+            gameConfig,
+            gameConfig.e2eUsername2,
+            validExpiration
+        );
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, notLoggedRequest),
+            'A user without a session has nothing to disconnect'
+        ).toBe(true);
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, notLoggedRequest),
+            'A used token is rejected'
+        ).toBe(false);
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(
+                page,
+                Object.assign({}, notLoggedRequest, {targetId: gameConfig.e2eUsername})
+            ),
+            'A token signed for another username'
+        ).toBe(false);
         await TestAuthenticationServerGuards.expectSessionKept(page, 'Only the requested user is disconnected');
-        let loggedToken = await LoginServerApi.fetchDisconnectToken(gameConfig, gameConfig.e2eUsername, validExpiration);
-        expect(await TestAuthenticationServerGuards.postDisconnect(page, {
-            username: gameConfig.e2eUsername,
-            token: loggedToken
-        }), 'A valid token disconnects the user').toBe(true);
+        let loggedRequest = await LoginServerApi.fetchDisconnectRequest(gameConfig, gameConfig.e2eUsername, validExpiration);
+        expect(
+            await TestAuthenticationServerGuards.postDisconnect(page, loggedRequest),
+            'A valid token disconnects the user'
+        ).toBe(true);
         await expect(page.locator(Selectors.reloadModal.message)).toHaveText(
             TestAuthenticationServerGuards.SESSION_ENDED_MESSAGE,
             {timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)}
@@ -114,8 +127,10 @@ class TestAuthenticationServerGuards
     static async runOtherServerUnavailableTest(page, screenshots, gameConfig, longRun)
     {
         await LoginServerApi.setOtherServer(gameConfig, TestAuthenticationServerGuards.UNAVAILABLE_SERVER_URL, true);
-        await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
-        await screenshots.capture(page, 'other-server-unavailable-login-continues');
+        expect(await TestAuthenticationServerGuards.fetchRejectedLoginText(gameConfig, page, longRun)).toBe(
+            GameConst.JOIN_GAME_ERROR_MESSAGE
+        );
+        await screenshots.capture(page, 'other-server-unavailable-login-rejected');
     }
 
     static async runOtherServerErrorTest(page, screenshots, gameConfig, longRun)
@@ -144,6 +159,51 @@ class TestAuthenticationServerGuards
         await screenshots.capture(page, 'other-server-disconnection-off');
     }
 
+    static async runEveryOtherServerAskedTest(page, screenshots, gameConfig, longRun)
+    {
+        await LoginServerApi.setOtherServers(
+            gameConfig,
+            [
+                TestAuthenticationServerGuards.fetchErrorServerUrl(gameConfig),
+                SecurityApi.baseUrl(gameConfig)+LoginServerState.OTHER_SERVER_ANSWER_PATH
+            ],
+            true
+        );
+        expect(await TestAuthenticationServerGuards.fetchRejectedLoginText(gameConfig, page, longRun)).toBe(
+            GameConst.JOIN_GAME_ERROR_MESSAGE
+        );
+        expect(
+            await LoginServerApi.fetchOtherServersHits(gameConfig),
+            'The server that does not confirm the disconnection refuses the login and the next server is still asked'
+        ).toEqual({hits: 1, answerHits: 1});
+        await screenshots.capture(page, 'other-servers-every-one-asked');
+    }
+
+    static async runOtherServerCheckErrorSceneChangeTest(page, screenshots, gameConfig, longRun)
+    {
+        await LoginServerApi.setOtherServer(gameConfig, TestAuthenticationServerGuards.fetchErrorServerUrl(gameConfig), false);
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let topology = await ChangePointsSteps.loadTopology(gameConfig);
+        let roomName = await Navigation.getCurrentRoomName(page);
+        let changePoint = topology.changePoints.find(row => topology.roomsIds[roomName] === Number(row.room_id));
+        expect(changePoint, 'The room '+roomName+' has a change point').toBeTruthy();
+        let nextRoomName = Object.keys(topology.roomsIds).find(
+            name => topology.roomsIds[name] === Number(changePoint.next_room_id)
+        );
+        let hitsBefore = await LoginServerApi.fetchOtherServerHits(gameConfig);
+        await ChangePointsSteps.enterNextRoom(
+            {gameConfig, longRun},
+            {page, playerName: gameConfig.e2ePlayerName},
+            {roomName, nextRoomName, tileIndex: String(changePoint.tile_index)}
+        );
+        expect(
+            await LoginServerApi.fetchOtherServerHits(gameConfig),
+            'The scene change sends the other server one check only request and its error refuses nothing'
+        ).toBe(hitsBefore + 1);
+        await TestAuthenticationServerGuards.expectSessionKept(page, 'The session stays in '+nextRoomName);
+        await screenshots.capture(page, 'other-server-check-error-scene-change');
+    }
+
     static async runServerBusyLoginTest(page, screenshots, gameConfig, longRun)
     {
         await LoginServerApi.setServerOverloaded(gameConfig, true);
@@ -160,7 +220,9 @@ class TestAuthenticationServerGuards
         await Login.loginRootPlayer(secondPage, gameConfig, longRun, '2');
         await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
         await LoginServerApi.setServerOverloaded(gameConfig, true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await expect(page.locator(GameConst.SELECTORS.PLAYER_SELECTION_ERRORS)).not.toBeEmpty({
             timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
         });
@@ -244,14 +306,20 @@ class TestAuthenticationServerGuards
             test('disconnect route handles a missing username and valid tokens', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runDisconnectRequestsTest(page, screenshots, gameConfig, longRun);
             });
-            test('other server unavailable lets the login continue', async ({ page, screenshots, gameConfig, longRun }) => {
+            test('other server unavailable rejects the login', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerUnavailableTest(page, screenshots, gameConfig, longRun);
             });
             test('other server answering an error rejects the login', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerErrorTest(page, screenshots, gameConfig, longRun);
             });
+            test('every other server is asked when the first one does not confirm the disconnection', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationServerGuards.runEveryOtherServerAskedTest(page, screenshots, gameConfig, longRun);
+            });
             test('disconnect on server change off sends no request', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerSwitchedOffTest(page, screenshots, gameConfig, longRun);
+            });
+            test('disconnect on server change off: a scene change checks the other server and its error refuses nothing', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationServerGuards.runOtherServerCheckErrorSceneChangeTest(page, screenshots, gameConfig, longRun);
             });
             test('login is rejected while the server is overloaded', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runServerBusyLoginTest(page, screenshots, gameConfig, longRun);

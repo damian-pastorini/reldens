@@ -9,7 +9,6 @@ const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
 const { TeamMessageActions } = require('../lib/teams/server/team-message-actions');
 const { ClanMessageActions } = require('../lib/teams/server/clan-message-actions');
 const { ClanJoin } = require('../lib/teams/server/message-actions/clan-join');
-const { Clan } = require('../lib/teams/server/clan');
 const { TeamsConst } = require('../lib/teams/constants');
 const timersPromises = require('timers/promises');
 
@@ -57,7 +56,7 @@ class TestTeamAndClanInvites extends BaseTest
 
     createInvitingClan(setup, pendingInvites)
     {
-        return new Clan({
+        return ClanFixturesBuilder.createSyncedClan({
             id: this.clanId,
             owner: {player_id: this.inviterId, playerName: 'ImRoot3'},
             players: {[this.inviterId]: {state: {room_id: 1}}},

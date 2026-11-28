@@ -5,7 +5,8 @@
  * Captures the setTimeout and setInterval calls made while a callback runs, instead of starting them, and runs the
  * captured timeouts on demand in their scheduled order (the timeouts a run callback schedules while the capture is
  * still active run in the same call), so a test controls when every delayed step happens and reads the delays used;
- * the captured intervals are kept for the test to call each tick.
+ * the captured intervals are kept for the test to call each tick, each one identified by its position in the captured
+ * list (from 1, the setInterval result), and the clearInterval calls record the cleared identifiers.
  *
  */
 
@@ -18,6 +19,8 @@ class ScheduledTimeouts
         this.scheduledTimeouts = [];
         /** @type {Array<{intervalCallback: Function, delayMs: number}>} */
         this.scheduledIntervals = [];
+        /** @type {Array<number>} */
+        this.clearedIntervals = [];
     }
 
     /**
@@ -28,8 +31,10 @@ class ScheduledTimeouts
     {
         let originalSetTimeout = global.setTimeout;
         let originalSetInterval = global.setInterval;
+        let originalClearInterval = global.clearInterval;
         global.setTimeout = (timeoutCallback, delayMs) => this.scheduledTimeouts.push({timeoutCallback, delayMs});
         global.setInterval = (intervalCallback, delayMs) => this.scheduledIntervals.push({intervalCallback, delayMs});
+        global.clearInterval = (intervalId) => this.clearedIntervals.push(intervalId);
         let callbackResult = false;
         let callbackError = false;
         try {
@@ -39,6 +44,7 @@ class ScheduledTimeouts
         }
         global.setTimeout = originalSetTimeout;
         global.setInterval = originalSetInterval;
+        global.clearInterval = originalClearInterval;
         if(callbackError){
             throw callbackError;
         }

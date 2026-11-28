@@ -6,20 +6,30 @@
  * snapshots, the path finder tiles around a tile (walkable, walls, change points and the other blocked tiles), the
  * object path, move, move back to the original tile, placement and random movement switch, the player placement on a
  * given position, and the trail collected
- * from the server snapshots until a condition is met (like a player standing still: no path steps and no velocity),
- * so every movement spec asserts the exact server bodies.
+ * from the server snapshots until a condition is met or its timeout passes (in time, so a slow server never stretches
+ * the wait past the test timeout and the caller fails with the last snapshot) (like a player standing still: no path steps and no velocity,
+ * or settled: the same position on two polls in a row, after a wall contact pushed a stopped body out), also with the
+ * server steps of the player body recorded while the trail is collected (RoomMovementStepsRecorder, the last ones that
+ * changed are returned to show in a failure, a step equal to the previous one is dropped so an idle body does not hide
+ * the step that emptied or stopped the path), so every movement spec asserts the exact server bodies. A held direction
+ * sets its velocity once per world step (ISSUE #456) and the body damping lowers it during the step, so the expected
+ * velocity accepts the movement speed or up to one unit under it (the rounded snapshot velocity read between steps).
  *
  */
 
 const { setTimeout: waitMs } = require('timers/promises');
 const { expect } = require('@playwright/test');
 const { SecurityApi } = require('./security-api');
-const { sc } = require('@reldens/utils');
+const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
+const { Logger, sc } = require('@reldens/utils');
 
 class RoomMovementApi
 {
 
     static POLL_MS = 100;
+    static DESCRIBED_STEPS = 20;
+    static VELOCITY_STEP_TOLERANCE = 1;
+    static RECORDED_STEPS_SHOWN = 40;
 
     static async waitForPlayerStill(gameConfig, roomName, playerName, timeout)
     {
@@ -30,6 +40,76 @@ class RoomMovementApi
         );
         expect(stopped.done, 'The player '+playerName+' must stand still: '+sc.toJsonString(stopped.last)).toBe(true);
         return stopped.last;
+    }
+
+    static async waitForPlayerSettled(gameConfig, roomName, playerName, timeout)
+    {
+        let previous = false;
+        let settled = await RoomMovementApi.collectTrail(
+            async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
+            (snapshot) => {
+                let isSettled = Boolean(previous) && previous.x === snapshot.x && previous.y === snapshot.y;
+                previous = snapshot;
+                return isSettled;
+            },
+            timeout
+        );
+        expect(settled.done, 'The player '+playerName+' body must settle: '+sc.toJsonString(settled.last)).toBe(true);
+        return settled.last;
+    }
+
+    static async collectRecordedTrail(recordedPlayer, startMovement, fetchSnapshot, isDone, timeout)
+    {
+        let recording = await SecurityApi.request(recordedPlayer.gameConfig, 'POST', '/api/e2e/movement/steps-record', {
+            roomName: recordedPlayer.roomName,
+            playerName: recordedPlayer.playerName
+        });
+        expect(sc.get(recording, 'recording', false), 'The movement steps are recorded: '+sc.get(recording, 'error', ''))
+            .toBe(true);
+        await startMovement();
+        let movement = await RoomMovementApi.collectTrail(fetchSnapshot, isDone, timeout);
+        let recorded = await SecurityApi.request(recordedPlayer.gameConfig, 'GET', '/api/e2e/movement/steps-recorded');
+        movement.steps = RoomMovementApi.dropRepeatedSteps(sc.get(recorded, 'steps', [])).slice(
+            -RoomMovementApi.RECORDED_STEPS_SHOWN
+        );
+        return movement;
+    }
+
+    static describeLastSteps(trail)
+    {
+        return 'column, row, velocity and path steps: '+sc.toJsonString(RoomMovementApi.dropRepeatedSteps(trail.map(
+            (step) => [step.currentCol, step.currentRow, step.velocityX, step.velocityY, step.pathSteps]
+        )).slice(-RoomMovementApi.DESCRIBED_STEPS));
+    }
+
+    static async expectVelocity(fetchPlayer, expectedVelocity, message, timeout, isAbsolute = false)
+    {
+        await expect.poll(async () => [await fetchPlayer()].map((player) => {
+            let reading = {velocity: [player.velocityX, player.velocityY].map((value) => isAbsolute ? Math.abs(value) : value)};
+            reading.isAtSpeed = [reading.velocity[0] - expectedVelocity.x, reading.velocity[1] - expectedVelocity.y].map(
+                (difference) => RoomMovementApi.VELOCITY_STEP_TOLERANCE >= Math.abs(difference)
+            );
+            return reading;
+        }).pop(), {message, timeout}).toEqual(expect.objectContaining({isAtSpeed: [true, true]}));
+    }
+
+    static async describeWalkFailure(walkContext, trail)
+    {
+        return 'the client send result '+sc.toJsonString(walkContext.lastSent)+', the last server steps ('
+            +RoomMovementApi.describeLastSteps(trail)+') and the movement messages the server got '
+            +sc.toJsonString(await GameplayE2eStateApi.fetchMovementMessages(walkContext.gameConfig, walkContext.playerName));
+    }
+
+    static dropRepeatedSteps(steps)
+    {
+        let changedSteps = [];
+        for(let step of steps){
+            if(0 < changedSteps.length && sc.toJsonString(changedSteps[changedSteps.length - 1]) === sc.toJsonString(step)){
+                continue;
+            }
+            changedSteps.push(step);
+        }
+        return changedSteps;
     }
 
     static async fetchPlayer(gameConfig, roomName, playerName)
@@ -77,19 +157,15 @@ class RoomMovementApi
 
     static async fetchClearLineTile(gameConfig, roomName, playerName, distances)
     {
-        return sc.get(
-            await SecurityApi.request(
-                gameConfig,
-                'GET',
-                '/api/e2e/movement/clear-line-tile?'+new URLSearchParams({
-                    roomName,
-                    playerName,
-                    distances: distances.join(',')
-                }).toString()
-            ),
-            'tile',
-            false
+        let clearLine = await SecurityApi.request(
+            gameConfig,
+            'GET',
+            '/api/e2e/movement/clear-line-tile?'+new URLSearchParams({roomName, playerName, distances: distances.join(',')}).toString()
         );
+        if(clearLine.error){
+            Logger.error('[room-movement-api] '+clearLine.error);
+        }
+        return sc.get(clearLine, 'tile', false);
     }
 
     static async fetchTiles(gameConfig, roomName, tile, radius)
@@ -185,7 +261,8 @@ class RoomMovementApi
     {
         let trail = [];
         let maxPolls = Math.max(1, Math.ceil(timeout / RoomMovementApi.POLL_MS));
-        for(let poll = 0; poll < maxPolls; poll++){
+        let deadline = Date.now() + timeout;
+        for(let poll = 0; poll < maxPolls && (0 === poll || Date.now() < deadline); poll++){
             let snapshot = await fetchSnapshot();
             trail.push(snapshot);
             if(snapshot && isDone(snapshot)){

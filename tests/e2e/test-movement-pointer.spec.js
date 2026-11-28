@@ -9,7 +9,8 @@
  * the pointer arrow, and a primary button click moves nothing; with primaryMove switched on in the client config the
  * secondary button moves nothing and the primary one walks; a touch tap from a page with touch support walks the
  * player and its touch end sends the stop, and with allowPrimaryTouch off a tap moves nothing; a second click destroys the arrow of the first one
- * before its animation ends; a click while the chat input has the focus blurs the input and walks the player; a click
+ * before its animation ends (the camera follow is stopped, so the second click lands on the tile while the player still
+ * walks to it and not on the player sprite that stands there once the walk ends); a click while the chat input has the focus blurs the input and walks the player; a click
  * on an NPC sprite sends no pointer move; a disabled player keys and clicks send only stops and the player walks again
  * once active; and with the client pointer arrow off a click walks with no arrow, with the client tap movement off a
  * click sends no pointer move.
@@ -74,15 +75,15 @@ class TestMovementPointer
 
     static async clickAndWalk(context, target, button = TestMovementPointer.MOVE_BUTTON)
     {
-        await TestMovementPointer.clickTile(context, target, button);
-        let walk = await RoomMovementApi.collectTrail(
+        let walk = await RoomMovementApi.collectRecordedTrail(
+            target.walkContext,
+            async () => await TestMovementPointer.clickTile(context, target, button),
             target.walkContext.fetchPlayer,
-            (player) => target.walkContext.isStill(player)
-                && target.tile[0] === player.currentCol
-                && target.tile[1] === player.currentRow,
+            (player) => target.walkContext.isStill(player) && target.tile.join() === [player.currentCol, player.currentRow].join(),
             target.walkContext.navTimeout
         );
-        expect(walk.done, 'The click walks the player to the tile: '+sc.toJsonString(walk.last)).toBe(true);
+        let failure = sc.toJsonString({last: walk.last, steps: walk.steps});
+        expect(walk.done, 'The click walks the player to the tile (last server steps): '+failure).toBe(true);
     }
 
     static async expectMessages(context, walkContext, expectedMessages, message)
@@ -189,6 +190,7 @@ class TestMovementPointer
     static async runSecondClickTest(context)
     {
         let target = await TestMovementPointer.enterAndTarget(context);
+        await context.page.evaluate(() => void window.reldens.getActiveScene().cameras.main.stopFollow());
         await TestMovementPointer.clickTile(context, target);
         expect(await context.page.evaluate(() => {
             window.e2eFirstArrow = window.reldens.getActiveScene().arrowSprite;

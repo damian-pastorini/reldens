@@ -4,9 +4,10 @@
  *
  * Tests the room chat messages of the group players in their scene (ChatSteps, the messages each client receives
  * recorded from the scene room and the global chat room, and the stored chat rows of the sender): three clients see a
- * room message once each; an HTML text and a text equal to a snippet key are
- * shown as literal text; a dead player message is still broadcast; an input with only "#", "@" or blanks is not sent
- * and the raw blank, non string or prefix only messages are dropped with no row (the joined and left notices are ignored,
+ * room message once each; an HTML text (the bold payload of tests/fixtures/markup-injection-payloads.json) arrives, is
+ * shown and is stored without its markup characters (< and >, no element is created) and a text equal to a snippet key is shown as literal text; a dead player message is still
+ * broadcast; an input with only "#", "@" or blanks is not sent and the raw blank, non string, markup only ("<>") or
+ * prefix only messages are dropped with no row (the joined and left notices are ignored,
  * the global chat room sends them for the players of every group); a message over the character limit is
  * cut by the client and by the server, one with exactly the limit arrives whole and a limit of 0 cuts nothing; the
  * backslashes are removed and the line breaks replaced; and the cooldown drops a second room message, keeps separate
@@ -24,6 +25,7 @@ const { Selectors } = require('./selectors');
 const { ChatConst } = require('../../lib/chat/constants');
 const { GameConst } = require('../../lib/game/constants');
 const ChatTranslations = require('../../lib/chat/client/snippets/en_US');
+const MarkupInjectionPayloads = require('../fixtures/markup-injection-payloads.json');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -34,7 +36,6 @@ class TestChatMessages
     static COOLDOWN_PATH = 'server/chat/messages/cooldownMs';
     static COOLDOWN_MS = 1000;
     static SETTLE_MS = 1500;
-    static HTML_ELEMENT_ID = 'e2e-chat-html';
 
     static async enter(context, withThird = false)
     {
@@ -69,21 +70,32 @@ class TestChatMessages
     static async runLiteralTextsTest(context)
     {
         await TestChatMessages.enter(context);
-        let htmlText = '<b id="'+TestChatMessages.HTML_ELEMENT_ID+'">e2e</b>';
-        await ChatSteps.sendText(context.page, htmlText);
-        await TestChatMessages.expectReceived(context.secondPage, ChatConst.TYPES.MESSAGE, [htmlText], 'The HTML text arrives');
+        let cleanedText = MarkupInjectionPayloads.boldWithIdCleaned;
+        let playerName = context.gameConfig.e2ePlayerName;
+        let storedCount = (await TestChatMessages.fetchStoredRows(context.gameConfig, playerName, cleanedText)).length;
+        await ChatSteps.sendText(context.page, MarkupInjectionPayloads.boldWithId);
+        await TestChatMessages.expectReceived(
+            context.secondPage,
+            ChatConst.TYPES.MESSAGE,
+            [cleanedText],
+            'The HTML text arrives without the markup characters'
+        );
         await ChatSteps.openChat(context.secondPage);
         for(let page of [context.page, context.secondPage]){
-            await expect(page.locator(Selectors.chat.tabContentGeneral), 'The HTML is shown as text').toContainText(htmlText);
-            await expect(page.locator('#'+TestChatMessages.HTML_ELEMENT_ID), 'No element is created').toHaveCount(0);
+            await expect(page.locator(Selectors.chat.tabContentGeneral), 'The cleaned text is shown').toContainText(cleanedText);
+            await expect(page.locator('#'+MarkupInjectionPayloads.boldWithIdElementId), 'No element is created').toHaveCount(0);
         }
+        expect(
+            (await TestChatMessages.fetchStoredRows(context.gameConfig, playerName, cleanedText)).length,
+            'The message is stored without the markup characters'
+        ).toBe(storedCount + 1);
         await context.page.waitForTimeout(TestChatMessages.COOLDOWN_MS);
         let snippetText = ChatConst.SNIPPETS.JOINED_ROOM;
         await ChatSteps.sendText(context.page, snippetText);
         await TestChatMessages.expectReceived(
             context.secondPage,
             ChatConst.TYPES.MESSAGE,
-            [htmlText, snippetText],
+            [cleanedText, snippetText],
             'The snippet key text arrives as it was sent'
         );
         await expect(
@@ -118,7 +130,7 @@ class TestChatMessages
             await expect(context.page.locator(Selectors.chat.input), 'The input is kept: '+inputText).toHaveValue(inputText);
             await context.page.locator(Selectors.chat.input).fill('');
         }
-        for(let rawText of ['#', '@', '  ', 7]){
+        for(let rawText of ['#', '@', '  ', 7, '<>']){
             await ChatSteps.sendRaw(context.page, {[ChatConst.MESSAGE.KEY]: rawText});
             await ChatSteps.sendRaw(context.page, {[ChatConst.MESSAGE.KEY]: rawText}, true);
             await context.page.waitForTimeout(TestChatMessages.COOLDOWN_MS);
@@ -217,7 +229,7 @@ class TestChatMessages
             test('three clients see a room message once each', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatMessages.runThreeClientsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('HTML and snippet key texts are shown literally', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('HTML text loses its markup characters and a snippet key text is shown literally', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatMessages.runLiteralTextsTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('dead player message is broadcast', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {

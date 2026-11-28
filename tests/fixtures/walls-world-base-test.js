@@ -4,8 +4,14 @@
  *
  * Base of the world bodies tests: builds a real P2world on a 6x6 map of 32 pixels tiles with a "collisions" layer
  * holding a wall of 3 tiles on the column 2 and a wall of 2 tiles on the row 5, and a "pathfinder" layer with one empty
- * tile, with the given walls grouping options; and walks player bodies on it (keyboard directions or a pointer path)
- * for 50 fixed world steps, answering their rounded positions and velocities.
+ * tile (or the given wall tiles instead), with the given walls grouping options (createWorldOptions gives the same world options for a world created by
+ * the code under test); and walks player bodies on it (keyboard directions or a pointer path)
+ * for 50 fixed world steps, answering their rounded positions and velocities; a tracked walk runs the given steps with
+ * its keyboard directions held (moved again on every step, like the scene movement interval of a held key) and also
+ * answers the tile the walker ended on, the row and the rounded position of every step, the rounded position of the
+ * tracked body on every step and the steps where the walker crossed that body: its center passed to the other side of
+ * the body center on one axis while it was inside the body band on the other axis (a contact penetration that keeps
+ * the sides, or a slide along a body face, is not a cross).
  *
  */
 
@@ -28,9 +34,19 @@ class WallsWorldBaseTest extends BaseTest
         this.walkerRow = 80;
         this.columnWallEdges = [64, 96];
         this.worldWallInnerEdge = 1.5;
+        this.aroundPathSteps = 250;
     }
 
-    async createWorld(groupingConfig)
+    async createWorld(groupingConfig, wallTiles = this.wallTiles)
+    {
+        let world = new P2world(this.createWorldOptions(groupingConfig, wallTiles));
+        clearInterval(world.worldDateTimeInterval);
+        world.createLimits();
+        await world.createWorldContent({});
+        return world;
+    }
+
+    createWorldOptions(groupingConfig, wallTiles = this.wallTiles)
     {
         let config = Object.assign(new ConfigProcessor(), {
             avoidLog: true,
@@ -39,22 +55,18 @@ class WallsWorldBaseTest extends BaseTest
         });
         let room = {customData: {}};
         WorldConfig.mapWorldConfigValues(room, config);
-        let world = new P2world({
+        return {
             events: {emit: async () => true},
             roomId: 1,
             sceneName: 'walls-test',
             roomMap: 'walls-test',
             mapJson: {width: 6, height: 6, tilewidth: 32, tileheight: 32, layers: [
-                {name: 'walls-collisions', data: this.mapTilesIndexes.map(i => -1 !== this.wallTiles.indexOf(i) ? 1 : 0)},
+                {name: 'walls-collisions', data: this.mapTilesIndexes.map(i => -1 !== wallTiles.indexOf(i) ? 1 : 0)},
                 {name: 'ground-pathfinder', data: this.mapTilesIndexes.map(i => this.emptyPathFinderTile === i ? 0 : 1)}
             ]},
             config,
             worldConfig: room.worldConfig
-        });
-        clearInterval(world.worldDateTimeInterval);
-        world.createLimits();
-        await world.createWorldContent({});
-        return world;
+        };
     }
 
     walk(world, walkers)
@@ -64,11 +76,50 @@ class WallsWorldBaseTest extends BaseTest
         return bodies.map(body => this.removeWalker(world, body));
     }
 
-    stepWorld(world)
+    stepWorld(world, onStep = false, stepsCount = 50)
     {
-        for(let stepIndex = 0; stepIndex < 50; stepIndex++){
+        for(let stepIndex = 0; stepIndex < stepsCount; stepIndex++){
             world.step(world.timeStep);
+            if(onStep){
+                onStep(stepIndex);
+            }
         }
+    }
+
+    walkTracked(world, walker, trackedBody, stepsCount)
+    {
+        let body = this.createWalker(world, walker, 0);
+        let crossedSteps = [];
+        let rows = [];
+        let positions = [];
+        let trackedPositions = [];
+        let previousDelta = [body.position[0] - trackedBody.position[0], body.position[1] - trackedBody.position[1]];
+        this.stepWorld(world, (stepIndex) => {
+            this.moveDirections(body, walker.directions);
+            rows.push(body.currentRow);
+            positions.push([Math.round(body.position[0]), Math.round(body.position[1])]);
+            trackedPositions.push([Math.round(trackedBody.position[0]), Math.round(trackedBody.position[1])]);
+            let delta = [body.position[0] - trackedBody.position[0], body.position[1] - trackedBody.position[1]];
+            if(this.isSideSwappedWhileOverlapping(previousDelta, delta, trackedBody)){
+                crossedSteps.push(stepIndex);
+            }
+            previousDelta = delta;
+        }, stepsCount);
+        return Object.assign(
+            {arrivedTile: [body.currentCol, body.currentRow], crossedSteps, rows, positions, trackedPositions},
+            this.removeWalker(world, body)
+        );
+    }
+
+    isSideSwappedWhileOverlapping(previousDelta, delta, trackedBody)
+    {
+        return (
+            Math.abs(delta[1]) < trackedBody.shapes[0].height / 2
+            && 0 > Math.sign(previousDelta[0]) * Math.sign(delta[0])
+        ) || (
+            Math.abs(delta[0]) < trackedBody.shapes[0].width / 2
+            && 0 > Math.sign(previousDelta[1]) * Math.sign(delta[1])
+        );
     }
 
     createWalker(world, walker, walkerIndex)
@@ -80,13 +131,18 @@ class WallsWorldBaseTest extends BaseTest
             speed: 0,
             bodyState: {x: walker.start[0], y: walker.start[1], dir: GameConst.DOWN}
         });
-        for(let direction of walker.directions){
-            body.initMove(direction);
-        }
+        this.moveDirections(body, walker.directions);
         if(walker.pointTo){
             body.moveToPoint(walker.pointTo);
         }
         return body;
+    }
+
+    moveDirections(body, directions)
+    {
+        for(let direction of directions){
+            body.initMove(direction);
+        }
     }
 
     removeWalker(world, body)

@@ -2,8 +2,8 @@
  *
  * Reldens - Death Resurrection Ad Steps
  *
- * The resurrection ad steps of the death specs (DeathReviveSteps context): the configured resurrection ad is enabled for
- * the group with its client provider SDK mock (AdMessagesPlayer), the death config and any other given config value is
+ * The resurrection ad steps of the death specs (DeathReviveSteps context): the configured resurrection ad (its key read
+ * from the ads config path) is enabled for the group with its client provider SDK mock (AdMessagesPlayer), the death config and any other given config value is
  * set before the login (the client config is sent on the login, so a client provider value like the video minimum
  * duration reaches the client), the player enters the forest carrying the given restoration items, the provider is
  * ready and the player is killed there; the ad offered in the game over box is played from its button and its reward
@@ -18,7 +18,7 @@ const { DeathReviveShowcase } = require('./death-revive-showcase');
 const { Selectors } = require('../selectors');
 const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
 const { TimeConstants } = require('./time-constants');
-const { ActionsConst } = require('../../../lib/actions/constants');
+const { AdsConst } = require('../../../lib/ads/constants');
 
 class DeathResurrectionAdSteps
 {
@@ -26,16 +26,13 @@ class DeathResurrectionAdSteps
     static CLIENT_VIDEO_DURATION_PATH = AdMessagesPlayer.CLIENT_PROVIDERS_PATH+'/'
         +AdMessagesPlayer.MOCKED_PROVIDER_KEY+'/videoMinimumDuration';
 
-    static async enableResurrectionAd(context)
+    static async enableResurrectionAd(context, playerName = context.gameConfig.e2ePlayerName)
     {
         return await AdMessagesPlayer.enableAd(
             context.gameConfig,
             context.e2eGroup,
-            await E2eSeedAndRestoreApi.fetchConfigValue(
-                context.gameConfig,
-                ActionsConst.DEATH.CONFIG_PATHS.RESURRECTION_ADS_KEY
-            ),
-            context.gameConfig.e2ePlayerName
+            await E2eSeedAndRestoreApi.fetchConfigValue(context.gameConfig, AdsConst.CONFIG_PATHS.RESURRECTION_ADS_KEY),
+            playerName
         );
     }
 

@@ -29,8 +29,6 @@ let expect = BaseE2eTest.expect;
 class TestTimingObjectsMiners
 {
 
-    static ENEMY_OBJECT_TYPE = 4;
-
     static async fetchStoredReward(gameConfig, rewardItemId)
     {
         return await E2eSeedAndRestoreApi.fetchInventoryQuantity(gameConfig, gameConfig.e2ePlayerName, rewardItemId);
@@ -96,18 +94,8 @@ class TestTimingObjectsMiners
 
     static async runFirstHitTest(context)
     {
-        let passiveEnemyArea = BaseE2eTest.loadRoomEntries(Login.FOREST_ROOM_NAME, ['respawnAreas']).find(
-            area => TestTimingObjectsMiners.ENEMY_OBJECT_TYPE === area.childObjectType && !area.isAggressive
-        );
-        expect(passiveEnemyArea, 'The forest must have a passive enemy').toBeTruthy();
         let miners = await TestTimingObjectsMiners.enterTwoMiners(context);
-        let enemyAttack = await RoomObjectsApi.startEnemyAttack(
-            context.gameConfig,
-            Login.FOREST_ROOM_NAME,
-            context.gameConfig.e2ePlayerName,
-            passiveEnemyArea.assetKey
-        );
-        expect(enemyAttack.enemyKey, 'The enemy attack must start: '+enemyAttack.error).toBeTruthy();
+        await TimingMiningSteps.startPassiveEnemyAttack(context.gameConfig);
         await TimingObjectSession.waitForTimingAction(context.page, TimingMiningSteps.CANCEL, miners.mining.duration);
         await RoomObjectsApi.disableEnemies(context.gameConfig, Login.FOREST_ROOM_NAME);
         await TestTimingObjectsMiners.expectSecondRewarded(context, miners);

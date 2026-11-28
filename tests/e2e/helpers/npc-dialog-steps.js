@@ -3,8 +3,9 @@
  * Reldens - NPC Dialog Steps
  *
  * The steps of the NPC dialog specs: the random movement of a room NPC is stopped and the body of a moving NPC placed
- * back on its original tile (the players reset restores the movement), the logged player of a page is placed next to it
- * (MovementScenario) and opens its dialog with the interaction message its sprite click sends; the visible NPC dialog
+ * back on its original tile (the players reset restores the movement) and its sprite awaited there (a click point read
+ * while the sprite still walks to the tile can fall behind the player sprite), the logged player of a page is placed
+ * next to it (MovementScenario) and opens its dialog with the interaction message its sprite click sends; the visible NPC dialog
  * of a page; the room custom data changed for the group (restored by the group reset); and the sessions with the NPC
  * dialog open on the server (the random movement pause list, read by the room objects probe).
  *
@@ -16,6 +17,7 @@ const { RoomMovementApi } = require('./room-movement-api');
 const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
 const { SecurityApi } = require('./security-api');
 const { Phaser } = require('./phaser');
+const { InterpolationFramesRecorder } = require('./interpolation-frames-recorder');
 const { Login } = require('./login');
 const { TimeConstants } = require('./time-constants');
 const { Selectors } = require('../selectors');
@@ -28,10 +30,14 @@ class NpcDialogSteps
         let gameConfig = context.gameConfig;
         let npcBody = await RoomMovementApi.switchRandomMovement(gameConfig, roomName, npcKey, false);
         expect(npcBody, 'The NPC '+npcKey+' body is in '+roomName).toBeTruthy();
+        await Phaser.waitForObject(page, npcKey, TimeConstants.SCENE_LOAD);
         if(0 < npcBody.maxTiles){
             await RoomMovementApi.placeObject(gameConfig, roomName, npcKey, [npcBody.originalCol, npcBody.originalRow]);
+            expect(
+                await InterpolationFramesRecorder.waitForObjectOnBody(page, npcKey, false, TimeConstants.SCENE_LOAD),
+                'The NPC '+npcKey+' sprite stands on its original tile before the player is placed next to it'
+            ).toBe(true);
         }
-        await Phaser.waitForObject(page, npcKey, TimeConstants.SCENE_LOAD);
         await MovementScenario.placePlayerNextToNpc(page, {gameConfig, roomName, npcKey, navTimeout: TimeConstants.SCENE_LOAD});
         return {page, npcKey, roomName, dialog: page.locator(Selectors.npc.dialogue).filter({visible: true})};
     }

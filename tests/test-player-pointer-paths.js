@@ -28,7 +28,17 @@ class TestPlayerPointerPaths extends RandomMovementBaseTest
         room.movementInterval = {};
         room.config = {get: () => true};
         room.pointsValidator = new WorldPointsValidator(body.world.mapJson.width, body.world.mapJson.height);
-        return {body, room, playerSchema: {player_id: 7, isDeath: () => false, isDisabled: () => false, physicalBody: body}};
+        return {
+            body,
+            room,
+            playerSchema: {
+                player_id: 7,
+                isDeath: () => false,
+                isDisabled: () => false,
+                getPrivate: () => null,
+                physicalBody: body
+            }
+        };
     }
 
     async pointTo(setup, column, row)

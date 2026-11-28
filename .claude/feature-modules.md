@@ -30,6 +30,8 @@ Core multiplayer room system
   removes the sessions of the new one
 - `server/player-relocator.js` (PlayerRelocator): moves a player to a room and position decided by the server, without
   a change point (used by the teleport NPC and the death teleport, see `.claude/gameplay-features.md`)
+- Rooms on several servers (the rooms `server_url`), the server change and the deleted rooms closed on every server:
+  see [multiple servers](multi-server/overview.md)
 - Client connects via `lib/game/client/room-events.js` to handle server state synchronization
 
 ### World (`lib/world/`)
@@ -66,8 +68,8 @@ Combat system (PvP/PvE), skills, battle mechanics
   to the dead player, so a listener can revive the player without receiving the battle
 - `server/room-auto-recovery.js` (with `players-auto-recovery.js`, `objects-auto-recovery.js` and
   `stats-recovery-calculator.js`): the stats auto recovery of every scene room
-- `server/player-death-relocator.js` and `server/resurrection-ad-gate.js`: the death teleport to town, the restoration
-  item and the resurrection ad (see `.claude/gameplay-features.md`)
+- `server/player-death-relocator.js`: the death teleport to town, the restoration item and the revive hold used by the
+  ads resurrection ad (`lib/ads/server/resurrection-ad-gate.js`, see `.claude/gameplay-features.md`)
 - `server/death-revive-notifier.js` and `client/game-over-revive-message.js`: the revive mode shown in the game over box,
   the seconds left to the revive, the revive, restoration item choice and resurrection ad buttons
 - `server/death-revive-requests.js`: the revive request and the restoration item choice of the dead player, without the
@@ -108,9 +110,18 @@ Loot and rewards system
 - Reward distribution
 - The accept of a reward event (`server/rewards-events-message-actions.js`) gives the items only of a `ready` and not
   `complete` state, the accepts of a player run one after the other, every given item is stored in the state
-  `givenItems` as soon as it is given (an item the inventory does not add or a rejected give stops the claim, which is
-  never sent as accepted), so a claim that failed after some items gives only the missing ones when it is claimed
-  again; the completed state drops `givenItems` and a new claim date clears it (`LoginStateHandler.resetRewardState()`)
+  `givenItems` as soon as it is given (`true` once all its units were given, or the number of units kept from a partly
+  failed give; an item the inventory does not add, a rejected give or a partly given item stops the claim, which is
+  never sent as accepted), so a claim that failed after some items or units gives only the missing ones when it is
+  claimed again; the completed state drops `givenItems` and a new claim date clears it
+  (`LoginStateHandler.resetRewardState()`)
+- A reward item with several units (`server/actions/give-reward-action.js`) adds the units one by one and removes the
+  units already added when one fails; `execute()` answers the units the player keeps (0 when nothing was given), a
+  unit that can not be removed is kept and counted (critical log), so the event rewards give only the missing units and
+  the kill, ads and ticket gives take any kept unit as given and never give it twice
+- Login rewards (`server/event-handlers/login-state-handler.js`): the daily reward is ready on a login of the current
+  local day; the straight days reward counts the logins from the local day after the day it was last made ready, and a
+  ready, not claimed straight days reward stays ready until it is claimed
 
 ### Scores (`lib/scores/`)
 Leaderboards and ranking system
@@ -120,7 +131,8 @@ Leaderboards and ranking system
   `server/scores/obtainedScorePerPlayerLevelMultiplier`, and the enemy `private_params` `"killScore"` with
   `server/scores/useNpcCustomScore`
 - `server/scores-period-reset.js` resets the scores once per period (`server/scores/reset/*`), started by the plugin on
-  `reldens.serverReady`, and `server/scores-period-key-builder.js` builds the UTC daily, weekly (ISO) and monthly keys;
+  `reldens.serverReady`, and `server/scores-period-key-builder.js` builds the daily, weekly (the week Monday date
+  plus `-W`) and monthly keys in the server local time;
   `server/scores-reset-claim.js` reads the pending reset claim shared by the reset and the kill score
 - The score updates of a player run one after the other and an existing score row is saved only while it holds the
   read id and counters (`ScoresUpdater.saveScore()`), a changed or deleted row is read again and the update retried
@@ -169,6 +181,7 @@ Party/guild system
 - Client: a team box removed at runtime removes its preload listeners (`UserInterface.removeEventsListeners()`), the
   team and clan leave buttons are bound inside their own boxes, and declining a clan request shows again the panel of
   the own clan, or the create form for a player with no clan
+- Members on other servers: see [teams and clans sync](multi-server/teams-and-clans-sync.md)
 
 ## Player Systems
 
@@ -181,7 +194,9 @@ Authentication, registration, player management
   with their dummy password validation and the failures registration), `UserRegistration` (accounts and
   guests), `PlayerCreation` (new players), `PlayerRoomState` (the states placed in a room and the players state and
   scene on login), `ForgotPassword` (forgot password requests, reset emails and the reset page routes) and
-  `UserDisconnection` (disconnection from every room and from the other servers)
+  `UserDisconnection` (disconnection from every room and from the other servers, see
+  [login and server change](multi-server/login-and-server-change.md)); the usernames, emails and player names are
+  checked on the servers with their own database (see [names check](multi-server/names-check.md))
 - Login protections: failed login lockout with stored address blocks, account bans, registration and guests limits per
   address, see `.claude/ip-lists-and-login-blocks.md`
 - The forgot password interval is kept per user in the `users.password_reset_sent_at` column, shared by every server
@@ -200,6 +215,7 @@ Multi-channel chat (global, room, private messages)
 - Real-time messaging
 - The overhead chat is shown only for the messages with a sender, a known chat type (`ChatUi.isValidMessageType()`,
   the `ChatConst.TYPES` values) and a configured chat type
+- Private messages to a player on another server: see [chat and rooms sync](multi-server/chat-and-rooms-sync.md)
 
 ### Audio (`lib/audio/`)
 Sound and music system
@@ -306,6 +322,15 @@ Game objects (NPCs, interactables, respawn areas)
   message and gets no reward, the object stays busy (`isActive`) until the completion settles, so no other timing
   starts while the reward item is added, and a rejected completion (a failed reward item add) is caught and frees the
   object after it settles, so the object can always be used again
+- The timing player lock (`server/objects/timing/lockPlayer`, `0` by default, read once by every timing object): the
+  start clears the player movement intervals, stops its body and its auto path and sets the
+  `ObjectsConst.TIMING_MOVEMENT_LOCKED` private data, which `RoomScene.executeMovePlayerActions()` checks to refuse
+  every direction and pointer move until the timing ends (the end clears it with the active timing key). While locked
+  the `cancelOnMove` rule does not apply (a push never cancels it), the other cancel rules and the death still do. The
+  `timingStart` message carries `locked`, and the client `TimingObject` then shows the cancel button (`X`, the
+  `cancelButton*` client params) over the object and listens to the Esc key (not while writing in an input); both send
+  `ObjectsConst.TIMING_CANCEL_REQUEST` with the interaction id, and only the player running the timing of that object
+  cancels it
 - Teleport objects (`server/object/type/teleport-object.js`, class type `9`) are NPCs whose dialog options move the
   player to the `private_params` `"destinations"` of the chosen option (see `.claude/gameplay-features.md`)
 

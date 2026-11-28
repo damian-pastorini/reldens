@@ -2,12 +2,20 @@
  *
  * Reldens - ClanFixturesBuilder
  *
+ * Builds the teams and clans of the teams tests. A synced team or clan gets the real cross server state sync of this
+ * server with no other servers, whose sends are recorded as [action, target id, payload] instead of sent.
+ *
  */
 
 const { Clan } = require('../../lib/teams/server/clan');
+const { Team } = require('../../lib/teams/server/team');
 const { ClanFactory } = require('../../lib/teams/server/clan-factory');
+const { ClanCrossServerStateSync } = require('../../lib/teams/server/clan-cross-server-state-sync');
+const { TeamCrossServerStateSync } = require('../../lib/teams/server/team-cross-server-state-sync');
 const { TeamsPlugin } = require('../../lib/teams/server/plugin');
+const { TeamsConst } = require('../../lib/teams/constants');
 const { ChatConst } = require('../../lib/chat/constants');
+const { ServerMessengerPropsBuilder } = require('./server-messenger-props-builder');
 const { sc } = require('@reldens/utils');
 
 class ClanFixturesBuilder
@@ -40,7 +48,7 @@ class ClanFixturesBuilder
 
     static createClan()
     {
-        return new Clan({
+        return this.createSyncedClan({
             id: 10,
             owner: {player_id: '1', playerName: 'ImRoot'},
             members: {1: {player_id: 1}, 2: {player_id: 2}},
@@ -83,6 +91,50 @@ class ClanFixturesBuilder
             delete: async (filters) => deletedRows.push({entityKey, filters}),
             deleteById: async (id) => deletedRows.push({entityKey, id})
         };
+    }
+
+    /**
+     * @param {Object} SyncClass
+     * @param {string} routePath
+     * @param {Array<Array<string>>} sentSyncs
+     * @returns {Object}
+     */
+    static createServersSync(SyncClass, routePath, sentSyncs)
+    {
+        let serversSync = new SyncClass(Object.assign(
+            ServerMessengerPropsBuilder.create('http://self:8080', {}, 'test-secret', routePath),
+            {teamsPlugin: {teams: {}, clans: {}}, sharedProperties: {}}
+        ));
+        serversSync.sendToServers = async (serversUrls, action, targetId, payload) => {
+            sentSyncs.push([action, String(targetId), payload]);
+        };
+        return serversSync;
+    }
+
+    /**
+     * @param {Object} clanProps
+     * @param {Array<Array<string>>} [sentSyncs]
+     * @returns {Clan}
+     */
+    static createSyncedClan(clanProps, sentSyncs = [])
+    {
+        return new Clan(Object.assign(
+            {serversSync: this.createServersSync(ClanCrossServerStateSync, TeamsConst.SYNC.CLANS_ROUTE, sentSyncs)},
+            clanProps
+        ));
+    }
+
+    /**
+     * @param {Object} teamProps
+     * @param {Array<Array<string>>} [sentSyncs]
+     * @returns {Team}
+     */
+    static createSyncedTeam(teamProps, sentSyncs = [])
+    {
+        return new Team(Object.assign(
+            {serversSync: this.createServersSync(TeamCrossServerStateSync, TeamsConst.SYNC.TEAMS_ROUTE, sentSyncs)},
+            teamProps
+        ));
     }
 
     static createTeamsPlugin(teamsPluginData)

@@ -3,7 +3,9 @@
  * Reldens - Character E2E State
  *
  * Server side e2e endpoints for the characters creation and selection: makes the next players creation fail in the
- * storage (the player is stored with a user ID that does not exist, so the foreign key rejects it), sets the banned
+ * storage (the player is stored with a user ID that does not exist, so the foreign key rejects it), makes only the next
+ * player state insert fail after the player row was stored (a copy of the state with a room ID that does not exist,
+ * rejected by the rooms foreign key), sets the banned
  * names, empties the classes sent to the client, leaves a single login room and broadcasts a room removal to the game
  * rooms. The reset restores every value before every test.
  *
@@ -16,7 +18,9 @@ class CharacterE2eState
 {
 
     static MISSING_USER_ID = 0;
+    static MISSING_ROOM_ID = 999999;
     static isCreationFailing = false;
+    static isStateCreationFailing = false;
     static defaults = {};
 
     static fetchActionsPlugin(serverManager)
@@ -37,6 +41,7 @@ class CharacterE2eState
     static resetAll(serverManager)
     {
         CharacterE2eState.isCreationFailing = false;
+        CharacterE2eState.isStateCreationFailing = false;
         serverManager.loginManager.usersManager.bannedNames = CharacterE2eState.defaults.bannedNames;
         CharacterE2eState.fetchActionsPlugin(serverManager).initialGameDataEnricher.classesData = CharacterE2eState
             .defaults.classesData;
@@ -51,10 +56,18 @@ class CharacterE2eState
             if(CharacterE2eState.isCreationFailing){
                 playerData.user_id = CharacterE2eState.MISSING_USER_ID;
             }
+            if(CharacterE2eState.isStateCreationFailing){
+                CharacterE2eState.isStateCreationFailing = false;
+                playerData.state = Object.assign({}, playerData.state, {room_id: CharacterE2eState.MISSING_ROOM_ID});
+            }
         });
         let app = serverManager.app;
         app.post('/api/e2e/characters/fail-creation', (request, response) => {
             CharacterE2eState.isCreationFailing = true;
+            response.json({ok: true});
+        });
+        app.post('/api/e2e/characters/fail-state-creation', (request, response) => {
+            CharacterE2eState.isStateCreationFailing = true;
             response.json({ok: true});
         });
         app.post('/api/e2e/characters/banned-names', (request, response) => {

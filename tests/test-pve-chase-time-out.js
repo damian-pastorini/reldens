@@ -7,7 +7,7 @@
 const { BaseTest } = require('./base-test');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
 const { RelocationRoomBuilder } = require('./fixtures/relocation-room-builder');
-const { Pve } = require('../lib/actions/server/pve');
+const { PveBattleBuilder } = require('./fixtures/pve-battle-builder');
 const { PlayerRelocator } = require('../lib/rooms/server/player-relocator');
 const { AnimationObject } = require('../lib/objects/server/object/type/animation-object');
 const { GameConst } = require('../lib/game/constants');
@@ -21,33 +21,7 @@ class TestPveChaseTimeOut extends BaseTest
         super(config);
         this.relocationRoomName = 'reldens-town';
         this.relocationPosition = {x: 300, y: 200};
-    }
-
-    createChaseSetup(chaseTimeOut)
-    {
-        let setup = {chasedBodies: [], originMoves: 0, delayedStarts: 0, emittedEvents: [], chaseTimeOut};
-        let events = {emit: async (eventName) => setup.emittedEvents.push(eventName)};
-        setup.pve = new Pve({fetchChaseTimeOut: () => setup.chaseTimeOut, events});
-        setup.pve.setTargetObject({
-            id: 'enemy-1',
-            uid: 'enemy-uid',
-            state: {inState: GameConst.STATUS.ACTIVE},
-            stats: {hp: 50},
-            chaseBody: (body) => {
-                setup.chasedBodies.push(body);
-                return [[1, 1]];
-            },
-            objectBody: {
-                bodyState: {inState: GameConst.STATUS.ACTIVE},
-                velocity: [1, 1],
-                resetAuto: () => true,
-                moveToOriginalPoint: () => setup.originMoves++
-            }
-        });
-        setup.pve.startBattleWithDelay = async () => setup.delayedStarts++;
-        setup.playerSchema = GameplayPlayerBuilder.createPlayerSchema({physicalBody: {id: 'player-body'}});
-        setup.pve.inBattleWithPlayers[setup.playerSchema.player_id] = true;
-        return setup;
+        this.createChaseSetup = PveBattleBuilder.createChaseSetup;
     }
 
     expectStillChasing(setup)
@@ -220,7 +194,8 @@ class TestPveChaseTimeOut extends BaseTest
             await setup.pve.startBattleWithDelay(setup.playerSchema, {}, {skillDelay: 0});
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema]);
             let skillDelay = 1;
-            await setup.pve.startBattleWithDelay(setup.playerSchema, {}, {skillDelay});
+            let scheduledTimer = await setup.pve.startBattleWithDelay(setup.playerSchema, {}, {skillDelay});
+            this.assert.strictEqual(scheduledTimer, setup.pve.battleTurnTimers.timers[setup.playerSchema.player_id]);
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema]);
             await timersPromises.setTimeout(skillDelay);
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema, setup.playerSchema]);
@@ -238,7 +213,7 @@ class TestPveChaseTimeOut extends BaseTest
             setup.playerSchema = relocation.playerSchema;
             setup.pve.inBattleWithPlayers = {[relocation.playerSchema.player_id]: true};
             setup.pve.targetObject.actionsKeys = ['bite'];
-            setup.pve.targetObject.actions = {bite: {validate: () => false}};
+            setup.pve.targetObject.actions = {bite: PveBattleBuilder.createEnemyAction()};
             setup.pve.targetObject.objectBody.world = {worldKey: this.relocationRoomName};
             let relocated = await new PlayerRelocator(relocation.room).relocate(
                 relocation.client,
@@ -264,13 +239,8 @@ class TestPveChaseTimeOut extends BaseTest
     async testBattleStartCountsAsTheFirstHit()
     {
         await this.test('the battle start counts as the first hit and the enemy loop never replaces it', async () => {
-            let setup = this.createChaseSetup(1000);
-            setup.pve.targetObject.actionsKeys = ['bite'];
-            setup.pve.targetObject.actions = {bite: {validate: () => false}};
-            setup.pve.targetObject.objectBody.world = {worldKey: 'forest'};
-            setup.playerSchema.physicalBody.world = {worldKey: 'forest'};
-            setup.playerSchema.stats = {hp: 10};
-            let room = {roomWorld: {}, state: {}, playerBySessionIdFromState: () => true, config: {get: () => 'hp'}};
+            let setup = PveBattleBuilder.setEnemyAction(this.createChaseSetup(1000));
+            let room = setup.room;
             let battleStart = Date.now();
             await setup.pve.startBattleWith(setup.playerSchema, room);
             this.assert.ok(battleStart <= setup.pve.lastHitAt[setup.playerSchema.player_id]);

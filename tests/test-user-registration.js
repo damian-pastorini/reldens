@@ -10,6 +10,7 @@ const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
 const { UsersConst } = require('../lib/users/constants');
 const { Encryptor } = require('@reldens/server-utils');
 const { sc } = require('@reldens/utils');
+const MarkupInjectionPayloads = require('./fixtures/markup-injection-payloads.json');
 
 class TestUserRegistration extends BaseTest
 {
@@ -52,11 +53,12 @@ class TestUserRegistration extends BaseTest
             passwordManager: Encryptor,
             loginAttempts: new LoginAttempts({maxAttempts: 1}),
             crossServerNamesCheck: {
-                holdEverywhere: async (routePath, values) => {
+                holdEverywhere: async (values) => {
                     registrationSetup.heldValues.push(...values);
-                    return registrationSetup.isFreeOnOtherServers;
+                    return registrationSetup.isFreeOnOtherServers ? 'hold-'+values.join('-') : false;
                 },
-                release: (routePath, values) => registrationSetup.releasedValues.push(...values)
+                release: (values, holdId) => 'hold-'+values.join('-') === holdId
+                    && registrationSetup.releasedValues.push(...values)
             },
             logUserData: (userData) => ({user: {username: userData.username}})
         });
@@ -259,6 +261,33 @@ class TestUserRegistration extends BaseTest
             ]);
             this.assert.strictEqual(registrationResult, registrationSetup.invalidResult);
             this.assert.strictEqual(registrationSetup.createdUsers.length, 0);
+        });
+    }
+
+    async testTheRegistrationAcceptsOnlyTheStrictEmailPattern()
+    {
+        await this.test('the registration rejects the emails out of the strict pattern and accepts its allowed characters', async () => {
+            let registrationSetup = this.createRegistrationSetup([], 10);
+            let invalidEmails = [
+                MarkupInjectionPayloads.emailWithMarkup,
+                MarkupInjectionPayloads.emailWithQuote,
+                'pla yer@test.com',
+                'player@test.c',
+                'player@test.123',
+                'player@te_st.com'
+            ];
+            await this.processRegistrations(
+                registrationSetup,
+                invalidEmails.map((email) => ({username: 'player', email, password: 'secret'}))
+            );
+            this.assert.strictEqual(registrationSetup.createdUsers.length, 0);
+            this.assert.deepStrictEqual(
+                registrationSetup.emittedEvents,
+                invalidEmails.map(() => 'reldens.registrationInvalidParams')
+            );
+            let allowedEmail = 'first.last_9+tag%x-y@sub-domain.test.com';
+            await this.processRegistrations(registrationSetup, [{username: 'player', email: allowedEmail, password: 'secret'}]);
+            this.assert.deepStrictEqual(registrationSetup.createdUsers.map((createdUser) => createdUser.email), [allowedEmail]);
         });
     }
 

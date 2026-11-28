@@ -32,7 +32,6 @@ const { Selectors } = require('./selectors');
 const { Navigation } = require('./helpers/navigation');
 const { TimeConstants } = require('./helpers/time-constants');
 const { GameConst } = require('../../lib/game/constants');
-const { ChatConst } = require('../../lib/chat/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -91,13 +90,7 @@ class TestTeleportNpcRelocations
         let entered = await TestTeleportNpcRelocations.enterWithDialog(context, 1);
         await WorldE2eStateApi.blockSceneChanges(context.gameConfig, Login.TOWN_ROOM_NAME, TestTeleportNpcRelocations.BLOCK_MS);
         await TeleportNpcSteps.chooseOption(entered.npc, entered.npc.teleportData.optionValue);
-        await expect.poll(
-            async () => (await ChatSteps.fetchChat(entered.npc.page)).filter(
-                message => GameConst.ROOM_UNAVAILABLE.SERVER_BUSY === message[ChatConst.MESSAGE.KEY]
-                    && ChatConst.TYPES.ERROR === message[ChatConst.TYPES.KEY]
-            ).length,
-            {message: 'The player gets the busy room line', timeout: TimeConstants.SERVER_RESPONSE}
-        ).toBe(1);
+        await ChatSteps.expectBusyRoomLine(entered.npc.page);
         await TestTeleportNpcRelocations.expectInTown(context, entered, 'The player stays in the town');
         await MovementScenario.placePlayerOnReturnPoint(entered.npc.page, entered.walkContext);
         let start = await entered.walkContext.fetchPlayer();

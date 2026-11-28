@@ -3,9 +3,13 @@
  * Reldens - Login Helper
  *
  * Provides the sample town and forest rooms names (the forest levels from the first to the sixth one) and the page
- * actions for logging in, selecting a character, and waiting for the game to start. Every extra client
+ * actions for logging in, selecting a character, and waiting for the game to start (the start click runs the game
+ * engine creation in its submit handler, so it is bound by the game start time, not the one second action time; the first scene preload creates
+ * the UI scene and its HUD after the game engine starts, so the HUD buttons are checked once the UI scene runs). Every extra client
  * page opened by openClientPage() keeps its browser context, closed by the page fixture after each test (even a failed
- * one), so no extra player stays connected into the next test reset.
+ * one), so no extra player stays connected into the next test reset. A timed login returns its start and end times,
+ * so the latest stored login date of the user is checked against them (stored in the server local time, at most one
+ * second before the start since the column keeps whole seconds).
  *
  */
 
@@ -15,9 +19,14 @@ const { TimeConstants } = require('./time-constants');
 const { Navigation } = require('./navigation');
 const { SecurityApi } = require('./security-api');
 const { RoomObjectsApi } = require('./room-objects-api');
+const { E2eSeedAndRestoreApi } = require('./e2e-seed-and-restore-api');
+const { GameplayE2eStateApi } = require('./gameplay-e2e-state-api');
+const { RoomMessagesRecorder } = require('./room-messages-recorder');
+const { sc } = require('@reldens/utils');
 
 class Login
 {
+    static STORED_SECOND_MS = 1000;
     static TOWN_ROOM_NAME = 'reldens-new-age-town';
     static FOREST_ROOM_NAME = 'reldens-forest-level-1';
     static FOREST_LEVELS = [
@@ -134,12 +143,17 @@ class Login
             await dialog.dismiss();
         };
         page.on('dialog', dialogHandler);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {timeout: gameTimeout});
         await gameStartedPromise;
         page.off('dialog', dialogHandler);
         if(skipUiSelectors){
             return;
         }
+        await page.waitForFunction(
+            () => Boolean(window.reldens.gameEngine.uiScene?.sys?.isActive()),
+            null,
+            {timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun)}
+        );
         let uiSelectors = [
             Selectors.hud.chatOpen,
             Selectors.hud.logout,
@@ -170,7 +184,9 @@ class Login
             timeout: TimeConstants.forLongRun(TimeConstants.CHARACTER_SCREEN, longRun)
         });
         expect(await Login.selectPlayer(target, playerName), playerName).toBe(true);
-        await target.click(Selectors.characterSelect.selectorSubmit);
+        await target.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await target.waitForSelector(Selectors.body.gameEngineStarted, {
             timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
         });
@@ -233,6 +249,23 @@ class Login
         Login.openedClientContexts = [];
     }
 
+    static async loginRootPlayerTimed(page, gameConfig, longRun)
+    {
+        let startedMs = Date.now();
+        await Login.loginRootPlayer(page, gameConfig, longRun);
+        return {startedMs, endedMs: Date.now()};
+    }
+
+    static async expectLatestLoginStoredIn(gameConfig, userId, loginWindow)
+    {
+        let logins = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLogin', {user_id: userId});
+        let storedLoginMs = new Date(logins.reduce((latest, login) => login.id > latest.id ? login : latest).login_date).getTime();
+        expect(
+            [loginWindow.startedMs - Login.STORED_SECOND_MS <= storedLoginMs, storedLoginMs <= loginWindow.endedMs],
+            'The login date is stored in the server local time, at the login moment: '+new Date(storedLoginMs).toString()
+        ).toEqual([true, true]);
+    }
+
     static async loginRootPlayer(page, gameConfig, longRun, userKeySuffix = '', skipUiSelectors = false, sceneName = null)
     {
         let username = gameConfig['e2eUsername'+userKeySuffix] || 'root'+userKeySuffix;
@@ -261,12 +294,27 @@ class Login
         return { pauseMs, sceneTimeout, navTimeout };
     }
 
-    static async moveThroughChangePoint(page, gameConfig, roomName, nextRoomName)
+    static async moveThroughChangePoint(page, gameConfig, roomName, nextRoomName, playerName = gameConfig.e2ePlayerName)
     {
+        await RoomMessagesRecorder.startSceneChangeRecording(page);
         let placed = await RoomObjectsApi.placePlayerOnChangePoint(page, gameConfig, roomName, nextRoomName);
-        expect(placed.position, 'The player is placed on the change point to '+nextRoomName+': '+placed.error).toBeTruthy();
-        await Navigation.waitForRoom(page, nextRoomName, TimeConstants.ROOM_TRANSITION);
-        expect(await Navigation.getCurrentRoomName(page), 'The player reaches '+nextRoomName).toBe(nextRoomName);
+        expect(placed.position, playerName+' is placed on the change point to '+nextRoomName+': '+placed.error).toBeTruthy();
+        await expect.poll(
+            async () => nextRoomName === await Navigation.getCurrentRoomName(page) ? nextRoomName : sc.toJsonString({
+                client: await page.evaluate(() => ({
+                    roomName: window.reldens.activeRoomEvents?.roomName,
+                    isChangingScene: Boolean(window.reldens.isChangingScene),
+                    isGameOver: Boolean(window.reldens.gameOver),
+                    modalText: document.querySelector('.reload-modal-message')?.textContent || '',
+                    sceneChangeMessages: window.e2eSceneChangeMessages || []
+                })),
+                server: await GameplayE2eStateApi.fetchPlayer(gameConfig, roomName, playerName)
+            }),
+            {
+                message: 'The player reaches '+nextRoomName+' (else the client state and its server state in '+roomName+')',
+                timeout: TimeConstants.ROOM_TRANSITION
+            }
+        ).toBe(nextRoomName);
     }
 }
 

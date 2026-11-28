@@ -14,7 +14,8 @@
  * in another room disable its enemies (but the one they use) and pause its moving NPCs the same way, so no wandering
  * body walks into the tiles they choose. The player can be placed again on the return point, next to the context NPC or
  * on a clear line of an enemy that gets targeted, and walked from the town into the forest through its change point
- * (with no canvas focus click in the long run, so its video records no stray click).
+ * (with no canvas focus click in the long run, so its video records no stray click). Every placement on the return
+ * point pauses the moving NPCs of its room on their spawn tiles first, so none pushes the player away from it.
  *
  */
 
@@ -117,6 +118,7 @@ class MovementScenario
             gameConfig,
             roomName,
             playerName,
+            lastSent: false,
             navTimeout: TimeConstants.forLongRun(TimeConstants.NAVIGATION, longRun),
             fetchPlayer: async () => RoomMovementApi.fetchPlayer(gameConfig, roomName, playerName),
             isStill: (snapshot) => 0 === snapshot.pathSteps && 0 === snapshot.velocityX && 0 === snapshot.velocityY
@@ -125,6 +127,7 @@ class MovementScenario
 
     static async placePlayerOnReturnPoint(page, context)
     {
+        await MovementScenario.pauseMovingObjects(context.gameConfig, context.roomName);
         let placement = await RoomObjectsApi.requestPlayerPlacement(
             page,
             context.gameConfig,
@@ -222,6 +225,7 @@ class MovementScenario
 
     static async walkBelowTheForestChangePoint(page, context, longRun)
     {
+        await GameplayE2eStateApi.recordMovementMessages(context.gameConfig, context.playerName);
         let townMovement = await MovementScenario.movePlayer(
             page,
             context,
@@ -231,12 +235,13 @@ class MovementScenario
             ],
             TimeConstants.forLongRun(TimeConstants.MAP_CROSSING, longRun)
         );
-        expect(townMovement.done, 'The player must reach the tile below the forest change point').toBe(true);
+        let walkFailure = townMovement.done ? '' : await RoomMovementApi.describeWalkFailure(context, townMovement.trail);
+        expect(townMovement.done, 'The player must reach the tile below the forest change point: '+walkFailure).toBe(true);
     }
 
     static async pauseMovingObjects(gameConfig, roomName)
     {
-        for(let entry of BaseE2eTest.loadRoomEntries(roomName, MovementScenario.MOVING_OBJECTS_LISTS, true)){
+        for(let entry of BaseE2eTest.loadRoomEntries(roomName, MovementScenario.MOVING_OBJECTS_LISTS, true, true)){
             let pausedObject = await RoomMovementApi.switchRandomMovement(gameConfig, roomName, entry.clientKey, false);
             if(!pausedObject){
                 continue;
@@ -259,7 +264,7 @@ class MovementScenario
     static async movePlayer(page, context, tile, timeout)
     {
         let point = WalkableTileLocator.worldPoint(tile);
-        await Navigation.moveToWorldPoint(page, point.x, point.y);
+        context.lastSent = await Navigation.moveToWorldPoint(page, point.x, point.y);
         return await RoomMovementApi.collectTrail(
             context.fetchPlayer,
             (player) => context.isStill(player) && tile[0] === player.currentCol && tile[1] === player.currentRow,

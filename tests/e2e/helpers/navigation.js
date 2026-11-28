@@ -119,14 +119,22 @@ class Navigation
 
     static async moveToWorldPoint(page, worldX, worldY)
     {
-        await page.evaluate((args) => {
-            window.reldens.activeRoomEvents.send({
+        return await page.evaluate((args) => {
+            let roomEvents = window.reldens.activeRoomEvents;
+            let sent = {
+                roomName: roomEvents.roomName,
+                isGameOver: Boolean(window.reldens.gameOver),
+                isOpen: Boolean(roomEvents.room?.connection?.isOpen),
+                sessionId: roomEvents.room?.sessionId
+            };
+            sent.isSent = roomEvents.send({
                 'act': 'mp',
                 'column': Math.floor(args.x / args.tileSize),
                 'row': Math.floor(args.y / args.tileSize),
                 'x': args.x,
                 'y': args.y
             });
+            return sent;
         }, { x: worldX, y: worldY, tileSize: Navigation.TILE_SIZE });
     }
 

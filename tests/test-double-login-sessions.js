@@ -2,6 +2,9 @@
  *
  * Reldens - Test Double Login Sessions
  *
+ * Tests the double login sessions: the old lobby, scene and chat sessions closed and removed, and the session ended
+ * message shown once on the old tab.
+ *
  */
 
 const { BaseTest } = require('./base-test');
@@ -136,38 +139,55 @@ class TestDoubleLoginSessions extends BaseTest
 
     async testTheEndedSceneSessionIsRemovedFromTheActivePlayers()
     {
-        await this.test('the ended scene session is removed with its player and kept when the save fails', async () => {
+        await this.test('the ended scene session is removed with its player and closed, a failed save keeps the session', async () => {
+            let expectedBySavedState = [
+                [true, ['old-scene'], [], [['old-scene', this.consentedCode]]],
+                [false, [], ['old-scene'], []]
+            ];
             for(let savedState of [true, false]){
                 let setup = ActiveSessionsBuilder.createSetup();
                 let oldSceneClient = this.prepareSceneDisconnection(setup, savedState);
-                this.assert.strictEqual(
-                    await setup.sceneRoom.disconnectBySessionId('old-scene', oldSceneClient, this.userModel),
-                    true
-                );
-                this.assert.deepStrictEqual(setup.removedPlayers, savedState ? ['old-scene'] : []);
                 this.assert.deepStrictEqual(
-                    ActiveSessionsBuilder.fetchUserSessions(setup, 1),
-                    savedState ? [] : ['old-scene']
+                    [
+                        await setup.sceneRoom.disconnectBySessionId('old-scene', oldSceneClient, this.userModel),
+                        setup.removedPlayers,
+                        ActiveSessionsBuilder.fetchUserSessions(setup, 1),
+                        setup.closedSessions
+                    ],
+                    expectedBySavedState[savedState ? 0 : 1],
+                    'Saved state: '+savedState
                 );
-                this.assert.deepStrictEqual(setup.closedSessions, []);
             }
+        });
+    }
+
+    async testTheSceneSessionEndedByAServerChangeIsClosedWithItsCode()
+    {
+        await this.test('a scene session ended by a server change is closed with the server change code', async () => {
+            let setup = ActiveSessionsBuilder.createSetup();
+            let oldSceneClient = this.prepareSceneDisconnection(setup, true);
+            await setup.sceneRoom.disconnectBySessionId('old-scene', oldSceneClient, this.userModel, true);
+            this.assert.deepStrictEqual(
+                [setup.removedPlayers, setup.closedSessions],
+                [['old-scene'], [['old-scene', GameConst.DISCONNECTION.SERVER_CHANGE_CLOSE_CODE]]]
+            );
         });
     }
 
     async testAMissingScenePlayerIsNotDisconnected()
     {
-        await this.test('a scene session without player in the room is not disconnected nor removed', async () => {
+        await this.test('a scene session without player in the room is only closed, no player is removed', async () => {
             let setup = ActiveSessionsBuilder.createSetup();
             this.prepareSceneDisconnection(setup, true);
             let otherClient = ActiveSessionsBuilder.joinRoom(setup, setup.sceneRoom, 'other-scene', this.userModel);
             this.assert.strictEqual(
                 await setup.sceneRoom.disconnectBySessionId('other-scene', otherClient, this.userModel),
-                false
+                true
             );
             this.assert.deepStrictEqual(setup.removedPlayers, []);
             this.assert.deepStrictEqual(
-                ActiveSessionsBuilder.fetchUserSessions(setup, 1),
-                ['old-scene', 'other-scene']
+                [ActiveSessionsBuilder.fetchUserSessions(setup, 1), setup.closedSessions],
+                [['old-scene'], [['other-scene', this.consentedCode]]]
             );
         });
     }

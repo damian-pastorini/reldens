@@ -159,15 +159,17 @@ class TestPlayerPathfindingCollisions
             {pressed: GameConst.KEY_STATES.PRESSED, direction: GameConst.DOWN},
             {timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
         );
-        await Navigation.pointToWorldPoint(page, point.x, point.y);
-        let movement = await RoomMovementApi.collectTrail(
+        let movement = await RoomMovementApi.collectRecordedTrail(
+            context,
+            async () => await Navigation.pointToWorldPoint(page, point.x, point.y),
             context.fetchPlayer,
             (player) => context.isStill(player) && target[0] === player.currentCol && target[1] === player.currentRow,
             context.navTimeout
         );
         await page.keyboard.up('ArrowDown');
         await screenshots.capture(page, 'key-held-pointer-path');
-        expect(movement.done, 'The path reaches its target with the key held: '+sc.toJsonString(movement.last)).toBe(true);
+        let failure = sc.toJsonString({from: context.from, target, last: movement.last, steps: movement.steps});
+        expect(movement.done, 'The path reaches its target with the key held (last server steps): '+failure).toBe(true);
     }
 
     static async runDirectionCancelsPathTest(page, screenshots, gameConfig, longRun, directionKey)

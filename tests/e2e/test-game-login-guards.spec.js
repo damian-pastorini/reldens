@@ -5,13 +5,15 @@
  * Tests the game login guards around the lockout: the stored address blocks restored after a restart only while they
  * did not expire, a repeated block updating its stored row, the permanent deny rows kept as they are, the banned
  * accounts not counting failures, the banned, blocked and throttled rejections answering the same text, the password
- * validations cap and the joins with missing or invalid options.
+ * validations cap (the concurrent logins of different new accounts, so no admitted login replaces another session of
+ * the same user) and the joins with missing or invalid options.
  *
  */
 
 const { sc } = require('@reldens/utils');
 const { BaseE2eTest } = require('./base-e2e-test');
 const { GameRoomJoin } = require('./helpers/game-room-join');
+const { DirectFormSubmit } = require('./helpers/direct-form-submit');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { SecurityApi } = require('./helpers/security-api');
 const { PlayerReset } = require('./helpers/player-reset');
@@ -25,7 +27,7 @@ class TestGameLoginGuards
     static SHORT_BLOCK_MS = 1000;
     static STORED_BLOCK_OFFSET_MS = 60000;
     static VALIDATIONS_CAP = 2;
-    static CONCURRENT_LOGINS = 5;
+    static CONCURRENT_ACCOUNTS_SUFFIXES = ['a', 'b', 'c', 'd', 'e'];
     static IPV4_STORED_ADDRESS = '127.0.0.1';
 
     static createDenyRow(gameConfig, e2eGroup, address, expiresAt)
@@ -129,13 +131,16 @@ class TestGameLoginGuards
 
     static async runValidationsCapTest(gameConfig)
     {
+        let accounts = [];
+        for(let nameSuffix of TestGameLoginGuards.CONCURRENT_ACCOUNTS_SUFFIXES){
+            accounts.push(await GameRoomJoin.createRegisteredAccount(gameConfig, nameSuffix));
+        }
         await SecurityApi.updateSettings(gameConfig, {maxPendingValidations: TestGameLoginGuards.VALIDATIONS_CAP});
-        let concurrentResults = await Promise.all(Array.from(
-            {length: TestGameLoginGuards.CONCURRENT_LOGINS},
-            () => TestGameLoginGuards.fetchLoginResult(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST)
+        let concurrentResults = await Promise.all(accounts.map(
+            account => GameRoomJoin.login(gameConfig, account.username, DirectFormSubmit.VALID_PASSWORD)
         ));
         expect(concurrentResults.filter(loginResult => !loginResult.joined), 'Over the cap').toEqual(Array(
-            TestGameLoginGuards.CONCURRENT_LOGINS - TestGameLoginGuards.VALIDATIONS_CAP
+            accounts.length - TestGameLoginGuards.VALIDATIONS_CAP
         ).fill(GameRoomJoin.REJECTED));
         expect(await TestGameLoginGuards.fetchLoginResult(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST)).toEqual(
             GameRoomJoin.ACCEPTED

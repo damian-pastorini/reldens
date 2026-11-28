@@ -4,7 +4,8 @@
  *
  * Steps for the specs about how a placed forest enemy starts and ends its battles (CombatSkillCasting context): the
  * stored "interactionRadio" of the configured enemy (read from the collected game data), the player placement for an
- * aggression check (RoomAggressionPlacement, which releases the held aggression), the enemy held next to the player
+ * aggression check (RoomAggressionPlacement, the held aggression released once the client shows the placed position,
+ * so the aggression check runs on that exact position), the enemy held next to the player
  * again, the move of the player to the densest tile of the enemy respawn layer with the enemy held next to it there
  * (the forest players start away from the respawn areas and the enemy chase only walks on its respawn layer), the
  * quiet wait that proves the enemy is in no battle, and the chase: the stored skill of the enemy, the player placed on
@@ -48,6 +49,9 @@ class EnemyAggressionSteps
             context.timeout
         );
         expect(placed.reached, label+': '+placed.error).toBe(true);
+        let release = await RoomObjectsApi.releaseEnemyAggression(context.gameConfig, context.roomName, context.bodyKey);
+        expect(release.released, 'The held aggression is released on the placed position: '+release.error)
+            .toBe(context.bodyKey);
         return placed;
     }
 
@@ -83,7 +87,8 @@ class EnemyAggressionSteps
     static async expectNoBattle(page, context, label)
     {
         await page.waitForTimeout(EnemyAggressionSteps.QUIET_MS);
-        expect(await CombatSkillCasting.fetchEnemyInBattle(context), label).toBe(0);
+        let enemy = await CombatSkillCasting.fetchEnemySnapshot(context);
+        expect(enemy.inBattle, label+' (else the players in battle with it): '+enemy.inBattlePlayers.join(', ')).toBe(0);
     }
 
     static async loadEnemySkill(gameConfig, enemyKey)

@@ -6,7 +6,9 @@
  * 0 (the respawnTime of the live object, read on every death, changed for the group) the enemy gets its full life and
  * the active state again right after its death, well before the seeded respawn time; and a player that disconnects
  * while the enemy it killed is respawning does not stop the restoration, the enemy gets its full life and the active
- * state once its respawn time ends (a second player keeps the room created).
+ * state once its respawn time ends (a second player keeps the room created; the killer disconnects by closing its
+ * scene and game room sockets and its session is awaited out of the forest, a page close also waits for its video
+ * and can outlast the respawn time on a loaded machine, so the enemy is always still respawning when its killer leaves).
  *
  */
 
@@ -17,6 +19,7 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { NpcDialogSteps } = require('./helpers/npc-dialog-steps');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Login } = require('./helpers/login');
+const { LoginServerApi } = require('./helpers/login-server-api');
 const { GameConst } = require('../../lib/game/constants');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -28,7 +31,7 @@ class TestEnemyRespawn
     static DIRECT_ATTACK = {criticalChance: 0, range: 0};
     static LAST_LIFE_POINTS = 1;
     static INSTANT_RESTORE_MS = 1500;
-    static SHORT_RESPAWN_MS = 3000;
+    static SHORT_RESPAWN_MS = 10000;
 
     static async killPlacedEnemy(page, gameConfig, e2eGroup, longRun, respawnTime)
     {
@@ -85,7 +88,15 @@ class TestEnemyRespawn
             longRun,
             TestEnemyRespawn.SHORT_RESPAWN_MS
         );
-        await page.close();
+        await page.evaluate(() => {
+            for(let joinedRoom of [window.reldens.activeRoomEvents.room, window.reldens.gameRoom]){
+                joinedRoom.connection.close();
+            }
+        });
+        await expect.poll(
+            async () => await LoginServerApi.fetchPlayersInRoom(gameConfig, context.roomName, context.playerName),
+            {message: 'The killer session leaves the forest', timeout: TimeConstants.forLongRun(TimeConstants.SERVER_RESPONSE, longRun)}
+        ).toBe(0);
         expect(
             (await CombatSkillCasting.fetchEnemySnapshot(context)).inState,
             'The enemy is still respawning when its killer leaves'

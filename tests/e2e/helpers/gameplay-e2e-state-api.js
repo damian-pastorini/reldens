@@ -6,14 +6,16 @@
  * (dead, disabled or active), the enemy body life set and read, the movement intervals a room keeps for a player, the
  * movement messages a player sends from the recording start and the scores period reset check on a given date; and
  * by LiveObjectsOverrides: a property of the live enemies of a key changed or removed, a teleport NPC option added with
- * its destination, the next calls of a room method made to reject with the failures done read back, and the restore of
- * every live object change of a group; by FeaturePropertiesOverrides: a property of a live feature object changed by
+ * its destination, the next calls of a room method made to reject with the failures done read back, the next calls of a
+ * storage repository method made to answer false, and the restore of every live object change of a group; by
+ * FeaturePropertiesOverrides: a property of a live feature object changed by
  * its path in the features list and a server event cancelled for a group with the count of the events it cancelled;
  * and by CombatE2eState: the live player and
  * enemy stats, the player skill properties and snapshot, and the recorded damages and end states of the player skills.
  *
  */
 
+const { expect } = require('@playwright/test');
 const { SecurityApi } = require('./security-api');
 
 class GameplayE2eStateApi
@@ -95,6 +97,17 @@ class GameplayE2eStateApi
             '/api/e2e/live-objects/room-method-override',
             {group, roomName, methodKey, failuresCount, rejects}
         );
+    }
+
+    static async failEntityMethod(gameConfig, group, entityKey, methodKey, failuresCount)
+    {
+        let override = await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/live-objects/entity-method-override',
+            {group, entityKey, methodKey, failuresCount}
+        );
+        expect(override.methodKey, 'The '+entityKey+' '+methodKey+' must fail: '+override.error).toBe(methodKey);
     }
 
     static async fetchRoomMethodFailures(gameConfig, roomName, methodKey)

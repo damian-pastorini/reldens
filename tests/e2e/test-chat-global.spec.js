@@ -7,8 +7,10 @@
  * for the group) reaches only the sender; a second global or private message inside the cooldown is dropped; tampered
  * messages with a blank or non string text, with no "#" or "@" (which still uses the cooldown) or a global message
  * ending in "@" and a space are delivered to nobody and store no row; a message over the stored text column (the limit
- * raised for the group) is still broadcast and stores no row; and a send with the chat room connection lost shows the
- * connection lost modal to the sender and reaches no other client.
+ * raised for the group) is still broadcast and stores no row; a global and a private message with HTML (the bold
+ * payload of tests/fixtures/markup-injection-payloads.json) are delivered and stored without the markup characters and
+ * create no element; and a send with the chat room connection lost shows the connection lost modal to the sender and
+ * reaches no other client.
  *
  */
 
@@ -19,6 +21,7 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { ChatConst } = require('../../lib/chat/constants');
 const GameTranslations = require('../../lib/game/client/snippets/en_US');
+const MarkupInjectionPayloads = require('../fixtures/markup-injection-payloads.json');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -107,6 +110,49 @@ class TestChatGlobal
         expect(await TestChatGlobal.fetchStoredRows(context.gameConfig, text), 'No row is stored').toEqual([]);
     }
 
+    static async countStoredTexts(gameConfig, messageType, text)
+    {
+        return (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'chat', {
+            player_id: await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'players', {name: gameConfig.e2ePlayerName}),
+            message_type: messageType
+        })).filter(row => text === String(row.message).trim()).length;
+    }
+
+    static async runMarkupTest(context)
+    {
+        await TestChatGlobal.enter(context);
+        let cleanedText = MarkupInjectionPayloads.boldWithIdCleaned;
+        let secondName = context.gameConfig.e2ePlayerName2;
+        let sentMessages = [
+            {type: ChatConst.TYPES.GLOBAL, data: {[ChatConst.MESSAGE.KEY]: '#'+MarkupInjectionPayloads.boldWithId}},
+            {
+                type: ChatConst.TYPES.PRIVATE,
+                data: {
+                    [ChatConst.MESSAGE.KEY]: '@'+secondName+' '+MarkupInjectionPayloads.boldWithId,
+                    [ChatConst.CHAT_TO]: secondName
+                }
+            }
+        ];
+        for(let sent of sentMessages){
+            let storedCount = await TestChatGlobal.countStoredTexts(context.gameConfig, sent.type, cleanedText);
+            await ChatSteps.sendRaw(context.page, sent.data, true);
+            await TestChatGlobal.expectTexts(
+                context.secondPage,
+                sent.type,
+                [cleanedText],
+                'The message of type '+sent.type+' arrives without the markup characters'
+            );
+            await expect.poll(
+                async () => await TestChatGlobal.countStoredTexts(context.gameConfig, sent.type, cleanedText),
+                {message: 'The message of type '+sent.type+' is stored without the markup characters', timeout: TimeConstants.SERVER_RESPONSE}
+            ).toBe(storedCount + 1);
+            await context.page.waitForTimeout(TestChatGlobal.COOLDOWN_MS);
+        }
+        await ChatSteps.openChat(context.secondPage);
+        await expect(context.secondPage.locator('#'+MarkupInjectionPayloads.boldWithIdElementId), 'No element is created')
+            .toHaveCount(0);
+    }
+
     static async runConnectionLostTest(context)
     {
         await TestChatGlobal.enter(context);
@@ -135,6 +181,9 @@ class TestChatGlobal
             });
             test('message over the stored column is broadcast with no row', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatGlobal.runOverColumnTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
+            test('global and private messages with HTML are delivered and stored without the markup characters', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestChatGlobal.runMarkupTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('send with the chat room connection lost shows the connection lost modal and reaches no other client', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestChatGlobal.runConnectionLostTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});

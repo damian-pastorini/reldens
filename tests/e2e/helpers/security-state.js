@@ -205,7 +205,7 @@ class SecurityState
         await SecurityState.clearResetSentTimes(serverManager);
         SecurityState.restoreMailer(serverManager);
         PasswordResetState.resetAll(serverManager);
-        LoginServerState.resetAll(serverManager);
+        await LoginServerState.resetAll(serverManager);
         Logger.info('[security-state] Login attempts, bans, address lists, reset emails and mailer cleared.');
     }
 

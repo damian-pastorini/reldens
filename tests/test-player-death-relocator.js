@@ -9,7 +9,6 @@ const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder'
 const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
 const { ConfigProcessor } = require('../lib/config/processor');
 const { ActionsConst } = require('../lib/actions/constants');
-const { AdsConst } = require('../lib/ads/constants');
 const { RoomsConst } = require('../lib/rooms/constants');
 const { GameConst } = require('../lib/game/constants');
 const { sc } = require('@reldens/utils');
@@ -27,12 +26,8 @@ class TestPlayerDeathRelocator extends BaseTest
         this.battleTimerWaitMs = 30;
         this.privateDataKeys = ActionsConst.DEATH.PRIVATE_DATA;
         this.deathTimerKey = this.privateDataKeys.PLAYER_DEATH_TIMER;
-        this.resetAdKeys = [
-            this.privateDataKeys.RESURRECTION_AD_REQUESTED,
-            this.privateDataKeys.RESURRECTION_AD_STARTED,
-            this.privateDataKeys.RESURRECTION_AD_ENDED,
-            this.privateDataKeys.RESURRECTION_AD_FAILED
-        ];
+        this.holdKey = this.privateDataKeys.REVIVE_HOLD_UNTIL;
+        this.holdMs = 60000;
     }
 
     async testConfigProcessorInstancesAreKept()
@@ -42,12 +37,12 @@ class TestPlayerDeathRelocator extends BaseTest
             let emptyConfigRelocator = new PlayerDeathRelocator({config: new ConfigProcessor(), events: {}});
             emptyConfigRelocator.loadConfig();
             this.assert.strictEqual(emptyConfigRelocator.teleportEnabled, false);
-            this.assert.strictEqual(emptyConfigRelocator.onPlayerDeath(emptyConfigSetup.event), false);
+            this.assert.strictEqual(emptyConfigRelocator.scheduleRevive(emptyConfigSetup.event), false);
             this.assert.strictEqual(sc.hasOwn(emptyConfigSetup.playerSchema.privateData, this.deathTimerKey), false);
             let setup = await this.deathBuilder.createRelocatorSetup();
             this.assert.strictEqual(setup.isTownRoomLoaded, true);
             this.assert.strictEqual(setup.relocator.townRoom, this.roomBuilder.townRoom);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
             this.assert.strictEqual(setup.revivedPlayers, 0);
         });
@@ -55,17 +50,13 @@ class TestPlayerDeathRelocator extends BaseTest
 
     async testDisabledTeleportKeepsTheBattleRevive()
     {
-        await this.test('the disabled death teleport keeps the battle revive and resets the ad flags', async () => {
+        await this.test('the disabled death teleport keeps the battle revive and resets the revive hold', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup(
                 {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false}
             );
-            for(let adKey of this.resetAdKeys){
-                setup.playerSchema.setPrivate(adKey, Date.now());
-            }
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), false);
-            for(let adKey of this.resetAdKeys){
-                this.assert.strictEqual(setup.playerSchema.privateData[adKey], false);
-            }
+            setup.playerSchema.setPrivate(this.holdKey, Date.now() + this.holdMs);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), false);
+            this.assert.strictEqual(setup.playerSchema.privateData[this.holdKey], 0);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
         });
     }
@@ -75,10 +66,10 @@ class TestPlayerDeathRelocator extends BaseTest
         await this.test('a death without revive callback or of an alive player is not handled', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
             setup.event.revivePlayerCallback = false;
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), false);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), false);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
             let aliveSetup = await this.deathBuilder.createRelocatorSetup({}, {inState: GameConst.STATUS.ACTIVE});
-            this.assert.strictEqual(aliveSetup.relocator.onPlayerDeath(aliveSetup.event), false);
+            this.assert.strictEqual(aliveSetup.relocator.scheduleRevive(aliveSetup.event), false);
             this.assert.strictEqual(sc.hasOwn(aliveSetup.playerSchema.privateData, this.deathTimerKey), false);
         });
     }
@@ -90,7 +81,7 @@ class TestPlayerDeathRelocator extends BaseTest
             let battleRevived = false;
             let battleTimer = setTimeout(() => battleRevived = true, this.battleTimerMs);
             setup.playerSchema.setPrivate(this.deathTimerKey, battleTimer);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             let deathTimer = setup.playerSchema.getPrivate(this.deathTimerKey);
             this.assert.notStrictEqual(deathTimer, battleTimer);
             await timersPromises.setTimeout(this.battleTimerWaitMs);
@@ -125,59 +116,39 @@ class TestPlayerDeathRelocator extends BaseTest
 
     async testPlayingResurrectionAdDelaysTheResolution()
     {
-        await this.test('a requested ad being stored or a started ad not ended delays the resolution', async () => {
-            let keys = this.privateDataKeys;
-            let waitedCases = [
-                {[keys.RESURRECTION_AD_REQUESTED]: Date.now()},
-                {[keys.RESURRECTION_AD_REQUESTED]: Date.now(), [keys.RESURRECTION_AD_STARTED]: Date.now()}
-            ];
-            for(let privateData of waitedCases){
-                let setup = await this.deathBuilder.createRelocatorSetup();
-                Object.assign(setup.playerSchema.privateData, privateData);
-                this.assert.strictEqual(setup.relocator.isWaitingResurrectionAd(setup.playerSchema), true);
-                this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
-                clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
-                this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), true);
-                this.assert.strictEqual(setup.revivedPlayers, 0);
-                this.assert.deepStrictEqual(setup.sceneChanges, []);
-                this.assert.strictEqual(setup.savedStats, 0);
-            }
+        await this.test('a revive hold in the future delays the resolution of a player without restoration item', async () => {
+            let setup = await this.deathBuilder.createRelocatorSetup();
+            setup.playerSchema.setPrivate(this.holdKey, Date.now() + this.holdMs);
+            this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
+            clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
+            this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), true);
+            this.assert.strictEqual(setup.revivedPlayers, 0);
+            this.assert.deepStrictEqual(setup.sceneChanges, []);
+            this.assert.strictEqual(setup.savedStats, 0);
+            let itemSetup = await this.deathBuilder.createRelocatorSetup({}, {restorationQty: 1});
+            itemSetup.playerSchema.setPrivate(this.holdKey, Date.now() + this.holdMs);
+            this.assert.strictEqual(await itemSetup.relocator.resolveDeath(itemSetup.event), true);
+            this.deathBuilder.assertRevivedWithRestorationItem(this.assert, itemSetup);
         });
     }
 
     async testResurrectionAdWaitEndsWithTheAd()
     {
-        await this.test('the resurrection ad is not waited when not requested, rejected, ended, failed or too long', async () => {
-            let keys = this.privateDataKeys;
-            let maximumDuration = 100;
-            let now = Date.now();
-            let expired = now - maximumDuration;
-            let notWaitedCases = [
-                {},
-                {[keys.RESURRECTION_AD_REQUESTED]: now, [keys.RESURRECTION_AD_FAILED]: true},
-                {[keys.RESURRECTION_AD_REQUESTED]: now, [keys.RESURRECTION_AD_STARTED]: now, [keys.RESURRECTION_AD_ENDED]: true},
-                {[keys.RESURRECTION_AD_REQUESTED]: now, [keys.RESURRECTION_AD_STARTED]: now, [keys.RESURRECTION_AD_FAILED]: true},
-                {[keys.RESURRECTION_AD_REQUESTED]: expired},
-                {[keys.RESURRECTION_AD_REQUESTED]: expired, [keys.RESURRECTION_AD_STARTED]: expired}
-            ];
-            for(let privateData of notWaitedCases){
-                let setup = await this.deathBuilder.createRelocatorSetup(
-                    {[AdsConst.CONFIG_PATHS.VIDEOS_MAXIMUM_DURATION]: maximumDuration}
-                );
-                Object.assign(setup.playerSchema.privateData, privateData);
-                this.assert.strictEqual(setup.relocator.isWaitingResurrectionAd(setup.playerSchema), false);
+        await this.test('a missing, released or expired revive hold does not delay the town revive', async () => {
+            for(let holdUntil of [null, 0, Date.now() - 1]){
+                let setup = await this.deathBuilder.createRelocatorSetup();
+                setup.playerSchema.setPrivate(this.holdKey, holdUntil);
                 this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
-                this.assert.deepStrictEqual(setup.sceneChanges, this.deathBuilder.townSceneChange);
+                this.assert.deepStrictEqual(setup.sceneChanges, this.deathBuilder.townSceneChange, 'Hold: '+holdUntil);
             }
         });
     }
 
     async testDeathOutOfTownRevivesInTown()
     {
-        await this.test('a death out of town after the ads maximum duration revives the player in town', async () => {
+        await this.test('a death out of town after its revive hold revives the player in town', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
-            let expiredStart = Date.now() - AdsConst.VIDEOS_MAXIMUM_DURATION - 1;
-            setup.playerSchema.setPrivate(this.privateDataKeys.RESURRECTION_AD_STARTED, expiredStart);
+            setup.playerSchema.setPrivate(this.holdKey, Date.now() - 1);
             this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
             this.assert.deepStrictEqual(setup.playerSchema.stats, {hp: 100});
             this.assert.strictEqual(setup.savedStats, 1);

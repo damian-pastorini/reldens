@@ -7,12 +7,14 @@
  * reaches a recipient in another scene through the global chat room; a global message reaches a client in the same
  * scene and one in another scene and is also shown in the general tab; and after a scene change (the player placed on
  * the change point of its room) the player is announced to the new scene players, still gets each global and private
- * message once and no longer gets the old room messages.
+ * message once and no longer gets the old room messages (the chat cooldown is 0 for the group, so the server never
+ * rejects the second message of the sender when the two arrive less than the cooldown apart on a loaded machine).
  *
  */
 
 const { BaseE2eTest } = require('./base-e2e-test');
 const { ChatSteps } = require('./helpers/chat-steps');
+const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { RoomObjectsApi } = require('./helpers/room-objects-api');
 const { Navigation } = require('./helpers/navigation');
 const { Login } = require('./helpers/login');
@@ -25,7 +27,7 @@ let expect = BaseE2eTest.expect;
 class TestChatScenes
 {
 
-    static COOLDOWN_MS = 1100;
+    static COOLDOWN_PATH = 'server/chat/messages/cooldownMs';
     static SETTLE_MS = 1500;
 
     static async enterTwoScenes(context)
@@ -80,6 +82,7 @@ class TestChatScenes
     static async runSceneChangeTest(context)
     {
         test.setTimeout(TimeConstants.forLongRun(TimeConstants.GAME_START * 4, context.longRun));
+        await E2eSeedAndRestoreApi.overrideConfig(context.gameConfig, context.e2eGroup, TestChatScenes.COOLDOWN_PATH, 0);
         let secondGameConfig = Login.fetchSecondPlayerConfig(context.gameConfig);
         await Login.startConfigPlayer(context.page, context.gameConfig, context.longRun, Login.TOWN_ROOM_NAME);
         await Login.startConfigPlayer(context.secondPage, secondGameConfig, context.longRun, Login.FOREST_ROOM_NAME);
@@ -95,9 +98,7 @@ class TestChatScenes
         await ChatSteps.recordChat(context.secondPage);
         let text = 'e2e-after-change-'+Date.now();
         await ChatSteps.sendText(thirdClient.clientPage, '#'+text);
-        await thirdClient.clientPage.waitForTimeout(TestChatScenes.COOLDOWN_MS);
         await ChatSteps.sendText(thirdClient.clientPage, '@'+secondGameConfig.e2ePlayerName+' '+text);
-        await context.page.waitForTimeout(TestChatScenes.COOLDOWN_MS);
         await Login.startConfigPlayer(context.page, context.gameConfig, context.longRun, Login.FOREST_ROOM_NAME);
         await ChatSteps.sendText(context.page, text+'-old-room');
         await context.secondPage.waitForTimeout(TestChatScenes.SETTLE_MS);

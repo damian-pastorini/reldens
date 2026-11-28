@@ -81,8 +81,17 @@ class ItemsSteps
         let gameConfig = context.gameConfig;
         let itemRowId = await E2eSeedAndRestoreApi.fetchRowId(gameConfig, 'itemsItem', {key: itemKey});
         let [modifier] = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'itemsItemModifiers', {item_id: itemRowId});
-        let statsBase = (await ItemsSteps.fetchPlayer(context, player)).statsBase;
-        return {base: statsBase.atk, bonus: Math.round(statsBase.atk * Number(modifier.value) / 100)};
+        let playerState = await ItemsSteps.fetchPlayer(context, player);
+        let statsBase = playerState.statsBase;
+        return {
+            base: statsBase.atk,
+            bonus: Math.round(statsBase.atk * Number(modifier.value) / 100),
+            modifierValue: modifier.value,
+            modifierOperation: modifier.operation,
+            currentAtk: playerState.stats.atk,
+            level: playerState.level,
+            experience: playerState.experience
+        };
     }
 
     static async openInventory(page)
@@ -141,7 +150,13 @@ class ItemsSteps
         let atk = await ItemsSteps.fetchAttackBonus(context, player, context.gameConfig.e2eEquipableItemId);
         let axeId = await TradeSteps.sendItemAction(context, player, InventoryConst.ACTIONS.EQUIP, context.gameConfig.e2eEquipableItemId);
         await ItemsSteps.expectEquipped(context, player, axeId, true, 'The axe is equipped');
-        await ItemsSteps.expectStat(context, player, 'atk', atk.base + atk.bonus, 'The axe modifier is applied');
+        await ItemsSteps.expectStat(
+            context,
+            player,
+            'atk',
+            atk.base + atk.bonus,
+            'The axe modifier is applied (the base, bonus, stored modifier value and operation): '+sc.toJsonString(atk)
+        );
         return axeId;
     }
 

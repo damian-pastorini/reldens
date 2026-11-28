@@ -31,9 +31,11 @@ class TestLoginLockout
     static SHORT_TIME_MS = 1000;
     static IDENTITY_MAX_LENGTH = 255;
 
-    static async expectLogin(gameConfig, username, host, expectedResult, label)
+    static async expectLogins(gameConfig, logins)
     {
-        expect(await GameRoomJoin.login(gameConfig, username, gameConfig.e2ePassword, host), label).toEqual(expectedResult);
+        for(let [username, host, expectedResult, label] of logins){
+            expect(await GameRoomJoin.login(gameConfig, username, gameConfig.e2ePassword, host), label).toEqual(expectedResult);
+        }
     }
 
     static async runBlockEndsTest(page, gameConfig)
@@ -43,9 +45,13 @@ class TestLoginLockout
             blockTimeMs: TestLoginLockout.SHORT_TIME_MS
         });
         await GameRoomJoin.failLogins(gameConfig, Array(TestLoginLockout.ATTEMPTS_LIMIT).fill(gameConfig.e2eUsername));
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Blocked');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Blocked']
+        ]);
         await page.waitForTimeout(TestLoginLockout.SHORT_TIME_MS);
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Ended');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Ended']
+        ]);
     }
 
     static async runValidLoginClearsIdentityTest(gameConfig)
@@ -53,13 +59,15 @@ class TestLoginLockout
         let username = gameConfig.e2eUsername;
         await SecurityApi.updateSettings(gameConfig, {maxAttempts: TestLoginLockout.ATTEMPTS_LIMIT});
         await GameRoomJoin.failLogins(gameConfig, [username, username]);
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, username), 'Counted failures').toBe(2);
-        await TestLoginLockout.expectLogin(gameConfig, username, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Valid');
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, username), 'Cleared identity hits').toBe(0);
+        expect((await SecurityApi.fetchIdentityState(gameConfig, username)).hits, 'Counted failures').toBe(2);
+        await TestLoginLockout.expectLogins(gameConfig, [[username, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Valid']]);
+        expect((await SecurityApi.fetchIdentityState(gameConfig, username)).hits, 'Cleared identity hits').toBe(0);
         await GameRoomJoin.failLogins(gameConfig, [username]);
         expect(await SecurityApi.fetchIdentityState(gameConfig, username)).toEqual({hits: 1, blocked: false});
-        await TestLoginLockout.expectLogin(gameConfig, username, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Address');
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Other');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [username, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Address'],
+            [gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Other']
+        ]);
     }
 
     static async runIdentityBlockApartTest(gameConfig)
@@ -70,9 +78,11 @@ class TestLoginLockout
             Array(TestLoginLockout.ATTEMPTS_LIMIT).fill(gameConfig.e2eUsername),
             GameRoomJoin.IPV6_HOST
         );
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Identity');
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free');
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername2, GameRoomJoin.IPV6_HOST, GameRoomJoin.REJECTED, 'Address');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Identity'],
+            [gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free'],
+            [gameConfig.e2eUsername2, GameRoomJoin.IPV6_HOST, GameRoomJoin.REJECTED, 'Address']
+        ]);
     }
 
     static async runIdentityVariantsTest(gameConfig)
@@ -83,13 +93,15 @@ class TestLoginLockout
         await SecurityApi.updateSettings(gameConfig, {maxAttempts: TestLoginLockout.ATTEMPTS_LIMIT + 1});
         await GameRoomJoin.failLogins(gameConfig, variants);
         await GameRoomJoin.failLogins(gameConfig, [accentVariant], GameRoomJoin.IPV6_HOST);
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, username), 'Shared identity hits').toBe(
+        expect((await SecurityApi.fetchIdentityState(gameConfig, username)).hits, 'Shared identity hits').toBe(
             TestLoginLockout.ATTEMPTS_LIMIT
         );
         await GameRoomJoin.failLogins(gameConfig, [accentVariant.toUpperCase()], GameRoomJoin.IPV6_HOST);
         expect((await SecurityApi.fetchIdentityState(gameConfig, username)).blocked, 'Shared identity block').toBe(true);
-        await TestLoginLockout.expectLogin(gameConfig, username, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Blocked');
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [username, GameRoomJoin.IPV4_HOST, GameRoomJoin.REJECTED, 'Blocked'],
+            [gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free']
+        ]);
     }
 
     static async runDisabledAttemptsTest(gameConfig)
@@ -97,7 +109,9 @@ class TestLoginLockout
         await SecurityApi.updateSettings(gameConfig, {maxAttempts: 1, loginAttemptsEnabled: false});
         await GameRoomJoin.failLogins(gameConfig, Array(TestLoginLockout.ATTEMPTS_LIMIT).fill(gameConfig.e2eUsername));
         expect(await SecurityApi.fetchIdentityState(gameConfig, gameConfig.e2eUsername)).toEqual({hits: 0, blocked: false});
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free']
+        ]);
     }
 
     static async runGuestAndDuplicateEmailTest(gameConfig)
@@ -120,8 +134,10 @@ class TestLoginLockout
             GameRoomJoin.REJECTED
         );
         await GameRoomJoin.failLogins(gameConfig, [gameConfig.e2eUsername], GameRoomJoin.IPV6_HOST);
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername2, GameRoomJoin.IPV6_HOST, GameRoomJoin.REJECTED, 'Blocked');
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [gameConfig.e2eUsername2, GameRoomJoin.IPV6_HOST, GameRoomJoin.REJECTED, 'Blocked'],
+            [gameConfig.e2eUsername2, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free']
+        ]);
     }
 
     static async runAdminFailuresBlockGameTest(page, screenshots, gameConfig, longRun)
@@ -162,7 +178,9 @@ class TestLoginLockout
         await page.waitForTimeout(TestLoginLockout.SHORT_TIME_MS);
         await GameRoomJoin.failLogins(gameConfig, [gameConfig.e2eUsername]);
         expect(await SecurityApi.fetchIdentityState(gameConfig, gameConfig.e2eUsername)).toEqual({hits: 1, blocked: false});
-        await TestLoginLockout.expectLogin(gameConfig, gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free');
+        await TestLoginLockout.expectLogins(gameConfig, [
+            [gameConfig.e2eUsername, GameRoomJoin.IPV4_HOST, GameRoomJoin.ACCEPTED, 'Free']
+        ]);
     }
 
     static async runLongUsernameTest(gameConfig)
@@ -170,7 +188,7 @@ class TestLoginLockout
         let sharedPrefix = 'e2e'.padEnd(TestLoginLockout.IDENTITY_MAX_LENGTH, 'x');
         await SecurityApi.updateSettings(gameConfig, {maxAttempts: 2});
         await GameRoomJoin.failLogins(gameConfig, [sharedPrefix+'1']);
-        expect(await SecurityApi.fetchIdentityHits(gameConfig, sharedPrefix+'2'), 'Shared truncated key').toBe(1);
+        expect((await SecurityApi.fetchIdentityState(gameConfig, sharedPrefix+'2')).hits, 'Shared truncated key').toBe(1);
         await GameRoomJoin.failLogins(gameConfig, [sharedPrefix+'2'], GameRoomJoin.IPV6_HOST);
         expect((await SecurityApi.fetchIdentityState(gameConfig, sharedPrefix+'3')).blocked, 'Truncated key block').toBe(true);
     }

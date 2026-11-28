@@ -7,8 +7,9 @@
  * on (the move rule off) leaving the rock interaction area cancels with one timingCancel, no reward and the rock still
  * active, colliding and without a new respawn; with it on, a short walk along the rock side keeps the mining and it
  * rewards; with the move rule off (the out of range rule on or off) the mining completes after a short walk or after
- * leaving the area; a cancelled mining started again on the same rock (once the server shows the player stopped, a body
- * still moving cancels the new mining by the move rule) completes with one reward; a player still walking
+ * leaving the area; a cancelled mining started again on the same rock (once the server shows the player body settled on
+ * the same position in two polls, a body still moving or pushed out of the rock contact cancels the new mining by the
+ * move rule) completes with one reward; a player still walking
  * when the mining starts is cancelled; a direction key held against the rock starts the mining touching it (the
  * collision moves the body back, so the move rule cancels it, ISSUE #70); and a move after timingComplete sends no
  * timingCancel.
@@ -85,6 +86,12 @@ class TestTimingObjectsRules
             context.gameConfig.e2ePlayerName,
             mining.serverTimeout
         );
+        await RoomMovementApi.waitForPlayerSettled(
+            context.gameConfig,
+            Login.FOREST_ROOM_NAME,
+            context.gameConfig.e2ePlayerName,
+            mining.serverTimeout
+        );
         await TimingObjectSession.startTiming(context.page, mining.rockKey, mining.serverTimeout);
         await TimingMiningSteps.expectCompleted(context.page, mining, 'The restarted mining completes');
     }
@@ -92,11 +99,7 @@ class TestTimingObjectsRules
     static async runWalkingStartTest(context)
     {
         let mining = await TimingMiningSteps.prepare(context);
-        let position = await Phaser.getPlayerServerPosition(context.page);
-        let direction = await TimingMiningSteps.fetchSideWalkDirection(context.page, position, mining.rock);
-        await TimingObjectSession.recordTimingActions(context.page);
-        await context.page.evaluate((walkDirection) => window.reldens.getActiveScene().player[walkDirection](), direction);
-        expect(await Phaser.triggerObjectInteraction(context.page, mining.rockKey), 'The interaction is sent').toBeTruthy();
+        await TimingMiningSteps.startWalkingInteraction(context.page, mining);
         await context.page.waitForTimeout(TimingMiningSteps.SHORT_WALK_MS);
         await context.page.evaluate(() => window.reldens.getActiveScene().player.stop());
         await TimingMiningSteps.expectCancelled(context.page, mining, 'A player walking on the start is cancelled');

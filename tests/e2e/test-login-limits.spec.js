@@ -124,7 +124,9 @@ class TestLoginLimits
         await page.click(Selectors.hud.logout);
         await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
         expect(await Login.selectPlayer(page, gameConfig.e2ePlayerName)).toBe(true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
     }
 
     static async runRoomsJoinsLimitTest(page, screenshots, gameConfig, longRun)

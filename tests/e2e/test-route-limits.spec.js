@@ -3,8 +3,9 @@
  * Reldens - Test Route Limits
  *
  * Tests the server status route answers for the missing, invalid, foreign, expired and valid tokens, and the per
- * address limiters of the reset password, disconnect user, terms, mailer, firebase, server status and firebase verify
- * routes, exhausted from the local address the browser does not use, with the spoofed forwarding headers ignored.
+ * address limiters of the reset password, disconnect user, names check, terms, mailer, firebase, server status and
+ * firebase verify routes, exhausted from the local address the browser does not use, with the spoofed forwarding headers
+ * ignored.
  *
  */
 
@@ -22,13 +23,14 @@ let expect = BaseE2eTest.expect;
 class TestRouteLimits
 {
 
-    static TOO_MANY_REQUESTS_STATUS = 429;
     static FORBIDDEN_STATUS = 403;
     static TOKEN_LIFETIME_MS = 60000;
     static SPOOFED_ADDRESS = '10.20.30.40';
     static REPORT_KEYS = ['blockingEnabled', 'exceededLimits', 'isBlocking', 'isOverloaded', 'limits', 'roomsUsage', 'usage'];
     static LIMITED_ROUTES = [
         GameConst.ROUTE_PATHS.DISCONNECT_USER,
+        GameConst.ROUTE_PATHS.CHECK_USER_NAME,
+        GameConst.ROUTE_PATHS.CHECK_PLAYER_NAME,
         GameConst.ROUTE_PATHS.FIREBASE,
         GameConst.ROUTE_PATHS.MAILER,
         GameConst.ROUTE_PATHS.RESET_PASSWORD,
@@ -66,7 +68,7 @@ class TestRouteLimits
         let rejectedTokens = {
             foreign: await LoginServerApi.fetchStatusToken(gameConfig, 'e2e-not-the-status-value', futureExpiration),
             expired: await LoginServerApi.fetchStatusToken(gameConfig, statusValue, Date.now() - TestRouteLimits.TOKEN_LIFETIME_MS),
-            disconnection: await LoginServerApi.fetchDisconnectToken(gameConfig, statusValue, futureExpiration)
+            disconnection: (await LoginServerApi.fetchDisconnectRequest(gameConfig, statusValue, futureExpiration)).token
         };
         for(let rejectedKey of Object.keys(rejectedTokens)){
             expect(await TestRouteLimits.fetchStatusCode(gameConfig, rejectedTokens[rejectedKey]), rejectedKey).toBe(
@@ -83,20 +85,6 @@ class TestRouteLimits
         expect(Object.keys(await statusResponse.json()).sort(), 'Usage report').toEqual(TestRouteLimits.REPORT_KEYS);
     }
 
-    static async exhaustRoute(gameConfig, host, route)
-    {
-        let firstResponse = await TestRouteLimits.fetchRoute(gameConfig, host, route);
-        let remainingMatch = String(firstResponse.headers.get('ratelimit')).match(/r=(\d+)/);
-        expect(remainingMatch, route+' must report the remaining requests').toBeTruthy();
-        let remainingRequests = Number([...remainingMatch].pop());
-        for(let requestIndex = 0; remainingRequests > requestIndex; requestIndex++){
-            await TestRouteLimits.fetchRoute(gameConfig, host, route);
-        }
-        expect((await TestRouteLimits.fetchRoute(gameConfig, host, route)).status, route).toBe(
-            TestRouteLimits.TOO_MANY_REQUESTS_STATUS
-        );
-    }
-
     static async runRouteLimitsTest(page, gameConfig)
     {
         await DirectFormSubmit.openPage(page);
@@ -107,7 +95,7 @@ class TestRouteLimits
         let limitedHost = isBrowserOnIpv4 ? GameRoomJoin.IPV6_HOST : GameRoomJoin.IPV4_HOST;
         let browserHost = isBrowserOnIpv4 ? GameRoomJoin.IPV4_HOST : GameRoomJoin.IPV6_HOST;
         for(let route of TestRouteLimits.LIMITED_ROUTES){
-            await TestRouteLimits.exhaustRoute(gameConfig, limitedHost, route);
+            await SecurityApi.exhaustRoute(gameConfig, limitedHost, route);
         }
         let spoofedHeaders = {
             'x-forwarded-for': TestRouteLimits.SPOOFED_ADDRESS,
@@ -116,7 +104,7 @@ class TestRouteLimits
         };
         let termsRoute = GameConst.ROUTE_PATHS.TERMS_AND_CONDITIONS;
         expect((await TestRouteLimits.fetchRoute(gameConfig, limitedHost, termsRoute, spoofedHeaders)).status, 'Spoofed').toBe(
-            TestRouteLimits.TOO_MANY_REQUESTS_STATUS
+            SecurityApi.TOO_MANY_REQUESTS_STATUS
         );
         expect((await TestRouteLimits.fetchRoute(gameConfig, browserHost, termsRoute)).status, 'Another address').toBe(200);
     }

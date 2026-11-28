@@ -6,7 +6,7 @@
  * single page evaluation (so no game frame runs in the middle) and returns what each call did: an entry without state,
  * an entry without sprite, the update with the client interpolation disabled, the players interpolation without the
  * player engine, a bullet entry without bullet sprite, an object entry without animation, the entries already on the
- * sprite position, a moving entry and a stopped entry (the real state, so the sprites end where they started). The real
+ * sprite position (for the player the sprite position plus the size offsets, ISSUE #462), a moving entry and a stopped entry (the real state, so the sprites end where they started). The real
  * entries waiting for the next frame (a state update of any player or object received after the last frame) are set
  * aside during the evaluation and put back after it, so every branch runs only with the crafted entries. It also
  * reads the depth of every map layer the scene created, so the depths are compared with the layer name and index rules.
@@ -56,7 +56,7 @@ class SceneInterpolationProbe
             };
             delete entries['e2e-missing-state'];
             delete entries['e2e-missing-sprite'];
-            entries[room.sessionId] = craftState(sprite.x, sprite.y, true);
+            entries[room.sessionId] = craftState(sprite.x + playerEngine.leftOff, sprite.y + playerEngine.topOff, true);
             results.current = {
                 returned: scene.processPlayersPositionInterpolation(),
                 isEntryKept: Boolean(entries[room.sessionId]),

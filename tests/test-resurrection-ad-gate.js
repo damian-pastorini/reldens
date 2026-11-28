@@ -2,12 +2,21 @@
  *
  * Reldens - Test Resurrection Ad Gate
  *
+ * Tests the ads ResurrectionAdGate: the resurrection ad start of a dead player is accepted once per death (the ad state
+ * is bound to the death event, so a new death starts a new state) when the room allows the message, and holds the
+ * death revive up to the ads videos maximum duration; an alive, disabled or missing player and a room refusing the
+ * message are rejected; the other messages and ads pass untouched. A stored start refreshes the hold; a rejected start,
+ * a failed ad and an end without reward close the ad, release the hold and tell the revive again, a rewarded end closes
+ * it and releases the hold without telling. The ad reward sets the choice to use the restoration item and tells the
+ * revive. The town revive data offers the ad event key only to a player without restoration item, with the ad not
+ * closed, in a room that allows the ad start and end messages.
+ *
  */
 
 const { BaseTest } = require('./base-test');
 const { GameplayPlayerBuilder } = require('./fixtures/gameplay-player-builder');
-const { ResurrectionAdGate } = require('../lib/actions/server/resurrection-ad-gate');
-const { PlayerDeathRelocator } = require('../lib/actions/server/player-death-relocator');
+const { DeathRelocationBuilder } = require('./fixtures/death-relocation-builder');
+const { ResurrectionAdGate } = require('../lib/ads/server/resurrection-ad-gate');
 const { RoomScene } = require('../lib/rooms/server/scene');
 const { ActionsConst } = require('../lib/actions/constants');
 const { AdsConst } = require('../lib/ads/constants');
@@ -19,269 +28,277 @@ class TestResurrectionAdGate extends BaseTest
     constructor(config)
     {
         super(config);
-        this.resurrectionAdId = 7;
-        this.otherAdId = 8;
-        this.privateDataKeys = ActionsConst.DEATH.PRIVATE_DATA;
-        this.relocator = new PlayerDeathRelocator({config: GameplayPlayerBuilder.createConfigManager({}), events: {}});
-        this.relocator.loadConfig();
+        let deathBuilder = new DeathRelocationBuilder();
+        this.resurrectionAd = deathBuilder.resurrectionAd;
+        this.otherAd = deathBuilder.otherAd;
+        this.maximumDuration = AdsConst.VIDEOS_MAXIMUM_DURATION;
+        this.holdKey = ActionsConst.DEATH.PRIVATE_DATA.REVIVE_HOLD_UNTIL;
+        this.stateKey = AdsConst.PRIVATE_DATA.RESURRECTION_AD;
     }
 
-    createGate(resurrectionAdEnabled = 1, notifiedSessions = [])
+    createGate(notified, adsKey = this.resurrectionAd.key, resurrectionAd = this.resurrectionAd)
     {
         return new ResurrectionAdGate({
-            deathReviveNotifier: {
-                notifyClient: (client, playerSchema) => notifiedSessions.push([client.sessionId, playerSchema.sessionId])
-            },
-            playerDeathRelocator: {
-                resurrectionAdsKey: 'resurrection-video',
-                adsCollection: {
-                    [this.resurrectionAdId]: {
-                        id: this.resurrectionAdId,
-                        key: 'resurrection-video',
-                        enabled: resurrectionAdEnabled,
-                        provider: {enabled: 1}
-                    },
-                    [this.otherAdId]: {id: this.otherAdId, key: 'other-video', enabled: 1, provider: {enabled: 1}}
-                }
-            }
+            events: {emitSync: (eventKey, event) => notified.push([eventKey, event.playerSchema.sessionId])},
+            adsKey,
+            adsCollection: {[resurrectionAd.id]: resurrectionAd, [this.otherAd.id]: this.otherAd},
+            maximumDuration: this.maximumDuration
         });
     }
 
-    createEvent(adsId, inState = GameConst.STATUS.DEATH, act = AdsConst.ACTIONS.AD_STARTED)
-    {
-        return {
-            room: this.createRoom({}),
-            messageData: {act, ads_id: adsId},
-            playerSchema: GameplayPlayerBuilder.createPlayerSchema({inState}),
-            canContinue: true
-        };
-    }
-
-    createRoom(customData)
+    createRoom(customData = {})
     {
         let room = Object.create(RoomScene.prototype);
         room.customData = customData;
-        room.getClientById = (sessionId) => ({sessionId});
         return room;
     }
 
-    async testClosedRequestedAdTellsTheReviveAgain()
+    createEvent(adsId = this.resurrectionAd.id, act = AdsConst.ACTIONS.AD_STARTED, inState = GameConst.STATUS.DEATH)
     {
-        await this.test('a requested ad that failed, was rejected or ended without reward tells the revive again, a rewarded end does not', async () => {
-            let notifiedSessions = [];
-            let gate = this.createGate(1, notifiedSessions);
-            let failedEvent = this.createStartedEvent(gate);
-            failedEvent.messageData.act = AdsConst.ACTIONS.AD_FAILED;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(failedEvent), true);
-            let rejectedEvent = this.createEvent(this.resurrectionAdId);
-            gate.onBeforeSceneExecuteMessages(rejectedEvent);
-            rejectedEvent.startResult = false;
-            this.assert.strictEqual(gate.onAfterAdStarted(rejectedEvent), true);
-            let notRewardedEvent = this.createStartedEvent(gate);
-            notRewardedEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
-            notRewardedEvent.claimResult = false;
-            this.assert.strictEqual(gate.onAfterAdEnded(notRewardedEvent), true);
-            let rewardedEvent = this.createStartedEvent(gate);
-            rewardedEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
-            rewardedEvent.claimResult = {id: 'reward'};
-            this.assert.strictEqual(gate.onAfterAdEnded(rewardedEvent), true);
-            this.assert.strictEqual(rewardedEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_ENDED), true);
+        let playerSchema = GameplayPlayerBuilder.createPlayerSchema({inState});
+        playerSchema.skillsServer.classPath.currentSkills = {};
+        playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_EVENT, {targetSchema: playerSchema});
+        return {room: this.createRoom(), client: {}, messageData: {act, ads_id: adsId}, playerSchema, canContinue: true};
+    }
+
+    createRequestedEvent(gate)
+    {
+        let event = this.createEvent();
+        gate.closeRequestOrHoldRevive(event);
+        return event;
+    }
+
+    async testDeadPlayerRequestsTheAdOncePerDeath()
+    {
+        await this.test('a dead player requests the resurrection ad once per death and the revive is held', async () => {
+            let notified = [];
+            let gate = this.createGate(notified);
+            let event = this.createEvent();
+            let requestedBefore = Date.now();
+            gate.closeRequestOrHoldRevive(event);
+            this.assert.strictEqual(event.canContinue, true);
+            this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey).isRequested, true);
+            this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey) >= requestedBefore + this.maximumDuration, true);
+            event.canContinue = true;
+            gate.closeRequestOrHoldRevive(event);
+            this.assert.strictEqual(event.canContinue, false);
+            this.assert.deepStrictEqual(notified, []);
+        });
+    }
+
+    async testNewDeathStartsANewAdState()
+    {
+        await this.test('a new death gets a new resurrection ad state and can request the ad again', async () => {
+            let gate = this.createGate([]);
+            let event = this.createRequestedEvent(gate);
+            event.messageData.act = AdsConst.ACTIONS.AD_FAILED;
+            gate.closeRequestOrHoldRevive(event);
+            this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey).isClosed, true);
+            event.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_EVENT, {targetSchema: event.playerSchema});
+            event.messageData.act = AdsConst.ACTIONS.AD_STARTED;
+            event.canContinue = true;
+            gate.closeRequestOrHoldRevive(event);
+            this.assert.strictEqual(event.canContinue, true);
             this.assert.deepStrictEqual(
-                notifiedSessions,
-                [failedEvent, rejectedEvent, notRewardedEvent].map(event => [
-                    event.playerSchema.sessionId,
-                    event.playerSchema.sessionId
-                ])
+                [event.playerSchema.getPrivate(this.stateKey).isRequested, event.playerSchema.getPrivate(this.stateKey).isClosed],
+                [true, false]
             );
         });
     }
 
     async testRoomWithoutTheAdMessageRejectsTheStart()
     {
-        await this.test('the resurrection ad start in a room that does not allow that message is rejected and not waited', async () => {
-            let gate = this.createGate();
+        await this.test('the resurrection ad start in a room that refuses that message is rejected and not held', async () => {
+            let gate = this.createGate([]);
             for(let customData of [{allActionsDisabled: true}, {disallowedActions: [AdsConst.ACTIONS.AD_STARTED]}]){
-                let blockedEvent = this.createEvent(this.resurrectionAdId);
-                blockedEvent.room = this.createRoom(customData);
-                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(blockedEvent), false);
-                this.assert.strictEqual(blockedEvent.canContinue, false);
-                this.assert.deepStrictEqual(blockedEvent.playerSchema.privateData, {});
-                this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(blockedEvent.playerSchema), false);
+                let event = this.createEvent();
+                event.room = this.createRoom(customData);
+                gate.closeRequestOrHoldRevive(event);
+                this.assert.strictEqual(event.canContinue, false);
+                this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey), null);
+                this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey).isRequested, false);
             }
         });
     }
 
-    createStartedEvent(gate)
-    {
-        let startEvent = this.createEvent(this.resurrectionAdId);
-        gate.onBeforeSceneExecuteMessages(startEvent);
-        startEvent.startResult = {id: 'stored-played-ad'};
-        gate.onAfterAdStarted(startEvent);
-        return startEvent;
-    }
-
-    async testOtherMessagesAreIgnored()
-    {
-        await this.test('the messages that are not an ad start and the other ads starts are not gated', async () => {
-            let gate = this.createGate();
-            let adEndedEvent = this.createEvent(this.resurrectionAdId);
-            adEndedEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(adEndedEvent), false);
-            this.assert.strictEqual(adEndedEvent.canContinue, true);
-            let otherAdEvent = this.createEvent(this.otherAdId);
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(otherAdEvent), false);
-            this.assert.strictEqual(otherAdEvent.canContinue, true);
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(null), false);
-            for(let emptyEvent of [null, {}]){
-                this.assert.strictEqual(gate.onAfterAdStarted(emptyEvent), false);
-                this.assert.strictEqual(gate.onAfterAdEnded(emptyEvent), false);
-            }
-        });
-    }
-
-    async testAlivePlayerOrMissingPlayerIsRejected()
+    async testAliveOrMissingPlayerIsRejected()
     {
         await this.test('the resurrection ad start of an alive, disabled or missing player is rejected', async () => {
-            let gate = this.createGate();
+            let gate = this.createGate([]);
             for(let inState of [GameConst.STATUS.ACTIVE, GameConst.STATUS.DISABLED]){
-                let notDeadEvent = this.createEvent(this.resurrectionAdId, inState);
-                this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(notDeadEvent), false);
-                this.assert.strictEqual(notDeadEvent.canContinue, false);
-                this.assert.deepStrictEqual(notDeadEvent.playerSchema.privateData, {});
+                let event = this.createEvent(this.resurrectionAd.id, AdsConst.ACTIONS.AD_STARTED, inState);
+                gate.closeRequestOrHoldRevive(event);
+                this.assert.strictEqual(event.canContinue, false);
+                this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey), null);
             }
-            let missingPlayerEvent = this.createEvent(this.resurrectionAdId);
+            let missingPlayerEvent = this.createEvent();
             missingPlayerEvent.playerSchema = false;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(missingPlayerEvent), false);
+            gate.closeRequestOrHoldRevive(missingPlayerEvent);
             this.assert.strictEqual(missingPlayerEvent.canContinue, false);
         });
     }
 
-    async testDeadPlayerRequestsTheAdOncePerDeath()
+    async testOtherMessagesAndAdsAreIgnored()
     {
-        await this.test('a dead player requests the resurrection ad once per death, waited while it is stored', async () => {
-            let gate = this.createGate();
-            let firstEvent = this.createEvent(this.resurrectionAdId);
-            let requestedBefore = Date.now();
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(firstEvent), true);
-            this.assert.strictEqual(firstEvent.canContinue, true);
-            let adRequested = firstEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_REQUESTED);
-            this.assert.strictEqual(adRequested >= requestedBefore, true);
-            this.assert.strictEqual(firstEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_STARTED), null);
-            this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(firstEvent.playerSchema), true);
-            let secondEvent = this.createEvent(this.resurrectionAdId);
-            secondEvent.playerSchema = firstEvent.playerSchema;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(secondEvent), false);
-            this.assert.strictEqual(secondEvent.canContinue, false);
+        await this.test('the other messages, the other ads and a disabled resurrection ad are not gated', async () => {
+            let gate = this.createGate([]);
+            let endedEvent = this.createEvent(this.resurrectionAd.id, AdsConst.ACTIONS.AD_ENDED);
+            let otherAdEvent = this.createEvent(this.otherAd.id);
+            let disabledGate = this.createGate([], this.resurrectionAd.key, Object.assign({}, this.resurrectionAd, {enabled: 0}));
+            let disabledEvent = this.createEvent();
+            for(let [checkedGate, event] of [[gate, endedEvent], [gate, otherAdEvent], [disabledGate, disabledEvent]]){
+                checkedGate.closeRequestOrHoldRevive(event);
+                this.assert.strictEqual(event.canContinue, true);
+                this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey), null);
+                this.assert.strictEqual(event.playerSchema.getPrivate(this.stateKey), null);
+            }
+            let emptyEvents = [null, {}];
+            for(let emptyEvent of emptyEvents){
+                gate.closeRequestOrHoldRevive(emptyEvent);
+                gate.holdReviveOrCloseFailedStart(emptyEvent);
+                gate.releaseReviveHold(emptyEvent);
+            }
+            this.assert.deepStrictEqual(emptyEvents, [null, {}]);
         });
     }
 
-    async testStoredStartMarksTheAdStarted()
+    async testStoredStartRefreshesTheHold()
     {
-        await this.test('only the start stored by the ads system for the requested ad starts the wait', async () => {
-            let gate = this.createGate();
+        await this.test('the start stored by the ads system refreshes the revive hold of the requested ad', async () => {
+            let notified = [];
+            let gate = this.createGate(notified);
+            let event = this.createRequestedEvent(gate);
+            event.playerSchema.setPrivate(this.holdKey, 1);
+            event.startResult = {id: 'stored-played-ad'};
             let startedBefore = Date.now();
-            let startEvent = this.createStartedEvent(gate);
-            let adStarted = startEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_STARTED);
-            this.assert.strictEqual(adStarted >= startedBefore, true);
-            this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(startEvent.playerSchema), true);
-            let notRequestedEvent = this.createEvent(this.resurrectionAdId);
-            notRequestedEvent.startResult = {id: 'stored-played-ad'};
-            let otherAdEvent = this.createEvent(this.otherAdId);
-            gate.onBeforeSceneExecuteMessages(otherAdEvent);
-            otherAdEvent.startResult = {id: 'stored-played-ad'};
-            for(let notStartedEvent of [notRequestedEvent, otherAdEvent]){
-                this.assert.strictEqual(gate.onAfterAdStarted(notStartedEvent), false);
-                this.assert.strictEqual(notStartedEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_STARTED), null);
+            gate.holdReviveOrCloseFailedStart(event);
+            this.assert.strictEqual(event.playerSchema.getPrivate(this.holdKey) >= startedBefore + this.maximumDuration, true);
+            this.assert.deepStrictEqual(notified, []);
+        });
+    }
+
+    async testClosedAdReleasesTheHoldAndTellsTheRevive()
+    {
+        await this.test('a rejected start, a failed ad or an end without reward release the hold and tell the revive, a rewarded end does not tell', async () => {
+            let closeCases = [
+                {close: (gate, event) => gate.holdReviveOrCloseFailedStart(Object.assign(event, {startResult: false})), isTold: true},
+                {
+                    close: (gate, event) => gate.closeRequestOrHoldRevive(
+                        Object.assign(event, {messageData: {act: AdsConst.ACTIONS.AD_FAILED, ads_id: this.resurrectionAd.id}})
+                    ),
+                    isTold: true
+                },
+                {close: (gate, event) => gate.releaseReviveHold(Object.assign(event, {claimResult: false})), isTold: true},
+                {close: (gate, event) => gate.releaseReviveHold(Object.assign(event, {claimResult: {id: 'reward'}})), isTold: false}
+            ];
+            for(let closeCase of closeCases){
+                let notified = [];
+                let gate = this.createGate(notified);
+                let event = this.createRequestedEvent(gate);
+                closeCase.close(gate, event);
+                let toldNotifications = closeCase.isTold ? [['reldens.deathReviveNotify', event.playerSchema.sessionId]] : [];
+                this.assert.deepStrictEqual(
+                    [event.playerSchema.getPrivate(this.stateKey).isClosed, event.playerSchema.privateData[this.holdKey], notified],
+                    [true, 0, toldNotifications]
+                );
+                event.messageData = {act: AdsConst.ACTIONS.AD_STARTED, ads_id: this.resurrectionAd.id};
+                event.canContinue = true;
+                gate.closeRequestOrHoldRevive(event);
+                this.assert.strictEqual(event.canContinue, false);
+                gate.releaseReviveHold(Object.assign(event, {claimResult: false}));
+                this.assert.deepStrictEqual([event.playerSchema.privateData[this.holdKey], notified], [0, toldNotifications]);
             }
         });
     }
 
-    async testRejectedStartStopsTheWait()
+    async testNotRequestedOrOtherAdMessagesAreIgnored()
     {
-        await this.test('a start rejected or failed in the ads system marks the requested ad failed', async () => {
-            let gate = this.createGate();
-            let rejectedEvent = this.createEvent(this.resurrectionAdId);
-            gate.onBeforeSceneExecuteMessages(rejectedEvent);
-            this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(rejectedEvent.playerSchema), true);
-            rejectedEvent.startResult = false;
-            this.assert.strictEqual(gate.onAfterAdStarted(rejectedEvent), true);
-            this.assert.strictEqual(rejectedEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_FAILED), true);
-            this.assert.strictEqual(rejectedEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_STARTED), null);
-            this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(rejectedEvent.playerSchema), false);
+        await this.test('the start result, the end or the failure of an ad not requested or of another ad are ignored', async () => {
+            let notified = [];
+            let gate = this.createGate(notified);
+            let notRequestedEvent = this.createEvent();
+            notRequestedEvent.startResult = {id: 'stored-played-ad'};
+            let failedEvent = this.createEvent(this.resurrectionAd.id, AdsConst.ACTIONS.AD_FAILED);
+            let otherAdEvent = this.createRequestedEvent(gate);
+            otherAdEvent.messageData = {act: AdsConst.ACTIONS.AD_ENDED, ads_id: this.otherAd.id};
+            gate.holdReviveOrCloseFailedStart(notRequestedEvent);
+            gate.releaseReviveHold(notRequestedEvent);
+            gate.closeRequestOrHoldRevive(failedEvent);
+            gate.releaseReviveHold(otherAdEvent);
+            this.assert.deepStrictEqual(
+                [
+                    notRequestedEvent.playerSchema.getPrivate(this.holdKey),
+                    notRequestedEvent.playerSchema.getPrivate(this.stateKey).isClosed,
+                    failedEvent.playerSchema.getPrivate(this.stateKey).isClosed,
+                    otherAdEvent.playerSchema.getPrivate(this.stateKey).isClosed,
+                    notified
+                ],
+                [null, false, false, false, []]
+            );
         });
     }
 
-    async testEndedOrFailedAdStopsTheWait()
+    async testRewardGivesTheRestorationItemChoice()
     {
-        await this.test('the processed end or the failure of the started ad stops the death resolution wait', async () => {
-            let gate = this.createGate();
-            let endedEvent = this.createStartedEvent(gate);
-            endedEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
-            this.assert.strictEqual(gate.onAfterAdEnded(endedEvent), true);
-            this.assert.strictEqual(endedEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_ENDED), true);
-            this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(endedEvent.playerSchema), false);
-            let failedStart = this.createStartedEvent(gate);
-            let failedEvent = this.createEvent(this.resurrectionAdId, GameConst.STATUS.DEATH, AdsConst.ACTIONS.AD_FAILED);
-            failedEvent.playerSchema = failedStart.playerSchema;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(failedEvent), true);
-            this.assert.strictEqual(failedEvent.canContinue, true);
-            this.assert.strictEqual(failedStart.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_FAILED), true);
-            this.assert.strictEqual(this.relocator.isWaitingResurrectionAd(failedStart.playerSchema), false);
-            let secondStartEvent = this.createEvent(this.resurrectionAdId);
-            secondStartEvent.playerSchema = failedStart.playerSchema;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(secondStartEvent), false);
-            this.assert.strictEqual(secondStartEvent.canContinue, false);
+        await this.test('the resurrection ad reward of a dead player sets the restoration item choice and tells the revive', async () => {
+            let notified = [];
+            let gate = this.createGate(notified);
+            let event = this.createEvent();
+            let rewardEvent = {playerSchema: event.playerSchema, room: event.room, playedAd: this.resurrectionAd};
+            gate.chooseRestorationItemUse(rewardEvent);
+            this.assert.strictEqual(
+                event.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE),
+                ActionsConst.DEATH.RESTORATION_ITEM_CHOICES.USE
+            );
+            this.assert.deepStrictEqual(notified, [['reldens.deathReviveNotify', event.playerSchema.sessionId]]);
+            let aliveEvent = this.createEvent(this.resurrectionAd.id, AdsConst.ACTIONS.AD_STARTED, GameConst.STATUS.ACTIVE);
+            let notRewarded = [
+                [gate, Object.assign({}, rewardEvent, {playedAd: this.otherAd})],
+                [gate, Object.assign({}, rewardEvent, {playerSchema: aliveEvent.playerSchema})],
+                [gate, Object.assign({}, rewardEvent, {playerSchema: false})],
+                [this.createGate(notified, ''), rewardEvent],
+                [gate, null]
+            ];
+            for(let [checkedGate, notRewardedEvent] of notRewarded){
+                checkedGate.chooseRestorationItemUse(notRewardedEvent);
+            }
+            this.assert.deepStrictEqual(
+                [notified.length, aliveEvent.playerSchema.getPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESTORATION_ITEM_CHOICE)],
+                [1, null]
+            );
         });
     }
 
-    async testEndOrFailureWithoutRequestOrOfOtherAdIsNotMarked()
+    async testTownReviveDataOffersTheOpenAd()
     {
-        await this.test('an end or a failure of an ad not requested, of another ad or without player is ignored', async () => {
-            let gate = this.createGate();
-            let deathState = GameConst.STATUS.DEATH;
-            let failedAction = AdsConst.ACTIONS.AD_FAILED;
-            let notRequestedEvent = this.createEvent(this.resurrectionAdId, deathState, failedAction);
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(notRequestedEvent), false);
-            this.assert.strictEqual(gate.onAfterAdEnded(notRequestedEvent), false);
-            this.assert.deepStrictEqual(notRequestedEvent.playerSchema.privateData, {});
-            let startEvent = this.createStartedEvent(gate);
-            let otherAdEvent = this.createEvent(this.otherAdId, deathState, failedAction);
-            otherAdEvent.playerSchema = startEvent.playerSchema;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(otherAdEvent), false);
-            this.assert.strictEqual(gate.onAfterAdEnded(otherAdEvent), false);
-            this.assert.strictEqual(startEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_FAILED), null);
-            this.assert.strictEqual(startEvent.playerSchema.getPrivate(this.privateDataKeys.RESURRECTION_AD_ENDED), null);
-            let missingPlayerEvent = this.createEvent(this.resurrectionAdId, deathState, failedAction);
-            missingPlayerEvent.playerSchema = false;
-            this.assert.strictEqual(gate.onBeforeSceneExecuteMessages(missingPlayerEvent), false);
-            this.assert.strictEqual(gate.onAfterAdEnded(missingPlayerEvent), false);
-            this.assert.strictEqual(missingPlayerEvent.canContinue, true);
-        });
-    }
-
-    async testNewDeathClearsThePreviousAdFlags()
-    {
-        await this.test('a new death clears the resurrection ad flags of the previous death', async () => {
-            let gate = this.createGate();
-            let startEvent = this.createStartedEvent(gate);
-            startEvent.messageData.act = AdsConst.ACTIONS.AD_ENDED;
-            gate.onAfterAdEnded(startEvent);
-            this.assert.strictEqual(this.relocator.onPlayerDeath({targetSchema: startEvent.playerSchema}), false);
-            let privateData = startEvent.playerSchema.privateData;
-            this.assert.strictEqual(privateData[this.privateDataKeys.RESURRECTION_AD_REQUESTED], false);
-            this.assert.strictEqual(privateData[this.privateDataKeys.RESURRECTION_AD_STARTED], false);
-            this.assert.strictEqual(privateData[this.privateDataKeys.RESURRECTION_AD_ENDED], false);
-            this.assert.strictEqual(privateData[this.privateDataKeys.RESURRECTION_AD_FAILED], false);
-        });
-    }
-
-    async testDisabledResurrectionAdIsNotGated()
-    {
-        await this.test('a disabled resurrection ad is not gated, the ads actions reject it', async () => {
-            let event = this.createEvent(this.resurrectionAdId);
-            this.assert.strictEqual(this.createGate(0).onBeforeSceneExecuteMessages(event), false);
-            this.assert.strictEqual(event.canContinue, true);
-            this.assert.deepStrictEqual(event.playerSchema.privateData, {});
+        await this.test('the town revive offers the ad event key only without item, with the ad open and allowed in the room', async () => {
+            let gate = this.createGate([]);
+            let offeredEvent = this.createEvent();
+            let reviveData = {};
+            let townEvent = {
+                playerSchema: offeredEvent.playerSchema,
+                client: {},
+                room: offeredEvent.room,
+                hasRestorationItem: false,
+                reviveData
+            };
+            gate.appendResurrectionAdOffer(townEvent);
+            this.assert.deepStrictEqual(reviveData, {resurrectionAdEventKey: this.resurrectionAd.eventKey});
+            let closedEvent = this.createRequestedEvent(gate);
+            gate.releaseReviveHold(Object.assign(closedEvent, {claimResult: false}));
+            let notOfferedCases = [
+                Object.assign({}, townEvent, {hasRestorationItem: true, reviveData: {}}),
+                Object.assign({}, townEvent, {playerSchema: closedEvent.playerSchema, reviveData: {}}),
+                Object.assign({}, townEvent, {room: this.createRoom({allActionsDisabled: true}), reviveData: {}}),
+                Object.assign({}, townEvent, {
+                    room: this.createRoom({disallowedActions: [AdsConst.ACTIONS.AD_ENDED]}),
+                    reviveData: {}
+                })
+            ];
+            for(let notOfferedEvent of notOfferedCases){
+                gate.appendResurrectionAdOffer(notOfferedEvent);
+                this.assert.deepStrictEqual(notOfferedEvent.reviveData, {});
+            }
         });
     }
 

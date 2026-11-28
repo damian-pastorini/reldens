@@ -8,7 +8,8 @@
  * registers the e2e endpoints and then starts every next numbered instance (E2eServerInstances, server-2) sharing its
  * database. A numbered instance reuses startServer() and registerEndpoints() from its own process. The servers boot
  * with the mailer off, so the app .env mailer service and its optional package never matter: the specs that send an
- * email turn on the recording test sender (SecurityState.setMailerEnabled).
+ * email turn on the recording test sender (SecurityState.setMailerEnabled). The admin tileset analyzer runs with
+ * skipAi, so an upload only runs the pixel analysis and never calls a local or remote AI provider.
  *
  */
 
@@ -20,10 +21,12 @@ const { PlayerStateReset } = require('./helpers/player-state-reset');
 const { SecurityState } = require('./helpers/security-state');
 const { RoomObjectsState } = require('./helpers/room-objects-state');
 const { RoomMovementState } = require('./helpers/room-movement-state');
+const { RoomMovementStepsRecorder } = require('./helpers/room-movement-steps-recorder');
 const { RoomEnemyPlacement } = require('./helpers/room-enemy-placement');
 const { RoomAnchoredPlacement } = require('./helpers/room-anchored-placement');
 const { RoomAggressionPlacement } = require('./helpers/room-aggression-placement');
 const { RoomBorderPlacement } = require('./helpers/room-border-placement');
+const { RoomSideStepTiles } = require('./helpers/room-side-step-tiles');
 const { RoomLinePlacement } = require('./helpers/room-line-placement');
 const { RoomChangePointPlacement } = require('./helpers/room-change-point-placement');
 const { RoomPlayerPlacement } = require('./helpers/room-player-placement');
@@ -42,6 +45,7 @@ const { E2eConsoleFileRedirect } = require('./helpers/e2e-console-file-redirect'
 const { InventoryGrowthProbe } = require('./helpers/inventory-growth-probe');
 const { CombatE2eState } = require('./helpers/combat-e2e-state');
 const { E2eAssetsEndpoints } = require('./helpers/e2e-assets-endpoints');
+const { ClassPathsImportEndpoints } = require('./helpers/class-paths-import-endpoints');
 const { TestDataSetup } = require('./helpers/test-data-setup');
 const { StartupGuard } = require('./helpers/startup-guard');
 const { ClientBundleCheck } = require('./helpers/client-bundle-check');
@@ -279,10 +283,12 @@ class CollectGameData
         SecurityState.registerEndpoints(serverManager, config);
         RoomObjectsState.registerEndpoints(serverManager);
         RoomMovementState.registerEndpoints(serverManager);
+        RoomMovementStepsRecorder.registerEndpoints(serverManager);
         RoomEnemyPlacement.registerEndpoints(serverManager);
         RoomAnchoredPlacement.registerEndpoints(serverManager);
         RoomAggressionPlacement.registerEndpoints(serverManager);
         RoomBorderPlacement.registerEndpoints(serverManager);
+        RoomSideStepTiles.registerEndpoints(serverManager);
         RoomLinePlacement.registerEndpoints(serverManager);
         RoomChangePointPlacement.registerEndpoints(serverManager);
         RoomPlayerPlacement.registerEndpoints(serverManager);
@@ -300,6 +306,7 @@ class CollectGameData
         InventoryGrowthProbe.registerEndpoints(serverManager);
         CombatE2eState.registerEndpoints(serverManager);
         E2eAssetsEndpoints.registerEndpoints(serverManager);
+        ClassPathsImportEndpoints.registerEndpoints(serverManager);
         await PlayerStateReset.registerResetEndpoint(serverManager, snapshots, config);
         CollectGameData.serverManager = serverManager;
     }
@@ -357,12 +364,14 @@ class CollectGameData
         if(modules.ServerPlugin) {
             serverConfig.customPlugin = modules.ServerPlugin;
         }
-        let bundleRequired = ClientBundleCheck.isMissing(serverPath)
-            || ClientBundleCheck.isOutdated(
-                serverPath,
-                process.cwd(),
-                sc.get(serverConfig, 'projectThemeName', GameConst.STRUCTURE.DEFAULT)
-            );
+        let themeName = sc.get(serverConfig, 'projectThemeName', GameConst.STRUCTURE.DEFAULT);
+        let syncedThemeFiles = ClientBundleCheck.syncTestedTheme(process.cwd(), serverPath, themeName);
+        if(0 < syncedThemeFiles.length){
+            Logger.info('[collect-game-data] Tested theme "'+themeName+'" synced from the checkout default theme.', syncedThemeFiles);
+        }
+        let bundleRequired = 0 < syncedThemeFiles.length
+            || ClientBundleCheck.isMissing(serverPath)
+            || ClientBundleCheck.isOutdated(serverPath, process.cwd(), themeName);
         if(bundleRequired){
             Logger.warning(
                 '[collect-game-data] Client bundle missing or older than the client sources, running the bundler.'
@@ -384,10 +393,7 @@ class CollectGameData
             process.env.RELDENS_APP_PORT = portStr;
             process.env.RELDENS_PUBLIC_URL = publicUrl;
         }
-        TestDataSetup.writeDisposableRoomsMaps(
-            serverPath,
-            sc.get(serverConfig, 'projectThemeName', GameConst.STRUCTURE.DEFAULT)
-        );
+        TestDataSetup.writeDisposableRoomsMaps(serverPath, themeName);
         let serverManager = new modules.ServerManager(serverConfig);
         serverManager.events.on('reldens.beforeInitializeManagers', async (event) => {
             await CollectGameData.ensureRequiredFeatures(event.serverManager);
@@ -398,6 +404,11 @@ class CollectGameData
                 TestDataSetup.SEPARATED_ARRIVAL.fromRoomName
             );
             event.serverManager.configManager.server.health.blockingEnabled = false;
+            event.serverManager.configManager.server.tilesetAnalyzer = Object.assign(
+                {},
+                event.serverManager.configManager.server.tilesetAnalyzer,
+                {skipAi: true}
+            );
         });
         process.stdout.write('Server: creating HTTP server...\n');
         await StartupGuard.runStep(serverManager.createServers(), 'HTTP server creation');

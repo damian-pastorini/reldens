@@ -306,8 +306,7 @@ class TestItemsActions
             });
             test('two uses in one tick use two units and heal twice', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runConcurrentUsesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
-            });
-            test('item of the same group replaces the equipped one', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            });            test('item of the same group replaces the equipped one', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestItemsActions.runSameGroupTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('items of two groups stay equipped', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {

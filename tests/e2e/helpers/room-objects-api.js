@@ -16,6 +16,7 @@
  *
  */
 
+const { expect } = require('@playwright/test');
 const { SecurityApi } = require('./security-api');
 const { RoomMovementApi } = require('./room-movement-api');
 const { Selectors } = require('../selectors');
@@ -128,36 +129,43 @@ class RoomObjectsApi
         return await isReached();
     }
 
-    static async waitForPlayerAtPosition(page, position, timeout)
+    static async fetchClientPlayerPosition(page)
     {
-        return await (await page.waitForFunction((args) => {
+        return await page.evaluate(() => {
             let room = window.reldens.activeRoomEvents.room;
-            if(!room.state || !room.state.players){
-                return false;
-            }
-            let player = window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId);
-            if(!player){
-                return false;
-            }
-            if(args.x !== player.state.x || args.y !== player.state.y){
-                return false;
-            }
+            let player = room.state?.players
+                ? window.reldens.activeRoomEvents.playerBySessionIdFromState(room, room.sessionId)
+                : false;
             let playerEngine = window.reldens.getActiveScene()?.player;
             let playerSprite = playerEngine?.players?.[room.sessionId];
-            if(!playerSprite){
-                return false;
+            let clientPosition = {state: false, sprite: false};
+            if(player){
+                clientPosition.state = {x: player.state.x, y: player.state.y};
             }
-            return args.x - playerEngine.leftOff === playerSprite.x && args.y - playerEngine.topOff === playerSprite.y;
-        }, {x: position.x, y: position.y}, {timeout})).jsonValue();
+            if(playerSprite){
+                clientPosition.sprite = {x: playerSprite.x + playerEngine.leftOff, y: playerSprite.y + playerEngine.topOff};
+            }
+            return clientPosition;
+        });
     }
 
-    static async placePlayerNextToObject(page, gameConfig, roomName, objectKey, timeout, minimumTilesDistance = 0)
+    static async waitForPlayerAtPosition(page, position, timeout)
+    {
+        let placedPosition = {x: position.x, y: position.y};
+        await expect.poll(
+            async () => await RoomObjectsApi.fetchClientPlayerPosition(page),
+            {message: 'The client state and sprite show the player on the placed position', timeout, intervals: [50]}
+        ).toEqual({state: placedPosition, sprite: placedPosition});
+        return true;
+    }
+
+    static async placePlayerNextToObject(page, gameConfig, roomName, objectKey, timeout, minimumTilesDistance = 0, lineDistances = [])
     {
         return await RoomObjectsApi.requestPlayerPlacement(
             page,
             gameConfig,
             '/api/e2e/room-objects/place-player-next-to-object',
-            {roomName, objectKey, minimumTilesDistance},
+            {roomName, objectKey, minimumTilesDistance, lineDistances},
             timeout
         );
     }
@@ -206,6 +214,16 @@ class RoomObjectsApi
         );
     }
 
+    static async releaseEnemyAggression(gameConfig, roomName, bodyKey)
+    {
+        return await SecurityApi.request(
+            gameConfig,
+            'POST',
+            '/api/e2e/room-objects/release-aggression',
+            {roomName, bodyKey}
+        );
+    }
+
     static async placePlayerInRespawnArea(page, gameConfig, roomName, bodyKey, radius, timeout)
     {
         return await RoomObjectsApi.requestPlayerPlacement(
@@ -224,6 +242,17 @@ class RoomObjectsApi
             gameConfig,
             '/api/e2e/room-objects/place-players-across-wall',
             {roomName, targetSessionId},
+            timeout
+        );
+    }
+
+    static async placePlayerBeforeWall(page, gameConfig, roomName, timeout)
+    {
+        return await RoomObjectsApi.requestPlayerPlacement(
+            page,
+            gameConfig,
+            '/api/e2e/room-objects/place-player-before-wall',
+            {roomName},
             timeout
         );
     }

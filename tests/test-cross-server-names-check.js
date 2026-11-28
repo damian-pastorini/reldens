@@ -2,13 +2,17 @@
  *
  * Reldens - Test Cross Server Names Check
  *
+ * Tests the CrossServerNamesCheck between servers wired through a routed fetch: a free name is held on both under its
+ * hold id until the release with that id frees it on both (a release with another id keeps it), a stored or held name
+ * is rejected, any other server rejecting or failing releases every hold, a message is accepted once, only signed for
+ * the receiving server address and its names route, and a message with invalid values, hold id or action is rejected.
+ * The login manager names check servers and routes are tested in TestLoginManagerNamesCheck.
+ *
  */
 
 const { BaseTest } = require('./base-test');
 const { CrossServerNamesCheck } = require('../lib/game/server/cross-server-names-check');
-const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
-const { LoginManager } = require('../lib/game/server/login-manager');
-const { JsonResponseRecorder } = require('./fixtures/json-response-recorder');
+const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { GlobalFetchStub } = require('./fixtures/global-fetch-stub');
 const { GameConst } = require('../lib/game/constants');
 const { sc } = require('@reldens/utils');
@@ -23,26 +27,35 @@ class TestCrossServerNamesCheck extends BaseTest
         this.userRoute = GameConst.ROUTE_PATHS.CHECK_USER_NAME;
         this.serverAUrl = 'http://server-a:8080';
         this.serverBUrl = 'http://server-b:8080';
+        this.serverCUrl = 'http://server-c:8080';
+        this.holdIdLength = GameConst.NAMES_CHECK.HOLD_ID_LENGTH;
+        this.holdId = 'h'.repeat(this.holdIdLength);
+        this.rejected = {isSuccess: false};
     }
 
-    createServer(otherServersUrls, {playerNames = [], usernames = [], emails = []} = {}, secret = 'shared-secret')
+    createServer(otherServersUrls, storedValues = {}, secret = 'shared-secret', serverSelfUrl = this.serverBUrl, routePath = this.playerRoute)
     {
-        return new CrossServerNamesCheck({
-            serversUrls: otherServersUrls,
-            expiringHmacToken: new ExpiringHmacToken({secret}),
-            usersManager: {
-                isNameAvailable: async (playerName) => !playerNames.includes(playerName.toLowerCase()),
-                loadUserByUsername: async (username) => usernames.includes(username) ? {username} : false,
-                loadUserByEmail: async (email) => emails.includes(email) ? {email} : false
-            }
-        });
+        let playerNames = sc.get(storedValues, 'playerNames', []);
+        let usernames = sc.get(storedValues, 'usernames', []);
+        let emails = sc.get(storedValues, 'emails', []);
+        return new CrossServerNamesCheck(Object.assign(
+            {
+                serversUrls: otherServersUrls,
+                usersManager: {
+                    isNameAvailable: async (playerName) => !playerNames.includes(playerName.toLowerCase()),
+                    loadUserByUsername: async (username) => usernames.includes(username) ? {username} : false,
+                    loadUserByEmail: async (email) => emails.includes(email) ? {email} : false
+                }
+            },
+            ServerMessengerPropsBuilder.create(serverSelfUrl, {}, secret, routePath)
+        ));
     }
 
-    createServersPair(serverAData = {}, serverBData = {})
+    createServersPair(serverAData = {}, serverBData = {}, routePath = this.playerRoute)
     {
         return {
-            serverA: this.createServer([this.serverBUrl], serverAData),
-            serverB: this.createServer([this.serverAUrl], serverBData)
+            serverA: this.createServer([this.serverBUrl], serverAData, 'shared-secret', this.serverAUrl, routePath),
+            serverB: this.createServer([this.serverAUrl], serverBData, 'shared-secret', this.serverBUrl, routePath)
         };
     }
 
@@ -51,14 +64,10 @@ class TestCrossServerNamesCheck extends BaseTest
         return async (requestUrl, requestOptions) => {
             sentRequests.push(requestUrl);
             let serverUrl = Object.keys(serversByUrl).find(url => requestUrl.startsWith(url));
-            let checkResponse = {ok: true};
-            checkResponse.json = async () => ({
-                isAvailable: await serversByUrl[serverUrl].isRequestAvailable(
-                    {body: sc.parseJson(requestOptions.body)},
-                    requestUrl.slice(serverUrl.length)
-                )
-            });
-            return checkResponse;
+            return {
+                ok: true,
+                json: async () => await serversByUrl[serverUrl].receiveRequest({body: sc.parseJson(requestOptions.body)})
+            };
         };
     }
 
@@ -76,8 +85,9 @@ class TestCrossServerNamesCheck extends BaseTest
             let singleServer = this.createServer([]);
             let sentRequests = [];
             await GlobalFetchStub.withFetch(async (requestUrl) => sentRequests.push(requestUrl), async () => {
-                this.assert.strictEqual(await singleServer.holdEverywhere(this.playerRoute, ['Hero']), true);
-                this.assert.strictEqual(singleServer.release(this.playerRoute, ['Hero']), false);
+                let holdId = await singleServer.holdEverywhere(['Hero']);
+                this.assert.strictEqual(String(holdId).length, this.holdIdLength);
+                this.assert.strictEqual(await singleServer.release(['Hero'], holdId), false);
             });
             this.assert.deepStrictEqual(sentRequests, []);
             this.assert.deepStrictEqual(singleServer.heldValues, {});
@@ -86,17 +96,22 @@ class TestCrossServerNamesCheck extends BaseTest
 
     async testANameFreeOnEveryServerIsHeldOnBoth()
     {
-        await this.test('a name free on every server passes and is held on both until the local release', async () => {
+        await this.test('a name free on every server is held on both until the release frees it on both', async () => {
             let serversPair = this.createServersPair();
+            let heldKeys = [];
             await this.withServersPair(serversPair, async (sentRequests) => {
-                this.assert.strictEqual(await serversPair.serverA.holdEverywhere(this.playerRoute, ['Hero']), true);
-                this.assert.deepStrictEqual(sentRequests, [this.serverBUrl+this.playerRoute]);
+                let holdId = await serversPair.serverA.holdEverywhere(['Hero']);
+                this.assert.strictEqual(String(holdId).length, this.holdIdLength);
+                heldKeys.push(Object.keys(serversPair.serverA.heldValues), Object.keys(serversPair.serverB.heldValues));
+                await serversPair.serverA.release(['Hero'], this.holdId);
+                heldKeys.push(Object.keys(serversPair.serverA.heldValues), Object.keys(serversPair.serverB.heldValues));
+                this.assert.strictEqual(await serversPair.serverA.release(['Hero'], holdId), true);
+                this.assert.deepStrictEqual(sentRequests, new Array(3).fill(this.serverBUrl+this.playerRoute));
             });
-            let holdKey = this.playerRoute+':hero';
-            this.assert.strictEqual(Object.keys(serversPair.serverA.heldValues).includes(holdKey), true);
-            this.assert.strictEqual(Object.keys(serversPair.serverB.heldValues).includes(holdKey), true);
-            this.assert.strictEqual(serversPair.serverA.release(this.playerRoute, ['Hero']), true);
-            this.assert.deepStrictEqual(serversPair.serverA.heldValues, {});
+            this.assert.deepStrictEqual(
+                [heldKeys, serversPair.serverA.heldValues, serversPair.serverB.heldValues],
+                [[['hero'], ['hero'], ['hero'], ['hero']], {}, {}]
+            );
         });
     }
 
@@ -105,7 +120,7 @@ class TestCrossServerNamesCheck extends BaseTest
         await this.test('a name stored on another server is rejected and the local hold is released', async () => {
             let serversPair = this.createServersPair({}, {playerNames: ['hero']});
             await this.withServersPair(serversPair, async () => {
-                this.assert.strictEqual(await serversPair.serverA.holdEverywhere(this.playerRoute, ['Hero']), false);
+                this.assert.strictEqual(await serversPair.serverA.holdEverywhere(['Hero']), false);
             });
             this.assert.deepStrictEqual(serversPair.serverA.heldValues, {});
             this.assert.deepStrictEqual(serversPair.serverB.heldValues, {});
@@ -114,15 +129,18 @@ class TestCrossServerNamesCheck extends BaseTest
 
     async testANameHeldByALocalCreationIsRejectedToAnotherServer()
     {
-        await this.test('a name held by a creation running on a server is rejected to the other server', async () => {
+        await this.test('a name held by a running creation is rejected to the other server and free at once after its release', async () => {
             let serversPair = this.createServersPair();
+            let results = [];
             await this.withServersPair(serversPair, async () => {
-                this.assert.strictEqual(await serversPair.serverA.holdEverywhere(this.playerRoute, ['Hero']), true);
-                this.assert.strictEqual(await serversPair.serverB.holdEverywhere(this.playerRoute, ['hero']), false);
-                serversPair.serverA.release(this.playerRoute, ['Hero']);
-                serversPair.serverB.removeExpiredHolds(Date.now()+GameConst.NAMES_CHECK.REMOTE_HOLD_MS);
-                this.assert.strictEqual(await serversPair.serverB.holdEverywhere(this.playerRoute, ['hero']), true);
+                let holdId = await serversPair.serverA.holdEverywhere(['Hero']);
+                results.push(String(holdId).length);
+                results.push(await serversPair.serverB.holdEverywhere(['hero']));
+                results.push(Object.keys(serversPair.serverA.heldValues).length);
+                await serversPair.serverA.release(['Hero'], holdId);
+                results.push(String(await serversPair.serverB.holdEverywhere(['hero'])).length);
             });
+            this.assert.deepStrictEqual(results, [this.holdIdLength, false, 1, this.holdIdLength]);
         });
     }
 
@@ -132,8 +150,8 @@ class TestCrossServerNamesCheck extends BaseTest
             let serversPair = this.createServersPair();
             await this.withServersPair(serversPair, async () => {
                 let results = await Promise.all([
-                    serversPair.serverA.holdEverywhere(this.playerRoute, ['Hero']),
-                    serversPair.serverB.holdEverywhere(this.playerRoute, ['Hero'])
+                    serversPair.serverA.holdEverywhere(['Hero']),
+                    serversPair.serverB.holdEverywhere(['Hero'])
                 ]);
                 this.assert.strictEqual(results.filter(result => result).length < 2, true);
             });
@@ -145,72 +163,83 @@ class TestCrossServerNamesCheck extends BaseTest
         await this.test('the hold of a remote check expires, so a creation that never ends frees the name', async () => {
             let serversPair = this.createServersPair();
             await this.withServersPair(serversPair, async () => {
-                await serversPair.serverA.holdEverywhere(this.playerRoute, ['Hero']);
+                await serversPair.serverA.holdEverywhere(['Hero']);
             });
             serversPair.serverB.removeExpiredHolds(Date.now()+GameConst.NAMES_CHECK.REMOTE_HOLD_MS);
             this.assert.deepStrictEqual(serversPair.serverB.heldValues, {});
-            this.assert.strictEqual(serversPair.serverB.hold(this.playerRoute, ['Hero'], 1000), true);
+            this.assert.strictEqual(serversPair.serverB.hold(['Hero'], 1000, this.holdId), true);
         });
     }
 
     async testTheUsernameAndEmailAreCheckedTogether()
     {
         await this.test('a username or an email stored on another server rejects the registration values', async () => {
-            let serversPair = this.createServersPair({}, {usernames: ['bob'], emails: ['alice@test.com']});
+            let serversPair = this.createServersPair({}, {usernames: ['bob'], emails: ['alice@test.com']}, this.userRoute);
             await this.withServersPair(serversPair, async () => {
                 let serverA = serversPair.serverA;
-                this.assert.strictEqual(await serverA.holdEverywhere(this.userRoute, ['bob', 'bob@test.com']), false);
-                this.assert.strictEqual(await serverA.holdEverywhere(this.userRoute, ['alice', 'alice@test.com']), false);
-                this.assert.strictEqual(await serverA.holdEverywhere(this.userRoute, ['carol', 'carol@test.com']), true);
+                this.assert.strictEqual(await serverA.holdEverywhere(['bob', 'bob@test.com']), false);
+                this.assert.strictEqual(await serverA.holdEverywhere(['alice', 'alice@test.com']), false);
+                let carolHoldId = await serverA.holdEverywhere(['carol', 'carol@test.com']);
+                this.assert.strictEqual(String(carolHoldId).length, this.holdIdLength);
             });
-            this.assert.deepStrictEqual(Object.keys(serversPair.serverB.heldValues), [
-                this.userRoute+':carol',
-                this.userRoute+':carol@test.com'
-            ]);
+            this.assert.deepStrictEqual(Object.keys(serversPair.serverB.heldValues), ['carol', 'carol@test.com']);
         });
     }
 
-    async testARequestWithAnInvalidTokenIsRejected()
+    async testAModifiedOrMisdirectedCheckIsRejected()
     {
-        await this.test('a check without token, with another route token or another secret is rejected', async () => {
+        await this.test('a check without token, modified, signed with another secret or for the other names route is rejected', async () => {
+            let serverA = this.createServer([this.serverBUrl], {}, 'shared-secret', this.serverAUrl);
             let serverB = this.createServer([this.serverAUrl]);
-            let otherSecretToken = new ExpiringHmacToken({secret: 'other-secret'})
-                .generate([this.playerRoute, 'Hero'], Date.now()+60000);
-            let disconnectionToken = serverB.expiringHmacToken.generate(['Hero'], Date.now()+60000);
-            let otherRouteToken = serverB.expiringHmacToken.generate([this.userRoute, 'Hero'], Date.now()+60000);
-            let expiredToken = serverB.expiringHmacToken.generate([this.playerRoute, 'Hero'], Date.now()-1);
-            for(let token of ['', otherSecretToken, disconnectionToken, otherRouteToken, expiredToken]){
-                this.assert.strictEqual(
-                    await serverB.isRequestAvailable({body: {values: ['Hero'], token}}, this.playerRoute),
-                    false
-                );
+            let otherSecretServer = this.createServer([this.serverBUrl], {}, 'other-secret', this.serverAUrl);
+            let userRouteServer = this.createServer([this.serverBUrl], {}, 'shared-secret', this.serverAUrl, this.userRoute);
+            let checkAction = GameConst.NAMES_CHECK.CHECK_ACTION;
+            let validBody = serverA.createRequestBody(this.serverBUrl, checkAction, this.holdId, {values: ['Hero']});
+            let invalidBodies = [
+                Object.assign({}, validBody, {token: ''}),
+                Object.assign({}, validBody, {payload: sc.toJsonString({values: ['Other']})}),
+                Object.assign({}, validBody, {targetId: 'g'.repeat(this.holdIdLength)}),
+                Object.assign({}, validBody, {action: GameConst.NAMES_CHECK.RELEASE_ACTION}),
+                otherSecretServer.createRequestBody(this.serverBUrl, checkAction, this.holdId, {values: ['Hero']}),
+                userRouteServer.createRequestBody(this.serverBUrl, checkAction, this.holdId, {values: ['Hero']})
+            ];
+            let results = [];
+            for(let body of invalidBodies){
+                results.push(await serverB.receiveRequest({body}));
             }
-            this.assert.deepStrictEqual(serverB.heldValues, {});
+            this.assert.deepStrictEqual(
+                [results, serverB.heldValues],
+                [new Array(invalidBodies.length).fill(this.rejected), {}]
+            );
         });
     }
 
     async testARequestWithInvalidValuesIsRejected()
     {
-        await this.test('a check with no body or values of a wrong count, type or length is rejected', async () => {
+        await this.test('a check with values of a wrong count, type or length, a wrong hold id or action is rejected', async () => {
             let serverB = this.createServer([this.serverAUrl]);
-            let invalidBodies = [
-                null,
-                {},
-                {values: 'Hero'},
-                {values: []},
-                {values: ['Hero', 'extra']},
-                {values: [12]},
-                {values: ['']},
-                {values: ['a'.repeat(256)]}
+            let checkAction = GameConst.NAMES_CHECK.CHECK_ACTION;
+            let invalidMessages = [
+                [checkAction, this.holdId, {}],
+                [checkAction, this.holdId, {values: 'Hero'}],
+                [checkAction, this.holdId, {values: []}],
+                [checkAction, this.holdId, {values: ['Hero', 'extra']}],
+                [checkAction, this.holdId, {values: [12]}],
+                [checkAction, this.holdId, {values: ['']}],
+                [checkAction, this.holdId, {values: ['a'.repeat(256)]}],
+                [checkAction, 'short', {values: ['Hero']}],
+                ['other', this.holdId, {values: ['Hero']}]
             ];
-            for(let invalidBody of invalidBodies){
-                this.assert.strictEqual(await serverB.isRequestAvailable({body: invalidBody}, this.playerRoute), false);
+            let results = [];
+            for(let [action, holdId, payload] of invalidMessages){
+                results.push(await serverB.receiveAction(action, holdId, payload));
             }
-            this.assert.strictEqual(
-                await serverB.isRequestAvailable({body: {values: ['bob']}}, this.userRoute),
-                false
+            let userRouteServer = this.createServer([this.serverAUrl], {}, 'shared-secret', this.serverBUrl, this.userRoute);
+            results.push(await userRouteServer.receiveAction(checkAction, this.holdId, {values: ['bob']}));
+            this.assert.deepStrictEqual(
+                [results, serverB.heldValues, userRouteServer.heldValues],
+                [new Array(invalidMessages.length + 1).fill(this.rejected), {}, {}]
             );
-            this.assert.deepStrictEqual(serverB.heldValues, {});
         });
     }
 
@@ -224,86 +253,58 @@ class TestCrossServerNamesCheck extends BaseTest
                     throw fetchError;
                 },
                 async () => ({ok: false, status: 429}),
-                async () => ({ok: true, json: async () => ({isAvailable: 'yes'})}),
+                async () => ({ok: true, json: async () => ({isSuccess: 'yes'})}),
                 async () => ({ok: true, json: async () => ({})})
             ];
             for(let failedResponse of failedResponses){
                 await GlobalFetchStub.withFetch(failedResponse, async () => {
-                    this.assert.strictEqual(await serverA.holdEverywhere(this.playerRoute, ['Hero']), false);
+                    this.assert.strictEqual(await serverA.holdEverywhere(['Hero']), false);
                 });
                 this.assert.deepStrictEqual(serverA.heldValues, {});
             }
         });
     }
 
-    createLoginManager(configValues)
+    async testACheckIsAcceptedOnceOnlyByItsTargetServer()
     {
-        let loginManager = Object.create(LoginManager.prototype);
-        loginManager.config = {getWithoutLogs: (path, defaultValue) => sc.get(configValues, path, defaultValue)};
-        return loginManager;
-    }
-
-    async testTheCheckedServersAreTheValidConfiguredUrlsWithoutThisServer()
-    {
-        await this.test('the checked servers are the valid configured URLs without trailing slashes nor this server', async () => {
-            let configuredServers = ' http://server-a:8080/ , http://server-b:8080,not an url,, http://server-c:8080//'
-                +',http://server-d:8080/game/';
-            let loginManager = this.createLoginManager({
-                'server/rooms/databases': configuredServers,
-                'server/publicUrl': this.serverAUrl
-            });
-            this.assert.deepStrictEqual(loginManager.fetchNamesCheckServersUrls(), [
-                'http://server-b:8080',
-                'http://server-c:8080',
-                'http://server-d:8080/game'
-            ]);
-            let withoutPublicUrl = this.createLoginManager({'server/rooms/databases': configuredServers});
-            this.assert.deepStrictEqual(withoutPublicUrl.fetchNamesCheckServersUrls(), [
-                'http://server-a:8080',
-                'http://server-b:8080',
-                'http://server-c:8080',
-                'http://server-d:8080/game'
-            ]);
-            this.assert.deepStrictEqual(this.createLoginManager({}).fetchNamesCheckServersUrls(), []);
+        await this.test('a check is accepted once and only by the server it was signed for', async () => {
+            let serverA = this.createServer([this.serverBUrl], {}, 'shared-secret', this.serverAUrl);
+            let serverB = this.createServer([this.serverAUrl], {}, 'shared-secret', this.serverBUrl);
+            let serverC = this.createServer([this.serverAUrl], {}, 'shared-secret', this.serverCUrl);
+            let sentBodies = [];
+            await GlobalFetchStub.withFetch(async (requestUrl, options) => {
+                sentBodies.push(sc.parseJson(options.body));
+                return {ok: true, json: async () => ({isSuccess: true})};
+            }, async () => serverA.holdEverywhere(['Hero']));
+            let body = sentBodies.shift();
+            let results = [
+                await serverC.receiveRequest({body}),
+                await serverB.receiveRequest({body}),
+                await serverB.receiveRequest({body})
+            ];
+            this.assert.deepStrictEqual(
+                [results, Object.keys(serverB.heldValues), serverC.heldValues],
+                [[this.rejected, {isSuccess: true}, this.rejected], ['hero'], {}]
+            );
         });
     }
 
-    async testThisServerWithAPathAndATrailingSlashIsNotChecked()
+    async testARejectionOfAnyServerReleasesEveryHold()
     {
-        await this.test('this server public URL with a path and a trailing slash is never a checked server', async () => {
-            let loginManager = this.createLoginManager({
-                'server/rooms/databases': 'http://server-d:8080/game/,http://server-b:8080',
-                'server/publicUrl': 'http://server-d:8080/game/'
+        await this.test('a name rejected by one of the other servers is released on every server', async () => {
+            let serverA = this.createServer([this.serverBUrl, this.serverCUrl], {}, 'shared-secret', this.serverAUrl);
+            let serverB = this.createServer([this.serverAUrl], {}, 'shared-secret', this.serverBUrl);
+            let serverC = this.createServer([this.serverAUrl], {playerNames: ['hero']}, 'shared-secret', this.serverCUrl);
+            let serversByUrl = {[this.serverAUrl]: serverA, [this.serverBUrl]: serverB, [this.serverCUrl]: serverC};
+            let sentRequests = [];
+            let holdResult = true;
+            await GlobalFetchStub.withFetch(this.routedFetch(serversByUrl, sentRequests), async () => {
+                holdResult = await serverA.holdEverywhere(['Hero']);
             });
-            this.assert.deepStrictEqual(loginManager.fetchNamesCheckServersUrls(), ['http://server-b:8080']);
-            let withoutSlash = this.createLoginManager({
-                'server/rooms/databases': 'http://server-d:8080/game/,http://server-b:8080',
-                'server/publicUrl': 'http://server-d:8080/game'
-            });
-            this.assert.deepStrictEqual(withoutSlash.fetchNamesCheckServersUrls(), ['http://server-b:8080']);
-        });
-    }
-
-    async testTheCheckRouteAnswersTheResultAndAFailedResultOnErrors()
-    {
-        await this.test('the check route answers the check result and a failed result when the check fails', async () => {
-            let loginManager = this.createLoginManager({});
-            let checkedRoutes = [];
-            let checkError = new Error('Storage failed.');
-            let responses = [];
-            let response = new JsonResponseRecorder().create(responses);
-            loginManager.crossServerNamesCheck = {
-                isRequestAvailable: async (req, routePath) => checkedRoutes.push(routePath) && true
-            };
-            await loginManager.handleNamesCheckRequest(this.playerRoute, {body: {}}, response);
-            loginManager.crossServerNamesCheck = {
-                isRequestAvailable: async () => {
-                    throw checkError;
-                }
-            };
-            await loginManager.handleNamesCheckRequest(this.userRoute, {body: {}}, response);
-            this.assert.deepStrictEqual(checkedRoutes, [this.playerRoute]);
-            this.assert.deepStrictEqual(responses, [{isAvailable: true}, 500, {isAvailable: false}]);
+            this.assert.deepStrictEqual(
+                [holdResult, serverA.heldValues, serverB.heldValues, serverC.heldValues, sentRequests.length],
+                [false, {}, {}, {}, 4]
+            );
         });
     }
 
@@ -313,7 +314,7 @@ class TestCrossServerNamesCheck extends BaseTest
             let serverA = this.createServer([this.serverBUrl], {}, '');
             let sentRequests = [];
             await GlobalFetchStub.withFetch(async (requestUrl) => sentRequests.push(requestUrl), async () => {
-                this.assert.strictEqual(await serverA.holdEverywhere(this.playerRoute, ['Hero']), false);
+                this.assert.strictEqual(await serverA.holdEverywhere(['Hero']), false);
             });
             this.assert.deepStrictEqual(sentRequests, []);
             this.assert.deepStrictEqual(serverA.heldValues, {});

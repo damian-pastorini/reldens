@@ -5,8 +5,9 @@
  * Builds the rewards events message actions over stubbed repositories, so the real provider, updater, mapper and data
  * sender run: the daily login reward event row with the given reward items and active dates, the players reward state rows (read and
  * saved in memory, every read waits one timers tick so overlapping accept messages really overlap, the read can reject
- * and the save can fail), the given items (every give or the give of some items can reject, and some items can be not
- * added) and the messages sent to every player client are recorded.
+ * and the save can fail), the given items (a give answers the given quantity like GiveRewardAction, every give or the
+ * give of some items can reject, and some items can be not added, answering 0) and the messages sent to every player
+ * client are recorded.
  *
  */
 
@@ -69,10 +70,10 @@ class RewardsAcceptBuilder
                     return Promise.reject({message: 'Inventory.'});
                 }
                 if(sc.inArray(itemKey, sc.get(setup.options, 'notAddedItems', []))){
-                    return false;
+                    return 0;
                 }
                 setup.givenItems.push({playerId: playerSchema.player_id, itemKey, quantity});
-                return true;
+                return quantity;
             }
         };
         setup.room = {

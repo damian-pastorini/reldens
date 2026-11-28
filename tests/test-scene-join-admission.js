@@ -6,7 +6,9 @@
 
 const timersPromises = require('timers/promises');
 const { BaseTest } = require('./base-test');
+const { ScheduledTimeouts } = require('./fixtures/scheduled-timeouts');
 const { RoomScene } = require('../lib/rooms/server/scene');
+const { SyncServerDriver } = require('../lib/sync/server/colyseus/sync-server-driver');
 const { GameConst } = require('../lib/game/constants');
 const { ChatConst } = require('../lib/chat/constants');
 
@@ -128,7 +130,10 @@ class TestSceneJoinAdmission extends BaseTest
 
     createLeavingSceneRoom(remainingClients, disposedRooms)
     {
-        let roomScene = Object.create(RoomScene.prototype, {roomName: {value: 'reldens-house-1'}});
+        let roomScene = Object.create(RoomScene.prototype, {
+            roomName: {value: 'reldens-house-1'},
+            roomId: {value: 'house-1-room'}
+        });
         roomScene.disposeTimeoutMs = 30;
         roomScene.disposeTimeoutTimer = false;
         roomScene.playersLastStateTimers = {};
@@ -161,6 +166,22 @@ class TestSceneJoinAdmission extends BaseTest
         });
     }
 
+    async testTheLeaveOfAnAlreadyRemovedPlayerStillDisposesTheEmptyRoom()
+    {
+        await this.test('the leave of a player already removed by a remote disconnect still disposes the empty room', async () => {
+            let disposedRooms = [];
+            let results = [];
+            for(let remainingClients of [[], [{sessionId: 'session-b'}]]){
+                let leftRoom = this.createLeavingSceneRoom(remainingClients, disposedRooms);
+                leftRoom.playerBySessionIdFromState = () => null;
+                let scheduledTimeouts = new ScheduledTimeouts();
+                let leaveResult = await scheduledTimeouts.capture(() => leftRoom.onLeave({sessionId: 'session-a'}, true));
+                results.push([leaveResult, scheduledTimeouts.runAll()]);
+            }
+            this.assert.deepStrictEqual([results, disposedRooms], [[[true, [30]], [false, []]], [0]]);
+        });
+    }
+
     async testLeaveAfterASceneChangeKeepsTheSavedNextScene()
     {
         await this.test('the leave of a room the player left through a change point never saves its state over the next scene', async () => {
@@ -175,6 +196,44 @@ class TestSceneJoinAdmission extends BaseTest
             await leftRoom.onLeave({sessionId: 'session-a'}, true);
             this.assert.deepStrictEqual(savedStates, ['session-a']);
         });
+    }
+
+    async testRemoteDisconnectAfterARelocationKeepsTheSavedDestination()
+    {
+        await this.test('the remote disconnect of a player already relocated to another room never saves over its destination', async () => {
+            let savedStates = [];
+            let removedSessions = [];
+            let closeCodes = [];
+            let leftRoom = this.createLeavingSceneRoom([{sessionId: 'session-b'}], []);
+            leftRoom.roomData = {roomId: 4};
+            leftRoom.events = {emit: async () => true};
+            leftRoom.loginManager = {
+                activePlayers: {removeByRoomAndSessionId: (sessionId, roomId) => removedSessions.push(roomId)}
+            };
+            leftRoom.savePlayerState = async (sessionId) => savedStates.push(sessionId);
+            let relocatedResult = await this.disconnectWithStateRoom(leftRoom, 5, closeCodes);
+            let stayedResult = await this.disconnectWithStateRoom(leftRoom, 4, closeCodes);
+            this.assert.deepStrictEqual(
+                [relocatedResult, stayedResult, savedStates, removedSessions, closeCodes],
+                [
+                    true,
+                    true,
+                    ['session-a'],
+                    ['house-1-room', 'house-1-room'],
+                    [SyncServerDriver.CloseCode.CONSENTED, SyncServerDriver.CloseCode.CONSENTED]
+                ]
+            );
+        });
+    }
+
+    async disconnectWithStateRoom(leftRoom, stateRoomId, closeCodes)
+    {
+        leftRoom.playerBySessionIdFromState = (sessionId) => ({player_id: 7, sessionId, state: {room_id: stateRoomId}});
+        return await leftRoom.disconnectBySessionId(
+            'session-a',
+            {leave: (closeCode) => closeCodes.push(closeCode)},
+            {username: 'player'}
+        );
     }
 
     async testLeaveClearsOnlyTheLeavingPlayerMovement()

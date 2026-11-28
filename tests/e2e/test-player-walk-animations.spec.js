@@ -11,7 +11,9 @@
  * sprite on the stopped state and stops it in the same frame), the stopped sprite ends with its animation stopped, the
  * name sprite keeps
  * the same position relative to the player sprite on every frame and the sprite depth is its Y plus its body height,
- * and the walker own camera moves in the walk direction.
+ * and the walker own camera moves in the walk direction. With the interpolation speed 1 on both clients every moving
+ * frame lands the sprite on its state target, so the stopped state arrives on a sprite already on its target and still
+ * stops its walk animation on every client (ISSUE #465).
  * A heal potion used while the own player walks a clear line (its life lowered first) plays its item animation
  * attached to the player sprite, which follows the player sprite on every recorded frame. The own player walking with
  * the right and down keys held (the sample allows simultaneous keys) steps its sprite on both axes in the same frame.
@@ -41,6 +43,9 @@ class TestPlayerWalkAnimations
 {
 
     static WALK_DISTANCES = [4, 3, 2];
+    static ANIMATIONS_PATH = 'client/players/animations';
+    static ENGINE_PATH = 'client/general/engine';
+    static ONE_FRAME_SPEED = 1;
     static DIAGONAL_WALK_MS = 400;
     static CAMERA_POLL_MS = 200;
     static RECORD_SPRITE = (sessionId) => {
@@ -94,10 +99,10 @@ class TestPlayerWalkAnimations
         return direction;
     }
 
-    static async recordWalk(context, animationsOptions)
+    static async recordWalk(context, configPath, configValues)
     {
         for(let clientPage of [context.page, context.secondPage]){
-            await InitialClientConfig.overrideBeforeEngine(clientPage, 'client/players/animations', animationsOptions);
+            await InitialClientConfig.overrideBeforeEngine(clientPage, configPath, configValues);
         }
         let players = await TeamSteps.enterPlayers(context, 2);
         let walker = players[0];
@@ -151,9 +156,9 @@ class TestPlayerWalkAnimations
         expect(frames.every((frame) => frame.isDepthByY), 'The sprite depth is its Y plus its body height').toBe(true);
     }
 
-    static async runWalkAnimationTest(context, animationsOptions)
+    static async runWalkAnimationTest(context, configPath, configValues)
     {
-        let walk = await TestPlayerWalkAnimations.recordWalk(context, animationsOptions);
+        let walk = await TestPlayerWalkAnimations.recordWalk(context, configPath, configValues);
         for(let frames of walk.recordings){
             TestPlayerWalkAnimations.expectWalkFrames(frames, walk.direction);
         }
@@ -235,12 +240,24 @@ class TestPlayerWalkAnimations
     {
         test.describe('Player Walk Animations', () => {
             test('a walking player plays and stops its direction animation with its name and depth on every client', async ({ page, secondPage, gameConfig, longRun }) => {
-                await TestPlayerWalkAnimations.runWalkAnimationTest({page, secondPage, gameConfig, longRun}, {});
+                await TestPlayerWalkAnimations.runWalkAnimationTest(
+                    {page, secondPage, gameConfig, longRun},
+                    TestPlayerWalkAnimations.ANIMATIONS_PATH,
+                    {}
+                );
             });
             test('with basedOnPress off a walking player plays its walk direction animation on every client', async ({ page, secondPage, gameConfig, longRun }) => {
                 await TestPlayerWalkAnimations.runWalkAnimationTest(
                     {page, secondPage, gameConfig, longRun},
+                    TestPlayerWalkAnimations.ANIMATIONS_PATH,
                     {basedOnPress: false}
+                );
+            });
+            test('a walk whose sprite reaches its target before the stop ends with its animation stopped on every client', async ({ page, secondPage, gameConfig, longRun }) => {
+                await TestPlayerWalkAnimations.runWalkAnimationTest(
+                    {page, secondPage, gameConfig, longRun},
+                    TestPlayerWalkAnimations.ENGINE_PATH,
+                    {interpolationSpeed: TestPlayerWalkAnimations.ONE_FRAME_SPEED}
                 );
             });
             test('the own diagonal walk steps the sprite on both axes in the same frame', async ({ page, gameConfig, longRun }) => {

@@ -3,17 +3,19 @@
  * Reldens - Timing Objects Probe
  *
  * Server side e2e endpoints for the timing objects specs of a live scene room: a cancel rule of a timing object
- * ("cancelOnMove", "cancelOnHit", "cancelOnOutOfRange", or its duration in the client params) changed for the group,
+ * ("cancelOnMove", "cancelOnHit", "cancelOnOutOfRange", its player lock "lockPlayer", or its duration in the client
+ * params) changed for the group,
  * the object interaction messages the room hands to an object counted from now on (every "oi" act, whatever its id),
  * its stop held for the group (the checks interval finds a player gone and stops nothing, like a player that leaves in
  * the last checks interval before the timer ends, so the completion runs for a player that left the room),
- * the timing state of an object (its position, interaction area and cancel rules, running or not, its body state,
+ * the timing state of an object (its position, interaction area, cancel rules and player lock, running or not, its body state,
  * whether its shapes still collide and the respawn timer set by its last completion), the respawn of an object pinned
  * for the group to the free respawn tile closest to the place it leaves among the tiles farther than its interaction
  * area plus half a tile from a given player (instead of a random tile, which can be the same tile or one next to it;
  * with no such free tile the respawn stays random and the error is logged), and the next calls of a method of a player
  * inventory manager (the
- * "addItem" a completion runs) delayed, answering false (like a full inventory) or rejected, kept and restored per
+ * "addItem" a completion runs) delayed, answering false (like a full inventory) or rejected after the given passed
+ * calls, kept and restored per
  * parallel spec group by LiveObjectsOverrides.
  *
  */
@@ -91,6 +93,7 @@ class TimingObjectsProbe
             cancelOnMove: true === timingObject.cancelOnMove,
             cancelOnHit: true === timingObject.cancelOnHit,
             cancelOnOutOfRange: true === timingObject.cancelOnOutOfRange,
+            lockPlayer: Boolean(timingObject.lockPlayer),
             isActive: true === timingObject.isActive,
             inState: sc.get(sc.get(objectBody, 'bodyState', {}), 'inState', 0),
             collides: objectBody.shapes.every(shape => objectBody.originalCollisionGroup === shape.collisionGroup),
@@ -237,6 +240,7 @@ class TimingObjectsProbe
                     {
                         callsKey: 'inventory.'+sc.get(request.body, 'playerName', ''),
                         delayMs: Number(sc.get(request.body, 'delayMs', 0)),
+                        passesCount: Number(sc.get(request.body, 'passesCount', 0)),
                         failuresCount: Number(sc.get(request.body, 'failuresCount', 0)),
                         rejects: true === sc.get(request.body, 'rejects', false)
                     }

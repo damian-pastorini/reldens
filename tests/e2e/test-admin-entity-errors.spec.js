@@ -6,7 +6,9 @@
  * required upload left empty, with a disallowed file or with a repeated unique value, the delete without ids or
  * prevented by a subscriber, the view and edit of an unknown id, the stored text shown as text on the view page, and
  * the management, theme manager and maps wizard forms with missing or invalid values. Every expected result comes from
- * the redirect the panel answers and the stored rows never change.
+ * the redirect the panel answers and the stored rows never change. The theme manager Build CSS (the CSS build allowed
+ * for the group on the panel theme manager) replaces a stale dist/css/styles.css with the rebuilt theme CSS, which is
+ * the CSS the game serves (ISSUE #503).
  *
  */
 
@@ -15,6 +17,9 @@ const { AdminPanelSession } = require('./helpers/admin-panel-session');
 const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { Selectors } = require('./selectors');
 const { RoomsConst } = require('../../lib/rooms/constants');
+const { GameplayE2eStateApi } = require('./helpers/gameplay-e2e-state-api');
+const { TimeConstants } = require('./helpers/time-constants');
+const { ServerPathResolver } = require('../server-path-resolver');
 const { FileHandler } = require('@reldens/server-utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
@@ -23,6 +28,8 @@ class TestAdminEntityErrors
 {
 
     static UNKNOWN_ID = '999999';
+    static THEME_MANAGER_PATH = 'admin/package/subscribers/themeManager/themeManager';
+    static STALE_DIST_CSS = '/* e2e stale dist css */';
     static XSS_FLAG = 'e2eStoredScriptRan';
     static STORED_HTML_PATH = FileHandler.joinPaths(process.cwd(), 'tests', 'e2e', 'assets', 'stored-html-payload.html');
 
@@ -119,6 +126,8 @@ class TestAdminEntityErrors
         let adminPath = AdminPanelSession.adminPath(gameConfig);
         let viewResponse = await page.request.get(adminPath+'/features/view?id='+TestAdminEntityErrors.UNKNOWN_ID, {maxRedirects: 0});
         TestAdminEntityErrors.expectRedirect(viewResponse, gameConfig, '/features?result=errorView', 'View of an unknown id');
+        let editResponse = await page.request.get(adminPath+'/features/edit?id='+TestAdminEntityErrors.UNKNOWN_ID, {maxRedirects: 0});
+        TestAdminEntityErrors.expectRedirect(editResponse, gameConfig, '/features?result=errorEdit', 'Edit of an unknown id');
         await screenshots.capture(page, 'unknown-id-errors');
     }
 
@@ -174,6 +183,36 @@ class TestAdminEntityErrors
         await screenshots.capture(page, 'theme-manager-forms');
     }
 
+    static async runBuildCssReplacesDistTest(context)
+    {
+        let {page, gameConfig, e2eGroup, longRun} = context;
+        let allowed = await GameplayE2eStateApi.changeFeatureProperty(
+            gameConfig,
+            e2eGroup,
+            TestAdminEntityErrors.THEME_MANAGER_PATH,
+            'allowBuildCss',
+            true
+        );
+        expect(allowed.error, 'The Control Panel CSS build is allowed for the group').toBeUndefined();
+        let serverPath = ServerPathResolver.resolve(gameConfig.serverPath);
+        let distCssPath = FileHandler.joinPaths(serverPath, 'dist', 'css', 'styles.css');
+        FileHandler.writeFile(distCssPath, TestAdminEntityErrors.STALE_DIST_CSS);
+        let csrfToken = await TestAdminEntityErrors.loginAndFetchToken(page, gameConfig, longRun);
+        await page.goto(AdminPanelSession.adminPath(gameConfig)+'/management');
+        let availableTheme = await page.locator('#selected-theme option').first().getAttribute('value');
+        let response = await page.request.post(AdminPanelSession.adminPath(gameConfig)+'/theme-manager', {
+            form: {_csrf: csrfToken, 'selected-theme': availableTheme, command: 'buildCss'},
+            maxRedirects: 0,
+            timeout: TimeConstants.CSS_BUILD
+        });
+        TestAdminEntityErrors.expectRedirect(response, gameConfig, '/management?result=success', 'Build CSS');
+        let themeCss = FileHandler.readFile(FileHandler.joinPaths(serverPath, 'theme', gameConfig.themeName, 'css', 'styles.css'));
+        expect(
+            [FileHandler.readFile(distCssPath) === themeCss, await (await page.request.get('/css/styles.css')).text() === themeCss],
+            'The rebuilt theme CSS replaces the stale dist copy and is the dist CSS the server serves'
+        ).toEqual([true, true]);
+    }
+
     static async runSaveConfigErrorsTest(page, screenshots, gameConfig, longRun)
     {
         let csrfToken = await TestAdminEntityErrors.loginAndFetchToken(page, gameConfig, longRun);
@@ -201,7 +240,7 @@ class TestAdminEntityErrors
             test('entity delete errors keep the rows', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminEntityErrors.runDeleteErrorsTest(page, screenshots, gameConfig, longRun);
             });
-            test('view of an unknown id redirects with the error', async ({ page, screenshots, gameConfig, longRun }) => {
+            test('view and edit of an unknown id redirect with their errors', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminEntityErrors.runUnknownIdTest(page, screenshots, gameConfig, longRun);
             });
             test('stored HTML never runs on the entity view page', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
@@ -212,6 +251,9 @@ class TestAdminEntityErrors
             });
             test('theme manager form errors', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminEntityErrors.runThemeManagerFormsTest(page, screenshots, gameConfig, longRun);
+            });
+            test('theme manager Build CSS replaces an existing dist CSS with the rebuilt theme CSS', async ({ page, gameConfig, e2eGroup, longRun }) => {
+                await TestAdminEntityErrors.runBuildCssReplacesDistTest({page, gameConfig, e2eGroup, longRun});
             });
             test('maps wizard save configuration errors', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAdminEntityErrors.runSaveConfigErrorsTest(page, screenshots, gameConfig, longRun);

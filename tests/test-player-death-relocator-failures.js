@@ -23,6 +23,7 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
         this.deathTimeOutMs = 5;
         this.deathTimeOutWaitMs = 30;
         this.deathTimerKey = ActionsConst.DEATH.PRIVATE_DATA.PLAYER_DEATH_TIMER;
+        this.holdKey = ActionsConst.DEATH.PRIVATE_DATA.REVIVE_HOLD_UNTIL;
     }
 
     assertRevivedInTown(setup)
@@ -90,9 +91,9 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
 
     async testRestorationItemIsUsedWhileTheAdPlays()
     {
-        await this.test('a restoration item is used without waiting the resurrection ad that is playing', async () => {
+        await this.test('a restoration item is used without waiting the revive hold of a playing resurrection ad', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup({}, {restorationQty: 1});
-            setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_STARTED, Date.now());
+            setup.playerSchema.setPrivate(this.holdKey, Date.now() + AdsConst.VIDEOS_MAXIMUM_DURATION);
             this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
             this.deathBuilder.assertRevivedWithRestorationItem(this.assert, setup);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
@@ -134,10 +135,9 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
 
     async testAdStartedAtTheMaximumWaitIsNotWaited()
     {
-        await this.test('a resurrection ad started the ads maximum duration ago is not waited', async () => {
+        await this.test('a revive hold that reached its time is not waited', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
-            let maximumWaitStart = Date.now() - AdsConst.VIDEOS_MAXIMUM_DURATION;
-            setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_STARTED, maximumWaitStart);
+            setup.playerSchema.setPrivate(this.holdKey, Date.now());
             this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
             this.assertRevivedInTown(setup);
@@ -146,10 +146,9 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
 
     async testFailedResurrectionAdIsNotWaited()
     {
-        await this.test('a failed resurrection ad is not waited and the player revives in town', async () => {
+        await this.test('a revive hold released by a failed resurrection ad is not waited and the player revives in town', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
-            setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_STARTED, Date.now());
-            setup.playerSchema.setPrivate(ActionsConst.DEATH.PRIVATE_DATA.RESURRECTION_AD_FAILED, true);
+            setup.playerSchema.setPrivate(this.holdKey, 0);
             this.assert.strictEqual(await setup.relocator.resolveDeath(setup.event), true);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
             this.assertRevivedInTown(setup);
@@ -159,10 +158,9 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
     async testScheduledResolutionRevivesAfterTheTimeOut()
     {
         await this.test('the scheduled death resolution revives the player in town after the game over time', async () => {
-            let setup = await this.deathBuilder.createRelocatorSetup({
-                [ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT]: this.deathTimeOutMs
-            });
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            let setup = await this.deathBuilder.createRelocatorSetup();
+            setup.event.reviveDelayMs = this.deathTimeOutMs;
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             this.assert.deepStrictEqual(setup.sceneChanges, []);
             await timersPromises.setTimeout(this.deathTimeOutWaitMs);
             this.assertRevivedInTown(setup);
@@ -172,11 +170,10 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
     async testNewDeathReplacesThePendingResolution()
     {
         await this.test('a new death replaces the pending death resolution so it runs once', async () => {
-            let setup = await this.deathBuilder.createRelocatorSetup({
-                [ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT]: this.deathTimeOutMs
-            });
-            setup.relocator.onPlayerDeath(setup.event);
-            setup.relocator.onPlayerDeath(setup.event);
+            let setup = await this.deathBuilder.createRelocatorSetup();
+            setup.event.reviveDelayMs = this.deathTimeOutMs;
+            setup.relocator.scheduleRevive(setup.event);
+            setup.relocator.scheduleRevive(setup.event);
             await timersPromises.setTimeout(this.deathTimeOutWaitMs);
             this.assertRevivedInTown(setup);
             this.assert.strictEqual(setup.client.sentMessages.length, 1);
@@ -186,12 +183,10 @@ class TestPlayerDeathRelocatorFailures extends BaseTest
     async testRejectedResolutionIsCaught()
     {
         await this.test('a rejected scheduled death resolution is caught and never revives the player', async () => {
-            let setup = await this.deathBuilder.createRelocatorSetup(
-                {[ActionsConst.DEATH.CONFIG_PATHS.GAME_OVER_TIME_OUT]: this.deathTimeOutMs},
-                {restorationQty: 1}
-            );
+            let setup = await this.deathBuilder.createRelocatorSetup({}, {restorationQty: 1});
+            setup.event.reviveDelayMs = this.deathTimeOutMs;
             setup.playerSchema.inventory.manager.decreaseItemQty = async () => Promise.reject({message: 'Storage.'});
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             await timersPromises.setTimeout(this.deathTimeOutWaitMs);
             this.assert.strictEqual(setup.revivedPlayers, 0);
             this.assert.deepStrictEqual(setup.sceneChanges, []);

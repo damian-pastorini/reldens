@@ -3,7 +3,9 @@
  * Reldens - Test Progress Reporter
  *
  * Custom Playwright reporter: shows live step updates per test in TTY mode,
- * error details on failure, and a pass/fail summary at the end.
+ * error details on failure (the first error line and the last Playwright calls and test steps with their start time in
+ * the test and their durations,
+ * so a test timeout shows what was running), and a pass/fail summary at the end.
  *
  */
 
@@ -12,6 +14,20 @@ let flushTick = util.promisify(setImmediate);
 
 class TestProgressReporter
 {
+    constructor()
+    {
+        this.lastStepsShown = 25;
+        this.total = 0;
+        this.index = 0;
+        this.passed = 0;
+        this.failed = 0;
+        this.skipped = 0;
+        this.hasActiveLine = false;
+        this.hasEnded = false;
+        this.testsIndexes = {};
+        this.isSingleWorker = false;
+    }
+
     printsToStdio()
     {
         return true;
@@ -20,13 +36,6 @@ class TestProgressReporter
     onBegin(config, suite)
     {
         this.total = suite.allTests().length;
-        this.index = 0;
-        this.passed = 0;
-        this.failed = 0;
-        this.skipped = 0;
-        this.hasActiveLine = false;
-        this.hasEnded = false;
-        this.testsIndexes = {};
         this.isSingleWorker = 1 === config.workers;
         process.once('exit', (exitCode) => this.reportAbortedRun(exitCode));
         process.stdout.write('Running '+this.total+' tests\n\n');
@@ -94,8 +103,26 @@ class TestProgressReporter
                 let errorMessage = [...error.message.split('\n')].shift();
                 process.stdout.write('     Error: '+this.truncate(errorMessage, 120)+'\n');
             }
+            let failedTestSteps = this.collectSteps(result.steps || [], []);
+            for(let step of failedTestSteps.slice(Math.max(0, failedTestSteps.length - this.lastStepsShown))) {
+                process.stdout.write(
+                    '       step at '+(step.startTime - result.startTime)+'ms: '+this.truncate(step.title, 100)
+                    +' ('+step.duration+'ms'+(step.error ? ', failed' : '')+')\n'
+                );
+            }
         }
         this.hasActiveLine = false;
+    }
+
+    collectSteps(steps, collected)
+    {
+        for(let step of steps) {
+            if('pw:api' === step.category || 'test.step' === step.category) {
+                collected.push(step);
+            }
+            this.collectSteps(step.steps || [], collected);
+        }
+        return collected;
     }
 
     async onEnd(result)

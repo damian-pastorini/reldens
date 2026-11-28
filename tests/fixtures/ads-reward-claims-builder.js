@@ -126,9 +126,7 @@ class AdsRewardClaimsBuilder
             let pastDate = null === recordElapsedTimes[dateField]
                 ? null
                 : new Date(currentTime - recordElapsedTimes[dateField]);
-            adsSetup.storedRecords[recordId][dateField] = pastDate
-                ? pastDate.toISOString().slice(0, 19).replace('T', ' ')
-                : null;
+            adsSetup.storedRecords[recordId][dateField] = pastDate ? sc.formatDate(pastDate) : null;
         }
         return adsSetup.storedRecords[recordId];
     }

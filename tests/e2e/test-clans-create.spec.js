@@ -5,9 +5,13 @@
  * Tests the clan creation of the group players in their scene (TeamSteps players, ClanSteps with the clan rows of the
  * players preserved, the clan settings changed for the group): a created clan stores its owner, name, first level,
  * starting points and owner membership and the panel shows the title (with the leader name only), the owner without
- * remove button and no connected players; a clan name with HTML is shown as text in the title and creates no element;
- * a duplicate name answers NAME_EXISTS; an empty name is not sent by the client; a name that cleans to nothing
- * answers CREATE_ERROR and a blank name still creates a clan; a long name is cut at the name limit and a name of exactly
+ * remove button and no connected players; a clan name with HTML (the bold payload of
+ * tests/fixtures/markup-injection-payloads.json) is stored without its markup characters (< and >),
+ * shown as text in the title and creates no element; a clan name with the replacement patterns "$&" and the title
+ * placeholder "%leaderName" (ISSUE #454) is stored as it is and shown exactly in the title of the new clan (the owner)
+ * and of the clan box of a joined member; a duplicate name answers NAME_EXISTS; an empty name is not sent
+ * by the client; a name that cleans to nothing (backslashes, blanks, markup only) answers CREATE_ERROR and stores no
+ * clan; a long name is cut at the name limit and a name of exactly
  * the limit is kept; a lowered name limit and a set of starting points are used; a second create by an owner answers
  * CREATE_ERROR with no second clan; a create sent by a member of another clan answers CREATE_ERROR and stores no clan; two creates of one name at once make one clan; a non string name creates nothing
  * and the room keeps answering; and a name of a disbanded clan can be used again.
@@ -23,6 +27,7 @@ const { E2eSeedAndRestoreApi } = require('./helpers/e2e-seed-and-restore-api');
 const { TimeConstants } = require('./helpers/time-constants');
 const { Selectors } = require('./selectors');
 const { TeamsConst } = require('../../lib/teams/constants');
+const MarkupInjectionPayloads = require('../fixtures/markup-injection-payloads.json');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -34,7 +39,7 @@ class TestClansCreate
     static LOWERED_LIMIT = 10;
     static STARTING_POINTS = 7;
     static SETTLE_MS = 1500;
-    static HTML_ELEMENT_ID = 'e2e-clan-html';
+    static TITLE_PATTERNS_PREFIX = 'E2e$&%leaderName';
 
     static async enter(context, playersCount = 1, configValues = {})
     {
@@ -91,13 +96,40 @@ class TestClansCreate
     static async runHtmlNameTest(context)
     {
         let players = await TestClansCreate.enter(context);
-        let created = await ClanSteps.createClan(players[0], '<b id="'+TestClansCreate.HTML_ELEMENT_ID+'">E2e</b>');
+        let created = await ClanSteps.createClan(players[0], MarkupInjectionPayloads.boldWithId);
+        expect(created.clanName, 'The created clan name has no markup characters').toBe(MarkupInjectionPayloads.boldWithIdCleaned);
+        expect(
+            (await ClanSteps.fetchStoredClans(context.gameConfig, {owner_id: players[0].playerId})).map(row => row.name),
+            'The stored clan name has no markup characters'
+        ).toEqual([MarkupInjectionPayloads.boldWithIdCleaned]);
         await TestClansCreate.openClanPanel(players[0].page);
         await expect(
             players[0].page.locator(Selectors.clans.dialog+' .box-title'),
             'The clan name with HTML is shown as text in the title'
         ).toContainText(created.clanName);
-        await expect(players[0].page.locator('#'+TestClansCreate.HTML_ELEMENT_ID), 'No element is created').toHaveCount(0);
+        await expect(players[0].page.locator('#'+MarkupInjectionPayloads.boldWithIdElementId), 'No element is created')
+            .toHaveCount(0);
+    }
+
+    static async runTitlePatternsNameTest(context)
+    {
+        let players = await TestClansCreate.enter(context, 2);
+        let [owner, member] = players;
+        let clanName = TestClansCreate.uniqueName(TestClansCreate.TITLE_PATTERNS_PREFIX);
+        let created = await ClanSteps.createClan(owner, clanName);
+        expect(created.clanName, 'The created clan keeps the replacement patterns and the title placeholder').toBe(clanName);
+        let expectedTitle = TeamsConst.LABELS.CLAN.CLAN_TITLE.split('%leaderName').join(owner.playerName)
+            .split('%clanName').join(clanName);
+        let clanTitle = '#box-'+TeamsConst.CLAN_KEY+' .box-title';
+        await expect(owner.page.locator(clanTitle), 'The new clan title shows the exact clan name').toHaveText(
+            expectedTitle,
+            {timeout: TimeConstants.SERVER_RESPONSE}
+        );
+        await ClanSteps.join(context.gameConfig, owner, member, created.id, TeamSteps.sortedIds(players));
+        await expect(member.page.locator(clanTitle), 'The joined member clan box title shows the exact clan name').toHaveText(
+            expectedTitle,
+            {timeout: TimeConstants.SERVER_RESPONSE}
+        );
     }
 
     static async runNameRulesTest(context)
@@ -124,7 +156,12 @@ class TestClansCreate
     static async runBlankNameTest(context)
     {
         let players = await TestClansCreate.enter(context);
-        expect((await ClanSteps.create(players[0], '   ')).result, 'A blank name still creates a clan').toBe(TeamsConst.VALIDATION.SUCCESS);
+        for(let emptyName of ['   ', '<>', ' < > ']){
+            expect((await ClanSteps.create(players[0], emptyName)).result, 'The name "'+emptyName+'" answers the error')
+                .toBe(TeamsConst.VALIDATION.CREATE_ERROR);
+        }
+        expect(await ClanSteps.fetchStoredClans(context.gameConfig, {owner_id: players[0].playerId}), 'No clan is stored')
+            .toEqual([]);
     }
 
     static async runEmptyClientNameTest(context)
@@ -228,13 +265,16 @@ class TestClansCreate
             test('clan name with HTML is shown as text in the panel title', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runHtmlNameTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
+            test('clan name with replacement patterns and a title placeholder is shown exactly in the new and the joined clan titles', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestClansCreate.runTitlePatternsNameTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
+            });
             test('duplicate, cleaned and long names follow the name rules', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runNameRulesTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('name of exactly the limit is kept', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runExactLimitTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
-            test('blank name still creates a clan', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
+            test('blank or markup only name answers the error and stores no clan', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestClansCreate.runBlankNameTest({page, secondPage, screenshots, gameConfig, e2eGroup, longRun});
             });
             test('empty name is not sent by the client', async ({ page, secondPage, screenshots, gameConfig, e2eGroup, longRun }) => {

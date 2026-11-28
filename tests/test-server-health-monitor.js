@@ -9,9 +9,11 @@ const { BaseTest } = require('./base-test');
 const { ServerHealthMonitor } = require('../lib/game/server/health/server-health-monitor');
 const { ServerUsageSampler } = require('../lib/game/server/health/server-usage-sampler');
 const { RoomsUsageCollector } = require('../lib/game/server/health/rooms-usage-collector');
+const { ActivePlayers } = require('../lib/game/server/memory/active-players');
 const { WorldTimer } = require('../lib/world/world-timer');
 const { EnvironmentVariablesReader } = require('../lib/game/server/environment-variables-reader');
 const { ServerManagersInitializer } = require('../lib/game/server/server-managers-initializer');
+const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { GameServer } = require('../lib/game/server/game-server');
 const { sc } = require('@reldens/utils');
 
@@ -159,7 +161,7 @@ class TestServerHealthMonitor extends BaseTest
                 },
                 chatRoomId: {clients: [{}, {}]}
             };
-            let monitor = this.createMonitor({}, [{}], new RoomsUsageCollector(createdInstances));
+            let monitor = this.createMonitor({}, [{}], new RoomsUsageCollector(createdInstances, new ActivePlayers()));
             let roomsUsage = monitor.checkUsage().roomsUsage;
             this.assert.strictEqual(roomsUsage.roomsCount, 2);
             this.assert.strictEqual(roomsUsage.sceneRoomsCount, 1);
@@ -180,7 +182,8 @@ class TestServerHealthMonitor extends BaseTest
                     return this.state.players.size;
                 }
             };
-            let roomsUsage = this.createMonitor({}, [{}], new RoomsUsageCollector({creatingRoomId: roomInCreation}))
+            let roomsUsageCollector = new RoomsUsageCollector({creatingRoomId: roomInCreation}, new ActivePlayers());
+            let roomsUsage = this.createMonitor({}, [{}], roomsUsageCollector)
                 .checkUsage()
                 .roomsUsage;
             this.assert.strictEqual(roomsUsage.roomsCount, 1);
@@ -268,10 +271,11 @@ class TestServerHealthMonitor extends BaseTest
             let serverManager = {
                 serverHealthMonitor: previousMonitor,
                 configManager: {getWithoutLogs: (path, defaultValue) => defaultValue},
-                loginManager: {expiringHmacToken: {}},
+                loginManager: {expiringHmacToken: {}, activePlayers: new ActivePlayers()},
                 roomsManager: {isRoomCreated: () => false, createdInstances: {}},
                 gameServer: {shutdownCallbacks: []},
-                app: {get: () => true}
+                app: {get: () => true},
+                serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, '')
             };
             new ServerManagersInitializer(serverManager).initializeServerHealth();
             this.assert.strictEqual(previousMonitor.checkTimer, false);

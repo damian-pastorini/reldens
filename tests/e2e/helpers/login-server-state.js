@@ -3,15 +3,19 @@
  * Reldens - Login Server State
  *
  * Server side e2e endpoints for the login guards that depend on the server state: the overloaded server (blocking or
- * only monitored), the created rooms, the rooms availability seen by the game room, the rooms origin validation, the
- * other servers of a multi-server setup (with a route answering an error that counts its requests) and the tokens
- * signed over the given values (the disconnection and the server status ones). The reset runs with the SecurityState
- * one before every test.
+ * only monitored; while the blocking is on only the forced memory limit decides, the CPU and event loop limits are off
+ * so the machine load of the parallel runs never blocks a login), the created rooms, the rooms availability seen by the game room, the rooms origin validation, the
+ * other servers of a multi-server setup (with a route answering an error and a route answering only after three times
+ * the disconnection request timeout, both counting their requests), the disconnection of the users on a server change
+ * switched off or on (restored by the reset), the disconnect message another server sends to this one for a username
+ * (signed until the given expiration), the tokens signed over the given values (the server status ones) and the
+ * ServersSignedRequestsState ones. The reset runs with the SecurityState one before every test.
  *
  */
 
 const { sc } = require('@reldens/utils');
 const { GameConst } = require('../../../lib/game/constants');
+const { ServersSignedRequestsState } = require('./servers-signed-requests-state');
 const { FirebaseE2eState } = require('./firebase-e2e-state');
 const { CharacterE2eState } = require('./character-e2e-state');
 const { GameSessionState } = require('./game-session-state');
@@ -21,6 +25,10 @@ class LoginServerState
 
     static OVERLOADED_MEMORY_LIMIT = 0.0001;
     static OTHER_SERVER_ERROR_PATH = '/api/e2e/security/other-server-error';
+    static OTHER_SERVER_SILENT_PATH = '/api/e2e/security/other-server-silent';
+    static OTHER_SERVER_ANSWER_PATH = '/api/e2e/security/other-server-answer';
+    static SILENT_ANSWER_MS = GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS * 3;
+    static OTHER_SERVER_INSTANCE_ID = 'e2e-other-server-instance';
     static UNKNOWN_STATE_COLUMN = 'e2e_unknown_column';
     static brokenSavePlayerIds = [];
     static guestRoomsDefaults = {};
@@ -30,6 +38,7 @@ class LoginServerState
     static roomsOriginDefaults = {};
     static originalAvailability = {};
     static otherServerHits = 0;
+    static otherServerAnswerHits = 0;
 
     static captureDefaults(serverManager)
     {
@@ -37,10 +46,12 @@ class LoginServerState
         let userDisconnection = serverManager.loginManager.userDisconnection;
         LoginServerState.healthDefaults = {
             blockingEnabled: monitor.blockingEnabled,
-            maxMemoryPercent: monitor.limits.maxMemoryPercent
+            maxMemoryPercent: monitor.limits.maxMemoryPercent,
+            maxCpuPercent: monitor.limits.maxCpuPercent,
+            maxEventLoopDelayMs: monitor.limits.maxEventLoopDelayMs
         };
         LoginServerState.disconnectionDefaults = {
-            roomsPerServer: userDisconnection.roomsPerServer,
+            otherServersUrls: [...userDisconnection.otherServersUrls],
             disconnectUsersOnServerChange: userDisconnection.disconnectUsersOnServerChange
         };
         LoginServerState.roomsOriginDefaults = {
@@ -52,10 +63,13 @@ class LoginServerState
     static setServerOverloaded(serverManager, isOverloaded, blockingEnabled)
     {
         let monitor = serverManager.serverHealthMonitor;
+        let healthDefaults = LoginServerState.healthDefaults;
         monitor.blockingEnabled = blockingEnabled;
         monitor.limits.maxMemoryPercent = isOverloaded
             ? LoginServerState.OVERLOADED_MEMORY_LIMIT
-            : LoginServerState.healthDefaults.maxMemoryPercent;
+            : healthDefaults.maxMemoryPercent;
+        monitor.limits.maxCpuPercent = blockingEnabled ? 0 : healthDefaults.maxCpuPercent;
+        monitor.limits.maxEventLoopDelayMs = blockingEnabled ? 0 : healthDefaults.maxEventLoopDelayMs;
         monitor.checkUsage();
     }
 
@@ -63,11 +77,6 @@ class LoginServerState
     {
         let createdInstances = serverManager.roomsManager.createdInstances;
         return Object.keys(createdInstances).map(roomId => createdInstances[roomId]);
-    }
-
-    static fetchGameRooms(serverManager)
-    {
-        return LoginServerState.fetchCreatedRooms(serverManager).filter(room => GameConst.ROOM_GAME === room.roomName);
     }
 
     static markRoomsUnavailable(roomsNames, knownAvailability)
@@ -80,7 +89,10 @@ class LoginServerState
 
     static setRoomsUnavailable(serverManager)
     {
-        for(let gameRoom of LoginServerState.fetchGameRooms(serverManager)){
+        for(let gameRoom of LoginServerState.fetchCreatedRooms(serverManager)){
+            if(GameConst.ROOM_GAME !== gameRoom.roomName){
+                continue;
+            }
             LoginServerState.originalAvailability[gameRoom.roomId] = gameRoom.roomsAvailability;
             gameRoom.roomsAvailability = {fetchRoomsAvailability: LoginServerState.markRoomsUnavailable};
         }
@@ -88,9 +100,10 @@ class LoginServerState
 
     static restoreRoomsAvailability(serverManager)
     {
-        for(let gameRoom of LoginServerState.fetchGameRooms(serverManager)){
-            if(sc.hasOwn(LoginServerState.originalAvailability, gameRoom.roomId)){
-                gameRoom.roomsAvailability = LoginServerState.originalAvailability[gameRoom.roomId];
+        for(let roomId of Object.keys(LoginServerState.originalAvailability)){
+            let gameRoom = serverManager.roomsManager.createdInstances[roomId];
+            if(gameRoom){
+                gameRoom.roomsAvailability = LoginServerState.originalAvailability[roomId];
             }
         }
         LoginServerState.originalAvailability = {};
@@ -105,21 +118,29 @@ class LoginServerState
         }
     }
 
-    static setOtherServer(serverManager, serverUrl, disconnectUsersOnServerChange)
+    static setOtherServers(serverManager, serversUrls, disconnectUsersOnServerChange)
     {
         let userDisconnection = serverManager.loginManager.userDisconnection;
-        userDisconnection.roomsPerServer = {[serverUrl]: ['e2e-other-server-room']};
+        userDisconnection.otherServersUrls = [...serversUrls];
         userDisconnection.disconnectUsersOnServerChange = disconnectUsersOnServerChange;
         LoginServerState.otherServerHits = 0;
+        LoginServerState.otherServerAnswerHits = 0;
     }
 
-    static async fetchActiveSessionsCount(serverManager, username)
+    static async fetchActiveSessions(serverManager, username)
     {
-        return Object.keys(sc.get(
+        let userSessions = sc.get(
             serverManager.loginManager.activePlayers.playersSessionsByUserId,
             (await serverManager.dataServer.getEntity('users').loadOneBy('username', username)).id,
             {}
-        )).length;
+        );
+        let createdInstances = serverManager.roomsManager.createdInstances;
+        return {
+            count: Object.keys(userSessions).length,
+            rooms: Object.keys(userSessions).map(
+                sessionId => sc.get(createdInstances[userSessions[sessionId]], 'roomName', 'room id '+userSessions[sessionId])
+            )
+        };
     }
 
     static fetchRoomByName(serverManager, roomName)
@@ -135,7 +156,7 @@ class LoginServerState
         ).length;
     }
 
-    static resetAll(serverManager)
+    static async resetAll(serverManager)
     {
         serverManager.roomsManager.availableRoomsGuest = LoginServerState.guestRoomsDefaults;
         serverManager.roomsManager.allowGuestOnRooms = LoginServerState.allowGuestOnRoomsDefault;
@@ -147,6 +168,7 @@ class LoginServerState
         LoginServerState.restoreRoomsAvailability(serverManager);
         LoginServerState.applyRoomsOrigin(serverManager, LoginServerState.roomsOriginDefaults);
         Object.assign(serverManager.loginManager.userDisconnection, LoginServerState.disconnectionDefaults);
+        await ServersSignedRequestsState.resetAll(serverManager);
         LoginServerState.otherServerHits = 0;
     }
 
@@ -186,9 +208,7 @@ class LoginServerState
         });
         let app = serverManager.app;
         app.get('/api/e2e/login-server/active-sessions', async (request, response) => {
-            response.json({
-                count: await LoginServerState.fetchActiveSessionsCount(serverManager, sc.get(request.query, 'username', ''))
-            });
+            response.json(await LoginServerState.fetchActiveSessions(serverManager, sc.get(request.query, 'username', '')));
         });
         app.get('/api/e2e/login-server/players-in-room', (request, response) => {
             response.json({
@@ -221,6 +241,7 @@ class LoginServerState
         FirebaseE2eState.registerEndpoints(serverManager);
         CharacterE2eState.registerEndpoints(serverManager);
         GameSessionState.registerEndpoints(serverManager);
+        ServersSignedRequestsState.registerEndpoints(serverManager);
         let app = serverManager.app;
         app.post('/api/e2e/login-server/overloaded', (request, response) => {
             let isOverloaded = true === sc.get(request.body, 'isOverloaded', false);
@@ -246,15 +267,47 @@ class LoginServerState
             response.json({ok: true});
         });
         app.post('/api/e2e/login-server/other-server', (request, response) => {
-            LoginServerState.setOtherServer(
+            LoginServerState.setOtherServers(
                 serverManager,
-                sc.get(request.body, 'serverUrl', ''),
+                sc.get(request.body, 'serversUrls', [sc.get(request.body, 'serverUrl', '')]),
                 true === sc.get(request.body, 'disconnectUsersOnServerChange', true)
             );
             response.json({ok: true});
         });
+        app.post('/api/e2e/login-server/disconnect-on-server-change', (request, response) => {
+            serverManager.loginManager.userDisconnection.disconnectUsersOnServerChange = true === sc.get(
+                request.body,
+                'enabled',
+                true
+            );
+            response.json({enabled: serverManager.loginManager.userDisconnection.disconnectUsersOnServerChange});
+        });
         app.get('/api/e2e/login-server/other-server-hits', (request, response) => {
-            response.json({hits: LoginServerState.otherServerHits});
+            response.json({hits: LoginServerState.otherServerHits, answerHits: LoginServerState.otherServerAnswerHits});
+        });
+        app.post('/api/e2e/login-server/disconnect-request', (request, response) => {
+            let userDisconnection = serverManager.loginManager.userDisconnection;
+            let serverSelfAddress = serverManager.serverToServerMessengerProps.serverSelfAddress;
+            let requestBody = userDisconnection.createRequestBody(
+                serverSelfAddress,
+                GameConst.DISCONNECTION.DISCONNECT,
+                sc.get(request.body, 'username', ''),
+                {senderInstanceId: LoginServerState.OTHER_SERVER_INSTANCE_ID}
+            );
+            if(requestBody){
+                requestBody.token = serverManager.loginManager.expiringHmacToken.generate(
+                    [
+                        userDisconnection.routePath,
+                        serverSelfAddress,
+                        requestBody.action,
+                        requestBody.targetId,
+                        requestBody.payload,
+                        requestBody.nonce
+                    ],
+                    Number(sc.get(request.body, 'expiresAt', 0))
+                );
+            }
+            response.json({requestBody});
         });
         app.post('/api/e2e/login-server/signed-token', (request, response) => {
             response.json({
@@ -267,6 +320,14 @@ class LoginServerState
         app.post(LoginServerState.OTHER_SERVER_ERROR_PATH+GameConst.ROUTE_PATHS.DISCONNECT_USER, (request, response) => {
             LoginServerState.otherServerHits++;
             response.status(500).json({isSuccess: false});
+        });
+        app.post(LoginServerState.OTHER_SERVER_ANSWER_PATH+GameConst.ROUTE_PATHS.DISCONNECT_USER, (request, response) => {
+            LoginServerState.otherServerAnswerHits++;
+            response.json({isSuccess: true, wasLogged: false});
+        });
+        app.post(LoginServerState.OTHER_SERVER_SILENT_PATH+GameConst.ROUTE_PATHS.DISCONNECT_USER, (request, response) => {
+            LoginServerState.otherServerHits++;
+            setTimeout(() => response.json({isSuccess: true}), LoginServerState.SILENT_ANSWER_MS);
         });
     }
 

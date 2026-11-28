@@ -41,6 +41,7 @@ class TimeConstants
     static TIMING_OBJECT_COMPLETE = 15000;
     static STEP_READ = 4000;
     static MAPS_GENERATION = 30000;
+    static CSS_BUILD = 30000;
 
     static forLongRun(value, longRun)
     {

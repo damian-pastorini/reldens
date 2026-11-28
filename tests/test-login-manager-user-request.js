@@ -2,10 +2,15 @@
  *
  * Reldens - Test Login Manager User Request
  *
+ * Tests the login manager user requests and the game room join: a game room join of a continued login (a player that
+ * changed server) records no new login, while its other session of the same user in that game room is ended like the
+ * one of a new login (ISSUE #480), so a stale session is never left to save its state over the new one.
+ *
  */
 
 const { BaseTest } = require('./base-test');
 const { LoginManager } = require('../lib/game/server/login-manager');
+const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { RoomGame } = require('../lib/rooms/server/game');
 const { RoomsAvailability } = require('../lib/game/server/health/rooms-availability');
 const { ActivePlayer } = require('../lib/game/server/memory/active-player');
@@ -36,6 +41,7 @@ class TestLoginManagerUserRequest extends BaseTest
                 server: {players: {guestUser: {roleId: this.guestRoleId}}}
             },
             events: {on: () => true, emitSync: () => true, emit: async () => true},
+            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, ''),
             usersManager: {
                 loadUserByUsername: async (username) => {
                     loginSetup.loadedUsernames.push(username);
@@ -183,17 +189,44 @@ class TestLoginManagerUserRequest extends BaseTest
         await this.test('a player role user with a guest domain email gets no guest password on start', async () => {
             let loginManager = this.createLoginManager({}).loginManager;
             loginManager.updateLastLogin = async () => true;
-            loginManager.activePlayers = {add: () => true};
-            let roomGame = Object.create(RoomGame.prototype, {roomId: {value: 'game-room'}});
-            roomGame.loginManager = loginManager;
-            roomGame.events = {emit: async () => true};
-            roomGame.config = {client: {}, gameEngine: {}, availableFeaturesList: []};
-            roomGame.activePlayerByUserName = () => false;
+            let roomGame = this.createJoinableRoomGame(loginManager);
             let sentMessages = [];
             let client = {sessionId: 'session-a', send: (type, message) => sentMessages.push(message)};
             let userModel = {username: 'player', email: 'player@guest-reldens.com', role_id: this.playerRoleId};
             await roomGame.onJoin(client, {password: 'player-password'}, userModel);
             this.assert.strictEqual([...sentMessages].pop().guestPassword, '');
+        });
+    }
+
+    createJoinableRoomGame(loginManager)
+    {
+        loginManager.activePlayers = {add: () => true};
+        let roomGame = Object.create(RoomGame.prototype, {roomId: {value: 'game-room'}});
+        roomGame.loginManager = loginManager;
+        roomGame.events = {emit: async () => true};
+        roomGame.config = {client: {}, gameEngine: {}, availableFeaturesList: []};
+        roomGame.activePlayerByUserName = () => false;
+        return roomGame;
+    }
+
+    async testAContinuedLoginRecordsNoNewLogin()
+    {
+        await this.test('a game room join of a continued login records no new login and ends the other session of its user like a new login', async () => {
+            let recordedLogins = [];
+            let loginManager = this.createLoginManager({}).loginManager;
+            loginManager.updateLastLogin = async (userModel) => recordedLogins.push(userModel.username);
+            let roomGame = this.createJoinableRoomGame(loginManager);
+            let startMessages = [];
+            let client = {sessionId: 'session-a', send: (type, message) => startMessages.push(message.act)};
+            let endedSessions = [];
+            roomGame.activePlayerByUserName = (username) => ({sessionId: username+'-other-session', client: {}});
+            roomGame.disconnectUserFromEveryOtherRoom = async (userModel) => endedSessions.push(userModel.username);
+            roomGame.disconnectBySessionId = (sessionId) => endedSessions.push(sessionId);
+            await roomGame.onJoin(client, {selectedPlayer: 1}, {username: 'moved', isLoginContinued: true});
+            await roomGame.onJoin(client, {selectedPlayer: 1}, {username: 'logged', isLoginContinued: false});
+            let endedSessionsNames = ['moved', 'moved-other-session', 'logged', 'logged-other-session'];
+            let expectedJoins = [['logged'], endedSessionsNames, [GameConst.START_GAME, GameConst.START_GAME]];
+            this.assert.deepStrictEqual([recordedLogins, endedSessions, startMessages], expectedJoins);
         });
     }
 
@@ -223,11 +256,15 @@ class TestLoginManagerUserRequest extends BaseTest
             getWithoutLogs: (path, defaultValue) => sc.get(joinSetup.configValues, path, defaultValue)
         };
         roomGame.activePlayerByUserName = () => false;
-        roomGame.roomsAvailability = Object.create(RoomsAvailability.prototype);
-        roomGame.roomsAvailability.fetchRoomAvailability = async (roomName) => {
-            joinSetup.requestedRooms.push(roomName);
-            return sc.get(joinSetup.availabilityByRoom, roomName, false);
-        };
+        roomGame.roomsAvailability = new RoomsAvailability({
+            serverHealthMonitor: {blockingEnabled: true, isBlocking: true},
+            remoteServersStatus: {fetchStatuses: async () => ({})},
+            isRoomCreated: (roomName) => {
+                joinSetup.requestedRooms.push(roomName);
+                return sc.get(sc.get(joinSetup.availabilityByRoom, roomName, {}), 'isAvailable', false);
+            },
+            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('', {}, '')
+        });
         let userModel = {
             username: 'player',
             related_players: [{id: 1, state: {scene: 'reldens-bots-forest'}}, {id: 2, state: {scene: 'reldens-town'}}]

@@ -106,7 +106,7 @@ class TestRemoteServersStatus extends BaseTest
                 [GameConst.ROUTE_PATHS.DISCONNECT_USER, GameConst.HEALTH.STATUS_TOKEN_VALUE],
                 [GameConst.HEALTH.STATUS_TOKEN_VALUE]
             ]){
-                let token = hmacToken.generate(tokenValues, Date.now()+GameConst.SIGNED_TOKENS.DISCONNECT_EXPIRATION);
+                let token = hmacToken.generate(tokenValues, Date.now()+GameConst.SIGNED_TOKENS.SERVER_STATUS_EXPIRATION);
                 let statusUrl = this.remoteServerUrl+GameConst.ROUTE_PATHS.SERVER_STATUS+'?token='+encodeURIComponent(token);
                 statuses.push((await remoteFetch(statusUrl)).status);
             }
@@ -155,6 +155,39 @@ class TestRemoteServersStatus extends BaseTest
             ]);
             await remoteServersStatus.fetchStatus(this.remoteServerUrl);
             this.assert.strictEqual(requestedUrls.length, 1);
+        });
+    }
+
+    async testTheStatusesOfSeveralServersAreRequestedOneAfterTheOther()
+    {
+        await this.test('the statuses of several servers are requested one after the other, keyed by server and once each', async () => {
+            let secondServerUrl = 'http://localhost:8100';
+            let requestedUrls = [];
+            let startedWhenAnswered = [];
+            let remoteFetch = this.createRemoteServerFetch('shared-secret', requestedUrls);
+            let remoteServersStatus = this.createRemoteServersStatus('shared-secret', async (requestUrl, options) => {
+                let response = remoteFetch(requestUrl, options);
+                await Promise.resolve();
+                startedWhenAnswered.push(requestedUrls.length);
+                return await response;
+            });
+            let statusesByServer = await remoteServersStatus.fetchStatuses(
+                [this.remoteServerUrl, secondServerUrl, this.remoteServerUrl]
+            );
+            this.assert.deepStrictEqual(
+                [
+                    Object.keys(statusesByServer),
+                    Object.values(statusesByServer).map(serverStatus => [serverStatus.serverUrl, serverStatus.isReachable]),
+                    startedWhenAnswered,
+                    await remoteServersStatus.fetchStatuses([])
+                ],
+                [
+                    [this.remoteServerUrl, secondServerUrl],
+                    [[this.remoteServerUrl, true], [secondServerUrl, true]],
+                    [1, 2],
+                    {}
+                ]
+            );
         });
     }
 

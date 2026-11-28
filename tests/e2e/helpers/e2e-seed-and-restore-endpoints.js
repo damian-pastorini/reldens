@@ -13,15 +13,24 @@
  * so a preserved row that references a seeded row (a user locale that points to a seeded locale) never blocks the
  * seeded row delete. The locales reload runs the snippets ConfigurationEnricher again, so a seeded locale reaches the
  * client config sent on the next login. The config values that the running server reads only once (the config rows
- * are never hot plugged, a server restart applies them) are read again after every override and restore: the death
- * relocator, the rooms auto recovery, the kill score subscriber, the scores page size and title and the player creation
- * (the player name lengths and the rooms selection), created again with the new values, like the restart that loads
- * them.
+ * are never hot plugged, a server restart applies them) are read again after every override and restore
+ * (LoadedConfigReloader). The stored rooms, change points and return points are also read only at the server start: a rooms reload loads
+ * them again, sets the new room data on every defined room, the rooms servers addresses sent to the clients (and read by
+ * the rooms availability) and the other servers the disconnect requests and the signed server to server messengers are
+ * sent to, and disposes the live instances of the
+ * given rooms, so their
+ * next instance builds its world with the stored change points, like a restart; a skills reload loads the stored skills,
+ * groups, class paths and animations again (the DataLoader of the server start) and drops the class paths labels the
+ * game room sends to the clients, built again on the next login like after a start, so the next join gets the imported
+ * skills and class paths; both run again on the group reset.
  *
  */
 
 const { TestDataSetup } = require('./test-data-setup');
-const { IncreaseScoreOnKill } = require('../../../lib/scores/server/subscriber/increase-score-on-kill');
+const { RoomObjectsState } = require('./room-objects-state');
+const { ServersSignedRequestsState } = require('./servers-signed-requests-state');
+const { LoadedConfigReloader } = require('./loaded-config-reloader');
+const { DataLoader } = require('../../../lib/actions/server/data-loader');
 const { Logger, sc } = require('@reldens/utils');
 
 class E2eSeedAndRestoreEndpoints
@@ -31,6 +40,8 @@ class E2eSeedAndRestoreEndpoints
     static preservedRows = {};
     static originalConfigValues = {};
     static reloadLocalesGroups = [];
+    static reloadRoomsGroups = {};
+    static reloadSkillsGroups = {};
 
     static fetchGroupEntries(groupsEntries, groupKey)
     {
@@ -154,19 +165,36 @@ class E2eSeedAndRestoreEndpoints
         });
     }
 
-    static async reloadLoadedConfig(serverManager)
+    static async reloadRooms(serverManager, roomsNames)
     {
-        let actionsPlugin = serverManager.featuresManager.featuresList.actions.package;
-        await actionsPlugin.playerDeathRelocator.loadTownRoom(serverManager.roomsManager);
-        actionsPlugin.playerDeathRelocator.loadConfig();
-        actionsPlugin.roomAutoRecovery.loadConfig();
-        let scoresPlugin = serverManager.featuresManager.featuresList.scores.package;
-        scoresPlugin.increaseScoreOnKill = new IncreaseScoreOnKill({
-            config: scoresPlugin.config,
-            dataServer: scoresPlugin.dataServer
-        });
-        scoresPlugin.createScoresRoute.loadConfig();
-        serverManager.loginManager.playerCreation = serverManager.loginManager.createPlayerCreation();
+        let roomsManager = serverManager.roomsManager;
+        roomsManager.loadedRooms = false;
+        await roomsManager.loadRooms();
+        let configManager = serverManager.configManager;
+        let roomsServers = configManager.client.rooms.servers;
+        let defaultServerUrl = configManager.get('server/publicUrl') || configManager.get('server/baseUrl');
+        for(let roomName of Object.keys(roomsManager.definedRooms)){
+            let roomModel = sc.get(roomsManager.loadedRoomsByName, roomName, false);
+            if(roomModel){
+                roomsManager.definedRooms[roomName].roomProps.roomData = roomModel;
+                roomsServers[roomName] = roomModel.serverUrl || defaultServerUrl;
+            }
+        }
+        let otherServersUrls = ServersSignedRequestsState.reloadOtherServersUrls(serverManager, roomsServers);
+        Logger.debug('E2e rooms reload, the other servers are now: '+otherServersUrls.join(', '));
+        for(let roomName of roomsNames){
+            let room = RoomObjectsState.findRoom(serverManager, roomName);
+            if(room){
+                await room.disconnect();
+            }
+        }
+    }
+
+    static async reloadSkills(serverManager)
+    {
+        let actionsPackage = serverManager.featuresManager.featuresList.actions.package;
+        await DataLoader.enrichConfig(serverManager.configManager, actionsPackage.skillsModelsManager, serverManager.dataServer);
+        actionsPackage.initialGameDataEnricher.classesData = false;
     }
 
     static async resetGroup(serverManager, groupKey)
@@ -184,13 +212,24 @@ class E2eSeedAndRestoreEndpoints
             E2eSeedAndRestoreEndpoints.restoreConfigValue(serverManager.configManager, path, groupOriginalValues[path]);
         }
         delete E2eSeedAndRestoreEndpoints.originalConfigValues[groupKey];
-        await E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
+        Logger.debug(await LoadedConfigReloader.reload(serverManager));
         if(E2eSeedAndRestoreEndpoints.reloadLocalesGroups.includes(groupKey)){
             E2eSeedAndRestoreEndpoints.reloadLocalesGroups.splice(
                 E2eSeedAndRestoreEndpoints.reloadLocalesGroups.indexOf(groupKey),
                 1
             );
             await E2eSeedAndRestoreEndpoints.reloadLocales(serverManager);
+        }
+        if(sc.hasOwn(E2eSeedAndRestoreEndpoints.reloadRoomsGroups, groupKey)){
+            await E2eSeedAndRestoreEndpoints.reloadRooms(
+                serverManager,
+                E2eSeedAndRestoreEndpoints.reloadRoomsGroups[groupKey]
+            );
+            delete E2eSeedAndRestoreEndpoints.reloadRoomsGroups[groupKey];
+        }
+        if(sc.hasOwn(E2eSeedAndRestoreEndpoints.reloadSkillsGroups, groupKey)){
+            await E2eSeedAndRestoreEndpoints.reloadSkills(serverManager);
+            delete E2eSeedAndRestoreEndpoints.reloadSkillsGroups[groupKey];
         }
         Logger.info('[e2e-seed-and-restore] Rows and config values restored for group: '+groupKey);
     }
@@ -201,7 +240,8 @@ class E2eSeedAndRestoreEndpoints
             ...Object.keys(E2eSeedAndRestoreEndpoints.createdRows),
             ...Object.keys(E2eSeedAndRestoreEndpoints.preservedRows),
             ...Object.keys(E2eSeedAndRestoreEndpoints.originalConfigValues),
-            ...E2eSeedAndRestoreEndpoints.reloadLocalesGroups
+            ...E2eSeedAndRestoreEndpoints.reloadLocalesGroups,
+            ...Object.keys(E2eSeedAndRestoreEndpoints.reloadRoomsGroups)
         ];
         for(let groupKey of [...new Set(groupsKeys)]){
             await E2eSeedAndRestoreEndpoints.resetGroup(serverManager, groupKey);
@@ -265,7 +305,7 @@ class E2eSeedAndRestoreEndpoints
                 sc.get(request.body, 'value', null),
                 true === sc.get(request.body, 'remove', false)
             );
-            await E2eSeedAndRestoreEndpoints.reloadLoadedConfig(serverManager);
+            Logger.debug(await LoadedConfigReloader.reload(serverManager));
             response.json({ok: true});
         });
         app.post('/api/e2e/data/reload-locales', async (request, response) => {
@@ -274,6 +314,17 @@ class E2eSeedAndRestoreEndpoints
                 E2eSeedAndRestoreEndpoints.reloadLocalesGroups.push(groupKey);
             }
             await E2eSeedAndRestoreEndpoints.reloadLocales(serverManager);
+            response.json({ok: true});
+        });
+        app.post('/api/e2e/data/reload-rooms', async (request, response) => {
+            let roomsNames = sc.get(request.body, 'roomsNames', []);
+            E2eSeedAndRestoreEndpoints.reloadRoomsGroups[sc.get(request.body, 'group', '')] = roomsNames;
+            await E2eSeedAndRestoreEndpoints.reloadRooms(serverManager, roomsNames);
+            response.json({ok: true});
+        });
+        app.post('/api/e2e/data/reload-skills', async (request, response) => {
+            E2eSeedAndRestoreEndpoints.reloadSkillsGroups[sc.get(request.body, 'group', '')] = true;
+            await E2eSeedAndRestoreEndpoints.reloadSkills(serverManager);
             response.json({ok: true});
         });
         Logger.info('[e2e-seed-and-restore] Data endpoints registered.');

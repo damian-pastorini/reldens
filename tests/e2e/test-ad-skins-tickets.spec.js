@@ -24,6 +24,7 @@ const { TimeConstants } = require('./helpers/time-constants');
 const { InventoryConst } = require('../../lib/inventory/constants');
 const { UsersConst } = require('../../lib/users/constants');
 const { AdsConst } = require('../../lib/ads/constants');
+const { sc } = require('@reldens/utils');
 let test = BaseE2eTest.test;
 let expect = BaseE2eTest.expect;
 
@@ -73,7 +74,24 @@ class TestAdSkinsTickets
         await AdMessagesPlayer.waitForProviderReady(owner.page, TimeConstants.UI_OPEN);
         let ticketId = await TradeSteps.fetchItemId(context, owner, skinTickets.skinData.ticketItemKey);
         let ticketUse = {act: InventoryConst.ACTIONS.USE, 'idx': ticketId};
+        let providerLines = [];
+        owner.page.on('console', (message) => providerLines.push(message.text()));
+        await owner.page.evaluate(() => {
+            let sdkAd = window.CrazyGames.SDK.ad;
+            let requestAd = sdkAd.requestAd;
+            window.e2eRequestAdCalls = 0;
+            sdkAd.requestAd = async (adType, callbacks) => {
+                window.e2eRequestAdCalls++;
+                return await requestAd(adType, callbacks);
+            };
+        });
         await RoomMessagesRecorder.sendMessages(owner.page, [ticketUse, ticketUse]);
+        await expect.poll(
+            async () => 0 < await owner.page.evaluate(() => window.e2eRequestAdCalls) ? 'requested' : sc.toJsonString(
+                providerLines.filter(line => -1 !== line.indexOf('CrazyGames') || -1 !== line.indexOf('Ad '))
+            ),
+            {message: 'The client requests the skin ad (else the provider console lines)', timeout: TimeConstants.UI_OPEN}
+        ).toBe('requested');
         await AdMessagesPlayer.waitForPlayedAd(owner.page, skinTickets.skinAd, TimeConstants.UI_OPEN);
         await SkinSteps.expectItems(
             context,

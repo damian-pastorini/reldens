@@ -189,6 +189,18 @@ class TestAnimationEngineSprites extends BaseTest
         });
     }
 
+    async testObjectFramesAreRequestedByTheirStartAndEndOnly()
+    {
+        await this.test('the object frames are requested from its sprite sheet by start and end only, prefix and zeroPad are not read', async () => {
+            let context = this.createDoorEngine({}, {prefix: 'door_', zeroPad: 4});
+            context.engine.createAnimation();
+            this.assert.deepStrictEqual(
+                context.frameRequests,
+                [{assetKey: this.doorProps.asset_key, start: this.doorProps.frameStart, end: this.doorProps.frameEnd}]
+            );
+        });
+    }
+
     async testAnimationWithItsOwnAssetKey()
     {
         await this.test('an animation with its own asset key reads its frames from that sprite sheet', async () => {

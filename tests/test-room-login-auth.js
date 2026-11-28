@@ -6,9 +6,11 @@
 
 const { BaseTest } = require('./base-test');
 const { RoomLogin } = require('../lib/rooms/server/login');
+const { GameLogin } = require('../lib/game/server/game-login');
 const { RoomsConst } = require('../lib/rooms/constants');
 const { GameConst } = require('../lib/game/constants');
 const { LoginAttempts } = require('../lib/game/server/memory/login-attempts');
+const { sc } = require('@reldens/utils');
 
 class TestRoomLoginAuth extends BaseTest
 {
@@ -18,6 +20,7 @@ class TestRoomLoginAuth extends BaseTest
         super(config);
         this.activeUserModel = {id: 1, username: 'victim', email: 'victim@reldens.com', related_players: []};
         this.request = {headers: {}};
+        this.guestRoleId = 3;
     }
 
     createRoomLogin(loginResult, processedRequests)
@@ -38,10 +41,89 @@ class TestRoomLoginAuth extends BaseTest
                 }
             },
             loginAttempts: new LoginAttempts({}),
-            activePlayers: {fetchByRoomAndUserName: () => ({userModel: this.activeUserModel})},
-            userDisconnection: {broadcastDisconnectionMessage: async () => true}
+            isGuestUser: (userModel) => this.guestRoleId === sc.get(userModel, 'role_id', 0),
+            activePlayers: {
+                fetchByRoomAndUserName: () => ({userModel: this.activeUserModel}),
+                fetchByUserNameInAnyRoom: () => sc.get(loginResult, 'isActiveHere', false)
+            },
+            userDisconnection: {
+                broadcastDisconnectionMessage: async () => sc.get(loginResult, 'disconnectAnswer', {isSuccess: true, wasLogged: false})
+            }
         };
         return roomLogin;
+    }
+
+    async testOnlyAServerChangeConfirmedByTheLeftServerContinuesTheLogin()
+    {
+        await this.test('only a server change (any truthy scene change flag) whose left server answers the user was logged there continues the login', async () => {
+            let continuedLogins = [];
+            let joinCases = [
+                {isSceneChange: true, wasLogged: true},
+                {isSceneChange: true, wasLogged: false},
+                {isSceneChange: false, wasLogged: true},
+                {isSceneChange: 'true', wasLogged: true}
+            ];
+            for(let joinCase of joinCases){
+                let loadedUser = {id: 1, username: 'victim', email: 'victim@reldens.com', related_players: []};
+                let disconnectAnswer = {isSuccess: true, wasLogged: joinCase.wasLogged};
+                let roomLogin = this.createRoomLogin({user: loadedUser, disconnectAnswer}, []);
+                let joinOptions = {username: 'victim', password: 'valid', isSceneChange: joinCase.isSceneChange};
+                continuedLogins.push((await roomLogin.onAuth({}, joinOptions, this.request)).isLoginContinued);
+            }
+            let stringFlagContinuesLogin = true;
+            this.assert.deepStrictEqual(continuedLogins, [true, false, false, stringFlagContinuesLogin]);
+        });
+    }
+
+    async testAGuestSceneChangeNeedsAnActiveSessionHereOrOnTheLeftServer()
+    {
+        await this.test('a guest scene change join (any truthy scene change flag) is accepted only when active here or confirmed by the server it left', async () => {
+            let joinCases = [
+                {role_id: this.guestRoleId, isSceneChange: true, wasLogged: true, isActiveHere: false},
+                {role_id: this.guestRoleId, isSceneChange: true, wasLogged: false, isActiveHere: false},
+                {role_id: this.guestRoleId, isSceneChange: true, wasLogged: false, isActiveHere: true},
+                {role_id: this.guestRoleId, isSceneChange: false, wasLogged: false, isActiveHere: false},
+                {role_id: this.guestRoleId, isSceneChange: 'true', wasLogged: false, isActiveHere: false},
+                {role_id: 1, isSceneChange: true, wasLogged: false, isActiveHere: false}
+            ];
+            let joinResults = [];
+            for(let joinCase of joinCases){
+                let loadedUser = {id: 7, username: 'guest-7', role_id: joinCase.role_id, related_players: []};
+                let disconnectAnswer = {isSuccess: true, wasLogged: joinCase.wasLogged};
+                let roomLogin = this.createRoomLogin({user: loadedUser, disconnectAnswer, isActiveHere: joinCase.isActiveHere}, []);
+                let joinOptions = {username: 'guest-7', password: 'generated', isSceneChange: joinCase.isSceneChange};
+                joinResults.push(await roomLogin.onAuth({}, joinOptions, this.request).then(() => true).catch(() => false));
+            }
+            let stringFlagUnconfirmedJoin = false;
+            this.assert.deepStrictEqual(joinResults, [true, false, true, true, stringFlagUnconfirmedJoin, true]);
+        });
+    }
+
+    async testTheGuestGameLoginAcceptsOnlyAnActiveGuestOrASceneChange()
+    {
+        await this.test('the guest login check accepts (with a truthy value) a guest active in the game room or joining on a scene change', async () => {
+            let gameLogin = Object.create(GameLogin.prototype);
+            gameLogin.config = {server: {players: {guestUser: {roleId: this.guestRoleId}}}};
+            let guestUser = {username: 'guest-7', role_id: this.guestRoleId};
+            let checks = [];
+            for(let isActive of [false, true]){
+                gameLogin.activePlayers = {gameRoomInstanceId: 'game-room', fetchByRoomAndUserName: () => isActive};
+                checks.push(gameLogin.isValidGuestLogin({isGuest: true}, guestUser));
+                checks.push(gameLogin.isValidGuestLogin({isGuest: true, isSceneChange: true}, guestUser));
+                checks.push(gameLogin.isValidGuestLogin({isGuest: true, isSceneChange: 'true'}, guestUser));
+            }
+            let stringSceneChangeFlag = 'true';
+            this.assert.deepStrictEqual(checks, [false, true, stringSceneChangeFlag, true, true, stringSceneChangeFlag]);
+        });
+    }
+
+    async testTheJoinIsRejectedWhenTheOtherServerDoesNotDisconnect()
+    {
+        await this.test('the join is rejected when another server does not confirm the disconnection', async () => {
+            let disconnectAnswer = {isSuccess: false, wasLogged: false};
+            let roomLogin = this.createRoomLogin({user: this.activeUserModel, disconnectAnswer}, []);
+            await this.assert.rejects(roomLogin.onAuth({}, {username: 'victim', password: 'valid'}, this.request));
+        });
     }
 
     async joinSceneRepeatedly(roomLogin, joinsData)

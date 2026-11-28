@@ -3,7 +3,9 @@
  * Reldens - Test Game Ui Panels
  *
  * Tests the game UI panels and buttons: the settings and instructions panels reopened, the panels and buttons removed
- * by their config, the full screen button with and without the browser permission, the responsive positions on a
+ * by their config, a feature left out of the features list the server sends (what a disabled feature row gives after a
+ * restart) that loads no client plugin and no UI on a new login and returns once the list has it again, the full screen
+ * button with and without the browser permission, the responsive positions on a
  * window resize and the own player name in the player box.
  *
  */
@@ -22,6 +24,7 @@ class TestGameUiPanels
 {
 
     static RESIZE_PX = 200;
+    static LEFT_OUT_FEATURE = 'scores';
     static SETTLE_MS = 1000;
     static GAME_FRAME = '.e2e-game-frame';
     static FULL_SCREEN_CLASS = new RegExp(GameConst.CLASSES.FULL_SCREEN_ON);
@@ -104,6 +107,60 @@ class TestGameUiPanels
         await screenshots.capture(page, 'disabled-ui-elements');
     }
 
+    static async loginClientAndFetchScoresState(page, gameConfig, longRun, userKeySuffix, waitedButtons)
+    {
+        let client = await Login.openClientPage(page, gameConfig);
+        await Login.loginRootPlayer(client.clientPage, gameConfig, longRun, userKeySuffix, true);
+        for(let waitedButton of waitedButtons){
+            await expect(client.clientPage.locator(waitedButton), 'The features UI is created: '+waitedButton).toBeVisible(
+                {timeout: TimeConstants.forLongRun(TimeConstants.SCENE_LOAD, longRun)}
+            );
+        }
+        return {
+            clientPage: client.clientPage,
+            hasScoresPlugin: (await client.clientPage.evaluate(() => Object.keys(window.reldens.features.featuresList)))
+                .includes(TestGameUiPanels.LEFT_OUT_FEATURE),
+            scoresButtons: await client.clientPage.locator(Selectors.hud.scoresOpen).count()
+        };
+    }
+
+    static async runDisabledFeatureTest(page, screenshots, gameConfig, e2eGroup, longRun)
+    {
+        await TestGameUiPanels.loginWithoutUiChecks(page, gameConfig, longRun);
+        let sentFeatures = await page.evaluate(() => window.reldens.initialGameData.features);
+        expect(sentFeatures, 'The scores feature is enabled in the sample data').toContain(TestGameUiPanels.LEFT_OUT_FEATURE);
+        await E2eSeedAndRestoreApi.overrideConfig(
+            gameConfig,
+            e2eGroup,
+            'availableFeaturesList',
+            sentFeatures.filter(featureCode => TestGameUiPanels.LEFT_OUT_FEATURE !== featureCode)
+        );
+        let otherFeaturesButtons = [Selectors.hud.chatOpen, Selectors.hud.rewardsOpen];
+        let disabledState = await TestGameUiPanels.loginClientAndFetchScoresState(
+            page,
+            gameConfig,
+            longRun,
+            '2',
+            otherFeaturesButtons
+        );
+        await screenshots.capture(disabledState.clientPage, 'disabled-feature-no-scores-ui');
+        await E2eSeedAndRestoreApi.overrideConfig(gameConfig, e2eGroup, 'availableFeaturesList', sentFeatures);
+        let enabledState = await TestGameUiPanels.loginClientAndFetchScoresState(
+            page,
+            gameConfig,
+            longRun,
+            '3',
+            [...otherFeaturesButtons, Selectors.hud.scoresOpen]
+        );
+        expect(
+            [
+                [disabledState.hasScoresPlugin, disabledState.scoresButtons],
+                [enabledState.hasScoresPlugin, enabledState.scoresButtons]
+            ],
+            'The scores plugin and button are absent while the feature is not sent and back once it is sent again'
+        ).toEqual([[false, 0], [true, 1]]);
+    }
+
     static async runFullScreenTest(page, screenshots, gameConfig, longRun)
     {
         await Login.loginRootPlayer(page, gameConfig, longRun);
@@ -182,6 +239,9 @@ class TestGameUiPanels
             });
             test('disabled UI configs remove their panels and buttons', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
                 await TestGameUiPanels.runDisabledUiTest(page, screenshots, gameConfig, e2eGroup, longRun);
+            });
+            test('a feature left out of the features sent to the client loads no client plugin or UI and returns once sent again', async ({ page, screenshots, gameConfig, e2eGroup, longRun }) => {
+                await TestGameUiPanels.runDisabledFeatureTest(page, screenshots, gameConfig, e2eGroup, longRun);
             });
             test('full screen button enters and exits full screen', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestGameUiPanels.runFullScreenTest(page, screenshots, gameConfig, longRun);

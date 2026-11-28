@@ -11,7 +11,7 @@
  */
 
 const { BaseTest } = require('./base-test');
-const { Team } = require('../lib/teams/server/team');
+const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
 const { ChatMessageActions } = require('../lib/teams/server/message-actions/chat-message-actions');
 const { CreatePlayerTeamHandler } = require('../lib/teams/server/event-handlers/create-player-team-handler');
 const { TeamsConst } = require('../lib/teams/constants');
@@ -26,7 +26,7 @@ class TestTeamSceneChange extends BaseTest
             owner: {player_id: 1, playerName: 'player1', currentTeam: 1, state: {room_id: 41}},
             member: {player_id: 2, playerName: 'player2', currentTeam: 1, state: {room_id: 114}}
         };
-        teamPlayers.team = new Team({owner: teamPlayers.owner, ownerClient: {send: () => true}});
+        teamPlayers.team = ClanFixturesBuilder.createSyncedTeam({owner: teamPlayers.owner, ownerClient: {send: () => true}});
         teamPlayers.team.join(teamPlayers.member, {send: (type, message) => memberMessages.push(message)});
         return teamPlayers;
     }
@@ -36,7 +36,7 @@ class TestTeamSceneChange extends BaseTest
         await this.test('the owner joining its team again replaces the owner player and client', async () => {
             let owner = {player_id: 1, playerName: 'player1', currentTeam: 1, state: {room_id: 41}};
             let ownerClient = {send: () => true};
-            let team = new Team({owner, ownerClient});
+            let team = ClanFixturesBuilder.createSyncedTeam({owner, ownerClient});
             team.join({player_id: 2, playerName: 'player2', currentTeam: 1, state: {room_id: 41}}, {send: () => true});
             this.assert.strictEqual(team.owner, owner);
             this.assert.strictEqual(team.ownerClient, ownerClient);
@@ -55,7 +55,7 @@ class TestTeamSceneChange extends BaseTest
     {
         await this.test('the changing room record rejoins the team once and is consumed', async () => {
             let owner = {player_id: 1, playerName: 'player1', currentTeam: 1, state: {room_id: 41}};
-            let team = new Team({owner, ownerClient: {send: () => true}});
+            let team = ClanFixturesBuilder.createSyncedTeam({owner, ownerClient: {send: () => true}});
             let teamsPlugin = {teams: {1: team}, teamChangingRoomPlayers: {2: {teamId: 1, leavingPlayerSessionId: 's2'}}};
             let member = {player_id: 2, playerName: 'player2', currentTeam: false, state: {room_id: 114}};
             await CreatePlayerTeamHandler.joinExistentTeam({send: () => true}, member, teamsPlugin);

@@ -4,8 +4,9 @@
  *
  * Tests the player and ticket states while a skin ad plays, with the skin ad start and end messages a client sends
  * (exclusive group, the skin ad enabled and the tickets seeded by SkinSteps, the inventory, played ads and config values
- * restored by the group reset): an ad that ends while an open trade locks the inventory is closed with no skin item and
- * the ticket kept; a ticket traded away while the ad plays gives no skin item to anyone; the movement messages of a
+ * restored by the group reset): the trades are opened before the ad starts, since a disabled player can not start or
+ * accept a trade; an ad that ends while an open trade locks the inventory is closed with no skin item and the ticket
+ * kept; a ticket traded away while the ad plays gives no skin item to anyone; the movement messages of a
  * player in a skin ad are ignored until the ad ends; a player in a skin ad keeps its sprite shown on the other client
  * and its body in the world, the other player walking into it collides with it; the ad start of a walking player clears
  * its movement intervals and stops its body; a page reload while the ad plays keeps the ticket and the play
@@ -69,8 +70,8 @@ class TestAdSkinsAdStates
     {
         let skinTickets = await SkinSteps.enterWithTickets(context, [1, 0]);
         let [owner, partner] = skinTickets.players;
-        await TestAdSkinsAdStates.startAd(context, owner, skinTickets.skinAd);
         await TradeSteps.open(owner, partner);
+        await TestAdSkinsAdStates.startAd(context, owner, skinTickets.skinAd);
         return Object.assign(skinTickets, {owner, partner});
     }
 

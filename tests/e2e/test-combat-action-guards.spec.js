@@ -8,7 +8,8 @@
  * player, the tampered action messages (a target id not in the room, an unknown target type and an unknown skill key,
  * against the same message untampered, which is applied) and a skill sent while the player body is changing scene (a
  * group override restored by the reset). The movement is a walk away from the placed enemy, so the enemy body never
- * stops it.
+ * stops it, and the placed (aggressive) enemy has no actions for the group, so none of its hits or bullet bodies
+ * reaches or pushes the player during the checked walks.
  *
  */
 
@@ -40,6 +41,9 @@ class TestCombatActionGuards
     static async prepareDirectAttack(page, gameConfig, e2eGroup, longRun, properties)
     {
         let context = await CombatSkillCasting.prepareEnemyTarget(page, gameConfig, longRun);
+        await GameplayE2eStateApi.changeEnemyBattle(gameConfig, e2eGroup, context.roomName, context.bodyKey, {
+            actionsKeys: []
+        }, false);
         await CombatSkillCasting.changeSkill(
             context,
             e2eGroup,

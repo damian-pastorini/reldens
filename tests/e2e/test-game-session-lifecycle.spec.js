@@ -4,7 +4,8 @@
  *
  * Tests a game session from the login to the logout: the state saved and restored, the logout seen by others, the page
  * reload, the dropped connection, the room closing message, the closed connection, the scene change rejected mid game,
- * the feature room join failure, the quick relogin, the dead state handler, the login records and the played time. The
+ * the feature room join failure, the quick relogin, the dead state handler, the login records (the login date stored in
+ * the server local time at the login moment, ISSUE #164) and the played time. The
  * walk that changes the saved position and the room closing keys check pause the town moving objects (a wandering NPC
  * can push the player after its position is read), the walk reads the position once the server shows the player
  * stopped.
@@ -192,7 +193,7 @@ class TestGameSessionLifecycle
             roomName: ChatConst.CHAT_GLOBAL
         });
         await Login.loginToSelection(page, gameConfig.e2eUsername, gameConfig.e2ePassword, longRun);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)});
         await TestGameSessionLifecycle.expectModalText(
             page,
             GameTranslations.game.errors.joiningFeatureRoom.replace('%joinRoomName', ChatConst.CHAT_GLOBAL),
@@ -239,13 +240,14 @@ class TestGameSessionLifecycle
         let usersFilter = {username: gameConfig.e2eUsername};
         let storedUser = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', usersFilter)).shift();
         let loginsBefore = (await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLogin', {user_id: storedUser.id})).length;
-        await Login.loginRootPlayer(page, gameConfig, longRun);
+        let loginWindow = await Login.loginRootPlayerTimed(page, gameConfig, longRun);
         await expect(page.locator(GameConst.SELECTORS.FORMS_CONTAINER)).toHaveCount(0);
         await expect(page.locator('body')).toHaveClass(new RegExp(GameConst.CLASSES.GAME_STARTED));
         await expect(page.locator('body')).not.toHaveClass(new RegExp(GameConst.CLASSES.GAME_ERROR));
         expect(await page.evaluate(() => window.reldens.initialGameData.guestPassword), 'No guest password').toBe('');
         let logins = await E2eSeedAndRestoreApi.loadRows(gameConfig, 'usersLogin', {user_id: storedUser.id});
         expect(logins.length).toBe(loginsBefore + 1);
+        await Login.expectLatestLoginStoredIn(gameConfig, storedUser.id, loginWindow);
         expect((await E2eSeedAndRestoreApi.loadRows(gameConfig, 'users', usersFilter)).shift().login_count).toBe(
             Number(storedUser.login_count) + 1
         );
@@ -327,9 +329,9 @@ class TestGameSessionLifecycle
                     GameConst.STATUS.DEATH
                 );
             });
-            test('state handler off rejoins a player without life active', async ({ page, gameConfig, longRun }) => {
+            test('state handler off still rejoins a player without life dead, its death is loaded again', async ({ page, gameConfig, longRun }) => {
                         expect(await TestGameSessionLifecycle.runStateHandlerTest(page, gameConfig, longRun, false)).toBe(
-                    GameConst.STATUS.ACTIVE
+                    GameConst.STATUS.DEATH
                 );
             });
             test('login stores the login records and the game started state', async ({ page, screenshots, gameConfig, longRun }) => {

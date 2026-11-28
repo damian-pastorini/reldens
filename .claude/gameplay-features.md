@@ -8,8 +8,9 @@ Every feature lives in its core module and is wired by that module plugin, so it
 enabled in the `features` table:
 
 - `actions` (`lib/actions/server/plugin.js`): the auto recovery (`RoomAutoRecovery` on `reldens.sceneRoomOnCreate` and
-  `reldens.onRoomDispose`), the death teleport (`PlayerDeathRelocator` on `reldens.playerDeath`) and the resurrection ad
-  gate (`ResurrectionAdGate` on `reldens.beforeSceneExecuteMessages`)
+  `reldens.onRoomDispose`) and the death teleport (`PlayerDeathRelocator` on `reldens.playerDeath`)
+- `ads` (`lib/ads/server/plugin.js`): the resurrection ad (`ResurrectionAdGate`, created on
+  `reldens.serverConfigFeaturesReady` once the ads collection is loaded)
 - `inventory` (`lib/inventory/server/plugin.js`): the item growth (`ItemsGrowthApplier` on
   `reldens.createPlayerInventoryAfter`, over the `@reldens/items-system` `ItemGrowthLeveler`)
 - `scores` (`lib/scores/server/plugin.js`): the points per kill (`IncreaseScoreOnKill`) and the scores reset
@@ -229,15 +230,15 @@ The death queues the player body for removal (`roomWorld.removeBodies`, processe
 `ActionsPlugin.setup()` (`lib/actions/server/plugin.js`) logs a missing events manager, data server or config.
 `listenEvents()` checks the events manager once and attaches nothing without it, and `listenConfigRequiredEvents()`
 checks the config once and attaches none of the listeners that need it without it (the player class path and skills
-enrichment and the death listeners). The death classes (`PlayerDeathRelocator`, `ResurrectionAdGate`,
-`DeathReviveNotifier`, `DeathReviveRequests`) are created by the plugin, their constructors only assign the props and
+enrichment and the death listeners). The death classes (`PlayerDeathRelocator`, `DeathReviveNotifier`,
+`DeathReviveRequests`) are created by the plugin, their constructors only assign the props and
 they never check them again. On `reldens.serverReady` the relocator reads the death config once and keeps it on its
-properties (`loadConfig()`: the teleport, auto revive, auto consume, game over time out, restoration item key,
-resurrection ad key and ads maximum duration values, the e2e config overrides load it again), and loads the town room once
+properties (`loadConfig()`: the teleport, auto revive, auto consume, game over time out and restoration item key
+values, the e2e config overrides load it again), and loads the town room once
 (`players/death/teleportToTown/roomId`, or the players initial room when it is not set): the teleport is enabled only
 with that room loaded, an unknown room logs the error and the players revive where they died.
 `PlayerDeathRelocator` (`lib/actions/server/player-death-relocator.js`) resets on every death the death private data
-(`restorationItemChoice`, `playerReviveReady`, `playerDeathResolving`, the ad flags) and keeps the death event
+(`restorationItemChoice`, `playerReviveReady`, `playerDeathResolving`, `playerReviveHoldUntil`) and keeps the death event
 (`playerDeathEvent`). Two options, both enabled by default (the previous behavior):
 
 - `players/death/autoRevive`: enabled, the player is revived once `players/gameOver/timeOut` passed; disabled, the
@@ -270,8 +271,8 @@ With the teleport enabled or the auto revive disabled it replaces the battle tim
 - with the teleport disabled the player revives where it died
 - with a restoration item (quantity above 0) used (auto consume or chosen) one is consumed and the player revives where
   it died
-- while the resurrection ad plays (its start stored by the ads system, not ended nor failed, started less than the ads
-  `server/ads/videoMaximumDuration` before) it checks again every second
+- without restoration item, while the revive is held (`playerReviveHoldUntil` private data in the future, set by the
+  ads resurrection ad) it checks again every `ActionsConst.DEATH.DEFAULTS.REVIVE_HOLD_CHECK_MS` (1 second)
 - otherwise it revives in the town: in the same room the player is placed on the return point and revived, from
   another room the affected stat is restored, the `REVIVED` message is sent and the player moves to the town room; a
   failed relocation revives where it died
@@ -286,12 +287,12 @@ relocator accepts them only from the dead player of the room of its death, and t
 `DeathReviveNotifier` (`lib/actions/server/death-revive-notifier.js`, on `reldens.playerDeath` and
 `reldens.playerReviveReady`) sends the dead player the `drm` message (`ActionsConst.DEATH.ACTIONS.REVIVE_MESSAGE`) with
 the revive mode: `reviveInPlace` (teleport disabled), `reviveWithRestorationItem` (with the item label),
-`askRestorationItem` (with the item label and the town room title) or `reviveInTown` (with the town room title and
-`resurrectionAdEventKey`, the `ads_event_video` event key of the enabled resurrection ad, empty when the ad is
-disabled, has no event key or the player keeps a restoration item). Without the auto revive it also carries
-`reviveWaitSeconds` (rounded up, at least 1) or, once the revive is ready, `reviveReady`. It sends it again on
-`reldens.afterGiveAdRewardItem` (emitted by `AdsMessageActions` after a given reward) when the resurrection ad reward
-reaches a dead player, and after every accepted restoration item choice. The client
+`askRestorationItem` (with the item label and the town room title) or `reviveInTown` (with the town room title; the
+data is passed to the `reldens.deathTownReviveData` subscribers with `playerSchema`, `client`, `room`,
+`hasRestorationItem` and `reviveData`, the ads `ResurrectionAdGate` adds `resurrectionAdEventKey` there). Without the
+auto revive it also carries `reviveWaitSeconds` (rounded up, at least 1) or, once the revive is ready, `reviveReady`.
+It sends it again on `reldens.deathReviveNotify` (`{playerSchema, room}`, emitted by the resurrection ad when its
+reward reaches a dead player or the requested ad is closed), and after every accepted restoration item choice. The client
 `GameOverReviveMessage` (`lib/actions/client/game-over-revive-message.js`) renders the game over box content from the
 `theme/default/assets/features/skills/templates/ui-game-over.html` template with the translated `actions.death.*`
 snippets (`ActionsConst.SNIPPETS.DEATH_*`; title and wait on `GAME_OVER`, with no button until the `drm` message offers
@@ -309,16 +310,18 @@ cases are covered by `tests/test-player-death-auto-revive.js`, `tests/test-playe
 `tests/e2e/test-death-teleport.spec.js`.
 
 The resurrection ad (`ads_event_video` on the client `reldens.resurrectionAd` event, `"replayCooldown":0`) rewards one
-restoration item. `ResurrectionAdGate` (`lib/actions/server/resurrection-ad-gate.js`) accepts its `AD_STARTED` message
-(`reldens.beforeSceneExecuteMessages`) only from a dead player and once per death, keeping the accepted time
-(`resurrectionAdRequested` private data), so the death resolution already waits while the ads system checks and stores
-the start. `AdsMessageActions` emits `reldens.afterAdStarted` after processing every `AD_STARTED` message with its
-`startResult` (the stored played ad, or false when the start was rejected, an unavailable ad, a played non replay ad, a
-replay cooldown or a storage error): a stored start sets `resurrectionAdStarted`, a rejected one sets
-`resurrectionAdFailed`. After processing an `AD_ENDED` message (with or without reward, the reward is already given) it
-emits `reldens.afterAdEnded` and the gate sets `resurrectionAdEnded`; the `AD_FAILED` message of the requested ad sets
-`resurrectionAdFailed`. The ended and failed flags stop the wait, a request or start older than the ads videos maximum
-duration is not waited either (a later reward stays in the inventory); every flag is cleared on every death.
+restoration item. `ResurrectionAdGate` (`lib/ads/server/resurrection-ad-gate.js`, created by the ads plugin with the
+`players/death/resurrectionAdsKey`, the ads collection and the `server/ads/videoMaximumDuration` values read once)
+accepts its `AD_STARTED` message (`reldens.beforeSceneExecuteMessages`) only from a dead player, once per death and
+when the room allows it, and holds the revive (`playerReviveHoldUntil` = now + the videos maximum duration), so the
+death resolution already waits while the ads system checks and stores the start. `AdsMessageActions` emits
+`reldens.afterAdStarted` after processing every `AD_STARTED` message with its `startResult` (the stored played ad, or
+false when the start was rejected, an unavailable ad, a played non replay ad, a replay cooldown or a storage error): a
+stored start holds the revive again from that time, a rejected one closes the ad. After processing an `AD_ENDED`
+message it emits `reldens.afterAdEnded`: with its reward (already given) the ad is closed and the hold released,
+without it, like the `AD_FAILED` message of the requested ad, the ad is closed, the hold released and the dead player
+told its revive again (`reldens.deathReviveNotify`). A closed ad is not offered again in that death; the ad state
+(`resurrectionAd` private data) is bound to the death event, so every death starts with a new one.
 `AdsMessageActions` receives the data server and the ads plugin, loads the `adsPlayed` repository (`setRepository()`) and
 `executeMessageActions()` does nothing without them; the ads plugin `listenEvents()` attaches nothing without its events
 manager or data server. `AdsMessageActions` also receives the config and reads the providers minimum durations and the videos maximum duration
@@ -331,7 +334,8 @@ cleared when the player leaves
 
 `ScoresPeriodReset` (`lib/scores/server/scores-period-reset.js`) checks the period on every `checkIntervalMs` (the
 interval never keeps the process alive). `ScoresPeriodKeyBuilder` (`lib/scores/server/scores-period-key-builder.js`)
-builds the UTC period key: `2026-10-17` (daily), the ISO week `2026-W42` (weekly) or `2026-10` (monthly). The stored
+builds the period key in the server local time: `2026-10-17` (daily), the week Monday `2026-10-12-W` (weekly) or `2026-10`
+(monthly). The stored
 `scores/reset/lastPeriodKey` row is only changed with conditional updates (its id and the value read), so with many
 servers on the same storage only one resets each period; the first check only stores the key. The reset:
 
@@ -357,6 +361,11 @@ its own scene rooms (its first check after the start only remembers the key). A 
 after its scores were sent, so a failed send is retried on the next check. A failed check is logged and releases the
 next one. The running instance is the `scoresPeriodReset` property of the scores plugin
 (`serverManager.featuresManager.featuresList.scores.package`).
+
+A stored key newer than the current key of the server (same key format, greater key: a server sharing the storage in a
+later time zone already started the next period) is never reset back: the server only sends the scores of that period,
+or waits while it is pending, and resets again when its own next period starts. A stored key of another format (the
+period setting changed) still resets. See [counts, statuses and periods](multi-server/counts-and-periods.md).
 
 ## Ad items that give a skin
 

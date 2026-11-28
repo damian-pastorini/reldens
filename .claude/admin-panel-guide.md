@@ -22,13 +22,14 @@ path, which keeps a custom `RELDENS_ADMIN_ROUTE_PATH` working. `DashboardStatsSu
 
 The data comes from `UsersActivityDataProvider` (`lib/admin/server/users-activity-data-provider.js`):
 
-- The active users count is derived from the `ActivePlayers` singleton, counting user ids with at least one open
-  session. Sessions are per room, so the raw session count would report the same user more than once.
+- The active users count comes from `RoomsAvailability.countActiveUsers()`: the distinct user keys of this server
+  (users with at least one open session in `ActivePlayers`) and of the reachable other servers, so a user logged on
+  several servers counts once (see [counts, statuses and periods](multi-server/counts-and-periods.md)).
 - The per-day series loads the login rows through the repository (`loadBy('login_date', <Date>, 'GTE')`) and groups
   them in `groupDistinctUsersPerDay`, counting each user once per day. There is no raw SQL: the storage drivers expose
   filters, sorting and paging but no group-by, and raw queries would bypass the entity layer and break driver
-  portability. The dates are handled in UTC because `sc.getCurrentDate()` writes `users_login.login_date` in UTC; using
-  local dates shifts every bucket on a server that is not on UTC.
+  portability. The dates are handled in the server local time, like `sc.getCurrentDate()` writes
+  `users_login.login_date`, so every bucket is a local day.
 - Only the days that actually had logins are returned, together with `fromDate` and `daysRange`. The chart places each
   row on its own slot by date difference, so the missing days stay empty instead of collapsing the axis.
 
@@ -147,9 +148,14 @@ runs from the `reldens.adminBeforeEntityDelete` handler and prevents the delete 
 any selected id matches the `players/initialState/room_id` config value. The administrator has to assign another room as
 default first (room view, "Set default").
 
-For any other room the player states pointing at it are moved to the default room before the delete, and the pending
-saves of the disconnected players use the default room id too. That is `server/rooms/deletion/setDefault`
-(boolean, default `1`).
+For any other room the player states pointing at it are moved to the default room once the delete succeeded, and the
+pending saves of the disconnected players use the default room id too. That is `server/rooms/deletion/setDefault`
+(boolean, default `1`, read from the config manager on every delete, like the default room id). The rooms module never touches the player states: the
+relocator emits `reldens.prepareDeletedRoomsPlayersRelocation` (`{roomIds, defaultRoomId, deleteControl}`) before the
+delete, where the users module `PlayerStatesMover` (`lib/users/server/player-states-mover.js`, created by
+`UsersManager`) keeps the ids of the player states in those rooms (they must be read before, the foreign key unlinks
+them), and `reldens.relocateDeletedRoomsPlayers` (`{defaultRoomId, deleteControl}`) after a successful delete, where it
+moves them; a failed delete moves nothing.
 
 Turning it off leaves the player states alone: the `players_state.room_id` foreign key is `ON DELETE SET NULL`, so the
 database unlinks them, the pending saves write null, and a player whose saved room is null is placed in the fallback
@@ -173,7 +179,8 @@ Once the row is deleted, `reldens.adminAfterEntityDelete` triggers `DeletedRoomC
 a failed delete must not tear down a room that still exists. The teardown purges the room from the `RoomsManager`
 caches and selector lists, broadcasts `RoomsConst.ROOM_REMOVED` to the lobby room so connected clients drop it from
 their scene selector, sends the players in the room the `chat.roomClosing` message plus a `RoomsConst.ROOM_CLOSING`
-message, and disconnects the live room instance after the configured time.
+message, and disconnects the live room instance after the configured time. The same IDs are sent to the other servers,
+which run the same teardown (see [chat and rooms sync](multi-server/chat-and-rooms-sync.md)).
 
 That purge is also what marks the room as gone for the rest of the server: there is no deleted-rooms registry, an id
 that no longer resolves is simply an invalid reference. `RoomsManager.isRoomLoaded()` answers it from

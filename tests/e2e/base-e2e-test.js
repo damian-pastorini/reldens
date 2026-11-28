@@ -8,12 +8,14 @@
  * and closes the extra client pages the test opened (Login.openClientPage) after it, even when it fails.
  * The console output of the process is written to tests.log in the run results folder (E2eConsoleFileRedirect), the
  * config, the game data and every output come from E2eInstance (the instance folder and database of an isolated run).
+ * The room entries of a room out of the collected game data (a room hosted by server-2) are an empty list when the
+ * caller marks the room as optional, every other caller requires the room data.
  *
  */
 
 const { test: baseTest, expect: baseExpect } = require('@playwright/test');
 const { FileHandler } = require('@reldens/server-utils');
-const { Logger } = require('@reldens/utils');
+const { Logger, sc } = require('@reldens/utils');
 const { Selectors } = require('./selectors');
 const { PlayerReset } = require('./helpers/player-reset');
 const { Login } = require('./helpers/login');
@@ -82,8 +84,11 @@ class BaseE2eTest
         return roomObjects;
     }
 
-    static loadRoomEntries(roomName, listsKeys, onlyMoving = false)
+    static loadRoomEntries(roomName, listsKeys, onlyMoving = false, isOptionalRoom = false)
     {
+        if(isOptionalRoom && !sc.hasOwn(BaseE2eTest.loadGameData().rooms, roomName)){
+            return [];
+        }
         let roomObjects = BaseE2eTest.loadRoomObjects(roomName);
         let entries = [];
         for(let listKey of listsKeys){
@@ -123,6 +128,7 @@ class BaseE2eTest
     {
         return () => {
             let cursorEl = document.createElement('div');
+            cursorEl.id = 'e2e-fake-cursor';
             cursorEl.style.cssText = [
                 'position:fixed',
                 'top:0',
@@ -140,7 +146,9 @@ class BaseE2eTest
                 'transition:background 0.1s,opacity 0.3s,width 0.1s,height 0.1s'
             ].join(';');
             let hideAfterMs = 1500;
+            let clickStateMs = 250;
             let hideTimer = false;
+            let releaseTimer = false;
             let showCursor = () => {
                 cursorEl.style.opacity = '1';
                 clearTimeout(hideTimer);
@@ -157,15 +165,19 @@ class BaseE2eTest
                 showCursor();
             });
             document.addEventListener('mousedown', () => {
+                clearTimeout(releaseTimer);
                 cursorEl.style.background = 'rgba(255,220,50,0.95)';
                 cursorEl.style.width = '32px';
                 cursorEl.style.height = '32px';
                 showCursor();
             });
             document.addEventListener('mouseup', () => {
-                cursorEl.style.background = 'rgba(255,80,80,0.85)';
-                cursorEl.style.width = '16px';
-                cursorEl.style.height = '16px';
+                clearTimeout(releaseTimer);
+                releaseTimer = setTimeout(() => {
+                    cursorEl.style.background = 'rgba(255,80,80,0.85)';
+                    cursorEl.style.width = '16px';
+                    cursorEl.style.height = '16px';
+                }, clickStateMs);
                 showCursor();
             });
         };

@@ -26,14 +26,27 @@ This identifies which exchange key belongs to the OTHER player (the one being se
 
 ## Trade Start
 
+A player keeps one exchange at a time: a player whose inventory is locked is in an exchange (a trader shop or a player
+trade). `server/players/exchanges/newCancelsActive` (default `0`) decides what a new exchange does:
+
+- `0`: the invite (`tryExchangeStart()`) and the accept are refused while one of the players is locked
+  (`Processor.isNewExchangeRefused()`), and the trader shows `objects.trader.exchangeInProgress`.
+- `1`: the new exchange starts and the exchanges in progress of the locked players are cancelled through the
+  `reldens.cancelPlayerExchanges` event (`Processor.cancelActiveExchanges()`): the inventory plugin closes the player
+  trade, the objects plugin cancels the trader shops and closes their UI.
+
 `InventoryMessageActions.startExchange()` runs when the invited player accepts:
 
-- a trade the accepting player already has with another player (both inventories set, a different exchange platform
-  than the inviter one) is closed first with `closeTradeAction()`: the other player trade box is closed and
-  `cancelExchange()` unlocks both inventories, so an accept never leaves the previous trade partner locked
+- the invite is accepted once (the inviter `tradeInvitedSessionId` is cleared) and only while the inviter still has the
+  exchange its invite created
+- the accepting player cancels its own previous exchange (its own pending invite) and clears its own
+  `tradeInvitedSessionId`, so that old invite can never be accepted or declined later to join or cancel the new trade
 - the inviter becomes the exchange initializer again (`exchangeInitializerId`), since `initializeExchangeBetween()` resets
   the exchange data, so `isMyTrade()` keeps the inviter on the `A` side and the accepting player on the `B` side
 - both players share the inviter exchange platform and both receive the trade box (`ExchangeUpdateSender.send()`)
+
+A trade action is accepted only from the two players of that exchange, an equipped item is never pushed for exchange
+(`Processor`), and the use or equip of an item is refused while the inventory is locked.
 
 ## Three Column Structure
 

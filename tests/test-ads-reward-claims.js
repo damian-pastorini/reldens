@@ -268,58 +268,6 @@ class TestAdsRewardClaims extends BaseTest
         });
     }
 
-    async testAdStartDisablesAnAlivePlayer()
-    {
-        await this.test('the ad start disables an alive player with the disabled status', async () => {
-            let adsSetup = this.adsBuilder.createAdsSetup(true);
-            this.adsBuilder.storeStartedAd(adsSetup, 0);
-            await adsSetup.adsMessageActions.adStart(adsSetup.startedMessage, adsSetup.room, adsSetup.playerSchema);
-            this.assert.deepStrictEqual(adsSetup.deactivatedStates, [GameConst.STATUS.DISABLED]);
-        });
-    }
-
-    async testPlayerDisabledByAnAdIsActivatedAfterTheMaximumDuration()
-    {
-        await this.test('a player disabled by an ad that never ends is activated after the maximum duration', async () => {
-            let adsSetup = this.adsBuilder.createAdsSetup(true);
-            await adsSetup.adsMessageActions.adStart(adsSetup.startedMessage, adsSetup.room, adsSetup.playerSchema);
-            this.assert.strictEqual(adsSetup.playerSchema.state.inState, GameConst.STATUS.DISABLED);
-            await timersPromises.setTimeout(AdsConst.VIDEOS_MINIMUM_DURATION / 100);
-            this.assert.deepStrictEqual(adsSetup.activatedStates, [GameConst.STATUS.ACTIVE]);
-            this.assert.strictEqual(adsSetup.playerSchema.state.inState, GameConst.STATUS.ACTIVE);
-        });
-    }
-
-    async testAdStartKeepsADeadPlayerDead()
-    {
-        await this.test('the ad start keeps the death status of a dead player', async () => {
-            let adsSetup = this.adsBuilder.createAdsSetup(true, GameConst.STATUS.DEATH);
-            this.adsBuilder.storeStartedAd(adsSetup, 0);
-            await adsSetup.adsMessageActions.adStart(adsSetup.startedMessage, adsSetup.room, adsSetup.playerSchema);
-            this.assert.deepStrictEqual(adsSetup.deactivatedStates, []);
-            this.assert.strictEqual(adsSetup.playerSchema.state.inState, GameConst.STATUS.DEATH);
-        });
-    }
-
-    async testAdEndedActivatesOnlyADisabledPlayer()
-    {
-        await this.test('the ad ended activates a disabled player and never revives a dead one', async () => {
-            let disabledSetup = this.adsBuilder.createAdsSetup(true, GameConst.STATUS.DISABLED);
-            this.adsBuilder.storeStartedAd(disabledSetup, AdsConst.VIDEOS_MINIMUM_DURATION * 2);
-            await disabledSetup.adsMessageActions.adEnded(
-                disabledSetup.endedMessage,
-                disabledSetup.room,
-                disabledSetup.playerSchema
-            );
-            this.assert.deepStrictEqual(disabledSetup.activatedStates, [GameConst.STATUS.ACTIVE]);
-            let deadSetup = this.adsBuilder.createAdsSetup(true, GameConst.STATUS.DEATH);
-            this.adsBuilder.storeStartedAd(deadSetup, AdsConst.VIDEOS_MINIMUM_DURATION * 2);
-            await deadSetup.adsMessageActions.adEnded(deadSetup.endedMessage, deadSetup.room, deadSetup.playerSchema);
-            this.assert.deepStrictEqual(deadSetup.activatedStates, []);
-            this.assert.strictEqual(deadSetup.playerSchema.state.inState, GameConst.STATUS.DEATH);
-        });
-    }
-
 }
 
 module.exports.TestAdsRewardClaims = TestAdsRewardClaims;

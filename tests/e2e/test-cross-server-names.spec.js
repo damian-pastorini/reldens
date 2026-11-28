@@ -79,11 +79,17 @@ class TestCrossServerNames
 
     static async expectRouteRejectsUnsignedChecks(gameConfig, checkRoute)
     {
-        for(let checkBody of [{}, {values: ['e2e-name'], token: '1.bad'}, {values: ['e2e-name']}]){
+        let forgedCheck = {
+            action: GameConst.NAMES_CHECK.CHECK_ACTION,
+            targetId: 'h'.repeat(GameConst.NAMES_CHECK.HOLD_ID_LENGTH),
+            payload: sc.toJsonString({values: ['e2e-name']}),
+            nonce: 'e2e-nonce'
+        };
+        for(let checkBody of [{}, Object.assign({token: '1.bad'}, forgedCheck), forgedCheck]){
             expect(
                 await SecurityApi.request(gameConfig, 'POST', checkRoute, checkBody),
                 checkRoute+' '+sc.toJsonString(checkBody)
-            ).toEqual({isAvailable: false});
+            ).toEqual({isSuccess: false});
         }
     }
 

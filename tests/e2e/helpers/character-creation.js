@@ -113,7 +113,9 @@ class CharacterCreation
     static async startSelectedPlayer(page, playerName, longRun)
     {
         expect(await Login.selectPlayer(page, playerName), playerName).toBe(true);
-        await page.click(Selectors.characterSelect.selectorSubmit);
+        await page.click(Selectors.characterSelect.selectorSubmit, {
+            timeout: TimeConstants.forLongRun(TimeConstants.GAME_START, longRun)
+        });
         await CharacterCreation.waitForGameStart(page, longRun);
     }
 
