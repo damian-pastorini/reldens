@@ -15,7 +15,7 @@ Every server answers `GET /reldens-server-status` with its `ServerHealthMonitor.
   can match the same user without publishing the user IDs; with an empty secret no key is listed.
 
 `RoomsAvailability` (`lib/game/server/health/rooms-availability.js`) reads the reports of the other servers of the rooms
-(`RemoteServersStatus.fetchStatuses()`, all requested before any answer is awaited, and cached) and only uses the
+(`RemoteServersStatus.fetchStatuses()`, requested one after the other, and cached) and only uses the
 reachable ones (`fetchOtherServersRoomsUsage()`).
 
 ## Admin counts
