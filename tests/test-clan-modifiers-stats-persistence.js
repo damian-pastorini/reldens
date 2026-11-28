@@ -6,6 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { ClanFixturesBuilder } = require('./fixtures/clan-fixtures-builder');
+const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { ClanLeave } = require('../lib/teams/server/message-actions/clan-leave');
 const { TeamsPlugin } = require('../lib/teams/server/plugin');
 const { RoomScene } = require('../lib/rooms/server/scene');
@@ -43,6 +44,7 @@ class TestClanModifiersStatsPersistence extends BaseTest
             clans,
             dataServer: sc.get(setupData, 'dataServer', ClanFixturesBuilder.createClanJoinDataServer([])),
             config: {get: () => ({}), getWithoutLogs: (path, defaultValue) => defaultValue},
+            serverToServerMessengerProps: ServerMessengerPropsBuilder.createShared('http://self:8080', {}, 'test-secret'),
             featuresManager: {featuresList: {}}
         });
         return {clan: clans[10], savedStats, teamsPlugin, room: this.createRoom(events, savedStats)};
