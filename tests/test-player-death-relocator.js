@@ -37,12 +37,12 @@ class TestPlayerDeathRelocator extends BaseTest
             let emptyConfigRelocator = new PlayerDeathRelocator({config: new ConfigProcessor(), events: {}});
             emptyConfigRelocator.loadConfig();
             this.assert.strictEqual(emptyConfigRelocator.teleportEnabled, false);
-            this.assert.strictEqual(emptyConfigRelocator.onPlayerDeath(emptyConfigSetup.event), false);
+            this.assert.strictEqual(emptyConfigRelocator.scheduleRevive(emptyConfigSetup.event), false);
             this.assert.strictEqual(sc.hasOwn(emptyConfigSetup.playerSchema.privateData, this.deathTimerKey), false);
             let setup = await this.deathBuilder.createRelocatorSetup();
             this.assert.strictEqual(setup.isTownRoomLoaded, true);
             this.assert.strictEqual(setup.relocator.townRoom, this.roomBuilder.townRoom);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             clearTimeout(setup.playerSchema.getPrivate(this.deathTimerKey));
             this.assert.strictEqual(setup.revivedPlayers, 0);
         });
@@ -55,7 +55,7 @@ class TestPlayerDeathRelocator extends BaseTest
                 {[ActionsConst.DEATH.CONFIG_PATHS.TELEPORT_ENABLED]: false}
             );
             setup.playerSchema.setPrivate(this.holdKey, Date.now() + this.holdMs);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), false);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), false);
             this.assert.strictEqual(setup.playerSchema.privateData[this.holdKey], 0);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
         });
@@ -66,10 +66,10 @@ class TestPlayerDeathRelocator extends BaseTest
         await this.test('a death without revive callback or of an alive player is not handled', async () => {
             let setup = await this.deathBuilder.createRelocatorSetup();
             setup.event.revivePlayerCallback = false;
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), false);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), false);
             this.assert.strictEqual(sc.hasOwn(setup.playerSchema.privateData, this.deathTimerKey), false);
             let aliveSetup = await this.deathBuilder.createRelocatorSetup({}, {inState: GameConst.STATUS.ACTIVE});
-            this.assert.strictEqual(aliveSetup.relocator.onPlayerDeath(aliveSetup.event), false);
+            this.assert.strictEqual(aliveSetup.relocator.scheduleRevive(aliveSetup.event), false);
             this.assert.strictEqual(sc.hasOwn(aliveSetup.playerSchema.privateData, this.deathTimerKey), false);
         });
     }
@@ -81,7 +81,7 @@ class TestPlayerDeathRelocator extends BaseTest
             let battleRevived = false;
             let battleTimer = setTimeout(() => battleRevived = true, this.battleTimerMs);
             setup.playerSchema.setPrivate(this.deathTimerKey, battleTimer);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             let deathTimer = setup.playerSchema.getPrivate(this.deathTimerKey);
             this.assert.notStrictEqual(deathTimer, battleTimer);
             await timersPromises.setTimeout(this.battleTimerWaitMs);
