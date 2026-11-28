@@ -2,15 +2,15 @@
  *
  * Reldens - Test Login Manager Disconnect
  *
- * Tests the disconnect requests a server receives: the token must be valid for the username, the request kind and this
- * server, it is accepted once, a check only request answers the logged user without disconnecting it, a request of
- * this same server instance is answered with no disconnection, and a failed request answers a failed result. The
- * requests sent to the other servers are tested in TestUserDisconnectionBroadcast.
+ * Tests the disconnect messages a server receives: the message must be signed for the username, the action and this
+ * server, it is accepted once, a check only message answers the logged user without disconnecting it, a signed message
+ * of this same server instance is answered with no disconnection, and a failed disconnection answers a failed result
+ * (an error a failed route answer). The messages sent to the other servers are tested in
+ * TestUserDisconnectionBroadcast.
  *
  */
 
 const { BaseTest } = require('./base-test');
-const { LoginManager } = require('../lib/game/server/login-manager');
 const { UserDisconnectionBuilder } = require('./fixtures/user-disconnection-builder');
 const { JsonResponseRecorder } = require('./fixtures/json-response-recorder');
 const { ActivePlayers } = require('../lib/game/server/memory/active-players');
@@ -19,102 +19,92 @@ const { GameConst } = require('../lib/game/constants');
 class TestLoginManagerDisconnect extends BaseTest
 {
 
-    createDisconnectionToken = UserDisconnectionBuilder.createToken;
-
     constructor(config)
     {
         super(config);
-        this.expirationMs = UserDisconnectionBuilder.EXPIRATION_MS;
         this.victimUserModel = {username: 'victim'};
+        this.rejected = {isSuccess: false};
     }
 
-    async testTheUserIsNotDisconnectedWithoutToken()
+    async testTheUserIsNotDisconnectedWithoutAValidSignature()
     {
-        await this.test('the user is not disconnected when the request has no token', async () => {
+        await this.test('the user is not disconnected without token, for another username, action or with a status token', async () => {
             let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
-            let result = await userDisconnection.disconnectUserByLoginData({body: {username: 'victim'}});
-            this.assert.strictEqual(result, false);
-            this.assert.strictEqual(disconnectedUsers.length, 0);
-        });
-    }
-
-    async testTheUserIsNotDisconnectedWithATokenForAnotherUser()
-    {
-        await this.test('the user is not disconnected with a token generated for another username', async () => {
-            let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
-            let token = userDisconnection.expiringHmacToken.generate(
-                [GameConst.ROUTE_PATHS.DISCONNECT_USER, 'attacker'],
-                Date.now()+this.expirationMs
+            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, disconnectedUsers);
+            let attackerBody = UserDisconnectionBuilder.createRequestBody(userDisconnection, 'attacker');
+            let statusToken = userDisconnection.expiringHmacToken.generate(
+                [GameConst.HEALTH.STATUS_TOKEN_VALUE],
+                Date.now()+GameConst.SIGNED_TOKENS.SERVER_STATUS_EXPIRATION
             );
-            let result = await userDisconnection.disconnectUserByLoginData({body: {username: 'victim', token}});
-            this.assert.strictEqual(result, false);
-            this.assert.strictEqual(disconnectedUsers.length, 0);
+            let invalidBodies = [
+                {targetId: 'victim', action: GameConst.DISCONNECTION.DISCONNECT},
+                Object.assign({}, attackerBody, {targetId: 'victim'}),
+                Object.assign({}, attackerBody, {action: GameConst.DISCONNECTION.SERVER_CHANGE}),
+                Object.assign({}, attackerBody, {targetId: GameConst.HEALTH.STATUS_TOKEN_VALUE, token: statusToken})
+            ];
+            let results = [];
+            for(let body of invalidBodies){
+                results.push(await userDisconnection.receiveRequest({body}));
+            }
+            this.assert.deepStrictEqual(
+                [results, disconnectedUsers],
+                [new Array(invalidBodies.length).fill(this.rejected), []]
+            );
         });
     }
 
     async testACheckOnlyRequestAnswersTheLoggedUserWithoutDisconnecting()
     {
-        await this.test('a check only request is accepted once, answers the logged user and never disconnects it', async () => {
+        await this.test('a check only message is accepted once, answers the logged user and never disconnects it', async () => {
             let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
-            let checkToken = this.createDisconnectionToken(userDisconnection, 'victim', true, true);
-            let body = {username: 'victim', token: checkToken, isServerChange: true, isCheckOnly: true};
+            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, disconnectedUsers);
+            let body = UserDisconnectionBuilder.createRequestBody(
+                userDisconnection,
+                'victim',
+                GameConst.DISCONNECTION.CHECK_ONLY
+            );
             let answers = [
-                await userDisconnection.answerDisconnectRequest({body}),
-                await userDisconnection.answerDisconnectRequest({body}),
-                await userDisconnection.answerDisconnectRequest({body: Object.assign({}, body, {isCheckOnly: false})})
+                await userDisconnection.receiveRequest({body}),
+                await userDisconnection.receiveRequest({body}),
+                await userDisconnection.receiveRequest({
+                    body: Object.assign({}, body, {action: GameConst.DISCONNECTION.DISCONNECT})
+                })
             ];
             this.assert.deepStrictEqual(
                 [answers, disconnectedUsers],
-                [
-                    [{isSuccess: true, wasLogged: true}, {isSuccess: false, wasLogged: false}, {isSuccess: false, wasLogged: false}],
-                    []
-                ]
+                [[{isSuccess: true, wasLogged: true}, this.rejected, this.rejected], []]
             );
         });
     }
 
     async testTheDisconnectRequestErrorAnswersAFailedResult()
     {
-        await this.test('an error on the disconnect request answers a failed result instead of rejecting', async () => {
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,[]);
-            let loginManager = Object.create(LoginManager.prototype);
-            loginManager.userDisconnection = userDisconnection;
-            userDisconnection.disconnectUserByLoginData = async () => Promise.reject({message: 'Storage.'});
+        await this.test('an error on the disconnect message answers a failed result instead of rejecting', async () => {
+            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, []);
+            userDisconnection.disconnectUserFromEveryRoom = async () => Promise.reject({message: 'Storage.'});
             let responses = [];
-            await loginManager.handleDisconnectUserRequest({body: {}}, new JsonResponseRecorder().create(responses));
-            this.assert.deepStrictEqual(responses, [500, {isSuccess: false}]);
+            await userDisconnection.handleRouteRequest(
+                {body: UserDisconnectionBuilder.createRequestBody(userDisconnection, 'victim')},
+                new JsonResponseRecorder().create(responses)
+            );
+            this.assert.deepStrictEqual(responses, [500, this.rejected]);
         });
     }
 
-    async testTheUserIsDisconnectedWithAValidToken()
+    async testTheUserIsDisconnectedWithAValidMessageOnce()
     {
-        await this.test('the user is disconnected with a valid token signed by the shared secret', async () => {
+        await this.test('a valid message disconnects the user once, its replay is rejected and the expired used ones are dropped', async () => {
             let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
-            let token = this.createDisconnectionToken(userDisconnection, 'victim');
-            let result = await userDisconnection.disconnectUserByLoginData({body: {username: 'victim', token}});
-            this.assert.strictEqual(result, true);
-            this.assert.deepStrictEqual(disconnectedUsers, ['victim']);
-        });
-    }
-
-    async testADisconnectionTokenIsAcceptedOnceUntilItExpires()
-    {
-        await this.test('a disconnection token is accepted once, its replay is rejected and the expired used ones are dropped', async () => {
-            let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
+            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, disconnectedUsers);
             userDisconnection.expiringHmacToken.usedTokens = {'1.expired-used-token': 1};
-            let token = this.createDisconnectionToken(userDisconnection, 'victim');
+            let body = UserDisconnectionBuilder.createRequestBody(userDisconnection, 'victim');
             let results = [];
             for(let attempt of [1, 2]){
-                results.push(await userDisconnection.disconnectUserByLoginData({body: {username: 'victim', token, attempt}}));
+                results.push(await userDisconnection.receiveRequest({body: Object.assign({attempt}, body)}));
             }
             this.assert.deepStrictEqual(
                 [results, disconnectedUsers, Object.keys(userDisconnection.expiringHmacToken.usedTokens)],
-                [[true, false], ['victim'], [token]]
+                [[{isSuccess: true, wasLogged: true}, this.rejected], ['victim'], [body.token]]
             );
         });
     }
@@ -124,83 +114,58 @@ class TestLoginManagerDisconnect extends BaseTest
         await this.test('a user only in a scene room, with no game room session, is disconnected and an absent one is not', async () => {
             let results = [];
             let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
-            let activePlayers = new ActivePlayers.constructor();
+            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, disconnectedUsers);
+            let activePlayers = new ActivePlayers();
             activePlayers.gameRoomInstanceId = 'game-room';
             activePlayers.add({id: 7, username: 'victim', player: {id: 70, name: 'Victim'}}, {sessionId: 'town'}, {roomId: 'town-room'});
             userDisconnection.activePlayers = activePlayers;
             for(let username of ['victim', 'absent']){
-                let token = this.createDisconnectionToken(userDisconnection, username);
-                results.push(await userDisconnection.disconnectUserByLoginData({body: {username, token}}));
+                let body = UserDisconnectionBuilder.createRequestBody(userDisconnection, username);
+                results.push(await userDisconnection.receiveRequest({body}));
             }
-            this.assert.deepStrictEqual([results, disconnectedUsers], [[true, true], ['victim']]);
+            this.assert.deepStrictEqual(
+                [results, disconnectedUsers],
+                [[{isSuccess: true, wasLogged: true}, {isSuccess: true, wasLogged: false}], ['victim']]
+            );
         });
     }
 
-    async testTheDisconnectAnswerSaysTheUserWasLoggedOnlyWithAValidToken()
+    async testAFailedDisconnectionAnswersAFailedResult()
     {
-        await this.test('the disconnect answer says the user was logged only for a valid token and a logged user', async () => {
-            let answers = [];
-            for(let answerCase of [{username: 'victim', isLogged: true}, {username: 'absent', isLogged: false}]){
-                let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,[]);
-                userDisconnection.activePlayers = {
-                    fetchByUserNameInAnyRoom: () => answerCase.isLogged ? {userModel: this.victimUserModel} : false
-                };
-                let token = this.createDisconnectionToken(userDisconnection, answerCase.username);
-                answers.push(await userDisconnection.answerDisconnectRequest({body: {username: answerCase.username, token}}));
-                answers.push(await userDisconnection.answerDisconnectRequest({body: {username: answerCase.username}}));
+        await this.test('a logged user without its user model or not disconnected from a room answers a failed result', async () => {
+            let results = [];
+            for(let activePlayer of [{userModel: false}, {userModel: this.victimUserModel}]){
+                let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, []);
+                userDisconnection.activePlayers = {fetchByUserNameInAnyRoom: () => activePlayer};
+                userDisconnection.disconnectUserFromEveryRoom = async () => false;
+                let body = UserDisconnectionBuilder.createRequestBody(userDisconnection, 'victim');
+                results.push(await userDisconnection.receiveRequest({body}));
             }
-            this.assert.deepStrictEqual(answers, [
-                {isSuccess: true, wasLogged: true},
-                {isSuccess: false, wasLogged: false},
-                {isSuccess: true, wasLogged: false},
-                {isSuccess: false, wasLogged: false}
-            ]);
+            this.assert.deepStrictEqual(results, [{isSuccess: false, wasLogged: false}, {isSuccess: false, wasLogged: false}]);
         });
     }
 
     async testARequestOfThisSameServerIsAnsweredWithNoDisconnection()
     {
-        await this.test('a disconnect request carrying this server instance ID is answered with no disconnection', async () => {
+        await this.test('a signed disconnect message carrying this server instance ID is answered with no disconnection', async () => {
             let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
+            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel, disconnectedUsers);
             let ownInstanceId = userDisconnection.serverInstanceId;
             let results = [];
-            for(let senderInstanceId of [ownInstanceId, 'another-instance', '']){
-                results.push(await userDisconnection.answerDisconnectRequest({
-                    body: {username: 'victim', token: '1.not-valid-here', senderInstanceId}
-                }));
+            for(let senderInstanceId of [ownInstanceId, '']){
+                let body = UserDisconnectionBuilder.createRequestBody(
+                    userDisconnection,
+                    'victim',
+                    GameConst.DISCONNECTION.DISCONNECT,
+                    senderInstanceId
+                );
+                results.push(await userDisconnection.receiveRequest({body}));
             }
-            results.push(await userDisconnection.disconnectUserByLoginData({
-                body: {username: 'victim', token: '1.not-valid-here', senderInstanceId: ownInstanceId}
-            }));
-            let otherInstanceId = UserDisconnectionBuilder.createForServer(this.victimUserModel,[]).serverInstanceId;
+            let otherInstanceId = UserDisconnectionBuilder.createForServer(this.victimUserModel, []).serverInstanceId;
             this.assert.deepStrictEqual(
                 [results, disconnectedUsers, /^[\w-]{16,}$/.test(ownInstanceId), ownInstanceId === otherInstanceId],
-                [
-                    [
-                        {isSuccess: true, wasLogged: false},
-                        {isSuccess: false, wasLogged: false},
-                        {isSuccess: false, wasLogged: false},
-                        false
-                    ],
-                    [],
-                    true,
-                    false
-                ]
+                [[{isSuccess: true, wasLogged: false}, {isSuccess: true, wasLogged: true}], ['victim'], true, false]
             );
-        });
-    }
-
-    async testAServerStatusTokenIsNotADisconnectionToken()
-    {
-        await this.test('a server status token is not a disconnection token for a user named as the status value', async () => {
-            let disconnectedUsers = [];
-            let userDisconnection = UserDisconnectionBuilder.createForServer(this.victimUserModel,disconnectedUsers);
-            let statusValue = GameConst.HEALTH.STATUS_TOKEN_VALUE;
-            let token = userDisconnection.expiringHmacToken.generate([statusValue], Date.now()+this.expirationMs);
-            let result = await userDisconnection.disconnectUserByLoginData({body: {username: statusValue, token}});
-            this.assert.deepStrictEqual([result, disconnectedUsers], [false, []]);
         });
     }
 
