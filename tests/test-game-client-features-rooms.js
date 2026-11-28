@@ -36,12 +36,14 @@ class TestGameClientFeaturesRooms extends BaseTest
         )});
     }
 
-    createAliasHostClient(configValues)
+    createAliasHostClient(loginServerUrl, configValues = {})
     {
-        return this.createGameClient([], this.aliasPageUrl, Object.assign({
+        let aliasClient = this.createGameClient([], this.aliasPageUrl, Object.assign({
             'client/rooms/servers/reldens-town': this.loginServerUrl,
             'client/rooms/servers/reldens-house-2': this.otherServerUrl
         }, configValues));
+        aliasClient.loginServerUrl = loginServerUrl;
+        return aliasClient;
     }
 
     recordJoinedRoom(sceneRoomName, roomName, joinedRooms)
@@ -53,8 +55,8 @@ class TestGameClientFeaturesRooms extends BaseTest
     async testTheLoginServerRoomsUseThePageUrl()
     {
         await this.test('a room of the login server uses the page url, another server room and no login server url keep the config url (ISSUE #457)', async () => {
-            let aliasClient = this.createAliasHostClient({'client/rooms/loginServerUrl': this.loginServerUrl});
-            let noLoginServerClient = this.createAliasHostClient({});
+            let aliasClient = this.createAliasHostClient(this.loginServerUrl);
+            let noLoginServerClient = this.createAliasHostClient('');
             this.assert.deepStrictEqual(
                 [
                     aliasClient.fetchRoomServerUrl('reldens-town'),
@@ -73,8 +75,7 @@ class TestGameClientFeaturesRooms extends BaseTest
             let unparsableUrl = {'client/rooms/servers/reldens-house-1': 'e2e not a server url'};
             let fetchedUrls = [];
             for(let loginServerUrl of [this.loginServerUrl, 'e2e not a login url', '']){
-                let configValues = Object.assign({'client/rooms/loginServerUrl': loginServerUrl}, unparsableUrl);
-                fetchedUrls.push(this.createAliasHostClient(configValues).fetchRoomServerUrl('reldens-house-1'));
+                fetchedUrls.push(this.createAliasHostClient(loginServerUrl, unparsableUrl).fetchRoomServerUrl('reldens-house-1'));
             }
             this.assert.deepStrictEqual(fetchedUrls, ['e2e not a server url', 'e2e not a server url', 'e2e not a server url']);
         });
@@ -83,7 +84,7 @@ class TestGameClientFeaturesRooms extends BaseTest
     async testAnAliasHostPageJoinsTheGameRoomOnlyForAnotherServer()
     {
         await this.test('a page on another host of the login server joins its scene alone and the game room only for another server', async () => {
-            let aliasClient = this.createAliasHostClient({'client/rooms/loginServerUrl': this.loginServerUrl});
+            let aliasClient = this.createAliasHostClient(this.loginServerUrl);
             let joinedRooms = [];
             for(let sceneRoomName of ['reldens-town', 'reldens-house-2']){
                 aliasClient.roomClient(sceneRoomName);
