@@ -127,7 +127,7 @@ class TestPlayerDeathAutoRevive extends BaseTest
             let setup = await this.deathBuilder.createRelocatorSetup(this.manualRevive);
             setup.event.reviveDelayMs = 1;
             let reviveReadyEvent = once(setup.eventsEmitter, this.reviveReadyEventKey);
-            this.assert.strictEqual(setup.relocator.onPlayerDeath(setup.event), true);
+            this.assert.strictEqual(setup.relocator.scheduleRevive(setup.event), true);
             this.assert.strictEqual((await reviveReadyEvent).shift(), setup.event);
             this.assert.strictEqual(setup.playerSchema.getPrivate(this.privateData.REVIVE_READY), true);
             this.assert.strictEqual(setup.revivedPlayers, 0);
