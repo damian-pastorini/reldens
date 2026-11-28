@@ -16,7 +16,8 @@
  * line places the player 3 tiles before a wall tile (RoomTileKindsClassifier wall tiles, the tiles between free) and a
  * target player on the free walkable tile behind it, the closest to the player, so a bullet shot at the target flies
  * before it ends on that wall (a shooter next to the wall spawns the bullet already touching it, removed before any
- * client update).
+ * client update); the same wall line places a player alone on the free tile right before the wall and returns the
+ * direction of the wall, so a held key presses the player against it.
  *
  */
 
@@ -55,11 +56,16 @@ class RoomLinePlacement
         }
     }
 
-    static findLineStart(room, line, ignoredBodies)
+    static fetchOtherBodiesBounds(room, ignoredBodies)
     {
-        let bodiesBounds = room.roomWorld.bodies.filter(
+        return room.roomWorld.bodies.filter(
             body => !ignoredBodies.includes(body) && !body.isWall && false !== body.collisionResponse
         ).map(body => body.getAABB());
+    }
+
+    static findLineStart(room, line, ignoredBodies)
+    {
+        let bodiesBounds = RoomLinePlacement.fetchOtherBodiesBounds(room, ignoredBodies);
         let radius = RoomLinePlacement.MAX_START_TILES_RADIUS;
         let startTiles = [];
         for(let column = line.fromTile[0] - radius; column <= line.fromTile[0] + radius; column++){
@@ -176,7 +182,7 @@ class RoomLinePlacement
         for(let tilesBefore = 1; tilesBefore <= RoomLinePlacement.WALL_SHOOTER_TILES; tilesBefore++){
             freeTiles.unshift([wallTile[0] - direction[0] * tilesBefore, wallTile[1] - direction[1] * tilesBefore]);
         }
-        return {fromTile: freeTiles[0], toTile: freeTiles[freeTiles.length - 1], freeTiles};
+        return {fromTile: freeTiles[0], toTile: freeTiles[freeTiles.length - 1], freeTiles, direction};
     }
 
     static findWallLine(room, playerTile, bodiesBounds)
@@ -204,12 +210,7 @@ class RoomLinePlacement
         let wallLine = RoomLinePlacement.findWallLine(
             room,
             RoomLinePlacement.fetchTile(playerSchema.physicalBody),
-            room.roomWorld.bodies.filter(
-                body => playerSchema.physicalBody !== body
-                    && targetSchema.physicalBody !== body
-                    && !body.isWall
-                    && false !== body.collisionResponse
-            ).map(body => body.getAABB())
+            RoomLinePlacement.fetchOtherBodiesBounds(room, [playerSchema.physicalBody, targetSchema.physicalBody])
         );
         if(!wallLine){
             return {error: 'No wall with free tiles at both sides in '+room.roomName+'.'};
@@ -223,8 +224,32 @@ class RoomLinePlacement
         return placement;
     }
 
+    static placePlayerBeforeWall(room, sessionId)
+    {
+        let playerSchema = RoomObjectsState.findPlayer(room, '', sessionId);
+        if(!playerSchema){
+            return {error: 'Player session '+sessionId+' not found in '+room.roomName+'.'};
+        }
+        let wallLine = RoomLinePlacement.findWallLine(
+            room,
+            RoomLinePlacement.fetchTile(playerSchema.physicalBody),
+            RoomLinePlacement.fetchOtherBodiesBounds(room, [playerSchema.physicalBody])
+        );
+        if(!wallLine){
+            return {error: 'No wall with free tiles at both sides in '+room.roomName+'.'};
+        }
+        let position = RoomLinePlacement.tileCenter(room, wallLine.freeTiles[RoomLinePlacement.WALL_SHOOTER_TILES - 1]);
+        RoomAggressionPlacement.placePlayer(playerSchema, position);
+        return {position, direction: wallLine.direction};
+    }
+
     static registerEndpoints(serverManager)
     {
+        RoomMovementState.registerActionEndpoint(
+            serverManager,
+            '/api/e2e/room-objects/place-player-before-wall',
+            (room, body) => RoomLinePlacement.placePlayerBeforeWall(room, String(sc.get(body, 'sessionId', '')))
+        );
         serverManager.app.post('/api/e2e/room-objects/place-enemies-on-line', async (request, response) => {
             await RoomObjectsState.respondForRoom(
                 serverManager,
