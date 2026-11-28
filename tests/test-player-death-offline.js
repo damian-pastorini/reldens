@@ -43,9 +43,9 @@ class TestPlayerDeathOffline extends BaseTest
             this.deathBuilder.keepOfflineDeathWithoutTimer(setup);
             let previousRecord = setup.offlineDeaths.deathsByPlayerId[playerId];
             setup.playerSchema.setPrivate(this.privateData.REVIVE_AT, reviveAt + 1000);
-            let isRecorded = setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: setup.playerSchema});
+            setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: setup.playerSchema});
             let record = setup.offlineDeaths.deathsByPlayerId[playerId];
-            this.assert.deepStrictEqual([isRecorded, previousRecord === record], [true, false]);
+            this.assert.strictEqual(previousRecord === record, false);
             this.assert.deepStrictEqual(record, {
                 sessionId: setup.playerSchema.sessionId,
                 reviveAt: reviveAt + 1000,
@@ -66,8 +66,9 @@ class TestPlayerDeathOffline extends BaseTest
             let playerId = setup.playerSchema.player_id;
             let reviveAt = Date.now() + 60000;
             setup.playerSchema.setPrivate(this.privateData.REVIVE_AT, reviveAt);
+            setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
             let keptCases = [
-                setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema}),
+                sc.hasOwn(setup.offlineDeaths.deathsByPlayerId, playerId),
                 this.deathBuilder.keepOfflineDeathWithoutTimer(setup)
             ];
             let keptDeath = setup.offlineDeaths.dropDeath(playerId);
@@ -96,11 +97,11 @@ class TestPlayerDeathOffline extends BaseTest
                 inState: GameConst.STATUS.DEATH,
                 stats: {hp: 0}
             });
-            let isKept = setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: olderSession});
+            setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: olderSession});
             let record = setup.offlineDeaths.deathsByPlayerId[setup.playerSchema.player_id];
             this.assert.deepStrictEqual(
-                [olderSession.player_id, isKept, record.sessionId, record.timer],
-                [setup.playerSchema.player_id, false, setup.playerSchema.sessionId, false]
+                [olderSession.player_id, record.sessionId, record.timer],
+                [setup.playerSchema.player_id, setup.playerSchema.sessionId, false]
             );
         });
     }
@@ -112,18 +113,16 @@ class TestPlayerDeathOffline extends BaseTest
             let playerId = setup.playerSchema.player_id;
             this.deathBuilder.keepOfflineDeathWithoutTimer(setup);
             let townState = setup.room.loginManager.playerRoomState.getStateObjectFromRoom(setup.relocator.townRoom);
-            this.assert.strictEqual(await setup.offlineDeaths.resolveDeath(playerId), true);
+            await setup.offlineDeaths.resolveDeath(playerId);
+            await setup.offlineDeaths.resolveDeath(playerId);
             this.assert.deepStrictEqual(setup.storedUpdates, [
                 ['stat', playerId, this.deathBuilder.hpStatId, {value: 100}],
                 ['state', playerId, townState]
             ]);
-            this.assert.deepStrictEqual(
-                [setup.offlineDeaths.deathsByPlayerId, await setup.offlineDeaths.resolveDeath(playerId)],
-                [{}, false]
-            );
+            this.assert.deepStrictEqual(setup.offlineDeaths.deathsByPlayerId, {});
             let noTeleportSetup = await this.deathBuilder.createOfflineDeathsSetup(this.teleportDisabled);
             this.deathBuilder.keepOfflineDeathWithoutTimer(noTeleportSetup);
-            this.assert.strictEqual(await noTeleportSetup.offlineDeaths.resolveDeath(playerId), true);
+            await noTeleportSetup.offlineDeaths.resolveDeath(playerId);
             this.assert.deepStrictEqual(
                 noTeleportSetup.storedUpdates,
                 [['stat', playerId, this.deathBuilder.hpStatId, {value: 100}]]
@@ -131,16 +130,29 @@ class TestPlayerDeathOffline extends BaseTest
         });
     }
 
+    async testTheAffectedStatIsLoadedByItsKey()
+    {
+        await this.test('the offline revive stat is loaded by the affected property key and is 0 when it is not stored', async () => {
+            let setup = await this.deathBuilder.createOfflineDeathsSetup();
+            let loadedStatIds = [setup.offlineDeaths.affectedStatId];
+            setup.usersManager.statsRepository = {loadOneBy: async () => null};
+            await setup.offlineDeaths.loadServerManagers({usersManager: setup.usersManager, loginManager: setup.room.loginManager});
+            loadedStatIds.push(setup.offlineDeaths.affectedStatId);
+            this.assert.deepStrictEqual(loadedStatIds, [this.deathBuilder.hpStatId, 0]);
+        });
+    }
+
     async testAFailedOfflineReviveDropsTheDeath()
     {
-        await this.test('a storage error in the offline revive is answered false and drops the kept death', async () => {
+        await this.test('a storage error in the offline revive stores nothing and drops the kept death', async () => {
             let setup = await this.deathBuilder.createOfflineDeathsSetup();
             let playerId = setup.playerSchema.player_id;
             this.deathBuilder.keepOfflineDeathWithoutTimer(setup);
             setup.usersManager.updatePlayerStatByIds = () => Promise.reject({message: 'Storage.'});
+            await setup.offlineDeaths.resolveDeath(playerId);
             this.assert.deepStrictEqual(
-                [await setup.offlineDeaths.resolveDeath(playerId), setup.offlineDeaths.deathsByPlayerId, setup.storedUpdates],
-                [false, {}, []]
+                [setup.offlineDeaths.deathsByPlayerId, setup.storedUpdates],
+                [{}, []]
             );
         });
     }
@@ -152,10 +164,14 @@ class TestPlayerDeathOffline extends BaseTest
             let playerId = setup.playerSchema.player_id;
             setup.playerSchema.setPrivate(this.privateData.REVIVE_AT, Date.now() + this.offlineReviveMs);
             setup.offlineDeaths.recordDeath({room: setup.room, targetSchema: setup.playerSchema});
-            let isKept = setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
+            setup.offlineDeaths.keepDeath({room: setup.room, playerSchema: setup.playerSchema});
             await waitMs(this.offlineReviveMs * 10);
             this.assert.deepStrictEqual(
-                [isKept, setup.offlineDeaths.deathsByPlayerId[playerId].timer, setup.storedUpdates],
+                [
+                    sc.hasOwn(setup.offlineDeaths.deathsByPlayerId, playerId),
+                    sc.get(setup.offlineDeaths.deathsByPlayerId[playerId], 'timer', true),
+                    setup.storedUpdates
+                ],
                 [true, false, []]
             );
         });
