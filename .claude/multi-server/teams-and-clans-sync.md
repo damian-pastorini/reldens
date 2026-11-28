@@ -47,9 +47,10 @@ Clans are stored rows, so the clan sync expects the servers to share the databas
   server online members goes to every other server: right away and awaited on a login (`CreatePlayerClanHandler`), a
   join (`ClanJoin`) and a disconnect (`ClanDisconnect`), queued on a stats change. Each server answers with its own
   online members; the group (team or clan) is sent again to the local clients only when those answers changed the
-  remote members, and a server that does not answer gets its members dropped from the group (logged) until its next
-  update or answer adds them again. A received update replaces the members of its sender and is sent to the local
-  clients.
+  remote members, and a server that does not answer gets its members dropped from the group (logged) and stays one of
+  the group servers (`SharedModifiersGroup.unansweredServersUrls`) until it answers, so the next update asks it again
+  and its answer adds them back, also when both servers dropped each other members. A received update replaces the
+  members of its sender and is sent to the local clients.
 - Queued updates (`queueUpdate()`): one update per group and per `TeamsConst.SYNC.UPDATE_INTERVAL_MS` (1 second), sent
   with the data of that moment, only when the group has servers to update; a fight never sends a request per hit and a
   received arrival never waits for the other servers.
