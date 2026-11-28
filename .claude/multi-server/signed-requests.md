@@ -31,9 +31,10 @@ the names check (`CrossServerNamesCheck`, one per names route). Each one is buil
 - `sendRequest(serverUrl, action, targetId, payload)` posts that body to `serverUrl + routePath`. It answers the parsed
   response only when it has `isSuccess: true`, otherwise `false` (no secret, error status, network error, timeout of
   `GameConst.SERVERS_SYNC.REQUEST_TIMEOUT_MS`).
-- `sendToServers(serversUrls, ...)` sends to every server, one after the other (each unreachable server costs its own
-  timeout), and returns `{serverUrl, response}` per server. It is the only place that sends a signed message to several
-  servers.
+- `sendToServers(serversUrls, action, targetId, payload, processResponse)` sends to every server, one after the other
+  (each unreachable server costs its own timeout), and gives each answer (`false` when not confirmed) and its server
+  URL to `processResponse` (when it is a function) right after it, so a failed server never stops the next ones. It is
+  the only place that sends a signed message to several servers.
 - `receiveRequest(req)` validates the token against every address of this server (public or base URL) and marks it
   used before calling the subclass `receiveAction(action, targetId, payload)`. A server without a valid
   `server/publicUrl` nor `server/baseUrl` rejects every request. An error in `receiveAction()` answers
