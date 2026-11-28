@@ -8,13 +8,15 @@
  * answering the given user model for any username, no created rooms (so no user is settled in a scene here) and a
  * disconnection recording the disconnected usernames (built for
  * the self server URL with the given rooms servers, so the login manager gives it the other servers addresses), and
- * signs the disconnection tokens (server change and check only when asked) for the server of that UserDisconnection.
+ * signs the disconnect messages (a disconnection, a server change or a check only) another server instance sends to the
+ * server of that UserDisconnection.
  *
  */
 
 const { LoginManager } = require('../../lib/game/server/login-manager');
 const { ExpiringHmacToken } = require('../../lib/game/server/expiring-hmac-token');
 const { ServerMessengerPropsBuilder } = require('./server-messenger-props-builder');
+const { GameConst } = require('../../lib/game/constants');
 const { sc } = require('@reldens/utils');
 
 class UserDisconnectionBuilder
@@ -22,9 +24,9 @@ class UserDisconnectionBuilder
 
     static SECRET = 'test-secret';
 
-    static EXPIRATION_MS = 60000;
-
     static SELF_URL = 'http://self:8080';
+
+    static OTHER_INSTANCE_ID = 'other-server-instance';
 
     /**
      * @param {Object<string, Function>} listeners
@@ -88,20 +90,21 @@ class UserDisconnectionBuilder
     /**
      * @param {UserDisconnection} userDisconnection
      * @param {string} username
-     * @param {boolean} [isServerChange]
-     * @param {boolean} [isCheckOnly]
-     * @returns {string}
+     * @param {string} [action]
+     * @param {string} [senderInstanceId]
+     * @returns {Object}
      */
-    static createToken(userDisconnection, username, isServerChange = false, isCheckOnly = false)
-    {
-        return userDisconnection.expiringHmacToken.generate(
-            userDisconnection.disconnectionTokenValues(
-                [...userDisconnection.serverSelfAddresses].shift(),
-                username,
-                isServerChange,
-                isCheckOnly
-            ),
-            Date.now()+UserDisconnectionBuilder.EXPIRATION_MS
+    static createRequestBody(
+        userDisconnection,
+        username,
+        action = GameConst.DISCONNECTION.DISCONNECT,
+        senderInstanceId = UserDisconnectionBuilder.OTHER_INSTANCE_ID
+    ){
+        return userDisconnection.createRequestBody(
+            [...userDisconnection.serverSelfAddresses].shift(),
+            action,
+            username,
+            {senderInstanceId}
         );
     }
 
