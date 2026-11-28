@@ -194,7 +194,8 @@ class TestPveChaseTimeOut extends BaseTest
             await setup.pve.startBattleWithDelay(setup.playerSchema, {}, {skillDelay: 0});
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema]);
             let skillDelay = 1;
-            this.assert.strictEqual(await setup.pve.startBattleWithDelay(setup.playerSchema, {}, {skillDelay}), true);
+            let scheduledTimer = await setup.pve.startBattleWithDelay(setup.playerSchema, {}, {skillDelay});
+            this.assert.strictEqual(scheduledTimer, setup.pve.battleTurnTimers.timers[setup.playerSchema.player_id]);
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema]);
             await timersPromises.setTimeout(skillDelay);
             this.assert.deepStrictEqual(continuedPlayers, [setup.playerSchema, setup.playerSchema]);
