@@ -6,6 +6,7 @@
 
 const { BaseTest } = require('./base-test');
 const { RoomsAvailability } = require('../lib/game/server/health/rooms-availability');
+const { RemoteServersStatus } = require('../lib/game/server/health/remote-servers-status');
 const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
 const { GameConst } = require('../lib/game/constants');
 const { sc } = require('@reldens/utils');
@@ -34,7 +35,8 @@ class TestRoomsAvailability extends BaseTest
                 fetchStatus: async (serverUrl) => {
                     requestedServers.push(serverUrl);
                     return remoteStatus;
-                }
+                },
+                fetchStatuses: RemoteServersStatus.prototype.fetchStatuses
             },
             roomsUsageCollector: {fetchActiveUsersKeys: () => []},
             isRoomCreated: (roomName) => -1 !== createdRooms.indexOf(roomName),
@@ -160,6 +162,29 @@ class TestRoomsAvailability extends BaseTest
         });
     }
 
+    async testTheRoomsOfOneServerRequestItsStatusOnce()
+    {
+        await this.test('the rooms of one other server request its status once and the local rooms none', async () => {
+            let requestedServers = [];
+            let roomsAvailability = this.createRoomsAvailability(
+                true,
+                [],
+                {isReachable: true, usageReport: {isBlocking: false}},
+                requestedServers
+            );
+            roomsAvailability.roomsServers['reldens-lake'] = this.remoteServerUrl;
+            this.assert.deepStrictEqual(
+                await roomsAvailability.fetchRoomsAvailability(['reldens-forest', 'reldens-bots-forest', 'reldens-lake']),
+                {
+                    'reldens-forest': {isAvailable: true, reason: ''},
+                    'reldens-bots-forest': {isAvailable: false, reason: GameConst.ROOM_UNAVAILABLE.SERVER_BUSY},
+                    'reldens-lake': {isAvailable: true, reason: ''}
+                }
+            );
+            this.assert.deepStrictEqual(requestedServers, [this.remoteServerUrl]);
+        });
+    }
+
     createRecordingRemoteStatus(statusRequests)
     {
         return {
@@ -168,7 +193,8 @@ class TestRoomsAvailability extends BaseTest
                 await Promise.resolve();
                 statusRequests.startedWhenAnswered.push(statusRequests.started.length);
                 return {isReachable: false, usageReport: false};
-            }
+            },
+            fetchStatuses: RemoteServersStatus.prototype.fetchStatuses
         };
     }
 
@@ -252,7 +278,8 @@ class TestRoomsAvailability extends BaseTest
                 fetchStatus: async (serverUrl) => ({
                     isReachable: sc.hasOwn(roomsUsageByUrl, serverUrl),
                     usageReport: {roomsUsage: sc.get(roomsUsageByUrl, serverUrl, false)}
-                })
+                }),
+                fetchStatuses: RemoteServersStatus.prototype.fetchStatuses
             },
             roomsUsageCollector: {fetchActiveUsersKeys: () => localUsersKeys},
             isRoomCreated: () => false,
