@@ -3,7 +3,8 @@
  * Reldens - Test Authentication Server Guards
  *
  * Tests the login guards that depend on the server state: the signed disconnect route with bad, expired, server status,
- * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error or switched off
+ * used and valid tokens, the other servers of a multi-server setup unavailable, answering an error (with two other
+ * servers, the first one answering an error refuses the login and the second one is still asked) or switched off
  * (with it off a scene change sends a check only request to the other server and its error refuses nothing, ISSUE
  * #479), the overloaded
  * server on the login and on the scene join, the single player mode with the player room unavailable, the rooms origin
@@ -158,6 +159,26 @@ class TestAuthenticationServerGuards
         await screenshots.capture(page, 'other-server-disconnection-off');
     }
 
+    static async runEveryOtherServerAskedTest(page, screenshots, gameConfig, longRun)
+    {
+        await LoginServerApi.setOtherServers(
+            gameConfig,
+            [
+                TestAuthenticationServerGuards.fetchErrorServerUrl(gameConfig),
+                SecurityApi.baseUrl(gameConfig)+LoginServerState.OTHER_SERVER_ANSWER_PATH
+            ],
+            true
+        );
+        expect(await TestAuthenticationServerGuards.fetchRejectedLoginText(gameConfig, page, longRun)).toBe(
+            GameConst.JOIN_GAME_ERROR_MESSAGE
+        );
+        expect(
+            await LoginServerApi.fetchOtherServersHits(gameConfig),
+            'The server that does not confirm the disconnection refuses the login and the next server is still asked'
+        ).toEqual({hits: 1, answerHits: 1});
+        await screenshots.capture(page, 'other-servers-every-one-asked');
+    }
+
     static async runOtherServerCheckErrorSceneChangeTest(page, screenshots, gameConfig, longRun)
     {
         await LoginServerApi.setOtherServer(gameConfig, TestAuthenticationServerGuards.fetchErrorServerUrl(gameConfig), false);
@@ -290,6 +311,9 @@ class TestAuthenticationServerGuards
             });
             test('other server answering an error rejects the login', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerErrorTest(page, screenshots, gameConfig, longRun);
+            });
+            test('every other server is asked when the first one does not confirm the disconnection', async ({ page, screenshots, gameConfig, longRun }) => {
+                await TestAuthenticationServerGuards.runEveryOtherServerAskedTest(page, screenshots, gameConfig, longRun);
             });
             test('disconnect on server change off sends no request', async ({ page, screenshots, gameConfig, longRun }) => {
                 await TestAuthenticationServerGuards.runOtherServerSwitchedOffTest(page, screenshots, gameConfig, longRun);
