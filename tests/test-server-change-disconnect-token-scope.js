@@ -196,8 +196,8 @@ class TestServerChangeDisconnectTokenScope extends BaseTest
             let consentedCode = SyncServerDriver.CloseCode.CONSENTED;
             let serverChangeCode = GameConst.DISCONNECTION.SERVER_CHANGE_CLOSE_CODE;
             this.assert.deepStrictEqual(results, [
-                [{isSuccess: true, wasLogged: false}, [['game-room', consentedCode], ['town-room', consentedCode]]],
-                [{isSuccess: true, wasLogged: true}, [['game-room', serverChangeCode], ['town-room', serverChangeCode]]],
+                [{isSuccess: true, wasLogged: false}, [['town-room', consentedCode], ['game-room', consentedCode]]],
+                [{isSuccess: true, wasLogged: true}, [['town-room', serverChangeCode], ['game-room', serverChangeCode]]],
                 [{isSuccess: true, wasLogged: true}, [['game-room', serverChangeCode]]]
             ]);
         });
