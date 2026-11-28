@@ -161,7 +161,7 @@ class TestServerHealthMonitor extends BaseTest
                 },
                 chatRoomId: {clients: [{}, {}]}
             };
-            let monitor = this.createMonitor({}, [{}], new RoomsUsageCollector(createdInstances, new ActivePlayers.constructor()));
+            let monitor = this.createMonitor({}, [{}], new RoomsUsageCollector(createdInstances, new ActivePlayers()));
             let roomsUsage = monitor.checkUsage().roomsUsage;
             this.assert.strictEqual(roomsUsage.roomsCount, 2);
             this.assert.strictEqual(roomsUsage.sceneRoomsCount, 1);
@@ -182,7 +182,7 @@ class TestServerHealthMonitor extends BaseTest
                     return this.state.players.size;
                 }
             };
-            let roomsUsageCollector = new RoomsUsageCollector({creatingRoomId: roomInCreation}, new ActivePlayers.constructor());
+            let roomsUsageCollector = new RoomsUsageCollector({creatingRoomId: roomInCreation}, new ActivePlayers());
             let roomsUsage = this.createMonitor({}, [{}], roomsUsageCollector)
                 .checkUsage()
                 .roomsUsage;
@@ -271,7 +271,7 @@ class TestServerHealthMonitor extends BaseTest
             let serverManager = {
                 serverHealthMonitor: previousMonitor,
                 configManager: {getWithoutLogs: (path, defaultValue) => defaultValue},
-                loginManager: {expiringHmacToken: {}, activePlayers: new ActivePlayers.constructor()},
+                loginManager: {expiringHmacToken: {}, activePlayers: new ActivePlayers()},
                 roomsManager: {isRoomCreated: () => false, createdInstances: {}},
                 gameServer: {shutdownCallbacks: []},
                 app: {get: () => true},
