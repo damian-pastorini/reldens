@@ -2,10 +2,11 @@
  *
  * Reldens - Test Server Change Disconnect Token Scope
  *
- * Tests the disconnection requested by the join of a player moving to a room of another server: the request body
- * carries the server change flag and its token signs the server change mark (and the check only mark when the
- * disconnection is disabled), so it is valid only as that kind of request; the receiving server disconnects the user as a server change only for that token (a normal token sent with
- * the flag or a server change token sent without it is rejected); the disconnection reaches every room of the user,
+ * Tests the disconnection requested by the join of a player moving to a room of another server: the message action is
+ * the server change (the check only when the disconnection is disabled, the disconnection on a login) and its token
+ * signs it, so it is valid only as that kind of message; the receiving server disconnects the user as a server change
+ * only for that action (a disconnection signed message sent as a server change or the other way around is rejected);
+ * the disconnection reaches every room of the user,
  * the game room session too (it has no player), unless the game room is avoided; a server change request for a user
  * settled in a scene here (its body not changing scene) is a forged move, so it ends the user as a new login (every
  * room closed with the consented code, answered as not logged) while a player changing scene or with no scene player
@@ -19,6 +20,7 @@ const { LoginManager } = require('../lib/game/server/login-manager');
 const { ExpiringHmacToken } = require('../lib/game/server/expiring-hmac-token');
 const { GlobalFetchStub } = require('./fixtures/global-fetch-stub');
 const { ServerMessengerPropsBuilder } = require('./fixtures/server-messenger-props-builder');
+const { UserDisconnectionBuilder } = require('./fixtures/user-disconnection-builder');
 const { RoomLogin } = require('../lib/rooms/server/login');
 const { RoomGame } = require('../lib/rooms/server/game');
 const { ActivePlayers } = require('../lib/game/server/memory/active-players');
@@ -54,67 +56,69 @@ class TestServerChangeDisconnectTokenScope extends BaseTest
         return userDisconnection;
     }
 
-    async testTheServerChangeRequestSignsItsMark()
+    async testTheServerChangeRequestSignsItsAction()
     {
-        await this.test('the server change disconnect request sends its flag and a token valid only as a server change', async () => {
-            let userDisconnection = this.createUserDisconnection([]);
+        await this.test('the disconnect message action is the server change, the disconnection or the check only and its token signs it', async () => {
+            let sender = this.createUserDisconnection([]);
+            sender.otherServersUrls = [this.serverUrl];
             let sentBodies = [];
             await GlobalFetchStub.withFetch(async (requestUrl, options) => {
                 sentBodies.push(sc.parseJson(options.body));
                 return {ok: true, json: async () => ({isSuccess: true})};
             }, async () => {
-                await userDisconnection.disconnectFromServer(this.serverUrl, this.username, true, false);
-                await userDisconnection.disconnectFromServer(this.serverUrl, this.username, false, false);
-                await userDisconnection.disconnectFromServer(this.serverUrl, this.username, true, true);
+                await sender.broadcastDisconnectionMessage({username: this.username}, true);
+                await sender.broadcastDisconnectionMessage({username: this.username}, false);
+                sender.disconnectUsersOnServerChange = false;
+                await sender.broadcastDisconnectionMessage({username: this.username}, true);
             });
-            let valuesByKind = [
-                userDisconnection.disconnectionTokenValues(this.serverUrl, this.username, true, false),
-                userDisconnection.disconnectionTokenValues(this.serverUrl, this.username, false, false),
-                userDisconnection.disconnectionTokenValues(this.serverUrl, this.username, true, true)
+            let receiver = this.createUserDisconnection([]);
+            let actions = [
+                GameConst.DISCONNECTION.SERVER_CHANGE,
+                GameConst.DISCONNECTION.DISCONNECT,
+                GameConst.DISCONNECTION.CHECK_ONLY
             ];
-            let tokenValidations = sentBodies.map(body => [
-                body.isServerChange,
-                body.isCheckOnly,
-                ...valuesByKind.map(tokenValues => userDisconnection.expiringHmacToken.validate(tokenValues, body.token, Date.now()))
+            let validations = sentBodies.map(body => [
+                body.action,
+                ...actions.map(action => receiver.isValidRequest(Object.assign({}, body, {action}), Date.now()))
             ]);
-            this.assert.deepStrictEqual(tokenValidations, [
-                [true, false, true, false, false],
-                [false, false, false, true, false],
-                [true, true, false, false, true]
+            this.assert.deepStrictEqual(validations, [
+                [GameConst.DISCONNECTION.SERVER_CHANGE, true, false, false],
+                [GameConst.DISCONNECTION.DISCONNECT, false, true, false],
+                [GameConst.DISCONNECTION.CHECK_ONLY, false, false, true]
             ]);
         });
     }
 
-    async testTheReceivedServerChangeIsAcceptedOnlyWithItsToken()
+    async testTheReceivedServerChangeIsAcceptedOnlyWithItsAction()
     {
-        await this.test('a server change disconnection is accepted only with its own token and flag', async () => {
+        await this.test('a server change disconnection is accepted only with its own signed action', async () => {
             let disconnections = [];
             let userDisconnection = this.createUserDisconnection(disconnections);
-            let createToken = (isServerChange) => userDisconnection.expiringHmacToken.generate(
-                userDisconnection.disconnectionTokenValues(this.serverUrl, this.username, isServerChange, false),
-                Date.now()+GameConst.SIGNED_TOKENS.DISCONNECT_EXPIRATION
+            let serverChangeBody = UserDisconnectionBuilder.createRequestBody(
+                userDisconnection,
+                this.username,
+                GameConst.DISCONNECTION.SERVER_CHANGE
             );
+            let disconnectBody = UserDisconnectionBuilder.createRequestBody(userDisconnection, this.username);
             let results = [];
-            for(let requestCase of [
-                {token: createToken(true), isServerChange: true},
-                {token: createToken(false), isServerChange: true},
-                {token: createToken(true), isServerChange: false},
-                {token: createToken(false), isServerChange: false}
+            for(let body of [
+                Object.assign({}, serverChangeBody, {action: GameConst.DISCONNECTION.DISCONNECT}),
+                Object.assign({}, disconnectBody, {action: GameConst.DISCONNECTION.SERVER_CHANGE}),
+                serverChangeBody,
+                disconnectBody
             ]){
-                results.push(await userDisconnection.disconnectUserByLoginData({
-                    body: {username: this.username, token: requestCase.token, isServerChange: requestCase.isServerChange}
-                }));
+                results.push((await userDisconnection.receiveRequest({body})).isSuccess);
             }
             this.assert.deepStrictEqual(
                 [results, disconnections],
-                [[true, false, false, true], [[this.username, true], [this.username, false]]]
+                [[false, false, true, true], [[this.username, true], [this.username, false]]]
             );
         });
     }
 
     createUserRooms(userModel, disconnectedRooms)
     {
-        let activePlayers = new ActivePlayers.constructor();
+        let activePlayers = new ActivePlayers();
         activePlayers.gameRoomInstanceId = 'game-room';
         let rooms = {
             'game-room': Object.create(RoomGame.prototype, {roomId: {value: 'game-room'}}),
@@ -153,7 +157,7 @@ class TestServerChangeDisconnectTokenScope extends BaseTest
     createSceneServer(sceneBody, closeCodes)
     {
         let userModel = {id: 7, username: this.username};
-        let activePlayers = new ActivePlayers.constructor();
+        let activePlayers = new ActivePlayers();
         activePlayers.gameRoomInstanceId = 'game-room';
         let rooms = {'game-room': Object.create(RoomGame.prototype, {roomId: {value: 'game-room'}})};
         if(sceneBody){
@@ -182,16 +186,12 @@ class TestServerChangeDisconnectTokenScope extends BaseTest
             for(let sceneBody of [{isChangingScene: false}, {isChangingScene: true}, false]){
                 let closeCodes = [];
                 let userDisconnection = this.createSceneServer(sceneBody, closeCodes);
-                let token = userDisconnection.expiringHmacToken.generate(
-                    userDisconnection.disconnectionTokenValues(this.serverUrl, this.username, true, false),
-                    Date.now()+GameConst.SIGNED_TOKENS.DISCONNECT_EXPIRATION
+                let body = UserDisconnectionBuilder.createRequestBody(
+                    userDisconnection,
+                    this.username,
+                    GameConst.DISCONNECTION.SERVER_CHANGE
                 );
-                results.push([
-                    await userDisconnection.answerDisconnectRequest({
-                        body: {username: this.username, token, isServerChange: true}
-                    }),
-                    closeCodes
-                ]);
+                results.push([await userDisconnection.receiveRequest({body}), closeCodes]);
             }
             let consentedCode = SyncServerDriver.CloseCode.CONSENTED;
             let serverChangeCode = GameConst.DISCONNECTION.SERVER_CHANGE_CLOSE_CODE;
