@@ -19,6 +19,8 @@ signed messenger of the `/reldens-disconnect-user` route), which sends the usern
   disconnected like on a new login (`UserDisconnection.isSettledInScene()`), so a join that only claims a scene change
   never leaves the other client frozen.
 - The answer `{isSuccess, wasLogged}`: `wasLogged` is true when the user was present there and not settled in a scene.
+  Every server is asked: a server that does not confirm the disconnection (with it enabled) is logged and refuses the
+  login or join, a failed presence check (with it disabled) counts as not logged.
   A message carrying this server own instance ID in its payload (an alias of this same server) answers
   `wasLogged: false` and disconnects nothing.
 - `RoomLogin.disconnectFromOtherServers()` refuses the join ("Could not connect to the game.") when a disconnection
