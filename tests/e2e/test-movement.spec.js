@@ -36,6 +36,7 @@ class TestMovement
     static DOOR_STEP_MS = 1500;
     static DOOR_ENTER_ATTEMPTS = 4;
     static NEAR_DEATH_DISTANCE = 64;
+    static CLEAR_LINE_DISTANCES = [3, 2, 1];
     static CLICK_TILES = [4, 3, 2];
 
     static async loginAndPrepare(page, gameConfig, longRun, scene = null)
@@ -106,6 +107,14 @@ class TestMovement
             + TimeConstants.ENEMY_KILL
             + TimeConstants.PLAYER_REVIVE
         );
+        let clearLine = await RoomObjectsApi.placePlayerOnLineStart(
+            page,
+            gameConfig,
+            Login.FOREST_ROOM_NAME,
+            sceneTimeout,
+            TestMovement.CLEAR_LINE_DISTANCES
+        );
+        expect(clearLine.reached, 'The player dies on a clear tile, away from the walls: '+clearLine.error).toBe(true);
         await TestCombatDeath.killPlayerWithEnemyAttack(page, gameConfig, enemyKey, TimeConstants.ENEMY_KILL);
         let dead = await TestCombatDeath.waitForServerDeath(gameConfig, Login.FOREST_ROOM_NAME, gameConfig.e2ePlayerName);
         await RoomObjectsApi.disableEnemies(gameConfig, Login.FOREST_ROOM_NAME);
